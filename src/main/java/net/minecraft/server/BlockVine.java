@@ -1,6 +1,6 @@
 package net.minecraft.server;
 
-import java.util.ArrayList;
+import java.util.ArrayList; // CraftBukkit
 import java.util.Random;
 
 import forge.IShearable;
@@ -287,8 +287,8 @@ public class BlockVine extends Block implements IShearable {
     }
 
     public void a(World world, EntityHuman entityhuman, int i, int j, int k, int l) {
-        super.a(world, entityhuman, i, j, k, l);
-    }
+            super.a(world, entityhuman, i, j, k, l);
+        }
 
 	public boolean isShearable(ItemStack item, World world, int x, int y, int z) {
 		return true;
@@ -302,5 +302,5 @@ public class BlockVine extends Block implements IShearable {
 	@Override
 	public boolean isLadder(World world, int x, int y, int z) {
 		return true;
-	}
+    }
 }

@@ -1,5 +1,6 @@
 package net.minecraft.server;
 
+import java.util.ArrayList; // CraftBukkit
 import java.util.Random;
 import org.bukkit.craftbukkit.event.CraftEventFactory;
 
@@ -44,7 +45,7 @@ public class BlockSnow extends Block {
 
     private boolean g(World world, int i, int j, int k) {
         if (!this.canPlace(world, i, j, k)) {
-            //this.b(world, i, j, k, world.getData(i, j, k), 0);
+            this.b(world, i, j, k, world.getData(i, j, k), 0);
             world.setRawTypeId(i, j, k, 0); // CraftBukkit
             world.notify(i, j, k); // CraftBukkit - Notfiy clients of the reversion
             return false;
@@ -54,26 +55,38 @@ public class BlockSnow extends Block {
     }
 
     public void a(World world, EntityHuman entityhuman, int i, int j, int k, int l) {
-        /*int i1 = Item.SNOW_BALL.id;
+        /* CraftBukkit start - This logic is exactly the same as in the superclass method, so defer it there
+        int i1 = Item.SNOW_BALL.id;
         float f = 0.7F;
         double d0 = (double) (world.random.nextFloat() * f) + (double) (1.0F - f) * 0.5D;
         double d1 = (double) (world.random.nextFloat() * f) + (double) (1.0F - f) * 0.5D;
         double d2 = (double) (world.random.nextFloat() * f) + (double) (1.0F - f) * 0.5D;
         EntityItem entityitem = new EntityItem(world, (double) i + d0, (double) j + d1, (double) k + d2, new ItemStack(i1, 1, 0));
+        // This is done so that getDrops() in the BlockBreakEvent works properly.
 
         entityitem.pickupDelay = 10;
         world.addEntity(entityitem);
-        world.setTypeId(i, j, k, 0);*/
-        this.b(world, i, j, k, l, 0);
+        // */
+        super.doActualDrop(world, entityhuman, i, j, k, l);
+        // CraftBukkit end
+        world.setTypeId(i, j, k, 0);
         entityhuman.a(StatisticList.C[this.id], 1);
     }
+
+    // CraftBukkit start - Calculate drops
+    public ArrayList<ItemStack> calculateDrops(World world, EntityHuman entityhuman, int i, int j, int k, int l) {
+        super.dropList = new ArrayList<ItemStack>();
+        this.a(world, i, j, k, new ItemStack(Item.SNOW_BALL.id, 1, 1));
+        return super.dropList;
+    }
+    // CraftBukkit end
 
     public int getDropType(int i, Random random, int j) {
         return Item.SNOW_BALL.id;
     }
 
     public int a(Random random) {
-        return 1;
+        return 0;
     }
 
     public void a(World world, int i, int j, int k, Random random) {
@@ -84,7 +97,7 @@ public class BlockSnow extends Block {
             }
             // CraftBukkit end
 
-            //this.b(world, i, j, k, world.getData(i, j, k), 0);
+            this.b(world, i, j, k, world.getData(i, j, k), 0);
             world.setTypeId(i, j, k, 0);
         }
     }

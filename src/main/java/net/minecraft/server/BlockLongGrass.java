@@ -1,6 +1,5 @@
 package net.minecraft.server;
 
-import java.util.ArrayList;
 import java.util.Random;
 
 import forge.ForgeHooks;
@@ -29,8 +28,8 @@ public class BlockLongGrass extends BlockFlower implements IShearable {
     }
 
     public void a(World world, EntityHuman entityhuman, int i, int j, int k, int l) {
-		super.a(world, entityhuman, i, j, k, l);
-    }
+            super.a(world, entityhuman, i, j, k, l);
+        }
 
     //FORGE
     @Override
@@ -54,5 +53,5 @@ public class BlockLongGrass extends BlockFlower implements IShearable {
 		ArrayList<ItemStack> ret = new ArrayList<ItemStack>();
 		ret.add(new ItemStack(this, 1, world.getData(x, y, z)));
 		return ret;
-	}
+    }
 }

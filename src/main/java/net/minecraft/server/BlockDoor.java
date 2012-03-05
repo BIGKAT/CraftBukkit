@@ -170,10 +170,11 @@ public class BlockDoor extends Block {
             }
 
             if (flag) {
+            /* CraftBukkit start - Move the drop to on break instead of on physics
                 if (!world.isStatic) {
                     this.b(world, i, j, k, i1, 0);
                 }
-            // CraftBukkit start
+                // */
             } else if (l > 0 && Block.byId[l].isPowerSource()) {
                 org.bukkit.World bworld = world.getWorld();
                 org.bukkit.block.Block block = bworld.getBlockAt(i, j, k);
@@ -196,7 +197,7 @@ public class BlockDoor extends Block {
     }
 
     public int getDropType(int i, Random random, int j) {
-        return (i & 8) != 0 ? 0 : (this.material == Material.ORE ? Item.IRON_DOOR.id : Item.WOOD_DOOR.id);
+        return /* (i & 8) != 0 ? 0 CraftBukkit : */ (this.material == Material.ORE ? Item.IRON_DOOR.id : Item.WOOD_DOOR.id);
     }
 
     public MovingObjectPosition a(World world, int i, int j, int k, Vec3D vec3d, Vec3D vec3d1) {

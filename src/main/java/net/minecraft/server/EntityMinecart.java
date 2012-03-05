@@ -57,7 +57,7 @@ public class EntityMinecart extends Entity implements IInventory {
 	protected float maxSpeedAirLateral;
 	protected float maxSpeedAirVertical;
 	protected double dragAir;
-	// CraftBukkit start
+    // CraftBukkit start
     public boolean slowWhenEmpty = true;
     private double derailedX = 0.5;
     private double derailedY = 0.5;
@@ -202,7 +202,7 @@ public class EntityMinecart extends Entity implements IInventory {
 
                 this.die();
                 dropCartAsItem();
-            }
+                                }
             return true;
         } else {
             return true;
@@ -407,7 +407,7 @@ public class EntityMinecart extends Entity implements IInventory {
                     this.setPosition(this.locX, this.locY + (double) aint[1][1], this.locZ);
                 }
                 applyDragAndPushForces();
-                
+
                 Vec3D vec3d1 = this.h(this.locX, this.locY, this.locZ);
 
                 if (vec3d1 != null && vec3d != null) {
@@ -534,7 +534,7 @@ public class EntityMinecart extends Entity implements IInventory {
             }
             updateFuel();
 			ForgeHooks.onMinecartUpdate(this, i, j, k);
-		}
+        }
     }
 
     public Vec3D h(double d0, double d1, double d2) {

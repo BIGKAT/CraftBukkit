@@ -53,5 +53,5 @@ public class EntityMushroomCow extends EntityCow implements IShearable {
 			ret.add(new ItemStack(Block.RED_MUSHROOM));
 		}
 		return ret;
-	}
+    }
 }

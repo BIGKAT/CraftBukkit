@@ -1,9 +1,11 @@
 package net.minecraft.server;
 
-import java.util.ArrayList;
 import java.util.Random;
 
 // CraftBukkit start
+import java.util.ArrayList;
+import java.util.List;
+
 import org.bukkit.Material;
 import org.bukkit.craftbukkit.event.CraftEventFactory;
 import org.bukkit.entity.Sheep;
@@ -190,5 +192,5 @@ public class EntitySheep extends EntityAnimal implements IShearable {
 			ret.add(new ItemStack(Block.WOOL.id, 1, getColor()));
 		}
 		return ret;
-	}
+    }
 }

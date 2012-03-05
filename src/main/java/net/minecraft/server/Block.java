@@ -3,8 +3,6 @@ package net.minecraft.server;
 import java.util.ArrayList;
 import java.util.Random;
 
-import forge.ForgeHooks;
-
 public class Block {
 
     public static final StepSound d = new StepSound("stone", 1.0F, 1.0F);
@@ -166,6 +164,7 @@ public class Block {
     public final Material material;
     public float frictionFactor;
     private String name;
+    protected ArrayList<ItemStack> dropList; // CraftBukkit
 
     protected Block(int i, Material material) {
         this.bR = true;
@@ -347,9 +346,9 @@ public class Block {
 
     public void dropNaturally(World world, int i, int j, int k, int l, float f, int i1) {
         if (!world.isStatic) {
-           int j1 = this.getDropCount(i1, world.random);
+            int j1 = this.getDropCount(i1, world.random);
 
-           /*for (int k1 = 0; k1 < j1; ++k1) {
+            for (int k1 = 0; k1 < j1; ++k1) {
                 // CraftBukkit - <= to < to allow for plugins to completely disable block drops from explosions
                 if (world.random.nextFloat() < f) {
                     int l1 = this.getDropType(l, world.random, i1);
@@ -358,17 +357,22 @@ public class Block {
                         this.a(world, i, j, k, new ItemStack(l1, 1, this.getDropData(l)));
                     }
                 }
-            }*/
-            ArrayList<ItemStack> items = getBlockDropped(world, i, j, k, l, i1);
-            for (ItemStack item : items) {
-                if (world.random.nextFloat() < f) {
-                    this.a(world, i, j, k, item);
-                }
             }
         }
     }
 
     protected void a(World world, int i, int j, int k, ItemStack itemstack) {
+        // CraftBukkit start - the logic of this function is moved into finishDrop
+        if (this.dropList != null) {
+            this.dropList.add(itemstack);
+        } else {
+            this.finishDrop(world, i, j, k, itemstack);
+        }
+    }
+
+    public final void finishDrop(World world, int i, int j, int k, ItemStack itemstack) {
+        this.dropList = null;
+        // CraftBukkit end
         if (!world.isStatic) {
             float f = 0.7F;
             double d0 = (double) (world.random.nextFloat() * f) + (double) (1.0F - f) * 0.5D;
@@ -540,6 +544,23 @@ public class Block {
     public void a(World world, EntityHuman entityhuman, int i, int j, int k, int l) {
         entityhuman.a(StatisticList.C[this.id], 1);
         entityhuman.c(0.025F);
+        // CraftBukkit start - A way to separate statistics from the logic of determining what to drop
+        this.doActualDrop(world, entityhuman, i, j, k, l);
+    }
+
+    public void doActualDrop(World world, EntityHuman entityhuman, int i, int j, int k, int l) {
+        for (ItemStack stack : dropList) {
+            finishDrop(world, i, j, k, stack);
+        }
+    }
+
+    public void setDrops(ArrayList<ItemStack> drops) {
+        this.dropList = drops;
+    }
+
+    public ArrayList<ItemStack> calculateDrops(World world, EntityHuman entityhuman, int i, int j, int k, int l) {
+        this.dropList = new ArrayList<ItemStack>();
+        // CraftBukkit end
         if (this.b() && !hasTileEntity(l) && EnchantmentManager.hasSilkTouchEnchantment(entityhuman.inventory)) {
             ItemStack itemstack = this.a_(l);
 
@@ -551,6 +572,7 @@ public class Block {
 
             this.b(world, i, j, k, l, i1);
         }
+        return this.dropList; // CraftBukkit
     }
 
     protected ItemStack a_(int i) {
