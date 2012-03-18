@@ -149,12 +149,12 @@ public class ForgeHooks
     }
     static LinkedList<IConnectionHandler> connectionHandlers = new LinkedList<IConnectionHandler>();
 
-    public static boolean onItemPickup(EntityPlayer player, EntityItem item)
+    public static boolean onItemPickup(EntityHuman entityhuman, EntityItem item)
     {
         boolean cont = true;
         for (IPickupHandler handler : pickupHandlers)
         {
-            cont = cont && handler.onItemPickup(player, item);
+            cont = cont && handler.onItemPickup(entityhuman, item);
             if (!cont || item.itemStack.count <= 0)
             {
                 return false;
