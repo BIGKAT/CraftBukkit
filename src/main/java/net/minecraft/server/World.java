@@ -55,7 +55,7 @@ public class World implements IBlockAccess {
     public int n = 0;
     public boolean suppressPhysics = false;
     private long M = System.currentTimeMillis();
-    protected int p = 40;
+    public int p = 40; //FORGE - autosavePeriod
     public int difficulty;
     public Random random = new Random();
     public boolean s = false;
@@ -273,7 +273,9 @@ public class World implements IBlockAccess {
     }
 
     public boolean isEmpty(int i, int j, int k) {
-        return this.getTypeId(i, j, k) == 0;
+    	// FORGE: air blocks
+    	int id = getTypeId(i,j,k);
+    	return (id == 0 || Block.byId[id] == null || Block.byId[id].isAirBlock(this, i, j, k));
     }
 
     public boolean isTileEntity(int i, int j, int k) {
@@ -2932,4 +2934,25 @@ public class World implements IBlockAccess {
         return this.dataManager.getUUID();
     }
     // CraftBukkit end
+	/**
+	 * Determine if the given block is considered solid on the specified side.
+	 * Used by placement logic.
+	 * 
+	 * @param x
+	 *            Block X Position
+	 * @param y
+	 *            Block Y Position
+	 * @param z
+	 *            Block Z Position
+	 * @param side
+	 *            The Side in question
+	 * @return True if the side is solid
+	 */
+	public boolean isBlockSolidOnSide(int x, int y, int z, int side) {
+		Block block = Block.byId[getTypeId(x, y, z)];
+		if (block == null) {
+			return false;
+		}
+		return block.isBlockSolidOnSide(this, x, y, z, side);
+	}
 }
