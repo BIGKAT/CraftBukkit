@@ -79,6 +79,7 @@ public class BlockMinecartTrack extends Block {
     }
 
     public int c() {
+        //FORGE
         return renderType;
     }
 
@@ -87,6 +88,7 @@ public class BlockMinecartTrack extends Block {
     }
 
     public boolean canPlace(World world, int i, int j, int k) {
+        //FORGE
         return world.isBlockSolidOnSide(i, j - 1, k,1);
     }
 
@@ -109,23 +111,27 @@ public class BlockMinecartTrack extends Block {
             }
 
             boolean flag = false;
-
+            //FORGE
             if (!world.isBlockSolidOnSide(i, j - 1, k,1)) {
                 flag = true;
             }
 
+            //FORGE
             if (j1 == 2 && !world.isBlockSolidOnSide(i + 1, j, k,1)) {
                 flag = true;
             }
 
+            //FORGE
             if (j1 == 3 && !world.isBlockSolidOnSide(i - 1, j, k,1)) {
                 flag = true;
             }
 
+            //FORGE
             if (j1 == 4 && !world.isBlockSolidOnSide(i, j, k - 1,1)) {
                 flag = true;
             }
 
+            //FORGE
             if (j1 == 5 && !world.isBlockSolidOnSide(i, j, k + 1,1)) {
                 flag = true;
             }
@@ -272,11 +278,13 @@ public class BlockMinecartTrack extends Block {
         return 0;
     }
 
+    //FORGE
     @Deprecated
     static boolean a(BlockMinecartTrack blockminecarttrack) {
         return blockminecarttrack.a;
     }
 
+    //FORGE
 	/**
 	 * Return true if the rail can make corners. Used by placement logic.
 	 * 
