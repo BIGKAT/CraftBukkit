@@ -14,6 +14,7 @@ public abstract class BlockContainer extends Block {
 
     public void onPlace(World world, int i, int j, int k) {
         super.onPlace(world, i, j, k);
+        //FORGE
         world.setTileEntity(i, j, k, this.getBlockEntity(world.getData(i, j, k)));
     }
 
@@ -33,6 +34,7 @@ public abstract class BlockContainer extends Block {
         }
     }
 
+    // FORGE
 	/**
 	 * Metatdata sensitive version of getBlockEntity
 	 * 

@@ -90,6 +90,7 @@ public class BlockCrops extends BlockFlower {
         return 6;
     }
 
+    //FORGE
     /*public void dropNaturally(World world, int i, int j, int k, int l, float f, int i1) {
         super.dropNaturally(world, i, j, k, l, f, 0);
         if (!world.isStatic) {
@@ -110,6 +111,7 @@ public class BlockCrops extends BlockFlower {
         }
     }*/
     
+    //FORGE
     @Override 
     public ArrayList<ItemStack> getBlockDropped(World world, int x, int y, int z, int metadata, int fortune) {
         ArrayList<ItemStack> ret = new ArrayList<ItemStack>();
