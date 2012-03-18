@@ -731,7 +731,7 @@ public class Block {
      * @param z Z position
      * @return A value 
      */
-    public float blockStrength(World world, EntityPlayer player, int x, int y, int z) 
+    public float blockStrength(World world, EntityHuman player, int x, int y, int z) 
     {
         return getDamage(player, world.getData(x, y, z));
     }
@@ -743,7 +743,7 @@ public class Block {
      * @param meta The block's current metadata
      * @return The larger the value, the faster it breaks.
      */
-    public float blockStrength(EntityPlayer player, int meta) 
+    public float blockStrength(EntityHuman player, int meta) 
     {
         return ForgeHooks.blockStrength(this, player, meta);
     }
