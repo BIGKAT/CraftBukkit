@@ -10,6 +10,7 @@ import net.minecraft.server.Block;
 import net.minecraft.server.Chunk;
 import net.minecraft.server.ChunkCoordIntPair;
 import net.minecraft.server.Entity;
+import net.minecraft.server.EntityHuman;
 import net.minecraft.server.EntityItem;
 import net.minecraft.server.EntityMinecart;
 import net.minecraft.server.EntityPlayer;
@@ -154,7 +155,7 @@ public class ForgeHooks
         for (IPickupHandler handler : pickupHandlers)
         {
             cont = cont && handler.onItemPickup(player, item);
-            if (!cont || item.item.stackSize <= 0)
+            if (!cont || item.itemStack.count <= 0)
             {
                 return false;
             }
@@ -235,13 +236,13 @@ public class ForgeHooks
 
     public static void plantGrassPlant(World world, int x, int y, int z)
     {
-        int index = world.rand.nextInt(plantGrassWeight);
+        int index = world.random.nextInt(plantGrassWeight);
         ProbableItem item = getRandomItem(plantGrassList, index);
         if (item == null)
         {
             return;
         }
-        world.setBlockAndMetadataWithNotify(x, y, z, item.ItemID, item.Metadata);
+        world.setTypeIdAndData(x, y, z, item.ItemID, item.Metadata);
     }
 
     public static void addPlantGrass(int item, int metadata, int probability)
@@ -252,7 +253,7 @@ public class ForgeHooks
 
     public static ItemStack getGrassSeed(World world)
     {
-        int index = world.rand.nextInt(seedGrassWeight);
+        int index = world.random.nextInt(seedGrassWeight);
         ProbableItem item = getRandomItem(seedGrassList, index);
         if (item == null)
         {
@@ -269,31 +270,31 @@ public class ForgeHooks
 
     // Tool Path
     // ------------------------------------------------------------
-    public static boolean canHarvestBlock(Block block, EntityPlayer player, int metadata)
+    public static boolean canHarvestBlock(Block block, EntityHuman player, int metadata)
     {
-        if (block.blockMaterial.isHarvestable())
+        if (block.material.isAlwaysDestroyable())
         {
             return true;
         }
-        ItemStack stack = player.inventory.getCurrentItem();
+        ItemStack stack = player.inventory.getItemInHand();
         if (stack == null)
         {
             return false;
         }
 
-        List info = (List)toolClasses.get(stack.itemID);
+        List info = (List)toolClasses.get(stack.id);
         if (info == null)
         {
-            return stack.canHarvestBlock(block);
+            return stack.b(block);
         }
         Object[] tmp = info.toArray();
         String toolClass = (String)tmp[0];
         int harvestLevel = (Integer)tmp[1];
 
-        Integer blockHarvestLevel = (Integer)toolHarvestLevels.get(Arrays.asList(block.blockID, metadata, toolClass));
+        Integer blockHarvestLevel = (Integer)toolHarvestLevels.get(Arrays.asList(block.id, metadata, toolClass));
         if (blockHarvestLevel == null)
         {
-            return stack.canHarvestBlock(block);
+            return stack.b(block);
         }
         if (blockHarvestLevel > harvestLevel)
         {
@@ -302,7 +303,7 @@ public class ForgeHooks
         return true;
     }
 
-    public static float blockStrength(Block block, EntityPlayer player, int metadata)
+    public static float blockStrength(Block block, EntityHuman player, int metadata)
     {
         float hardness = block.getHardness(metadata);
         if (hardness < 0.0F)
@@ -322,12 +323,12 @@ public class ForgeHooks
 
     public static boolean isToolEffective(ItemStack stack, Block block, int metadata)
     {
-        List toolClass = (List)toolClasses.get(stack.itemID);
+        List toolClass = (List)toolClasses.get(stack.id);
         if (toolClass == null)
         {
             return false;
         }
-        return toolEffectiveness.contains(Arrays.asList(block.blockID, metadata, (String)toolClass.get(0)));
+        return toolEffectiveness.contains(Arrays.asList(block.id, metadata, (String)toolClass.get(0)));
     }
 
     static void initTools()
@@ -338,47 +339,47 @@ public class ForgeHooks
         }
         toolInit = true;
 
-        MinecraftForge.setToolClass(Item.pickaxeWood,    "pickaxe", 0);
-        MinecraftForge.setToolClass(Item.pickaxeStone,   "pickaxe", 1);
-        MinecraftForge.setToolClass(Item.pickaxeSteel,   "pickaxe", 2);
-        MinecraftForge.setToolClass(Item.pickaxeGold,    "pickaxe", 0);
-        MinecraftForge.setToolClass(Item.pickaxeDiamond, "pickaxe", 3);
+        MinecraftForge.setToolClass(Item.WOOD_PICKAXE,    "pickaxe", 0);
+        MinecraftForge.setToolClass(Item.STONE_PICKAXE,   "pickaxe", 1);
+        MinecraftForge.setToolClass(Item.IRON_PICKAXE,   "pickaxe", 2);
+        MinecraftForge.setToolClass(Item.GOLD_PICKAXE,    "pickaxe", 0);
+        MinecraftForge.setToolClass(Item.DIAMOND_PICKAXE, "pickaxe", 3);
 
-        MinecraftForge.setToolClass(Item.axeWood,    "axe", 0);
-        MinecraftForge.setToolClass(Item.axeStone,   "axe", 1);
-        MinecraftForge.setToolClass(Item.axeSteel,   "axe", 2);
-        MinecraftForge.setToolClass(Item.axeGold,    "axe", 0);
-        MinecraftForge.setToolClass(Item.axeDiamond, "axe", 3);
+        MinecraftForge.setToolClass(Item.WOOD_AXE,    "axe", 0);
+        MinecraftForge.setToolClass(Item.STONE_AXE,   "axe", 1);
+        MinecraftForge.setToolClass(Item.IRON_AXE,   "axe", 2);
+        MinecraftForge.setToolClass(Item.GOLD_AXE,    "axe", 0);
+        MinecraftForge.setToolClass(Item.DIAMOND_AXE, "axe", 3);
 
-        MinecraftForge.setToolClass(Item.shovelWood,    "shovel", 0);
-        MinecraftForge.setToolClass(Item.shovelStone,   "shovel", 1);
-        MinecraftForge.setToolClass(Item.shovelSteel,   "shovel", 2);
-        MinecraftForge.setToolClass(Item.shovelGold,    "shovel", 0);
-        MinecraftForge.setToolClass(Item.shovelDiamond, "shovel", 3);
+        MinecraftForge.setToolClass(Item.WOOD_SPADE,    "shovel", 0);
+        MinecraftForge.setToolClass(Item.STONE_SPADE,   "shovel", 1);
+        MinecraftForge.setToolClass(Item.IRON_SPADE,   "shovel", 2);
+        MinecraftForge.setToolClass(Item.GOLD_SPADE,    "shovel", 0);
+        MinecraftForge.setToolClass(Item.DIAMOND_SPADE, "shovel", 3);
 
-        MinecraftForge.setBlockHarvestLevel(Block.obsidian,     "pickaxe", 3);
-        MinecraftForge.setBlockHarvestLevel(Block.oreDiamond,   "pickaxe", 2);
-        MinecraftForge.setBlockHarvestLevel(Block.blockDiamond, "pickaxe", 2);
-        MinecraftForge.setBlockHarvestLevel(Block.oreGold,      "pickaxe", 2);
-        MinecraftForge.setBlockHarvestLevel(Block.blockGold,    "pickaxe", 2);
-        MinecraftForge.setBlockHarvestLevel(Block.oreIron,      "pickaxe", 1);
-        MinecraftForge.setBlockHarvestLevel(Block.blockSteel,   "pickaxe", 1);
-        MinecraftForge.setBlockHarvestLevel(Block.oreLapis,     "pickaxe", 1);
-        MinecraftForge.setBlockHarvestLevel(Block.blockLapis,   "pickaxe", 1);
-        MinecraftForge.setBlockHarvestLevel(Block.oreRedstone,  "pickaxe", 2);
-        MinecraftForge.setBlockHarvestLevel(Block.oreRedstoneGlowing, "pickaxe", 2);
-        MinecraftForge.removeBlockEffectiveness(Block.oreRedstone, "pickaxe");
-        MinecraftForge.removeBlockEffectiveness(Block.obsidian,    "pickaxe");
-        MinecraftForge.removeBlockEffectiveness(Block.oreRedstoneGlowing, "pickaxe");
+        MinecraftForge.setBlockHarvestLevel(Block.OBSIDIAN,     "pickaxe", 3);
+        MinecraftForge.setBlockHarvestLevel(Block.DIAMOND_ORE,   "pickaxe", 2);
+        MinecraftForge.setBlockHarvestLevel(Block.DIAMOND_BLOCK, "pickaxe", 2);
+        MinecraftForge.setBlockHarvestLevel(Block.GOLD_ORE,      "pickaxe", 2);
+        MinecraftForge.setBlockHarvestLevel(Block.GOLD_BLOCK,    "pickaxe", 2);
+        MinecraftForge.setBlockHarvestLevel(Block.IRON_ORE,      "pickaxe", 1);
+        MinecraftForge.setBlockHarvestLevel(Block.IRON_BLOCK,   "pickaxe", 1);
+        MinecraftForge.setBlockHarvestLevel(Block.LAPIS_ORE,     "pickaxe", 1);
+        MinecraftForge.setBlockHarvestLevel(Block.LAPIS_BLOCK,   "pickaxe", 1);
+        MinecraftForge.setBlockHarvestLevel(Block.REDSTONE_ORE,  "pickaxe", 2);
+        MinecraftForge.setBlockHarvestLevel(Block.GLOWING_REDSTONE_ORE, "pickaxe", 2);
+        MinecraftForge.removeBlockEffectiveness(Block.REDSTONE_ORE, "pickaxe");
+        MinecraftForge.removeBlockEffectiveness(Block.OBSIDIAN,    "pickaxe");
+        MinecraftForge.removeBlockEffectiveness(Block.GLOWING_REDSTONE_ORE, "pickaxe");
 
         Block[] pickeff =
         {
-            Block.cobblestone, Block.stairDouble,
-            Block.stairSingle, Block.stone,
-            Block.sandStone,   Block.cobblestoneMossy,
-            Block.oreCoal,     Block.ice,
-            Block.netherrack,  Block.oreLapis,
-            Block.blockLapis
+            Block.COBBLESTONE, Block.COBBLESTONE_STAIRS,
+            Block.STEP, Block.STONE,
+            Block.SANDSTONE,   Block.MOSSY_COBBLESTONE,
+            Block.COAL_ORE,     Block.ICE,
+            Block.NETHERRACK,  Block.LAPIS_ORE,
+            Block.LAPIS_BLOCK
         };
         for (Block block : pickeff)
         {
@@ -387,11 +388,11 @@ public class ForgeHooks
 
         Block[] spadeEff =
         {
-            Block.grass,     Block.dirt,
-            Block.sand,      Block.gravel,
-            Block.snow,      Block.blockSnow,
-            Block.blockClay, Block.tilledField,
-            Block.slowSand,  Block.mycelium
+            Block.GRASS,     Block.DIRT,
+            Block.SAND,      Block.GRAVEL,
+            Block.SNOW,      Block.SNOW_BLOCK,
+            Block.CLAY, Block.SOIL,
+            Block.SOUL_SAND,  Block.MYCEL
         };
         for (Block block : spadeEff)
         {
@@ -400,10 +401,10 @@ public class ForgeHooks
 
         Block[] axeEff =
         {
-            Block.planks,      Block.bookShelf,
-            Block.wood,        Block.chest,
-            Block.stairDouble, Block.stairSingle,
-            Block.pumpkin,     Block.pumpkinLantern
+            Block.WOOD,      Block.BOOKSHELF,
+            Block.LOG,        Block.CHEST,
+            Block.DOUBLE_STEP, Block.STEP,
+            Block.PUMPKIN,     Block.JACK_O_LANTERN
         };
         for (Block block : axeEff)
         {
