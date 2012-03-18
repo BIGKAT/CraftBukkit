@@ -88,6 +88,6 @@ public abstract class Enchantment {
     */
     public boolean canEnchantItem(ItemStack item) 
     {
-        return type.canEnchantItem(item.getItem());
+        return slot.canEnchantItem(item.getItem());
     }
 }
