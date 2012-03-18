@@ -51,7 +51,7 @@ public class BlockPressurePlate extends Block {
     public void doPhysics(World world, int i, int j, int k, int l) {
         boolean flag = false;
 
-        if (!world.e(i, j - 1, k) && world.getTypeId(i, j - 1, k) != Block.FENCE.id) {
+        if (!world.isBlockSolidOnSide(i, j - 1, k,1) && world.getTypeId(i, j - 1, k) != Block.FENCE.id) {
             flag = true;
         }
 
