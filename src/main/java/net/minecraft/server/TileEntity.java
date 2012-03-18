@@ -133,4 +133,13 @@ public class TileEntity {
         return null;
     }
     // CraftBukkit end
+
+    /**
+     * Determines if this TileEntity requires update calls.
+     * @return True if you want updateEntity() to be called, false if not
+     */
+    public boolean canUpdate()
+    {
+        return true;
+    }
 }

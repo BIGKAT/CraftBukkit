@@ -42,7 +42,7 @@ public abstract class EntityLiving extends Entity {
     public float ao;
     protected int health = this.getMaxHealth();
     public int aq;
-    protected int ar;
+    public int ar;
     private int a;
     public int hurtTicks;
     public int at;
@@ -965,7 +965,7 @@ public abstract class EntityLiving extends Entity {
         int k = MathHelper.floor(this.locZ);
         int l = this.world.getTypeId(i, j, k);
 
-        return l == Block.LADDER.id || l == Block.VINE.id;
+        return (Block.byId[l] != null && Block.byId[l].isLadder(world, i, j, k));
     }
 
     public void b(NBTTagCompound nbttagcompound) {

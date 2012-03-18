@@ -3,6 +3,10 @@ package net.minecraft.server;
 import java.util.Iterator;
 import java.util.List;
 
+import forge.ArmorProperties;
+import forge.ForgeHooks;
+import forge.ISpecialArmor;
+
 // CraftBukkit start
 import org.bukkit.Bukkit;
 import org.bukkit.craftbukkit.entity.CraftItem;
@@ -127,6 +131,7 @@ public abstract class EntityHuman extends EntityLiving {
             if (itemstack != this.d) {
                 this.N();
             } else {
+                d.getItem().onUsingItemTick(d, this, e);
                 if (this.e <= 25 && this.e % 4 == 0) {
                     this.b(itemstack, 5);
                 }
@@ -268,6 +273,10 @@ public abstract class EntityHuman extends EntityLiving {
 
     // CraftBukkit - protected -> public
     public void closeInventory() {
+        if (activeContainer != null) //TODO: This is a bugfix for chests staying open in SMP
+        {
+            activeContainer.onCraftGuiClosed(this);
+        }
         this.activeContainer = this.defaultContainer;
     }
 
@@ -396,7 +405,14 @@ public abstract class EntityHuman extends EntityLiving {
     }
 
     public EntityItem R() {
-        return this.a(this.inventory.splitStack(this.inventory.itemInHandIndex, 1), false);
+        ItemStack stack = inventory.getItemInHand();
+        if (stack == null) {
+            return null;
+        }
+        if (stack.getItem().onDroppedByPlayer(stack, this)) {
+            return this.a(this.inventory.splitStack((this.inventory.itemInHandIndex, 1), false);
+        }
+        return null;
     }
 
     public EntityItem drop(ItemStack itemstack) {
@@ -456,8 +472,15 @@ public abstract class EntityHuman extends EntityLiving {
         this.world.addEntity(entityitem);
     }
 
+    @Deprecated
     public float a(Block block) {
-        float f = this.inventory.a(block);
+        return getCurrentPlayerStrVsBlock(block, 0);
+    }
+
+    public float getCurrentPlayerStrVsBlock(Block block, int meta) {
+        ItemStack stack = inventory.getItemInHand();
+        float f = (stack == null ? 1.0F : stack.getItem().getStrVsBlock(stack, block, meta));
+        //float f = this.inventory.a(block);
         float f1 = f;
         int i = EnchantmentManager.getDigSpeedEnchantmentLevel(this.inventory);
 
@@ -692,7 +715,12 @@ public abstract class EntityHuman extends EntityLiving {
             i = 1 + i >> 1;
         }
 
-        i = this.d(damagesource, i);
+        //i = this.d(damagesource, i);
+        i = ArmorProperties.ApplyArmor(this, inventory.armor, damagesource, i);
+        if (i <= 0) {
+            return;
+        }
+
         i = this.b(damagesource, i);
         this.c(damagesource.f());
         this.health -= i;
@@ -726,7 +754,9 @@ public abstract class EntityHuman extends EntityLiving {
     }
 
     public void U() {
+        ItemStack orig = inventory.getItemInHand();
         this.inventory.setItem(this.inventory.itemInHandIndex, (ItemStack) null);
+        ForgeHooks.onDestroyCurrentItem(this, orig);
     }
 
     public double V() {
@@ -741,6 +771,11 @@ public abstract class EntityHuman extends EntityLiving {
     }
 
     public void attack(Entity entity) {
+        ItemStack stack = this.inventory.getItemInHand();
+        if (stack != null && stack.getItem().onLeftClickEntity(stack, this, entity)) {
+            return;
+        }
+
         if (entity.k_()) {
             int i = this.inventory.a(entity);
 
@@ -874,6 +909,11 @@ public abstract class EntityHuman extends EntityLiving {
     }
 
     public EnumBedResult a(int i, int j, int k) {
+        EnumBedResult customSleep = ForgeHooks.sleepInBedAt(this, i, j, k);
+        if (customSleep != null) {
+            return customSleep;
+        }
+
         if (!this.world.isStatic) {
             if (this.isSleeping() || !this.isAlive()) {
                 return EnumBedResult.OTHER_PROBLEM;
@@ -1284,4 +1324,16 @@ public abstract class EntityHuman extends EntityLiving {
     protected boolean g_() {
         return !this.abilities.isFlying;
     }
+
+    /**
+     * Opens a Gui for the player. 
+     * 
+     * @param mod The mod associated with the gui
+     * @param ID The ID number for the Gui
+     * @param world The World
+     * @param X X Position
+     * @param Y Y Position
+     * @param Z Z Position
+     */
+    public void openGui(BaseMod mod, int ID, World world, int x, int y, int z){}
 }

@@ -88,6 +88,9 @@ public abstract class Entity {
     public boolean ce;
     public UUID uniqueId = UUID.randomUUID(); // CraftBukkit
 
+    /** Forge: Used to store custom data for each entity. */
+    private NBTTagCompound customEntityData;
+
     public Entity(World world) {
         this.id = entityCount++;
         this.be = 1.0D;
@@ -127,6 +130,20 @@ public abstract class Entity {
     }
 
     protected abstract void b();
+
+    /**
+     * Returns a NBTTagCompound that can be used to store custom data for this entity.
+     * It will be written, and read from disc, so it persists over world saves.
+     * @return A NBTTagCompound
+     */
+    public NBTTagCompound getEntityData()
+    {
+    	if (customEntityData == null)
+    	{
+    		customEntityData = new NBTTagCompound();
+    	}
+    	return customEntityData;
+    }
 
     public DataWatcher getDataWatcher() {
         return this.datawatcher;
@@ -954,6 +971,9 @@ public abstract class Entity {
         nbttagcompound.setShort("Fire", (short) this.fireTicks);
         nbttagcompound.setShort("Air", (short) this.getAirTicks());
         nbttagcompound.setBoolean("OnGround", this.onGround);
+        if (customEntityData != null) {
+            nbttagcompound.setCompound("ForgeData", customEntityData);
+        }
         // CraftBukkit start
         nbttagcompound.setLong("WorldUUIDLeast", this.world.getUUID().getLeastSignificantBits());
         nbttagcompound.setLong("WorldUUIDMost", this.world.getUUID().getMostSignificantBits());
@@ -995,6 +1015,10 @@ public abstract class Entity {
         this.setAirTicks(nbttagcompound.getShort("Air"));
         this.onGround = nbttagcompound.getBoolean("OnGround");
         this.setPosition(this.locX, this.locY, this.locZ);
+
+        if (nbttagcompound.hasKey("ForgeData")) {
+            customEntityData = nbttagcompound.getCompound("ForgeData");
+        }
 
         // CraftBukkit start
         long least = nbttagcompound.getLong("UUIDLeast");

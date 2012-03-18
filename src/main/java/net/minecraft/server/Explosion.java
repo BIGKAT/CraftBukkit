@@ -6,6 +6,8 @@ import java.util.List;
 import java.util.Random;
 import java.util.Set;
 
+import forge.ISpecialResistance;
+
 // CraftBukkit start
 import org.bukkit.Bukkit;
 import org.bukkit.entity.TNTPrimed;
@@ -80,7 +82,13 @@ public class Explosion {
                             int k1 = this.world.getTypeId(l, i1, j1);
 
                             if (k1 > 0) {
-                                f1 -= (Block.byId[k1].a(this.source) + 0.3F) * f2;
+                                //f1 -= (Block.byId[k1].a(this.source) + 0.3F) * f2;
+                                if (Block.byId[k1] instanceof ISpecialResistance) {
+                                    ISpecialResistance isr = (ISpecialResistance)Block.byId[k1];
+                                    f1 -= (isr.getSpecialExplosionResistance(world, l, i1, j1, posX, posY, posZ, source) + 0.3F) * f2;
+                                } else {
+                                    f1 -= (Block.byId[k1].a(this.source) + 0.3F) * f2;
+                                }
                             }
 
                             if (f1 > 0.0F && i1 < 256 && i1 >= 0) { // CraftBukkit - Don't wrap explosions

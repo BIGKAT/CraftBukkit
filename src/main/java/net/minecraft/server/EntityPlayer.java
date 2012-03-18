@@ -5,6 +5,11 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
+import forge.IGuiHandler;
+import forge.MinecraftForge;
+import forge.NetworkMod;
+import forge.packets.PacketOpenGUI;
+
 // CraftBukkit start
 import java.util.EnumSet;
 import org.bukkit.Bukkit;
@@ -479,6 +484,7 @@ public class EntityPlayer extends EntityHuman implements ICrafting {
         // CraftBukkit end
 
         this.nextContainerCounter();
+        this.H();
         this.netServerHandler.sendPacket(new Packet100OpenWindow(this.containerCounter, 1, "Crafting", 9));
         this.activeContainer = container; // CraftBukkit - Use container we passed to event
         this.activeContainer.windowId = this.containerCounter;
@@ -492,6 +498,7 @@ public class EntityPlayer extends EntityHuman implements ICrafting {
         // CraftBukkit end
 
         this.nextContainerCounter();
+        this.H();
         this.netServerHandler.sendPacket(new Packet100OpenWindow(this.containerCounter, 4, "Enchanting", 9));
         this.activeContainer = container; // CraftBukkit - Use container we passed to event
         this.activeContainer.windowId = this.containerCounter;
@@ -505,6 +512,7 @@ public class EntityPlayer extends EntityHuman implements ICrafting {
         // CraftBukkit end
 
         this.nextContainerCounter();
+        this.H();
         this.netServerHandler.sendPacket(new Packet100OpenWindow(this.containerCounter, 0, iinventory.getName(), iinventory.getSize()));
         this.activeContainer = container; // CraftBukkit - Use container passed to event
         this.activeContainer.windowId = this.containerCounter;
@@ -518,6 +526,7 @@ public class EntityPlayer extends EntityHuman implements ICrafting {
         // CraftBukkit end
 
         this.nextContainerCounter();
+        this.H();
         this.netServerHandler.sendPacket(new Packet100OpenWindow(this.containerCounter, 2, tileentityfurnace.getName(), tileentityfurnace.getSize()));
         this.activeContainer = container; // CraftBukkit - Use container passed to event
         this.activeContainer.windowId = this.containerCounter;
@@ -531,6 +540,7 @@ public class EntityPlayer extends EntityHuman implements ICrafting {
         // CraftBukkit end
 
         this.nextContainerCounter();
+        this.H();
         this.netServerHandler.sendPacket(new Packet100OpenWindow(this.containerCounter, 3, tileentitydispenser.getName(), tileentitydispenser.getSize()));
         this.activeContainer = container; // CraftBukkit - Use container passed to event
         this.activeContainer.windowId = this.containerCounter;
@@ -544,6 +554,7 @@ public class EntityPlayer extends EntityHuman implements ICrafting {
         // CraftBukkit end
 
         this.nextContainerCounter();
+        this.H();
         this.netServerHandler.sendPacket(new Packet100OpenWindow(this.containerCounter, 5, tileentitybrewingstand.getName(), tileentitybrewingstand.getSize()));
         this.activeContainer = container; // CraftBukkit - Use container passed to event
         this.activeContainer.windowId = this.containerCounter;
@@ -729,4 +740,38 @@ public class EntityPlayer extends EntityHuman implements ICrafting {
         return (CraftPlayer) super.getBukkitEntity();
     }
     // CraftBukkit end
+
+    /**
+     * Opens a Gui for the player. 
+     * 
+     * @param mod The mod associated with the gui
+     * @param ID The ID number for the Gui
+     * @param world The World
+     * @param x X Position
+     * @param y Y Position
+     * @param z Z Position
+     */
+    @Override
+    public void openGui(BaseMod mod, int ID, World world, int x, int y, int z)
+    {
+        if (!(mod instanceof NetworkMod))
+        {
+            return;
+        }
+        IGuiHandler handler = MinecraftForge.getGuiHandler(mod);
+        if (handler != null)
+        {
+            Container container = handler.getGuiContainer(ID, this, world, x, y, z);
+            if (container != null)
+            {
+                nextContainerCounter();
+                H();
+                PacketOpenGUI pkt = new PacketOpenGUI(currentWindowId, MinecraftForge.getModID((NetworkMod)mod), ID, x, y, z);
+                playerNetServerHandler.sendPacket(pkt.getPacket());
+                craftingInventory = container; 
+                craftingInventory.windowId = currentWindowId;
+                craftingInventory.onCraftGuiOpened(this);
+            }
+        }
+    }
 }

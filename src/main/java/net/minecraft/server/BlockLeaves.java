@@ -1,10 +1,13 @@
 package net.minecraft.server;
 
+import java.util.ArrayList;
 import java.util.Random;
 
 import org.bukkit.event.block.LeavesDecayEvent; // CraftBukkit
 
-public class BlockLeaves extends BlockTransparant {
+import forge.IShearable;
+
+public class BlockLeaves extends BlockTransparant implements IShearable {
 
     private int c;
     int[] a;
@@ -159,12 +162,13 @@ public class BlockLeaves extends BlockTransparant {
     }
 
     public void a(World world, EntityHuman entityhuman, int i, int j, int k, int l) {
-        if (!world.isStatic && entityhuman.T() != null && entityhuman.T().id == Item.SHEARS.id) {
+        /*if (!world.isStatic && entityhuman.T() != null && entityhuman.T().id == Item.SHEARS.id) {
             entityhuman.a(StatisticList.C[this.id], 1);
             this.a(world, i, j, k, new ItemStack(Block.LEAVES.id, 1, l & 3));
         } else {
             super.a(world, entityhuman, i, j, k, l);
-        }
+        }*/
+        super.harvestBlock(world, entityhuman, i, j, k, l);
     }
 
     protected int getDropData(int i) {
@@ -181,5 +185,19 @@ public class BlockLeaves extends BlockTransparant {
 
     public void b(World world, int i, int j, int k, Entity entity) {
         super.b(world, i, j, k, entity);
+    }
+
+    @Override
+    public boolean isShearable(ItemStack item, World world, int x, int y, int z) 
+    {
+        return true;
+    }
+
+    @Override
+    public ArrayList<ItemStack> onSheared(ItemStack item, World world, int x, int y, int z, int fortune) 
+    {
+        ArrayList<ItemStack> ret = new ArrayList<ItemStack>();
+        ret.add(new ItemStack(this, 1, world.getData(x, y, z) & 3));
+        return ret;
     }
 }

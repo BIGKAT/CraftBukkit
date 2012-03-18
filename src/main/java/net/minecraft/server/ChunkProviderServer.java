@@ -7,6 +7,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
+import forge.ForgeHooks;
+
 // CraftBukkit start
 import java.util.Random;
 import org.bukkit.craftbukkit.CraftChunk;
@@ -43,6 +45,10 @@ public class ChunkProviderServer implements IChunkProvider {
     }
 
     public void queueUnload(int i, int j) {
+        if (!ForgeHooks.canUnloadChunk(world.getChunkAt(i, j))) {
+            return;
+        }
+
         if (this.world.worldProvider.c()) {
             ChunkCoordinates chunkcoordinates = this.world.getSpawn();
             int k = i * 16 + 8 - chunkcoordinates.x;

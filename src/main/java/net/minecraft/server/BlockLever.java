@@ -24,12 +24,20 @@ public class BlockLever extends Block {
         return 12;
     }
 
-    public boolean canPlace(World world, int i, int j, int k, int l) {
-        return l == 1 && world.e(i, j - 1, k) ? true : (l == 2 && world.e(i, j, k + 1) ? true : (l == 3 && world.e(i, j, k - 1) ? true : (l == 4 && world.e(i + 1, j, k) ? true : l == 5 && world.e(i - 1, j, k))));
+    public boolean canPlace(World par1World, int par2, int par3, int par4, int par5) {
+        return (par5 == 1 && par1World.isBlockSolidOnSide(par2, par3 - 1, par4, 1)) ||
+               (par5 == 2 && par1World.isBlockSolidOnSide(par2, par3, par4 + 1, 2)) ||
+               (par5 == 3 && par1World.isBlockSolidOnSide(par2, par3, par4 - 1, 3)) || 
+               (par5 == 4 && par1World.isBlockSolidOnSide(par2 + 1, par3, par4, 4)) ||
+               (par5 == 5 && par1World.isBlockSolidOnSide(par2 - 1, par3, par4, 5));
     }
 
-    public boolean canPlace(World world, int i, int j, int k) {
-        return world.e(i - 1, j, k) ? true : (world.e(i + 1, j, k) ? true : (world.e(i, j, k - 1) ? true : (world.e(i, j, k + 1) ? true : world.e(i, j - 1, k))));
+    public boolean canPlace(World par1World, int par2, int par3, int par4) {
+        return par1World.isBlockSolidOnSide(par2 - 1, par3, par4, 5) ||
+               par1World.isBlockSolidOnSide(par2 + 1, par3, par4, 4) ||
+               par1World.isBlockSolidOnSide(par2, par3, par4 - 1, 3) ||
+               par1World.isBlockSolidOnSide(par2, par3, par4 + 1, 2) ||
+               par1World.isBlockSolidOnSide(par2, par3 - 1, par4, 1);
     }
 
     public void postPlace(World world, int i, int j, int k, int l) {
@@ -38,23 +46,23 @@ public class BlockLever extends Block {
 
         i1 &= 7;
         i1 = -1;
-        if (l == 1 && world.e(i, j - 1, k)) {
+        if (l == 1 && world.isBlockSolidOnSide(i, j - 1, k, 1)) {
             i1 = 5 + world.random.nextInt(2);
         }
 
-        if (l == 2 && world.e(i, j, k + 1)) {
+        if (l == 2 && world.isBlockSolidOnSide(i, j, k + 1, 2)) {
             i1 = 4;
         }
 
-        if (l == 3 && world.e(i, j, k - 1)) {
+        if (l == 3 && world.isBlockSolidOnSide(i, j, k - 1, 3)) {
             i1 = 3;
         }
 
-        if (l == 4 && world.e(i + 1, j, k)) {
+        if (l == 4 && world.isBlockSolidOnSide(i + 1, j, k, 4)) {
             i1 = 2;
         }
 
-        if (l == 5 && world.e(i - 1, j, k)) {
+        if (l == 5 && world.isBlockSolidOnSide(i - 1, j, k, 5)) {
             i1 = 1;
         }
 
@@ -71,27 +79,27 @@ public class BlockLever extends Block {
             int i1 = world.getData(i, j, k) & 7;
             boolean flag = false;
 
-            if (!world.e(i - 1, j, k) && i1 == 1) {
+            if (!world.isBlockSolidOnSide(i - 1, j, k, 5) && i1 == 1) {
                 flag = true;
             }
 
-            if (!world.e(i + 1, j, k) && i1 == 2) {
+            if (!world.isBlockSolidOnSide(i + 1, j, k, 4) && i1 == 2) {
                 flag = true;
             }
 
-            if (!world.e(i, j, k - 1) && i1 == 3) {
+            if (!world.isBlockSolidOnSide(i, j, k - 1, 3) && i1 == 3) {
                 flag = true;
             }
 
-            if (!world.e(i, j, k + 1) && i1 == 4) {
+            if (!world.isBlockSolidOnSide(i, j, k + 1, 2) && i1 == 4) {
                 flag = true;
             }
 
-            if (!world.e(i, j - 1, k) && i1 == 5) {
+            if (!world.isBlockSolidOnSide(i, j - 1, k, 1) && i1 == 5) {
                 flag = true;
             }
 
-            if (!world.e(i, j - 1, k) && i1 == 6) {
+            if (!world.isBlockSolidOnSide(i, j - 1, k, 1) && i1 == 6) {
                 flag = true;
             }
 
