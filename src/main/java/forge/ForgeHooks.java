@@ -111,12 +111,12 @@ public class ForgeHooks
         }
     }
 
-    public static boolean onMinecartInteract(EntityMinecart minecart, EntityPlayer player)
+    public static boolean onMinecartInteract(EntityMinecart minecart, EntityHuman entityhuman)
     {
         boolean canceled = true;
         for (IMinecartHandler handler : minecartHandlers)
         {
-            boolean tmp = handler.onMinecartInteract(minecart, player, canceled);
+            boolean tmp = handler.onMinecartInteract(minecart, entityhuman, canceled);
             canceled = canceled && tmp;
         }
         return canceled;

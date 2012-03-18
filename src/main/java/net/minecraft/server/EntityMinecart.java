@@ -19,23 +19,45 @@ import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.craftbukkit.entity.CraftHumanEntity;
 // CraftBukkit end
 
+import forge.ForgeHooks;
+import forge.IMinecartCollisionHandler;
+import forge.MinecraftForge;
+
 public class EntityMinecart extends Entity implements IInventory {
 
-    private ItemStack[] items;
-    private int e;
-    private boolean f;
+    protected ItemStack[] items;
+    protected int e;
+    protected boolean f;
     public int type;
     public double b;
     public double c;
-    private static final int[][][] matrix = new int[][][] { { { 0, 0, -1}, { 0, 0, 1}}, { { -1, 0, 0}, { 1, 0, 0}}, { { -1, -1, 0}, { 1, 0, 0}}, { { -1, 0, 0}, { 1, -1, 0}}, { { 0, 0, -1}, { 0, -1, 1}}, { { 0, -1, -1}, { 0, 0, 1}}, { { 0, 0, 1}, { 1, 0, 0}}, { { 0, 0, 1}, { -1, 0, 0}}, { { 0, 0, -1}, { -1, 0, 0}}, { { 0, 0, -1}, { 1, 0, 0}}};
-    private int h;
-    private double i;
-    private double j;
-    private double k;
-    private double l;
-    private double m;
+    protected static final int[][][] matrix = new int[][][] { { { 0, 0, -1}, { 0, 0, 1}}, { { -1, 0, 0}, { 1, 0, 0}}, { { -1, -1, 0}, { 1, 0, 0}}, { { -1, 0, 0}, { 1, -1, 0}}, { { 0, 0, -1}, { 0, -1, 1}}, { { 0, -1, -1}, { 0, 0, 1}}, { { 0, 0, 1}, { 1, 0, 0}}, { { 0, 0, 1}, { -1, 0, 0}}, { { 0, 0, -1}, { -1, 0, 0}}, { { 0, 0, -1}, { 1, 0, 0}}};
+    protected int h;
+    protected double i;
+    protected double j;
+    protected double k;
+    protected double l;
+    protected double m;
+    protected double velocityX;
+    protected double velocityY;
+    protected double velocityZ;
 
-    // CraftBukkit start
+	public static float defaultMaxSpeedRail = 0.4f;
+	public static float defaultMaxSpeedGround = 0.4f;
+	public static float defaultMaxSpeedAirLateral = 0.4f;
+	public static float defaultMaxSpeedAirVertical = -1f;
+	public static double defaultDragAir = 0.94999998807907104D;
+	protected boolean canUseRail = true;
+	protected boolean canBePushed = true;
+	private static IMinecartCollisionHandler collisionHandler = null;
+
+	/* Instance versions of the above physics properties */
+	protected float maxSpeedRail;
+	protected float maxSpeedGround;
+	protected float maxSpeedAirLateral;
+	protected float maxSpeedAirVertical;
+	protected double dragAir;
+	// CraftBukkit start
     public boolean slowWhenEmpty = true;
     private double derailedX = 0.5;
     private double derailedY = 0.5;
@@ -82,6 +104,16 @@ public class EntityMinecart extends Entity implements IInventory {
         this.bf = true;
         this.b(0.98F, 0.7F);
         this.height = this.length / 2.0F;
+        maxSpeedRail = defaultMaxSpeedRail;
+        maxSpeedGround = defaultMaxSpeedGround;
+        maxSpeedAirLateral = defaultMaxSpeedAirLateral;
+        maxSpeedAirVertical = defaultMaxSpeedAirVertical;
+        dragAir = defaultDragAir;
+    }
+    public EntityMinecart(World world, int type)
+    {
+    	this(world);
+    	this.type = type;
     }
 
     protected boolean g_() {
@@ -96,15 +128,23 @@ public class EntityMinecart extends Entity implements IInventory {
     }
 
     public AxisAlignedBB b_(Entity entity) {
+    	if (getCollisionHandler() != null)
+    	{
+    		return getCollisionHandler().getCollisionBox(this, entity);
+    	}
         return entity.boundingBox;
     }
 
     public AxisAlignedBB h() {
+    	if (getCollisionHandler() != null)
+    	{
+    		return getCollisionHandler().getBoundingBox(this);
+    	}
         return null;
     }
 
     public boolean e_() {
-        return true;
+        return canBePushed;
     }
 
     public EntityMinecart(World world, double d0, double d1, double d2, int i) {
@@ -161,44 +201,8 @@ public class EntityMinecart extends Entity implements IInventory {
                 // CraftBukkit end
 
                 this.die();
-                this.a(Item.MINECART.id, 1, 0.0F);
-                if (this.type == 1) {
-                    EntityMinecart entityminecart = this;
-
-                    for (int j = 0; j < entityminecart.getSize(); ++j) {
-                        ItemStack itemstack = entityminecart.getItem(j);
-
-                        if (itemstack != null) {
-                            float f = this.random.nextFloat() * 0.8F + 0.1F;
-                            float f1 = this.random.nextFloat() * 0.8F + 0.1F;
-                            float f2 = this.random.nextFloat() * 0.8F + 0.1F;
-
-                            while (itemstack.count > 0) {
-                                int k = this.random.nextInt(21) + 10;
-
-                                if (k > itemstack.count) {
-                                    k = itemstack.count;
-                                }
-
-                                itemstack.count -= k;
-                                // CraftBukkit - include enchantments in the new itemstack
-                                EntityItem entityitem = new EntityItem(this.world, this.locX + (double) f, this.locY + (double) f1, this.locZ + (double) f2, new ItemStack(itemstack.id, k, itemstack.getData(), itemstack.getEnchantments()));
-                                float f3 = 0.05F;
-
-                                entityitem.motX = (double) ((float) this.random.nextGaussian() * f3);
-                                entityitem.motY = (double) ((float) this.random.nextGaussian() * f3 + 0.2F);
-                                entityitem.motZ = (double) ((float) this.random.nextGaussian() * f3);
-                                this.world.addEntity(entityitem);
-                            }
-                        }
-                    }
-
-                    this.a(Block.CHEST.id, 1, 0.0F);
-                } else if (this.type == 2) {
-                    this.a(Block.FURNACE.id, 1, 0.0F);
-                }
+                dropCartAsItem();
             }
-
             return true;
         } else {
             return true;
@@ -258,7 +262,7 @@ public class EntityMinecart extends Entity implements IInventory {
             this.setDamage(this.getDamage() - 1);
         }
 
-        if (this.k() && this.random.nextInt(4) == 0) {
+        if (this.k() && this.random.nextInt(4) == 0 && type == 2 && getClass() == EntityMinecart.class) {
             this.world.a("largesmoke", this.locX, this.locY + 0.8D, this.locZ, 0.0D, 0.0D, 0.0D);
         }
 
@@ -305,21 +309,17 @@ public class EntityMinecart extends Entity implements IInventory {
             double d5 = 0.0078125D;
             int l = this.world.getTypeId(i, j, k);
 
-            if (BlockMinecartTrack.d(l)) {
+            if (canUseRail() && BlockMinecartTrack.d(l)) {
                 Vec3D vec3d = this.h(this.locX, this.locY, this.locZ);
-                int i1 = this.world.getData(i, j, k);
+                int i1 = ((BlockMinecartTrack)Block.byId[l]).getBasicRailMetadata(world,this,i, j, k);
 
                 this.locY = (double) j;
                 boolean flag = false;
                 boolean flag1 = false;
 
                 if (l == Block.GOLDEN_RAIL.id) {
-                    flag = (i1 & 8) != 0;
+                    flag = (world.getData(i, j, k) & 8) != 0;
                     flag1 = !flag;
-                }
-
-                if (((BlockMinecartTrack) Block.byId[l]).h()) {
-                    i1 &= 7;
                 }
 
                 if (i1 >= 2 && i1 <= 5) {
@@ -359,7 +359,7 @@ public class EntityMinecart extends Entity implements IInventory {
                 this.motZ = d10 * d7 / d8;
                 double d11;
 
-                if (flag1) {
+                if (flag1 && shouldDoRailFunctions()) {
                     d11 = Math.sqrt(this.motX * this.motX + this.motZ * this.motZ);
                     if (d11 < 0.03D) {
                         this.motX *= 0.0D;
@@ -400,66 +400,14 @@ public class EntityMinecart extends Entity implements IInventory {
                 this.locX = d12 + d6 * d11;
                 this.locZ = d13 + d7 * d11;
                 this.setPosition(this.locX, this.locY + (double) this.height, this.locZ);
-                d16 = this.motX;
-                d18 = this.motZ;
-                if (this.passenger != null) {
-                    d16 *= 0.75D;
-                    d18 *= 0.75D;
-                }
-
-                if (d16 < -d4) {
-                    d16 = -d4;
-                }
-
-                if (d16 > d4) {
-                    d16 = d4;
-                }
-
-                if (d18 < -d4) {
-                    d18 = -d4;
-                }
-
-                if (d18 > d4) {
-                    d18 = d4;
-                }
-
-                this.move(d16, 0.0D, d18);
+                moveMinecartOnRail(i, j, k);
                 if (aint[0][1] != 0 && MathHelper.floor(this.locX) - i == aint[0][0] && MathHelper.floor(this.locZ) - k == aint[0][2]) {
                     this.setPosition(this.locX, this.locY + (double) aint[0][1], this.locZ);
                 } else if (aint[1][1] != 0 && MathHelper.floor(this.locX) - i == aint[1][0] && MathHelper.floor(this.locZ) - k == aint[1][2]) {
                     this.setPosition(this.locX, this.locY + (double) aint[1][1], this.locZ);
                 }
-
-                // CraftBukkit
-                if (this.passenger != null || !this.slowWhenEmpty) {
-                    this.motX *= 0.996999979019165D;
-                    this.motY *= 0.0D;
-                    this.motZ *= 0.996999979019165D;
-                } else {
-                    if (this.type == 2) {
-                        d17 = (double) MathHelper.sqrt(this.b * this.b + this.c * this.c);
-                        if (d17 > 0.01D) {
-                            this.b /= d17;
-                            this.c /= d17;
-                            double d19 = 0.04D;
-
-                            this.motX *= 0.800000011920929D;
-                            this.motY *= 0.0D;
-                            this.motZ *= 0.800000011920929D;
-                            this.motX += this.b * d19;
-                            this.motZ += this.c * d19;
-                        } else {
-                            this.motX *= 0.8999999761581421D;
-                            this.motY *= 0.0D;
-                            this.motZ *= 0.8999999761581421D;
-                        }
-                    }
-
-                    this.motX *= 0.9599999785423279D;
-                    this.motY *= 0.0D;
-                    this.motZ *= 0.9599999785423279D;
-                }
-
+                applyDragAndPushForces();
+                
                 Vec3D vec3d1 = this.h(this.locX, this.locY, this.locZ);
 
                 if (vec3d1 != null && vec3d != null) {
@@ -485,22 +433,12 @@ public class EntityMinecart extends Entity implements IInventory {
 
                 double d21;
 
-                if (this.type == 2) {
-                    d21 = (double) MathHelper.sqrt(this.b * this.b + this.c * this.c);
-                    if (d21 > 0.01D && this.motX * this.motX + this.motZ * this.motZ > 0.0010D) {
-                        this.b /= d21;
-                        this.c /= d21;
-                        if (this.b * this.motX + this.c * this.motZ < 0.0D) {
-                            this.b = 0.0D;
-                            this.c = 0.0D;
-                        } else {
-                            this.b = this.motX;
-                            this.c = this.motZ;
-                        }
-                    }
+                updatePushForces();
+                if (shouldDoRailFunctions()) {
+                	((BlockMinecartTrack)Block.byId[l]).onMinecartPass(world, this, i, j, k);
                 }
 
-                if (flag) {
+                if (flag && shouldDoRailFunctions()) {
                     d21 = Math.sqrt(this.motX * this.motX + this.motZ * this.motZ);
                     if (d21 > 0.01D) {
                         double d22 = 0.06D;
@@ -522,38 +460,7 @@ public class EntityMinecart extends Entity implements IInventory {
                     }
                 }
             } else {
-                if (this.motX < -d4) {
-                    this.motX = -d4;
-                }
-
-                if (this.motX > d4) {
-                    this.motX = d4;
-                }
-
-                if (this.motZ < -d4) {
-                    this.motZ = -d4;
-                }
-
-                if (this.motZ > d4) {
-                    this.motZ = d4;
-                }
-
-                if (this.onGround) {
-                    // CraftBukkit start
-                    this.motX *= this.derailedX;
-                    this.motY *= this.derailedY;
-                    this.motZ *= this.derailedZ;
-                    // CraftBukkit end
-                }
-
-                this.move(this.motX, this.motY, this.motZ);
-                if (!this.onGround) {
-                    // CraftBukkit start
-                    this.motX *= this.flyingX;
-                    this.motY *= this.flyingY;
-                    this.motZ *= this.flyingZ;
-                    // CraftBukkit end
-                }
+            	moveMinecartOffRail(i, j, k);
             }
 
             this.pitch = 0.0F;
@@ -597,7 +504,16 @@ public class EntityMinecart extends Entity implements IInventory {
             }
             // CraftBukkit end
 
-            List list = this.world.getEntities(this, this.boundingBox.grow(0.20000000298023224D, 0.0D, 0.20000000298023224D));
+            AxisAlignedBB box = null;
+            if (getCollisionHandler() != null)
+            {
+            	box = getCollisionHandler().getMinecartCollisionBox(this);
+            }
+            else
+            {
+            	box = boundingBox.grow(0.2D, 0.0D, 0.2D);
+            }
+            List list = this.world.getEntities(this, box);
 
             if (list != null && list.size() > 0) {
                 for (int l1 = 0; l1 < list.size(); ++l1) {
@@ -616,17 +532,9 @@ public class EntityMinecart extends Entity implements IInventory {
 
                 this.passenger = null;
             }
-
-            if (this.e > 0) {
-                --this.e;
-            }
-
-            if (this.e <= 0) {
-                this.b = this.c = 0.0D;
-            }
-
-            this.a(this.e > 0);
-        }
+            updateFuel();
+			ForgeHooks.onMinecartUpdate(this, i, j, k);
+		}
     }
 
     public Vec3D h(double d0, double d1, double d2) {
@@ -641,12 +549,9 @@ public class EntityMinecart extends Entity implements IInventory {
         int l = this.world.getTypeId(i, j, k);
 
         if (BlockMinecartTrack.d(l)) {
-            int i1 = this.world.getData(i, j, k);
+            int i1 = ((BlockMinecartTrack)Block.byId[l]).getBasicRailMetadata(world, this, i, j, k);
 
             d1 = (double) j;
-            if (((BlockMinecartTrack) Block.byId[l]).h()) {
-                i1 &= 7;
-            }
 
             if (i1 >= 2 && i1 <= 5) {
                 d1 = (double) (j + 1);
@@ -697,11 +602,11 @@ public class EntityMinecart extends Entity implements IInventory {
 
     protected void b(NBTTagCompound nbttagcompound) {
         nbttagcompound.setInt("Type", this.type);
-        if (this.type == 2) {
+        if (this.isPoweredCart()) {
             nbttagcompound.setDouble("PushX", this.b);
             nbttagcompound.setDouble("PushZ", this.c);
-            nbttagcompound.setShort("Fuel", (short) this.e);
-        } else if (this.type == 1) {
+            nbttagcompound.setInt("Fuel", this.e);
+        } else if (getSize()>0) {
             NBTTagList nbttaglist = new NBTTagList();
 
             for (int i = 0; i < this.items.length; ++i) {
@@ -720,11 +625,11 @@ public class EntityMinecart extends Entity implements IInventory {
 
     protected void a(NBTTagCompound nbttagcompound) {
         this.type = nbttagcompound.getInt("Type");
-        if (this.type == 2) {
+        if (isPoweredCart()) {
             this.b = nbttagcompound.getDouble("PushX");
             this.c = nbttagcompound.getDouble("PushZ");
-            this.e = nbttagcompound.getShort("Fuel");
-        } else if (this.type == 1) {
+            this.e = nbttagcompound.getInt("Fuel");
+        } else if (getSize()>0) {
             NBTTagList nbttaglist = nbttagcompound.getList("Items");
 
             this.items = new ItemStack[this.getSize()];
@@ -741,6 +646,12 @@ public class EntityMinecart extends Entity implements IInventory {
     }
 
     public void collide(Entity entity) {
+    	ForgeHooks.onMinecartEntityCollision(this, entity);
+    	if (getCollisionHandler() != null)
+    	{
+    		getCollisionHandler().onEntityCollision(this, entity);
+    		return;
+    	}
         if (!this.world.isStatic) {
             if (entity != this.passenger) {
                 // CraftBukkit start
@@ -755,7 +666,7 @@ public class EntityMinecart extends Entity implements IInventory {
                 }
                 // CraftBukkit end
 
-                if (entity instanceof EntityLiving && !(entity instanceof EntityHuman) && !(entity instanceof EntityIronGolem) && this.type == 0 && this.motX * this.motX + this.motZ * this.motZ > 0.01D && this.passenger == null && entity.vehicle == null) {
+                if (entity instanceof EntityLiving && !(entity instanceof EntityHuman) && !(entity instanceof EntityIronGolem) && canBeRidden() && this.motX * this.motX + this.motZ * this.motZ > 0.01D && this.passenger == null && entity.vehicle == null) {
                     entity.mount(this);
                 }
 
@@ -796,13 +707,13 @@ public class EntityMinecart extends Entity implements IInventory {
                         double d7 = entity.motX + this.motX;
                         double d8 = entity.motZ + this.motZ;
 
-                        if (((EntityMinecart) entity).type == 2 && this.type != 2) {
+                        if (((EntityMinecart) entity).isPoweredCart() && !isPoweredCart()) {
                             this.motX *= 0.20000000298023224D;
                             this.motZ *= 0.20000000298023224D;
                             this.b_(entity.motX - d0, 0.0D, entity.motZ - d1);
                             entity.motX *= 0.949999988079071D;
                             entity.motZ *= 0.949999988079071D;
-                        } else if (((EntityMinecart) entity).type != 2 && this.type == 2) {
+                        } else if (!((EntityMinecart) entity).isPoweredCart() && isPoweredCart()) {
                             entity.motX *= 0.20000000298023224D;
                             entity.motZ *= 0.20000000298023224D;
                             entity.b_(this.motX + d0, 0.0D, this.motZ + d1);
@@ -828,7 +739,7 @@ public class EntityMinecart extends Entity implements IInventory {
     }
 
     public int getSize() {
-        return 27;
+        return type==1 && getClass() == EntityMinecart.class ? 27 : 0;
     }
 
     public ItemStack getItem(int i) {
@@ -885,7 +796,11 @@ public class EntityMinecart extends Entity implements IInventory {
     public void update() {}
 
     public boolean b(EntityHuman entityhuman) {
-        if (this.type == 0) {
+    	if (!ForgeHooks.onMinecartInteract(this, entityhuman))
+    	{
+    		return true;
+    	}
+    	if (canBeRidden()) {
             if (this.passenger != null && this.passenger instanceof EntityHuman && this.passenger != entityhuman) {
                 return true;
             }
@@ -893,11 +808,11 @@ public class EntityMinecart extends Entity implements IInventory {
             if (!this.world.isStatic) {
                 entityhuman.mount(this);
             }
-        } else if (this.type == 1) {
+        } else if (getSize()>0) {
             if (!this.world.isStatic) {
                 entityhuman.openContainer(this);
             }
-        } else if (this.type == 2) {
+        } else if (this.type == 2 && getClass() ==  EntityMinecart.class) {
             ItemStack itemstack = entityhuman.inventory.getItemInHand();
 
             if (itemstack != null && itemstack.id == Item.COAL.id) {
@@ -919,7 +834,7 @@ public class EntityMinecart extends Entity implements IInventory {
         return this.dead ? false : entityhuman.j(this) <= 64.0D;
     }
 
-    protected boolean k() {
+    public boolean k() {
         return (this.datawatcher.getByte(16) & 1) != 0;
     }
 
@@ -980,4 +895,412 @@ public class EntityMinecart extends Entity implements IInventory {
         derailedZ = derailed.getZ();
     }
     // CraftBukkit end
+    
+    /**
+     * Drops the cart as a item. The exact item dropped is defined by getItemDropped().
+     */
+    public void dropCartAsItem()
+    {
+        for(ItemStack item : getItemsDropped())
+        {
+            a(item, 0);
+        }
+    }
+    
+    /**
+     * Override this to define which items your cart drops when broken.
+     * This does not include items contained in the inventory,
+     * that is handled elsewhere.
+     * @return A list of items dropped.
+     */
+    public List<ItemStack> getItemsDropped()
+    {
+        List<ItemStack> items = new ArrayList<ItemStack>();
+        items.add(new ItemStack(Item.MINECART));
+        
+        switch(type)
+        {
+            case 1:
+                items.add(new ItemStack(Block.CHEST));
+                break;
+            case 2:
+                items.add(new ItemStack(Block.FURNACE));
+                break;
+        }
+        return items;
+    }
+    
+    /**
+     * This function returns an ItemStack that represents this cart.
+     * This should be an ItemStack that can be used by the player to place the cart.
+     * This is the item that was registered with the cart via the registerMinecart function,
+     * but is not necessary the item the cart drops when destroyed.
+     * @return An ItemStack that can be used to place the cart.
+     */
+    public ItemStack getCartItem()
+    {
+        return MinecraftForge.getItemForCart(this);
+    }
+    
+    /**
+     * Returns true if this cart is self propelled.
+     * @return True if powered.
+     */
+    public boolean isPoweredCart()
+    {
+        return type == 2 && getClass() == EntityMinecart.class;
+    }
+
+    /** 
+     * Returns true if this cart is a storage cart
+     * Some carts may have inventories but not be storage carts
+     * and some carts without inventories may be storage carts.
+     * @return True if this cart should be classified as a storage cart.
+     */
+    public boolean isStorageCart()
+    {
+        return type == 1 && getClass() == EntityMinecart.class;
+    }
+
+    /**
+     * Returns true if this cart can be ridden by an Entity.
+     * @return True if this cart can be ridden.
+     */
+    public boolean canBeRidden()
+    {
+        if(type == 0 && getClass() == EntityMinecart.class)
+        {
+            return true;
+        }
+        return false;
+    }
+    
+    /** 
+     * Returns true if this cart can currently use rails.
+     * This function is mainly used to gracefully detach a minecart from a rail.
+     * @return True if the minecart can use rails.
+     */
+    public boolean canUseRail()
+    {
+        return canUseRail;
+    }
+
+    /**
+     * Set whether the minecart can use rails.
+     * This function is mainly used to gracefully detach a minecart from a rail.
+     * @param use Whether the minecart can currently use rails.
+     */
+    public void setCanUseRail(boolean use)
+    {
+        canUseRail = use;
+    }    
+        
+    /** 
+     * Return false if this cart should not call IRail.onMinecartPass() and should ignore Powered Rails.
+     * @return True if this cart should call IRail.onMinecartPass().
+     */
+    public boolean shouldDoRailFunctions()
+    {
+        return true;
+    }
+    
+    /**
+     * Simply returns the minecartType variable.
+     * @return minecartType
+     */
+    public int getMinecartType()
+    {
+        return type;
+    }
+    
+    /**
+     * Gets the current global Minecart Collision handler if none
+     * is registered, returns null
+     * @return The collision handler or null
+     */
+    public static IMinecartCollisionHandler getCollisionHandler()
+    {
+        return collisionHandler;
+    }
+    
+    /**
+     * Sets the global Minecart Collision handler, overwrites any
+     * that is currently set.
+     * @param handler The new handler
+     */
+    public static void setCollisionHandler(IMinecartCollisionHandler handler)
+    {
+        collisionHandler = handler;
+    }
+    
+    /**
+     * Carts should return their drag factor here
+     * @return The drag rate.
+     */
+    protected double getDrag()
+    {
+        return passenger != null ? 1D : 0.96D;
+    }   
+    
+    /**
+     * Moved to allow overrides.
+     * This code applies drag and updates push forces.
+     */
+    protected void applyDragAndPushForces()
+    {
+        if(isPoweredCart())
+        {
+            double d27 = MathHelper.sqrt(b * b + c * c);
+            if(d27 > 0.01D)
+            {
+                b /= d27;
+                c /= d27;
+                double d29 = 0.04;
+                motX *= 0.8D;
+                motY *= 0.0D;
+                motZ *= 0.8D;
+                motX += b * d29;
+                motZ += c * d29;
+            } else
+            {
+                motX *= 0.9D;
+                motY *= 0.0D;
+                motZ *= 0.9D;
+            }
+        }
+        motX *= getDrag();
+        motY *= 0.0D;
+        motZ *= getDrag();
+/*        // CraftBukkit
+        if (this.passenger != null || !this.slowWhenEmpty) {
+            this.motX *= 0.996999979019165D;
+            this.motY *= 0.0D;
+            this.motZ *= 0.996999979019165D;
+        } else {
+            if (this.type == 2) {
+                d17 = (double) MathHelper.sqrt(this.b * this.b + this.c * this.c);
+                if (d17 > 0.01D) {
+                    this.b /= d17;
+                    this.c /= d17;
+                    double d19 = 0.04D;
+
+                    this.motX *= 0.800000011920929D;
+                    this.motY *= 0.0D;
+                    this.motZ *= 0.800000011920929D;
+                    this.motX += this.b * d19;
+                    this.motZ += this.c * d19;
+                } else {
+                    this.motX *= 0.8999999761581421D;
+                    this.motY *= 0.0D;
+                    this.motZ *= 0.8999999761581421D;
+                }
+            }
+
+            this.motX *= 0.9599999785423279D;
+            this.motY *= 0.0D;
+            this.motZ *= 0.9599999785423279D;
+        }*/
+    }
+    
+    /**
+     * Moved to allow overrides.
+     * This code updates push forces.
+     */
+    protected void updatePushForces()
+    {
+        if(isPoweredCart())
+        {
+            double push = MathHelper.sqrt(b * b + c * c);
+            if(push > 0.01D && motX * motX + motZ * motZ > 0.001D)
+            {
+                b /= push;
+                c /= push;
+                if(b * b + c * c < 0.0D)
+                {
+                    b = 0.0D;
+                    c = 0.0D;
+                } else
+                {
+                    b = motX;
+                    c = motZ;
+                }
+            }
+        }
+    }
+    
+    /**
+     * Moved to allow overrides.
+     * This code handles minecart movement and speed capping when on a rail.
+     */
+    protected void moveMinecartOnRail(int i, int j, int k)
+    {
+        int id = world.getTypeId(i, j, k);
+        if (!BlockMinecartTrack.d(id))
+        {
+            return;
+        }
+        float railMaxSpeed = ((BlockMinecartTrack)Block.byId[id]).getRailMaxSpeed(world, this, i, j, k);
+        
+        double maxSpeed = Math.min(railMaxSpeed, getMaxSpeedRail());
+        double mX = motX;
+        double mZ = motZ;
+        if(passenger != null)
+        {
+            mX *= 0.75D;
+            mZ *= 0.75D;
+        }
+        if(mX < -maxSpeed) mX = -maxSpeed;
+        if(mX >  maxSpeed) mX =  maxSpeed;
+        if(mZ < -maxSpeed) mZ = -maxSpeed;
+        if(mZ >  maxSpeed) mZ =  maxSpeed;
+        move(mX, 0.0D, mZ);
+    }    
+    
+    /**
+     * Moved to allow overrides.
+     * This code handles minecart movement and speed capping when not on a rail.
+     */
+    protected void moveMinecartOffRail(int i, int j, int k)
+    {
+        double d2 = getMaxSpeedGround();
+        if(!onGround)
+        {
+            d2 = getMaxSpeedAirLateral();
+        }
+        if(motX < -d2) motX = -d2;
+        if(motX >  d2) motX =  d2;
+        if(motZ < -d2) motZ = -d2;
+        if(motZ >  d2) motZ =  d2;
+        double moveY = motY;
+        if(getMaxSpeedAirVertical() > 0 && motY > getMaxSpeedAirVertical())
+        {
+            moveY = getMaxSpeedAirVertical();
+            if(Math.abs(motX) < 0.3f && Math.abs(motZ) < 0.3f)
+            {
+                moveY = 0.15f;
+                motY = moveY;
+            }
+        }
+        if(onGround)
+        {
+            motX *= 0.5D;
+            motY *= 0.5D;
+            motZ *= 0.5D;
+        }
+        move(motX, moveY, motZ);
+        if(!onGround)
+        {
+            motX *= getDragAir();
+            motY *= getDragAir();
+            motZ *= getDragAir();
+        }
+        /*
+         if (this.motX < -d4) {
+                    this.motX = -d4;
+                }
+
+                if (this.motX > d4) {
+                    this.motX = d4;
+                }
+
+                if (this.motZ < -d4) {
+                    this.motZ = -d4;
+                }
+
+                if (this.motZ > d4) {
+                    this.motZ = d4;
+                }
+
+                if (this.onGround) {
+                    // CraftBukkit start
+                    this.motX *= this.derailedX;
+                    this.motY *= this.derailedY;
+                    this.motZ *= this.derailedZ;
+                    // CraftBukkit end
+                }
+
+                this.move(this.motX, this.motY, this.motZ);
+                if (!this.onGround) {
+                    // CraftBukkit start
+                    this.motX *= this.flyingX;
+                    this.motY *= this.flyingY;
+                    this.motZ *= this.flyingZ;
+                    // CraftBukkit end
+                }
+
+         */
+    }
+    
+    /**
+     * Moved to allow overrides.
+     * This code applies fuel consumption.
+     */   
+    protected void updateFuel()
+    {
+        if (e > 0) e--;
+        if (e <= 0) b = c = 0.0D;
+        a(e > 0);
+    }
+    
+    /**
+     * Getters/setters for physics variables
+     */
+    
+    /**
+     * Returns the carts max speed.
+     * Carts going faster than 1.1 cause issues with chunk loading.
+     * Carts cant traverse slopes or corners at greater than 0.5 - 0.6.
+     * This value is compared with the rails max speed to determine
+     * the carts current max speed. A normal rails max speed is 0.4.
+     * @return Carts max speed.
+     */
+    public float getMaxSpeedRail()
+    {
+        return maxSpeedRail;
+    }
+
+    public void setMaxSpeedRail(float value)
+    {
+        maxSpeedRail = value;
+    }
+    
+    public float getMaxSpeedGround()
+    {
+        return maxSpeedGround;
+    }
+    
+    public void setMaxSpeedGround(float value)
+    {
+        maxSpeedGround = value;
+    }
+    
+    public float getMaxSpeedAirLateral()
+    {
+        return maxSpeedAirLateral;
+    }
+    
+    public void setMaxSpeedAirLateral(float value)
+    {
+        maxSpeedAirLateral = value;
+    }
+    
+    public float getMaxSpeedAirVertical()
+    {
+        return maxSpeedAirVertical;
+    }
+    
+    public void setMaxSpeedAirVertical(float value)
+    {
+        maxSpeedAirVertical = value;
+    }
+    
+    public double getDragAir()
+    {
+        return dragAir;
+    }
+    
+    public void setDragAir(double value)
+    {
+        dragAir = value;
+    }
 }
