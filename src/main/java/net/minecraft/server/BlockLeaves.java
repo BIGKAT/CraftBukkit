@@ -162,13 +162,8 @@ public class BlockLeaves extends BlockTransparant implements IShearable {
     }
 
     public void a(World world, EntityHuman entityhuman, int i, int j, int k, int l) {
-        /*if (!world.isStatic && entityhuman.T() != null && entityhuman.T().id == Item.SHEARS.id) {
-            entityhuman.a(StatisticList.C[this.id], 1);
-            this.a(world, i, j, k, new ItemStack(Block.LEAVES.id, 1, l & 3));
-        } else {
-            super.a(world, entityhuman, i, j, k, l);
-        }*/
-        super.harvestBlock(world, entityhuman, i, j, k, l);
+    	//FORGE
+        super.a(world, entityhuman, i, j, k, l);
     }
 
     protected int getDropData(int i) {
