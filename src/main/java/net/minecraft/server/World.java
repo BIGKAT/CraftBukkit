@@ -2934,6 +2934,7 @@ public class World implements IBlockAccess {
         return this.dataManager.getUUID();
     }
     // CraftBukkit end
+    // FORGE
 	/**
 	 * Determine if the given block is considered solid on the specified side.
 	 * Used by placement logic.
