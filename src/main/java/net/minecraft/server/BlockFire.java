@@ -13,6 +13,7 @@ import org.bukkit.material.MaterialData;
 
 public class BlockFire extends Block {
 
+	//FORGE
     private int[] a = Block.blockFireSpreadSpeed;
     private int[] b = Block.blockFlammability;
 
@@ -35,8 +36,7 @@ public class BlockFire extends Block {
     }
 
     private void a(int i, int j, int k) {
-        //this.a[i] = j;
-        //this.b[i] = k;
+    	//FORGE
         Block.setBurnProperties(i, j, k);
     }
 
@@ -65,8 +65,8 @@ public class BlockFire extends Block {
     }
 
     public void a(World world, int i, int j, int k, Random random) {
-        //boolean flag = world.getTypeId(i, j - 1, k) == Block.NETHERRACK.id;
-        Block base = Block.byId[world.getTypeId(par2, par3 - 1, par4)];
+    	//FORGE
+        Block base = Block.byId[world.getTypeId(i, j - 1, k)];
         boolean flag = (base != null && base.isFireSource(world, i, j - 1, k, world.getData(i, j - 1, k), 0));
 
         if (world.worldProvider instanceof WorldProviderTheEnd && world.getTypeId(i, j - 1, k) == Block.BEDROCK.id) {
@@ -176,7 +176,7 @@ public class BlockFire extends Block {
 
     @Deprecated
     private void a(World world, int i, int j, int k, int l, Random random, int i1) {
-        tryToCatchBlockOnFire(par1World, par2, par3, par4, par5, par6Random, par7, 0);
+        tryToCatchBlockOnFire(world, i, j, k, l, random, i1, 0);
     }
     
     private void tryToCatchBlockOnFire(World world, int i, int j, int k, int l, Random random, int i1, int face)
