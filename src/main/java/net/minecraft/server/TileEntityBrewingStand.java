@@ -14,7 +14,7 @@ import org.bukkit.event.inventory.BrewEvent;
 import org.bukkit.inventory.BrewerInventory;
 // CraftBukkit end
 
-public class TileEntityBrewingStand extends TileEntity implements IInventory, ISidedInventory {
+public class TileEntityBrewingStand extends TileEntity implements ISidedInventory {
 
     public ItemStack[] items = new ItemStack[4]; // CraftBukkit private -> public
     public int brewTime; // CraftBukkit private -> public
