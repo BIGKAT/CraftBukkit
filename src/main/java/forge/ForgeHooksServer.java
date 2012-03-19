@@ -2,8 +2,8 @@ package forge;
 
 import java.util.Map;
 
-import net.minecraft.src.*;
-import net.minecraft.src.forge.packets.PacketModList;
+import net.minecraft.server.*;
+import forge.packets.PacketModList;
 
 public class ForgeHooksServer
 {
@@ -20,7 +20,7 @@ public class ForgeHooksServer
         EntityTrackerInfo info = MinecraftForge.getEntityTrackerInfo(entity, true);
         if (info != null)
         {
-            tracker.trackEntity(entity, info.Range, info.UpdateFrequency, info.SendVelocityInfo);
+            tracker.addEntity(entity, info.Range, info.UpdateFrequency, info.SendVelocityInfo);
             return true;
         }
         return false;
