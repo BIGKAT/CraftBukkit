@@ -38,6 +38,10 @@
       <id>repobo-snap</id>
       <url>http://repo.bukkit.org/content/groups/public</url>
     </repository>
+    <repository>
+      <id>mlmprepo</id>
+      <url>file://${project.basedir}/lib</url>
+    </repository>
   </repositories>
 
   <pluginRepositories>
@@ -66,8 +70,8 @@
       <groupId>net.minecraftportcentral</groupId>
       <artifactId>modloadermp</artifactId>
       <version>1.2.3v3</version>
-      <scope>system</scope>
-      <systemPath>${project.basedir}/lib/bukkit-mlmp-1.2.3v3.zip</systemPath>
+      <type>jar</type>
+      <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>net.sf.jopt-simple</groupId>
