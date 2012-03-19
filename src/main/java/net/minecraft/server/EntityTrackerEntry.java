@@ -6,6 +6,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
+import forge.ForgeHooks;
+
 public class EntityTrackerEntry {
 
     public Entity tracker;
@@ -276,6 +278,10 @@ public class EntityTrackerEntry {
             // CraftBukkit - add some information
             System.out.println("Fetching addPacket for removed entity: " + this.tracker.getBukkitEntity().toString());
         }
+		Packet pkt = ForgeHooks.getEntitySpawnPacket(this.tracker);
+		if (pkt != null) {
+			return pkt;
+		}
 
         if (this.tracker instanceof EntityItem) {
             EntityItem entityitem = (EntityItem) this.tracker;
