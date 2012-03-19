@@ -67,11 +67,11 @@ public class ForgeHooks
     }
     static LinkedList<IBonemealHandler> bonemealHandlers = new LinkedList<IBonemealHandler>();
 
-    public static boolean onUseHoe(ItemStack hoe, EntityPlayer player, World world, int x, int y, int z)
+    public static boolean onUseHoe(ItemStack hoe, EntityHuman entityhuman, World world, int x, int y, int z)
     {
         for (IHoeHandler handler : hoeHandlers)
         {
-            if (handler.onUseHoe(hoe, player, world, x, y, z))
+            if (handler.onUseHoe(hoe, entityhuman, world, x, y, z))
             {
                 return true;
             }

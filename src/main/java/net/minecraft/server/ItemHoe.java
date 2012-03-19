@@ -4,6 +4,8 @@ package net.minecraft.server;
 import org.bukkit.craftbukkit.block.CraftBlockState;
 import org.bukkit.craftbukkit.event.CraftEventFactory;
 import org.bukkit.event.block.BlockPlaceEvent;
+
+import forge.ForgeHooks;
 // CraftBukkit end
 
 public class ItemHoe extends Item {
@@ -18,6 +20,11 @@ public class ItemHoe extends Item {
         if (!entityhuman.d(i, j, k)) {
             return false;
         } else {
+            if(ForgeHooks.onUseHoe(itemstack, entityhuman, world, i, j, k)) 
+            {
+                itemstack.damage(1, entityhuman);
+                return true;
+            }
             int i1 = world.getTypeId(i, j, k);
             int j1 = world.getTypeId(i, j + 1, k);
 
