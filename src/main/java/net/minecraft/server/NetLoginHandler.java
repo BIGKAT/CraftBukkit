@@ -1,5 +1,6 @@
 package net.minecraft.server;
 
+import java.io.UnsupportedEncodingException;
 import java.net.Socket;
 import java.util.Iterator;
 import java.util.Random;
@@ -10,6 +11,11 @@ import org.bukkit.ChatColor;
 import org.bukkit.craftbukkit.event.CraftEventFactory;
 import org.bukkit.event.server.ServerListPingEvent;
 // CraftBukkit end
+
+import forge.ForgeHooks;
+import forge.ForgeHooksServer;
+import forge.MessageManager;
+import forge.packets.ForgePacket;
 
 public class NetLoginHandler extends NetHandler {
 
@@ -28,6 +34,7 @@ public class NetLoginHandler extends NetHandler {
         this.server = minecraftserver;
         this.networkManager = new NetworkManager(socket, s, this);
         this.networkManager.f = 0;
+        ForgeHooks.onConnect(networkManager);
     }
 
     // CraftBukkit start
@@ -139,6 +146,36 @@ public class NetLoginHandler extends NetHandler {
             }
 
             entityplayer.syncInventory();
+            if (packet1login.d == ForgePacket.FORGE_ID)
+            {
+                //Pretty hackish place to put it, but it needs to go somewhere
+                ForgeHooksServer.init();
+                //pkt.mapSeed = ForgeHooks.buildVersion;
+                ForgeHooks.onLogin(networkManager, packet1login);                
+                String[] channels = MessageManager.getInstance().getRegisteredChannels(networkManager);
+                StringBuilder tmp = new StringBuilder();
+                tmp.append("Forge");
+                for(String channel : channels)
+                {
+                    tmp.append("\0");
+                    tmp.append(channel);
+                }
+                Packet250CustomPayload pkt = new Packet250CustomPayload(); 
+                pkt.tag = "REGISTER";
+                try {
+                    pkt.data = tmp.toString().getBytes("UTF8");
+                } catch (UnsupportedEncodingException e) {
+                    e.printStackTrace();
+                }
+                pkt.length = pkt.data.length;
+                netserverhandler.sendPacket(pkt);
+                ForgeHooksServer.sendModListRequest(networkManager);                
+                ModLoaderMp.handleAllLogins(entityplayer);
+            }
+            else
+            {
+                netserverhandler.disconnect("This server requires you to have Minecraft Forge installed.");
+            }
         }
 
         this.c = true;
