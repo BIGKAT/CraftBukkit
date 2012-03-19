@@ -1,5 +1,6 @@
 package net.minecraft.server;
 
+import java.util.ArrayList;
 import java.util.Random;
 
 // CraftBukkit start
@@ -8,7 +9,9 @@ import org.bukkit.craftbukkit.event.CraftEventFactory;
 import org.bukkit.entity.Sheep;
 // CraftBukkit end
 
-public class EntitySheep extends EntityAnimal {
+import forge.IShearable;
+
+public class EntitySheep extends EntityAnimal implements IShearable {
 
     public static final float[][] a = new float[][] { { 1.0F, 1.0F, 1.0F}, { 0.95F, 0.7F, 0.2F}, { 0.9F, 0.5F, 0.85F}, { 0.6F, 0.7F, 0.95F}, { 0.9F, 0.9F, 0.2F}, { 0.5F, 0.8F, 0.1F}, { 0.95F, 0.7F, 0.8F}, { 0.3F, 0.3F, 0.3F}, { 0.6F, 0.6F, 0.6F}, { 0.3F, 0.6F, 0.7F}, { 0.7F, 0.4F, 0.9F}, { 0.2F, 0.4F, 0.8F}, { 0.5F, 0.4F, 0.3F}, { 0.4F, 0.5F, 0.2F}, { 0.8F, 0.3F, 0.3F}, { 0.1F, 0.1F, 0.1F}};
     private int b;
@@ -75,34 +78,6 @@ public class EntitySheep extends EntityAnimal {
     }
 
     public boolean b(EntityHuman entityhuman) {
-        ItemStack itemstack = entityhuman.inventory.getItemInHand();
-
-        if (itemstack != null && itemstack.id == Item.SHEARS.id && !this.isSheared() && !this.isBaby()) {
-            if (!this.world.isStatic) {
-                // CraftBukkit start
-                org.bukkit.event.player.PlayerShearEntityEvent event = new org.bukkit.event.player.PlayerShearEntityEvent((org.bukkit.entity.Player) entityhuman.getBukkitEntity(), this.getBukkitEntity());
-                this.world.getServer().getPluginManager().callEvent(event);
-
-                if (event.isCancelled()) {
-                    return false;
-                }
-                // CraftBukkit end
-
-                this.setSheared(true);
-                int i = 1 + this.random.nextInt(3);
-
-                for (int j = 0; j < i; ++j) {
-                    EntityItem entityitem = this.a(new ItemStack(Block.WOOL.id, 1, this.getColor()), 1.0F);
-
-                    entityitem.motY += (double) (this.random.nextFloat() * 0.05F);
-                    entityitem.motX += (double) ((this.random.nextFloat() - this.random.nextFloat()) * 0.1F);
-                    entityitem.motZ += (double) ((this.random.nextFloat() - this.random.nextFloat()) * 0.1F);
-                }
-            }
-
-            itemstack.damage(1, entityhuman);
-        }
-
         return super.b(entityhuman);
     }
 
@@ -193,4 +168,27 @@ public class EntitySheep extends EntityAnimal {
             this.setAge(i);
         }
     }
+
+	public boolean isShearable(ItemStack item, World world, int x, int y, int z) {
+		return !isSheared() && !isBaby();
+	}
+
+	public ArrayList<ItemStack> onSheared(ItemStack item, World world, int x, int y, int z, int fortune) {
+        // CraftBukkit start
+        /*org.bukkit.event.player.PlayerShearEntityEvent event = new org.bukkit.event.player.PlayerShearEntityEvent((org.bukkit.entity.Player) entityhuman.getBukkitEntity(), this.getBukkitEntity());
+        this.world.getServer().getPluginManager().callEvent(event);
+
+        if (event.isCancelled()) {
+            return false;
+        }*/
+        // CraftBukkit end
+		ArrayList<ItemStack> ret = new ArrayList<ItemStack>();
+		setSheared(true);
+		int i = 1 + random.nextInt(3);
+		for (int j = 0; j < i; j++)
+		{
+			ret.add(new ItemStack(Block.WOOL.id, 1, getColor()));
+		}
+		return ret;
+	}
 }
