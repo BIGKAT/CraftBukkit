@@ -3,6 +3,8 @@ package net.minecraft.server;
 // CraftBukkit start
 import org.bukkit.craftbukkit.event.CraftEventFactory;
 import org.bukkit.event.entity.EntityShootBowEvent;
+
+import forge.ForgeHooks;
 // CraftBukkit end
 
 public class ItemBow extends Item {
@@ -14,6 +16,11 @@ public class ItemBow extends Item {
     }
 
     public void a(ItemStack itemstack, World world, EntityHuman entityhuman, int i) {
+    	if (ForgeHooks.onArrowLoose(itemstack, world, entityhuman, c(itemstack) - i))
+    	{
+    		return;
+    	}
+    	
         boolean flag = entityhuman.abilities.canInstantlyBuild || EnchantmentManager.getEnchantmentLevel(Enchantment.ARROW_INFINITE.id, itemstack) > 0;
 
         if (flag || entityhuman.inventory.d(Item.ARROW.id)) {
@@ -86,6 +93,12 @@ public class ItemBow extends Item {
     }
 
     public ItemStack a(ItemStack itemstack, World world, EntityHuman entityhuman) {
+        ItemStack stack = ForgeHooks.onArrowNock(itemstack, world, entityhuman);
+        if (stack != null)
+        {
+            return stack;
+        }
+        
         if (entityhuman.abilities.canInstantlyBuild || entityhuman.inventory.d(Item.ARROW.id)) {
             entityhuman.a(itemstack, this.c(itemstack));
         }

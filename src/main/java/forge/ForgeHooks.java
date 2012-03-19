@@ -437,11 +437,11 @@ public class ForgeHooks
     public static Hashtable<Integer, NetworkMod> networkMods = new Hashtable<Integer, NetworkMod>();
     public static Hashtable<BaseMod, IGuiHandler> guiHandlers = new Hashtable<BaseMod, IGuiHandler>();
 
-    public static boolean onArrowLoose(ItemStack itemstack, World world, EntityPlayer player, int heldTime)
+    public static boolean onArrowLoose(ItemStack itemstack, World world, EntityHuman entityhuman, int heldTime)
     {
         for (IArrowLooseHandler handler : arrowLooseHandlers)
         {
-            if (handler.onArrowLoose(itemstack, world, player, heldTime))
+            if (handler.onArrowLoose(itemstack, world, entityhuman, heldTime))
             {
                 return true;
             }
@@ -451,11 +451,11 @@ public class ForgeHooks
 
     public static ArrayList<IArrowLooseHandler> arrowLooseHandlers = new ArrayList<IArrowLooseHandler>();
 
-    public static ItemStack onArrowNock(ItemStack itemstack, World world, EntityPlayer player)
+    public static ItemStack onArrowNock(ItemStack itemstack, World world, EntityHuman entityhuman)
     {
         for (IArrowNockHandler handler : arrowNockHandlers)
         {
-            ItemStack ret = handler.onArrowNock(itemstack, world, player);
+            ItemStack ret = handler.onArrowNock(itemstack, world, entityhuman);
             if (ret != null)
             {
                 return ret;
