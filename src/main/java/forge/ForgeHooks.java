@@ -36,11 +36,11 @@ public class ForgeHooks
 {
     // List Handling Hooks
     // ------------------------------------------------------------
-    public static void onTakenFromCrafting(EntityPlayer player, ItemStack stack, IInventory craftMatrix)
+    public static void onTakenFromCrafting(EntityHuman f, ItemStack stack, IInventory craftMatrix)
     {
         for (ICraftingHandler handler : craftingHandlers)
         {
-            handler.onTakenFromCrafting(player, stack, craftMatrix);
+            handler.onTakenFromCrafting(f, stack, craftMatrix);
         }
     }
     static LinkedList<ICraftingHandler> craftingHandlers = new LinkedList<ICraftingHandler>();
