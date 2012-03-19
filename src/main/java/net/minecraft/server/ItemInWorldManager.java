@@ -78,7 +78,7 @@ public class ItemInWorldManager {
 
             if (j != 0) {
                 Block block = Block.byId[j];
-                float f = block.getDamage(this.world, this.player, l, m, n) * (float)(i + 1);
+                float f = block.blockStrength(this.world, this.player, l, m, n) * (float)(i + 1);
 
                 if (f >= 1.0F) {
                     this.j = false;
@@ -132,7 +132,7 @@ public class ItemInWorldManager {
             }
 
             // Handle hitting a block
-            float toolDamage = Block.byId[i1].getDamage(this.world, this.player, i, j, k);
+            float toolDamage = Block.byId[i1].blockStrength(this.world, this.player, i, j, k);
             if (event.useItemInHand() == Event.Result.DENY) {
                 // If we 'insta destroyed' then the client needs to be informed.
                 if (toolDamage > 1.0f) {
@@ -171,7 +171,7 @@ public class ItemInWorldManager {
 
             if (i1 != 0) {
                 Block block = Block.byId[i1];
-                float f = block.getDamage(this.world, this.player, i, j, k) * (float) (l + 1);
+                float f = block.blockStrength(this.world, this.player, i, j, k) * (float) (l + 1);
 
                 if (f >= 0.7F) {
                     this.breakBlock(i, j, k);

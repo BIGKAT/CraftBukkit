@@ -388,7 +388,7 @@ public class Item {
     /**
      * This is called when the item is used, before the block is activated.
      * @param stack The Item Stack
-     * @param player The Player that used the item
+     * @param entityhuman The Player that used the item
      * @param world The Current World
      * @param X Target X Position
      * @param Y Target Y Position
@@ -396,7 +396,7 @@ public class Item {
      * @param side The side of the target hit
      * @return Return true to prevent any further processing.
      */
-    public boolean onItemUseFirst(ItemStack stack, EntityPlayer player, World world, int X, int Y, int Z, int side) 
+    public boolean onItemUseFirst(ItemStack stack, EntityHuman entityhuman, World world, int X, int Y, int Z, int side) 
     {
         return false;
     }
@@ -440,7 +440,7 @@ public class Item {
      * @param player The Player that is wielding the item
      * @return True to prevent harvesting, false to continue as normal
      */
-    public boolean onBlockStartBreak(ItemStack itemstack, int X, int Y, int Z, EntityPlayer player) 
+    public boolean onBlockStartBreak(ItemStack itemstack, int X, int Y, int Z, EntityHuman player) 
     {
         return false;
     }

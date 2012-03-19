@@ -755,7 +755,7 @@ public class Block {
      * @param meta The block's current metadata
      * @return True tospawn the drops
      */
-    public boolean canHarvestBlock(EntityPlayer player, int meta) 
+    public boolean canHarvestBlock(EntityHuman player, int meta) 
     {
         return ForgeHooks.canHarvestBlock(this, player, meta);
     }
@@ -778,7 +778,7 @@ public class Block {
      * @param z Z position
      * @return True if the block is actually destroyed.
      */
-    public boolean removeBlockByPlayer(World world, EntityPlayer player, int x, int y, int z) 
+    public boolean removeBlockByPlayer(World world, EntityHuman player, int x, int y, int z) 
     {
         return world.setTypeId(x, y, z, 0);
     }

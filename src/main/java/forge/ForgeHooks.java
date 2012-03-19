@@ -45,7 +45,7 @@ public class ForgeHooks
     }
     static LinkedList<ICraftingHandler> craftingHandlers = new LinkedList<ICraftingHandler>();
 
-    public static void onDestroyCurrentItem(EntityPlayer player, ItemStack orig)
+    public static void onDestroyCurrentItem(EntityHuman player, ItemStack orig)
     {
         for (IDestroyToolHandler handler : destroyToolHandlers)
         {
