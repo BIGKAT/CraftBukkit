@@ -51,6 +51,8 @@ import org.bukkit.inventory.InventoryView;
 import org.bukkit.inventory.Recipe;
 // CraftBukkit end
 
+import forge.MessageManager;
+
 public class NetServerHandler extends NetHandler implements ICommandListener {
 
     public static Logger logger = Logger.getLogger("Minecraft");
@@ -597,8 +599,10 @@ public class NetServerHandler extends NetHandler implements ICommandListener {
                 double d1 = this.player.locY - ((double) j + 0.5D) + 1.5D;
                 double d2 = this.player.locZ - ((double) k + 0.5D);
                 double d3 = d0 * d0 + d1 * d1 + d2 * d2;
+                double dist = player.itemInWorldManager.getBlockReachDistance() + 1;
+                dist *= dist;
 
-                if (d3 > 36.0D) {
+                if (d3 > dist) {
                     return;
                 }
 
@@ -711,9 +715,12 @@ public class NetServerHandler extends NetHandler implements ICommandListener {
                 j1 = i1;
             }
 
+            double dist = player.itemInWorldManager.getBlockReachDistance() + 1;
+            dist *= dist;
+            
             // CraftBukkit start - Check if we can actually do something over this large a distance
             Location eyeLoc = this.getPlayer().getEyeLocation();
-            if (Math.pow(eyeLoc.getX() - i, 2) + Math.pow(eyeLoc.getY() - j, 2) + Math.pow(eyeLoc.getZ() - k, 2) > PLACE_DISTANCE_SQUARED) {
+            if (Math.pow(eyeLoc.getX() - i, 2) + Math.pow(eyeLoc.getY() - j, 2) + Math.pow(eyeLoc.getZ() - k, 2) > Math.max(dist,PLACE_DISTANCE_SQUARED)) {
                 return;
             }
             flag1 = true; // spawn protection moved to ItemBlock!!!
@@ -1375,14 +1382,20 @@ public class NetServerHandler extends NetHandler implements ICommandListener {
         return true;
     }
 
+    public EntityPlayer getPlayerEntity() {
+    	return this.player;
+    }
+    
     // CraftBukkit start
     @Override
     public void a(Packet250CustomPayload packet) {
-        if (packet.tag.equals("REGISTER")) {
+    	MessageManager inst = MessageManager.getInstance();
+    	if (packet.tag.equals("REGISTER")) {
             try {
                 String channels = new String(packet.data, "UTF8");
                 for (String channel : channels.split("\0")) {
                     getPlayer().addChannel(channel);
+                    inst.addActiveChannel(networkManager, channel);
                 }
             } catch (UnsupportedEncodingException ex) {
                 Logger.getLogger(NetServerHandler.class.getName()).log(Level.SEVERE, "Could not parse REGISTER payload in plugin message packet", ex);
@@ -1392,11 +1405,13 @@ public class NetServerHandler extends NetHandler implements ICommandListener {
                 String channels = new String(packet.data, "UTF8");
                 for (String channel : channels.split("\0")) {
                     getPlayer().removeChannel(channel);
+                    inst.removeActiveChannel(networkManager, channel);
                 }
             } catch (UnsupportedEncodingException ex) {
                 Logger.getLogger(NetServerHandler.class.getName()).log(Level.SEVERE, "Could not parse UNREGISTER payload in plugin message packet", ex);
             }
         } else {
+        	inst.dispatchIncomingMessage(networkManager, packet.tag, packet.data);
             server.getMessenger().dispatchIncomingMessage(player.getBukkitEntity(), packet.tag, packet.data);
         }
     }
