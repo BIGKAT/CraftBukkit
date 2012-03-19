@@ -193,7 +193,7 @@ public final class SpawnerCreature {
         } else {
             int l = world.getTypeId(i, j - 1, k);
 
-            return Block.g(l) && l != Block.BEDROCK.id && !world.e(i, j, k) && !world.getMaterial(i, j, k).isLiquid() && !world.e(i, j + 1, k);
+            return world.isBlockSolidOnSide(i, j-1, k, 1) && l != Block.BEDROCK.id && !world.e(i, j, k) && !world.getMaterial(i, j, k).isLiquid() && !world.e(i, j + 1, k);
         }
     }
 
