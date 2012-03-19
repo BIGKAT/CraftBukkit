@@ -6,6 +6,8 @@ import org.bukkit.craftbukkit.event.CraftEventFactory;
 import org.bukkit.craftbukkit.inventory.CraftItemStack;
 import org.bukkit.event.player.PlayerBucketEmptyEvent;
 import org.bukkit.event.player.PlayerBucketFillEvent;
+
+import forge.MinecraftForge;
 // CraftBukkit end
 
 public class ItemBucket extends Item {
@@ -39,8 +41,13 @@ public class ItemBucket extends Item {
                 }
 
                 if (this.a == 0) {
-                    if (!entityhuman.d(i, j, k)) {
+                    if (entityhuman!=null && !entityhuman.d(i, j, k)) {
                         return itemstack;
+                    }
+                    ItemStack stack = MinecraftForge.fillCustomBucket(world, i, j, k);
+                    if (stack != null)
+                    {
+                        return stack;
                     }
 
                     if (world.getMaterial(i, j, k) == Material.WATER && world.getData(i, j, k) == 0) {
