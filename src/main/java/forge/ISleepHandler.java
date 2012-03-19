@@ -5,6 +5,7 @@
 
 package forge;
 
+import net.minecraft.server.EntityHuman;
 import net.minecraft.server.EntityPlayer;
 import net.minecraft.server.EnumBedResult;
 
@@ -18,6 +19,6 @@ public interface ISleepHandler
      *
      * @see MinecraftForge#registerSleepHandler(ISleepHandler)
      */
-    public EnumBedResult sleepInBedAt(EntityPlayer player, int X, int Y, int Z);
+    public EnumBedResult sleepInBedAt(EntityHuman entityHuman, int X, int Y, int Z);
 }
 

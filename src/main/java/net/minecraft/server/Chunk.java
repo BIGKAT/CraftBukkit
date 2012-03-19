@@ -568,13 +568,13 @@ public class Chunk {
         if (tileentity == null) {
             int l = this.getTypeId(i, j, k);
 
-            int meta = getBlockMetadata(par1, par2, par3);
+            int meta = getData(i, j, k);
             if (l <= 0 || Block.byId[l] == null || !Block.byId[l].hasTileEntity(meta)) {
                 return null;
             }
 
             if (tileentity == null) {
-                tileentity = Block.byId[l]).getTileEntity(meta);
+                tileentity = Block.byId[l].getTileEntity(meta);
                 this.world.setTileEntity(this.x * 16 + i, j, this.z * 16 + k, tileentity);
             }
 
@@ -606,7 +606,7 @@ public class Chunk {
         if (id > 0 && Block.byId[id] != null && Block.byId[id].hasTileEntity(getData(i, j, k))) {
             TileEntity old = (TileEntity)this.tileEntities.get(chunkposition);
             if (old != null) {
-                old.invalidate();
+                old.j();
             }
             tileentity.m();
             this.tileEntities.put(chunkposition, tileentity);

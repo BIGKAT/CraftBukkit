@@ -766,11 +766,11 @@ public class EntityPlayer extends EntityHuman implements ICrafting {
             {
                 nextContainerCounter();
                 H();
-                PacketOpenGUI pkt = new PacketOpenGUI(currentWindowId, MinecraftForge.getModID((NetworkMod)mod), ID, x, y, z);
-                playerNetServerHandler.sendPacket(pkt.getPacket());
-                craftingInventory = container; 
-                craftingInventory.windowId = currentWindowId;
-                craftingInventory.onCraftGuiOpened(this);
+                PacketOpenGUI pkt = new PacketOpenGUI(containerCounter, MinecraftForge.getModID((NetworkMod)mod), ID, x, y, z);
+                netServerHandler.sendPacket(pkt.getPacket());
+                activeContainer = container; 
+                activeContainer.windowId = containerCounter;
+                activeContainer.addSlotListener(this);
             }
         }
     }

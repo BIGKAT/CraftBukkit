@@ -81,6 +81,8 @@ public class EntityTracker {
         } else if (entity instanceof EntityEnderCrystal) {
             this.addEntity(entity, 256, Integer.MAX_VALUE, false);
         }
+
+      ModLoaderMp.handleEntityTrackers(this, entity);
     }
 
     public void addEntity(Entity entity, int i, int j) {

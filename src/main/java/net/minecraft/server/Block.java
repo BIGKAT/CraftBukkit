@@ -733,7 +733,7 @@ public class Block {
      */
     public float blockStrength(World world, EntityHuman player, int x, int y, int z) 
     {
-        return getDamage(player, world.getData(x, y, z));
+        return blockStrength(player, world.getData(x, y, z));
     }
 
     /**
@@ -867,7 +867,7 @@ public class Block {
         {
             return true;
         }
-        if ((world.worldProvider instanceof WorldProviderTheEnd) && blockID == Block.BEDROCK.id && face == 0)
+        if ((world.worldProvider instanceof WorldProviderTheEnd) && id == Block.BEDROCK.id && face == 0)
         {
             return true;
         }
@@ -913,7 +913,7 @@ public class Block {
     {
         if (this instanceof BlockContainer)
         {
-            return ((BlockContainer)this).a_(metadata);
+            return ((BlockContainer)this).getBlockEntity(metadata);
         }
         return null;
     }    

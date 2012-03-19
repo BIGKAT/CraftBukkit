@@ -120,6 +120,7 @@ public class ChunkProviderLoadOrGenerate implements IChunkProvider {
             try {
                 chunk.n = this.g.getTime();
                 this.d.a(this.g, chunk);
+                if (0==1) throw new IOException();
             } catch (IOException ioexception) {
                 ioexception.printStackTrace();
             }

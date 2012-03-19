@@ -914,6 +914,8 @@ public class NetServerHandler extends NetHandler implements ICommandListener {
             if (this.server.dispatchCommand(player, event.getMessage().substring(1))) {
                 return;
             }
+		    if (ModLoaderMp.handleCommand(s.substring(1), this.player.name, logger, minecraftServer.serverConfigurationManager.isOp(this.player.name)))
+	    	    logger.info("ModLoaderMP : " + this.player.name + " issued command: " + s.substring(1));
         } catch (CommandException ex) {
             player.sendMessage(ChatColor.RED + "An internal error occurred while attempting to perform this command");
             Logger.getLogger(NetServerHandler.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);

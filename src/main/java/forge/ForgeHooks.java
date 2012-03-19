@@ -32,6 +32,9 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.*;
 
+import org.bukkit.craftbukkit.CraftWorld;
+import org.bukkit.craftbukkit.util.LongHashset;
+
 public class ForgeHooks
 {
     // List Handling Hooks
@@ -80,11 +83,11 @@ public class ForgeHooks
     }
     static LinkedList<IHoeHandler> hoeHandlers = new LinkedList<IHoeHandler>();
 
-    public static EnumBedResult sleepInBedAt(EntityPlayer player, int x, int y, int z)
+    public static EnumBedResult sleepInBedAt(EntityHuman entityHuman, int x, int y, int z)
     {
         for (ISleepHandler handler : sleepHandlers)
         {
-            EnumBedResult status = handler.sleepInBedAt(player, x, y, z);
+            EnumBedResult status = handler.sleepInBedAt(entityHuman, x, y, z);
             if (status != null)
             {
                 return status;
@@ -502,5 +505,9 @@ public class ForgeHooks
     {
         return forgePacketHandler;
     }
+
+	public static void addActiveChunks(World world, LongHashset chunkTickList) {
+		
+	}
 }
 

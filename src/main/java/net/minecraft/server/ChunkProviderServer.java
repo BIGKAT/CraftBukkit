@@ -180,7 +180,7 @@ public class ChunkProviderServer implements IChunkProvider {
             chunk.done = true;
             if (this.chunkProvider != null) {
                 this.chunkProvider.getChunkAt(ichunkprovider, i, j);
-
+	            ModLoader.populateChunk(this.chunkProvider, i << 4, j << 4, this.world);
                 // CraftBukkit start
                 BlockSand.instaFall = true;
                 Random random = new Random();

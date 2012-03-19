@@ -31,6 +31,8 @@ import org.bukkit.event.weather.ThunderChangeEvent;
 import org.bukkit.block.BlockState;
 // CraftBukkit end
 
+import forge.ForgeHooks;
+
 public class World implements IBlockAccess {
 
     public boolean a = false;
@@ -1188,7 +1190,7 @@ public class World implements IBlockAccess {
                     Chunk chunk = this.getChunkAt(tileentity.x >> 4, tileentity.z >> 4);
 
                     if (chunk != null) {
-                        chunk.f(tileentity.x & 15, tileentity.y, tileentity.z & 15);
+                        chunk.cleanChunkBlockTileEntity(tileentity.x & 15, tileentity.y, tileentity.z & 15);
                     }
                 }
             }
@@ -1208,22 +1210,25 @@ public class World implements IBlockAccess {
                 TileEntity tileentity1 = (TileEntity) iterator1.next();
 
                 if (!tileentity1.l()) {
+                    if (!this.tileEntityList.contains(tileentity1)) {
+                        this.tileEntityList.add(tileentity1);
+                    }
+                } else {
                     // CraftBukkit - order matters, moved down
                     /* if (!this.h.contains(tileentity1)) {
                         this.h.add(tileentity1);
                     } */
 
-                    if (this.isChunkLoaded(tileentity1.x >> 4, tileentity1.z >> 4)) {
-                        Chunk chunk1 = this.getChunkAt(tileentity1.x >> 4, tileentity1.z >> 4);
+                    	if (this.isChunkLoaded(tileentity1.x >> 4, tileentity1.z >> 4)) {
+                    		Chunk chunk1 = this.getChunkAt(tileentity1.x >> 4, tileentity1.z >> 4);
 
-                        if (chunk1 != null) {
-                            chunk1.a(tileentity1.x & 15, tileentity1.y, tileentity1.z & 15, tileentity1);
+                    		if (chunk1 != null) {
+                    			chunk1.cleanChunkBlockTileEntity(tileentity1.x & 15, tileentity1.y, tileentity1.z & 15);
+                    		}
+//                    			chunk1.a(tileentity1.x & 15, tileentity1.y, tileentity1.z & 15, tileentity1);
                             // CraftBukkit start - moved in from above
-                            if (!this.tileEntityList.contains(tileentity1)) {
-                                this.tileEntityList.add(tileentity1);
-                            }
                             // CraftBukkit end
-                        }
+//                        }
                     }
 
                     this.notify(tileentity1.x, tileentity1.y, tileentity1.z);
@@ -1238,11 +1243,12 @@ public class World implements IBlockAccess {
     }
 
     public void a(Collection collection) {
-        if (this.Q) {
-            this.J.addAll(collection);
-        } else {
-            this.tileEntityList.addAll(collection);
-        }
+    	List dest = Q ? J : tileEntityList;
+    	for (Object entity : collection) {
+    		if (((TileEntity)entity).canUpdate()) {
+    			dest.add(entity);
+    		}
+    	}
     }
 
     public void playerJoinedWorld(Entity entity) {
@@ -1419,6 +1425,14 @@ public class World implements IBlockAccess {
                         if (j2 == Block.FIRE.id || j2 == Block.LAVA.id || j2 == Block.STATIONARY_LAVA.id) {
                             return true;
                         }
+                        else 
+                        {
+                            if (j2 > 0 && Block.byId[j2] != null && Block.byId[j2].isBlockBurning(this, k1, l1, i2))
+                            {
+                                return true;
+                            }
+                        }
+
                     }
                 }
             }
@@ -1629,43 +1643,29 @@ public class World implements IBlockAccess {
     }
 
     public void setTileEntity(int i, int j, int k, TileEntity tileentity) {
-        if (tileentity != null && !tileentity.l()) {
-            if (this.Q) {
-                tileentity.x = i;
-                tileentity.y = j;
-                tileentity.z = k;
-                this.J.add(tileentity);
-            } else {
-                // CraftBukkit - order matters, moved down
-                // this.tileEntityList.add(tileentity);
-                Chunk chunk = this.getChunkAt(i >> 4, k >> 4);
+    	if (tileentity == null || tileentity.l()) {
+    		return;
+    	}
+    	List dest = Q ? J : tileEntityList;
+    	if (tileentity.canUpdate())
+    	{
+    		dest.add(tileentity);
+    	}
+        // CraftBukkit - order matters, moved down
+        // this.tileEntityList.add(tileentity);
+        Chunk chunk = this.getChunkAt(i >> 4, k >> 4);
 
-                if (chunk != null) {
-                    chunk.a(i & 15, j, k & 15, tileentity);
-                    this.tileEntityList.add(tileentity); // CraftBukkit - moved in from above
-                }
-            }
+        if (chunk != null) {
+            chunk.a(i & 15, j, k & 15, tileentity);
         }
     }
 
     public void q(int i, int j, int k) {
-        TileEntity tileentity = this.getTileEntity(i, j, k);
-
-        if (tileentity != null && this.Q) {
-            tileentity.j();
-            this.J.remove(tileentity);
-        } else {
-            if (tileentity != null) {
-                this.J.remove(tileentity);
-                this.tileEntityList.remove(tileentity);
-            }
-
             Chunk chunk = this.getChunkAt(i >> 4, k >> 4);
 
             if (chunk != null) {
                 chunk.f(i & 15, j, k & 15);
             }
-        }
     }
 
     public void a(TileEntity tileentity) {
@@ -1679,7 +1679,8 @@ public class World implements IBlockAccess {
     }
 
     public boolean e(int i, int j, int k) {
-        return Block.g(this.getTypeId(i, j, k));
+    	Block block=Block.byId[getTypeId(i,j,k)];
+        return block!=null && block.isBlockNormalCube(this, i, j, k);
     }
 
     public boolean b(int i, int j, int k, boolean flag) {
@@ -1902,6 +1903,7 @@ public class World implements IBlockAccess {
             }
         }
 
+        ForgeHooks.addActiveChunks(this, chunkTickList);
         // MethodProfiler.a(); // CraftBukkit - not in production code
         if (this.R > 0) {
             --this.R;
@@ -2177,7 +2179,7 @@ public class World implements IBlockAccess {
     }
 
     private int d(int i, int j, int k, int l, int i1, int j1) {
-        int k1 = Block.lightEmission[i1];
+        int k1 = (i1 == 0 || Block.byId[i1] ==null ? 0 : Block.byId[i1].getLightValue(this, j, k, l));
         int l1 = this.a(EnumSkyBlock.BLOCK, j - 1, k, l) - j1;
         int i2 = this.a(EnumSkyBlock.BLOCK, j + 1, k, l) - j1;
         int j2 = this.a(EnumSkyBlock.BLOCK, j, k - 1, l) - j1;
@@ -2565,6 +2567,10 @@ public class World implements IBlockAccess {
             if (block != null && (block == Block.WATER || block == Block.STATIONARY_WATER || block == Block.LAVA || block == Block.STATIONARY_LAVA || block == Block.FIRE || block.material.isReplacable())) {
                 block = null;
             }
+            
+            if (block != null && block.isBlockReplaceable(this, j, k, l)) {
+            	block = null;
+            }
 
             defaultReturn = i > 0 && block == null && block1.canPlace(this, j, k, l, i1); // CraftBukkit
         }
@@ -2935,6 +2941,20 @@ public class World implements IBlockAccess {
     }
     // CraftBukkit end
     // FORGE
+    /**
+     * Adds a single TileEntity to the world.
+     * TODO: Eloraam fully describe the bug this fixes.
+     * @param entity The TileEntity to be added.
+     */
+    public void addTileEntity(TileEntity entity) 
+    {
+        List dest = Q ? J : tileEntityList;
+        if(entity.canUpdate())
+        {
+            dest.add(entity);
+        }
+    }
+    
 	/**
 	 * Determine if the given block is considered solid on the specified side.
 	 * Used by placement logic.

@@ -116,12 +116,12 @@ public class ArmorProperties implements Comparable<ArmorProperties>
             }
             damage -= (damage * ratio);
         }
-        damage += entity.carryoverDamage;
+        damage += entity.ar;
         if (DEBUG)
         {
             System.out.println("Return: " + (int)(damage / 25D) + " " + damage);
         }
-        entity.carryoverDamage = (int)damage % 25;
+        entity.ar = (int)damage % 25;
         return (int)(damage / 25D);
     }
 

@@ -135,6 +135,10 @@ public class BlockDispenser extends BlockContainer {
                 // Actually remove the item
                 tileentitydispenser.splitStack(dispenseSlot, 1);
 
+            if(ModLoader.dispenseEntity(world, d0, d1, d2, b0, b1, itemstack)) {
+               world.triggerEffect(2000, i, j, k, b0 + 1 + (b1 + 1) * 3);
+               return;
+            }
                 motX = event.getVelocity().getX();
                 motY = event.getVelocity().getY();
                 motZ = event.getVelocity().getZ();

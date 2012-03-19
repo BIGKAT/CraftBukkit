@@ -1,5 +1,6 @@
 package net.minecraft.server;
 
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -282,8 +283,38 @@ public class EntityTrackerEntry {
 		if (pkt != null) {
 			return pkt;
 		}
+      EntityTrackerEntry2 var1 = ModLoaderMp.handleEntityTrackerEntries(this.tracker);
+      if(var1 != null) {
+         try {
+            if(this.tracker instanceof ISpawnable) {
+               Packet230ModLoader var12 = ((ISpawnable)this.tracker).getSpawnPacket();
+               var12.modId = "Spawn".hashCode();
+               if(var1.entityId > 127) {
+                  var12.packetType = var1.entityId - 256;
+               } else {
+                  var12.packetType = var1.entityId;
+               }
 
-        if (this.tracker instanceof EntityItem) {
+               return var12;
+            } else if(!var1.entityHasOwner) {
+               return new Packet23VehicleSpawn(this.tracker, var1.entityId);
+            } else {
+//TODO FIX
+	               Field var13 = this.tracker.getClass().getField("owner");
+	               if(Entity.class.isAssignableFrom(var13.getType())) {
+	                  Entity var9 = (Entity)var13.get(this.tracker);
+	                  return new Packet23VehicleSpawn(this.tracker, var1.entityId, var9 != null?var9.id:this.tracker.id);
+	               } else {
+	                  throw new Exception(String.format("Entity\'s owner field must be of type Entity, but it is of type %s.", new Object[]{var13.getType()}));
+	               }
+	            }
+	         } catch (Exception var4) {
+	            ModLoader.getLogger().throwing("EntityTrackerEntry", "getSpawnPacket", var4);
+	            ModLoader.throwException(String.format("Error sending spawn packet for entity of type %s.", new Object[]{this.tracker.getClass()}), var4);
+	            return null;
+	         }
+	      
+         } else if (this.tracker instanceof EntityItem) {
             EntityItem entityitem = (EntityItem) this.tracker;
             Packet21PickupSpawn packet21pickupspawn = new Packet21PickupSpawn(entityitem);
 

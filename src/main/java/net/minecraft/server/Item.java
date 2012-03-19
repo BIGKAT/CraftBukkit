@@ -166,6 +166,7 @@ public class Item {
         }
 
         byId[256 + i] = this;
+	    org.bukkit.Material.addMaterial(256 + i);
     }
 
     public Item d(int i) {
@@ -378,10 +379,10 @@ public class Item {
      * being removed from the players inventory and spawning
      * in the world
      * 
-     * @param player The player that dropped the item
+     * @param entityHuman The player that dropped the item
      * @param item The item stack, before the item is removed.
      */
-    public boolean onDroppedByPlayer(ItemStack item, EntityPlayer player)
+    public boolean onDroppedByPlayer(ItemStack item, EntityHuman entityHuman)
     {
         return true;
     }
@@ -447,10 +448,10 @@ public class Item {
     /**
      * Called each tick while using an item.
      * @param stack The Item being used
-     * @param player The Player using the item
+     * @param entityHuman The Player using the item
      * @param count The amount of time in tick the item has been used for continuously
      */
-    public void onUsingItemTick(ItemStack stack, EntityPlayer player, int count) 
+    public void onUsingItemTick(ItemStack stack, EntityHuman entityHuman, int count) 
     {
     }
     /**
@@ -459,11 +460,11 @@ public class Item {
      * and the entity is not attacked.
      * 
      * @param stack The Item being used
-     * @param player The player that is attacking
+     * @param entityHuman The player that is attacking
      * @param entity The entity being attacked
      * @return True to cancel the rest of the interaction.
      */
-    public boolean onLeftClickEntity(ItemStack stack, EntityPlayer player, Entity entity) 
+    public boolean onLeftClickEntity(ItemStack stack, EntityHuman entityHuman, Entity entity) 
     {
         return false;
     }

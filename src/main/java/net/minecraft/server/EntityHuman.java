@@ -270,7 +270,7 @@ public abstract class EntityHuman extends EntityLiving {
     public void closeInventory() {
         if (activeContainer != null) //TODO: This is a bugfix for chests staying open in SMP
         {
-            activeContainer.onCraftGuiClosed(this);
+            activeContainer.a(this);
         }
         this.activeContainer = this.defaultContainer;
     }
@@ -405,7 +405,7 @@ public abstract class EntityHuman extends EntityLiving {
             return null;
         }
         if (stack.getItem().onDroppedByPlayer(stack, this)) {
-            return this.a(this.inventory.splitStack((this.inventory.itemInHandIndex, 1), false);
+            return this.a(this.inventory.splitStack(this.inventory.itemInHandIndex, 1), false);
         }
         return null;
     }
