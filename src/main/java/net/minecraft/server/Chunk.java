@@ -379,7 +379,8 @@ public class Chunk {
             if (l1 != 0) {
                 if (!this.world.isStatic) {
                     Block.byId[l1].remove(this.world, i2, j, j2);
-                } else if (Block.byId[l1] != null && Block.byId[l1].hasTileEntity(getData(i, j, k))) {
+                }
+                if (Block.byId[l1] != null && Block.byId[l1].hasTileEntity(getData(i, j, k))) {
                     this.world.q(i2, j, j2);
                 }
             }
