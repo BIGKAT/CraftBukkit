@@ -188,11 +188,11 @@ public class ForgeHooks
     }
     static LinkedList<IChunkLoadHandler> chunkLoadHandlers = new LinkedList<IChunkLoadHandler>();
 
-    public static boolean onEntityInteract(EntityPlayer player, Entity entity, boolean isAttack)
+    public static boolean onEntityInteract(EntityHuman entityHuman, Entity entity, boolean isAttack)
     {
         for (IEntityInteractHandler handler : entityInteractHandlers)
         {
-            if (!handler.onEntityInteract(player, entity, isAttack))
+            if (!handler.onEntityInteract(entityHuman, entity, isAttack))
             {
                 return false;
             }
