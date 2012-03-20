@@ -188,6 +188,19 @@ public class ForgeHooks
     }
     static LinkedList<IChunkLoadHandler> chunkLoadHandlers = new LinkedList<IChunkLoadHandler>();
 
+    public static boolean onEntityInteract(EntityPlayer player, Entity entity, boolean isAttack)
+    {
+        for (IEntityInteractHandler handler : entityInteractHandlers)
+        {
+            if (!handler.onEntityInteract(player, entity, isAttack))
+            {
+                return false;
+            }
+        }
+        return true;
+    }
+    static LinkedList<IEntityInteractHandler> entityInteractHandlers = new LinkedList<IEntityInteractHandler>();
+
     // Plant Management
     // ------------------------------------------------------------
     static class ProbableItem
@@ -471,7 +484,7 @@ public class ForgeHooks
     public static final int majorVersion=1;
     public static final int minorVersion=4;
     public static final int revisionVersion=0;
-    public static final int buildVersion=46;
+    public static final int buildVersion=57;
     static
     {
         plantGrassList = new ArrayList<ProbableItem>();
