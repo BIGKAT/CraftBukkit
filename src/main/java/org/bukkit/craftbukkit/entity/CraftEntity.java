@@ -21,7 +21,7 @@ import java.util.UUID;
 import org.bukkit.Bukkit;
 import org.bukkit.event.player.PlayerTeleportEvent.TeleportCause;
 
-public abstract class CraftEntity implements org.bukkit.entity.Entity {
+public class CraftEntity implements org.bukkit.entity.Entity {
     private static final Map<String, CraftPlayer> players = new MapMaker().softValues().makeMap();
     protected final CraftServer server;
     protected Entity entity;
@@ -141,7 +141,9 @@ public abstract class CraftEntity implements org.bukkit.entity.Entity {
         else if (entity instanceof EntityPainting) { return new CraftPainting(server, (EntityPainting) entity); }
         else if (entity instanceof EntityTNTPrimed) { return new CraftTNTPrimed(server, (EntityTNTPrimed) entity); }
 
-        throw new IllegalArgumentException("Unknown entity");
+        // Mae start: Mod entities aren't in the above list, return a generic entity instead of throwing an exception.
+        return new CraftEntity(server, entity);
+        // Mae end
     }
 
     public Location getLocation() {
@@ -371,4 +373,10 @@ public abstract class CraftEntity implements org.bukkit.entity.Entity {
 
         return getHandle().vehicle.getBukkitEntity();
     }
+
+    // Mae start
+    public org.bukkit.entity.EntityType getType() {
+        return org.bukkit.entity.EntityType.UNKNOWN;
+    }
+    // Mae end
 }

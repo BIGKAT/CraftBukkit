@@ -65,7 +65,7 @@ public class CraftEventFactory {
         int spawnSize = Bukkit.getServer().getSpawnRadius();
 
         if (spawnSize <= 0) return true;
-        if (player.isOp()) return true;
+        if (player != null && player.isOp()) return true;
 
         ChunkCoordinates chunkcoordinates = worldServer.getSpawn();
 
