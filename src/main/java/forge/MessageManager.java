@@ -415,7 +415,7 @@ public class MessageManager
             }
         }
 
-        if (connections.contains(manager))
+        if (connections.containsKey(manager))
         {
             ConnectionInstance con = getConnection(manager);
             IPacketHandler[] handlers = con.getChannelHandlers(channel);
