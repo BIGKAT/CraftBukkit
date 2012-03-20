@@ -2,6 +2,10 @@ package forge;
 
 import java.util.Hashtable;
 
+import org.bukkit.Bukkit;
+import org.bukkit.craftbukkit.CraftServer;
+import org.bukkit.craftbukkit.CraftWorld;
+
 import net.minecraft.server.*;
 
 public class DimensionManager
@@ -55,7 +59,15 @@ public class DimensionManager
 
     public static World[] getWorlds()
     {
-        return worlds.values().toArray(new World[0]);
+    	CraftServer cs=(CraftServer)Bukkit.getServer();
+    	int len=cs.getWorlds().size();
+    	World[] res=new World[len];
+    	int i=0;
+    	for (org.bukkit.World w : cs.getWorlds()) {
+    		CraftWorld cw=(CraftWorld)w;
+    		res[i++]=cw.getHandle();
+    	}
+    	return res;
     }
 
     public static boolean shouldLoadSpawn(int id)
