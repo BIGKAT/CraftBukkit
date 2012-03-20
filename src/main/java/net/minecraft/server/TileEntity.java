@@ -1,5 +1,6 @@
 package net.minecraft.server;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -22,7 +23,7 @@ public class TileEntity {
     protected boolean o;
     public int p = -1;
     public Block q;
-	private List<HumanEntity> transaction;
+	private List<HumanEntity> transaction=new ArrayList<HumanEntity>(2);
 
     public TileEntity() {}
 
