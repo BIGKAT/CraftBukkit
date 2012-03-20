@@ -1,7 +1,7 @@
 package forge.bukkit;
 
 import net.minecraft.server.Container;
-import net.minecraft.server.EntityPlayer;
+import net.minecraft.server.EntityHuman;
 
 import org.bukkit.craftbukkit.inventory.CraftInventory;
 import org.bukkit.entity.HumanEntity;
@@ -12,11 +12,11 @@ import org.bukkit.inventory.InventoryView;
 public class ModInventoryView extends InventoryView {
 
 	private Container container;
-	private EntityPlayer player;
+	private EntityHuman player;
 
-	public ModInventoryView(Container container, EntityPlayer player) {
+	public ModInventoryView(Container container, EntityHuman entityHuman) {
 		this.container=container;
-		this.player=player;
+		this.player=entityHuman;
 	}
 
 	@Override
