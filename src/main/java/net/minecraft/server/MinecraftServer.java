@@ -18,6 +18,7 @@ import java.io.PrintWriter;
 import java.net.UnknownHostException;
 import jline.ConsoleReader;
 import joptsimple.OptionSet;
+
 import org.bukkit.World.Environment;
 import org.bukkit.command.ConsoleCommandSender;
 import org.bukkit.command.RemoteConsoleCommandSender;
@@ -427,6 +428,7 @@ public class MinecraftServer implements Runnable, ICommandListener, IMinecraftSe
                 long i = System.currentTimeMillis();
 
                 for (long j = 0L; this.isRunning; Thread.sleep(1L)) {
+                    ModLoader.onTick(this);
                     long k = System.currentTimeMillis();
                     long l = k - i;
 

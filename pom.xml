@@ -255,7 +255,7 @@
         <version>0.4</version>
         <configuration>
           <description>${project.version} (${BUILD_NUMBER}) release of ${project.name}</description>
-          <suffix>${BUILD_NUMBER}</suffix>
+          <suffix>-${BUILD_NUMBER}</suffix>
           <override>true</override>
         </configuration>
 		<executions>
