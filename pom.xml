@@ -15,9 +15,9 @@
   </properties>
 
   <scm>
-    <connection>scm:git:git://github.com/Bukkit/CraftBukkit.git</connection>
-    <developerConnection>scm:git:ssh://git@github.com/Bukkit/CraftBukkit.git</developerConnection>
-    <url>https://github.com/Bukkit/CraftBukkit</url>
+    <connection>scm:git:git://github.com/MinecraftPortCentral/CraftBukkit.git</connection>
+    <developerConnection>scm:git:ssh://git@github.com/MinecraftPortCentral/CraftBukkit.git</developerConnection>
+    <url>https://github.com/MinecraftPortCentral/CraftBukkit</url>
   </scm>
 
   <distributionManagement>
@@ -69,9 +69,7 @@
     <dependency>
       <groupId>net.minecraftportcentral</groupId>
       <artifactId>modloadermp</artifactId>
-      <version>1.2.3v3</version>
-      <type>jar</type>
-      <scope>compile</scope>
+      <version>1.2.3v3-r2</version>
     </dependency>
     <dependency>
       <groupId>net.sf.jopt-simple</groupId>
@@ -250,6 +248,23 @@
         <configuration>
           <workingDirectory>${basedir}/target/test-server</workingDirectory>
         </configuration>
+      </plugin>
+      <plugin>
+        <groupId>com.github.github</groupId>
+        <artifactId>downloads-maven-plugin</artifactId>
+        <version>0.4</version>
+        <configuration>
+          <description>${project.version} release of ${project.name}</description>
+          <override>true</override>
+        </configuration>
+		<executions>
+		  <execution>
+		    <goals>
+		      <goal>upload</goal>
+		    </goals>
+		    <phase>install</phase>
+		  </execution>
+		</executions>
       </plugin>
     </plugins>
     <pluginManagement>
