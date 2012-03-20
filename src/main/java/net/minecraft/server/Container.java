@@ -11,6 +11,8 @@ import org.bukkit.craftbukkit.inventory.CraftInventory;
 import org.bukkit.inventory.InventoryView;
 // CraftBukkit end
 
+import forge.bukkit.ModInventoryView;
+
 public abstract class Container {
 
     public List d = new ArrayList();
@@ -19,10 +21,12 @@ public abstract class Container {
     private short a = 0;
     protected List listeners = new ArrayList();
     private Set b = new HashSet();
-
+    
     // CraftBukkit start
     public boolean checkReachable = true;
-    public abstract InventoryView getBukkitView();
+    public InventoryView getBukkitView() {
+    	return new ModInventoryView(this, getPlayer());
+    }
     public void transferTo(Container other, CraftHumanEntity player) {
         InventoryView source = this.getBukkitView(), destination = other.getBukkitView();
         ((CraftInventory) source.getTopInventory()).getInventory().onClose(player);
@@ -34,6 +38,10 @@ public abstract class Container {
 
     public Container() {}
 
+    public EntityPlayer getPlayer() {
+    	return null;
+    }
+    
     protected void a(Slot slot) {
         slot.c = this.e.size();
         this.e.add(slot);
@@ -321,4 +329,7 @@ public abstract class Container {
 
         return flag1;
     }
+	public IInventory getInventory() {
+		return null;
+	}
 }
