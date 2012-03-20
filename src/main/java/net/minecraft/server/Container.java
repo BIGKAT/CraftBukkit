@@ -24,6 +24,7 @@ public abstract class Container {
     
     // CraftBukkit start
     public boolean checkReachable = true;
+	private EntityHuman forgePlayer;
     public InventoryView getBukkitView() {
     	return new ModInventoryView(this, getPlayer());
     }
@@ -38,8 +39,8 @@ public abstract class Container {
 
     public Container() {}
 
-    public EntityPlayer getPlayer() {
-    	return null;
+    public EntityHuman getPlayer() {
+    	return this.forgePlayer;
     }
     
     protected void a(Slot slot) {
@@ -331,5 +332,8 @@ public abstract class Container {
     }
 	public IInventory getInventory() {
 		return null;
+	}
+	public void setPlayer(EntityHuman player) {
+		this.forgePlayer=player;
 	}
 }
