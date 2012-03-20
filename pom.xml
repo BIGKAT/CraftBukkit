@@ -189,7 +189,7 @@
               <Specification-Title>Bukkit</Specification-Title>
               <Specification-Version>${api.version}</Specification-Version>
               <Specification-Vendor>Bukkit Team</Specification-Vendor>
-              <Sealed>true</Sealed>
+              <Sealed>false</Sealed>
             </manifestEntries>
             <manifestSections>
               <manifestSection>
