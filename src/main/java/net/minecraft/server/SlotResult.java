@@ -55,12 +55,12 @@ public class SlotResult extends Slot {
         } else if (itemstack.id == Block.BOOKSHELF.id) {
             this.f.a((Statistic) AchievementList.F, 1);
         }
-
-      ModLoader.takenFromCrafting(this.f, itemstack, this.a);
-      ForgeHooks.onTakenFromCrafting(f, itemstack, a);
     }
 
     public void c(ItemStack itemstack) {
+        ModLoader.takenFromCrafting(this.f, itemstack, this.a);
+        ForgeHooks.onTakenFromCrafting(f, itemstack, a);
+
         this.b(itemstack);
 
         for (int i = 0; i < this.a.getSize(); ++i) {

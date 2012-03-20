@@ -709,6 +709,10 @@ public abstract class EntityHuman extends EntityLiving {
     public void openBrewingStand(TileEntityBrewingStand tileentitybrewingstand) {}
 
     public void e(Entity entity) {
+        if (!ForgeHooks.onEntityInteract(this, entity, false))
+        {
+            return;
+        }
         if (!entity.b(this)) {
             ItemStack itemstack = this.T();
 
@@ -745,6 +749,10 @@ public abstract class EntityHuman extends EntityLiving {
     }
 
     public void attack(Entity entity) {
+        if (!ForgeHooks.onEntityInteract(this, entity, true))
+        {
+            return;
+        }
         ItemStack stack = this.inventory.getItemInHand();
         if (stack != null && stack.getItem().onLeftClickEntity(stack, this, entity)) {
             return;

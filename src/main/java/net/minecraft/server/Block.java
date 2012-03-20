@@ -660,6 +660,20 @@ public class Block {
      */
     public boolean isBlockSolidOnSide(World world, int x, int y, int z, int side) 
     {
+        int meta = world.getData(x, y, z);
+        if (this instanceof BlockStep)
+        {
+            return (((meta & 8) == 8 && (side == 1)) || b());
+        }
+        else if (this instanceof BlockSoil)
+        {
+            return (side != 1 && side != 0);
+        }
+        else if (this instanceof BlockStairs)
+        {
+            boolean flipped = ((meta & 4) != 0);
+            return ((meta & 3) + side == 5) || (side == 1 && flipped);
+        }
         return isBlockNormalCube(world, x, y, z);
     }
 
