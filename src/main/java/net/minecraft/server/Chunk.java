@@ -376,7 +376,7 @@ public class Chunk {
             int i2 = this.x * 16 + i;
             int j2 = this.z * 16 + k;
 
-            if (l1 != 0) {
+            if (l1 != 0 && !this.world.suppressPhysics) {
                 if (!this.world.isStatic) {
                     Block.byId[l1].remove(this.world, i2, j, j2);
                 }
@@ -403,7 +403,7 @@ public class Chunk {
 
             TileEntity tileentity;
 
-            if (l != 0) {
+            if (l != 0 && !this.world.suppressPhysics) {
                 if (!this.world.isStatic) {
                     Block.byId[l].onPlace(this.world, i2, j, j2);
                 }
