@@ -415,5 +415,5 @@ public class BlockMinecartTrack extends Block {
 	 */
 	public boolean hasPowerBit(World world, int x, int y, int z) {
 		return a;
-	}
+    }
 }
