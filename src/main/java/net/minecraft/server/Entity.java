@@ -210,11 +210,11 @@ public abstract class Entity {
         this.boundingBox.c(d0 - (double) f, d1 - (double) this.height + (double) this.bO, d2 - (double) f, d0 + (double) f, d1 - (double) this.height + (double) this.bO + (double) f1, d2 + (double) f);
     }
 
-    public void G_() {
-        this.az();
+    public void F_() {
+        this.aA();
     }
 
-    public void az() {
+    public void aA() {
         // MethodProfiler.a("entityBaseTick"); // CraftBukkit - not in production code
         if (this.vehicle != null && this.vehicle.dead) {
             this.vehicle = null;
@@ -229,7 +229,7 @@ public abstract class Entity {
         this.lastYaw = this.yaw;
         int i;
 
-        if (this.isSprinting() && !this.aT()) {
+        if (this.isSprinting() && !this.aU()) {
             int j = MathHelper.floor(this.locX);
             int k = MathHelper.floor(this.locY - 0.20000000298023224D - (double) this.height);
 
@@ -303,13 +303,13 @@ public abstract class Entity {
             }
         }
 
-        if (this.aU()) {
-            this.aP();
+        if (this.aV()) {
+            this.aQ();
             this.fallDistance *= 0.5F;
         }
 
         if (this.locY < -64.0D) {
-            this.aH();
+            this.aI();
         }
 
         if (!this.world.isStatic) {
@@ -321,7 +321,7 @@ public abstract class Entity {
         // MethodProfiler.a(); // CraftBukkit - not in production code
     }
 
-    protected void aP() {
+    protected void aQ() {
         if (!this.fireProof) {
             // CraftBukkit start - fallen in lava TODO: this event spams!
             if (this instanceof EntityLiving) {
@@ -371,7 +371,7 @@ public abstract class Entity {
         this.fireTicks = 0;
     }
 
-    protected void aH() {
+    protected void aI() {
         this.die();
     }
 
@@ -431,6 +431,27 @@ public abstract class Entity {
                     } else {
                         d2 += d8;
                     }
+                }
+
+                while (d0 != 0.0D && d2 != 0.0D && this.world.getCubes(this, this.boundingBox.c(d0, -1.0D, d2)).size() == 0) {
+                    if (d0 < d8 && d0 >= -d8) {
+                        d0 = 0.0D;
+                    } else if (d0 > 0.0D) {
+                        d0 -= d8;
+                    } else {
+                        d0 += d8;
+                    }
+
+                    if (d2 < d8 && d2 >= -d8) {
+                        d2 = 0.0D;
+                    } else if (d2 > 0.0D) {
+                        d2 -= d8;
+                    } else {
+                        d2 += d8;
+                    }
+
+                    d5 = d0;
+                    d7 = d2;
                 }
             }
 
@@ -637,7 +658,7 @@ public abstract class Entity {
                 }
             }
 
-            boolean flag2 = this.aS();
+            boolean flag2 = this.aT();
 
             if (this.world.d(this.boundingBox.shrink(0.0010D, 0.0010D, 0.0010D))) {
                 this.burn(1);
@@ -742,11 +763,11 @@ public abstract class Entity {
         }
     }
 
-    public boolean aS() {
+    public boolean aT() {
         return this.bV || this.world.y(MathHelper.floor(this.locX), MathHelper.floor(this.locY), MathHelper.floor(this.locZ));
     }
 
-    public boolean aT() {
+    public boolean aU() {
         return this.bV;
     }
 
@@ -775,7 +796,7 @@ public abstract class Entity {
         return 0.0F;
     }
 
-    public boolean aU() {
+    public boolean aV() {
         return this.world.a(this.boundingBox.grow(-0.10000000149011612D, -0.4000000059604645D, -0.10000000149011612D), Material.LAVA);
     }
 
@@ -922,12 +943,12 @@ public abstract class Entity {
         this.ce = true;
     }
 
-    protected void aV() {
+    protected void aW() {
         this.velocityChanged = true;
     }
 
     public boolean damageEntity(DamageSource damagesource, int i) {
-        this.aV();
+        this.aW();
         return false;
     }
 
@@ -942,7 +963,7 @@ public abstract class Entity {
     public void b(Entity entity, int i) {}
 
     public boolean c(NBTTagCompound nbttagcompound) {
-        String s = this.aW();
+        String s = this.aX();
 
         if (!this.dead && s != null) {
             nbttagcompound.setString("id", s);
@@ -1074,7 +1095,7 @@ public abstract class Entity {
         // CraftBukkit end
     }
 
-    protected final String aW() {
+    protected final String aX() {
         return EntityTypes.b(this);
     }
 
@@ -1155,14 +1176,14 @@ public abstract class Entity {
         return null;
     }
 
-    public void Q() {
+    public void R() {
         if (this.vehicle.dead) {
             this.vehicle = null;
         } else {
             this.motX = 0.0D;
             this.motY = 0.0D;
             this.motZ = 0.0D;
-            this.G_();
+            this.F_();
             if (this.vehicle != null) {
                 this.vehicle.i_();
                 this.f += (double) (this.vehicle.yaw - this.vehicle.lastYaw);
@@ -1212,10 +1233,10 @@ public abstract class Entity {
     }
 
     public void i_() {
-        this.passenger.setPosition(this.locX, this.locY + this.x_() + this.passenger.V(), this.locZ);
+        this.passenger.setPosition(this.locX, this.locY + this.x_() + this.passenger.W(), this.locZ);
     }
 
-    public double V() {
+    public double W() {
         return (double) this.height;
     }
 
@@ -1300,11 +1321,11 @@ public abstract class Entity {
         return 0.1F;
     }
 
-    public Vec3D aI() {
+    public Vec3D aJ() {
         return null;
     }
 
-    public void ac() {}
+    public void ad() {}
 
     public ItemStack[] getEquipment() {
         return null;
@@ -1496,7 +1517,7 @@ public abstract class Entity {
         return LocaleI18n.get("entity." + s + ".name");
     }
 
-    public Entity[] ba() {
+    public Entity[] bb() {
         return null;
     }
 
@@ -1504,7 +1525,7 @@ public abstract class Entity {
         return this == entity;
     }
 
-    public float aq() {
+    public float ar() {
         return 0.0F;
     }
 

@@ -164,7 +164,7 @@ public class BlockLeaves extends BlockTransparant implements IShearable {
     public void a(World world, EntityHuman entityhuman, int i, int j, int k, int l) {
     	//FORGE
             super.a(world, entityhuman, i, j, k, l);
-    }
+        }
 
     protected int getDropData(int i) {
         return i & 3;

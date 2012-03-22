@@ -1,5 +1,6 @@
 package net.minecraft.server;
 
+import java.util.ArrayList; // CraftBukkit
 import java.util.Random;
 
 import forge.ForgeHooks;
@@ -43,11 +44,11 @@ public class BlockLongGrass extends BlockFlower implements IShearable {
 			ret.add(item);
 		}
 		return ret;
-	}
+    }
 
 	public boolean isShearable(ItemStack item, World world, int x, int y, int z) {
 		return true;
-	}
+        }
 
 	public ArrayList<ItemStack> onSheared(ItemStack item, World world, int x, int y, int z, int fortune) {
 		ArrayList<ItemStack> ret = new ArrayList<ItemStack>();

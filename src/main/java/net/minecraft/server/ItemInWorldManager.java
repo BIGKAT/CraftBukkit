@@ -3,7 +3,6 @@ package net.minecraft.server;
 import forge.ForgeHooks;
 
 // CraftBukkit start
-import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockDamageEvent;
 import org.bukkit.craftbukkit.event.CraftEventFactory;
 import org.bukkit.event.Event;
@@ -52,6 +51,8 @@ public class ItemInWorldManager {
             this.player.abilities.canInstantlyBuild = true;
             this.player.abilities.isInvulnerable = true;
         }
+
+        this.player.updateAbilities();
     }
 
     public int getGameMode() {
@@ -208,7 +209,7 @@ public class ItemInWorldManager {
         int l = this.world.getTypeId(i, j, k);
         int i1 = this.world.getData(i, j, k);
 
-        ItemStack stack = this.player.T();
+        ItemStack stack = this.player.U();
         if (stack != null && stack.getItem().onBlockStartBreak(stack, i, j, k, this.player)) {
             return false;
         }
@@ -230,14 +231,14 @@ public class ItemInWorldManager {
             // CraftBukkit end
             ((EntityPlayer) this.player).netServerHandler.sendPacket(new Packet53BlockChange(i, j, k, this.world));
         } else {
-            ItemStack itemstack = this.player.T();
+            ItemStack itemstack = this.player.U();
             boolean flag1 = Block.byId[l].canHarvestBlock(this.player, i1);
 
             if (itemstack != null) {
                 itemstack.a(l, i, j, k, this.player);
                 if (itemstack.count == 0) {
                     itemstack.a(this.player);
-                    this.player.U();
+                    this.player.V();
                     ForgeHooks.onDestroyCurrentItem(this.player, itemstack);
                 }
             }

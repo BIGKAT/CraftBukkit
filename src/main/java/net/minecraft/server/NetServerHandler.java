@@ -577,9 +577,9 @@ public class NetServerHandler extends NetHandler implements ICommandListener {
                 }
             }
             // CraftBukkit end
-            this.player.R();
+            this.player.S();
         } else if (packet14blockdig.e == 5) {
-            this.player.M();
+            this.player.N();
         } else {
             boolean flag = worldserver.weirdIsOpCache = worldserver.dimension != 0 || this.minecraftServer.serverConfigurationManager.isOp(this.player.name); // CraftBukkit
             boolean flag1 = false;
@@ -719,7 +719,7 @@ public class NetServerHandler extends NetHandler implements ICommandListener {
 
             double dist = player.itemInWorldManager.getBlockReachDistance() + 1;
             dist *= dist;
-            
+
             // CraftBukkit start - Check if we can actually do something over this large a distance
             Location eyeLoc = this.getPlayer().getEyeLocation();
             if (Math.pow(eyeLoc.getX() - i, 2) + Math.pow(eyeLoc.getY() - j, 2) + Math.pow(eyeLoc.getZ() - k, 2) > Math.max(dist,PLACE_DISTANCE_SQUARED)) {
@@ -994,7 +994,7 @@ public class NetServerHandler extends NetHandler implements ICommandListener {
             if (event.isCancelled()) return;
             // CraftBukkit end
 
-            this.player.D();
+            this.player.C_();
         }
     }
 
@@ -1388,15 +1388,19 @@ public class NetServerHandler extends NetHandler implements ICommandListener {
         return true;
     }
 
+    public void a(Packet202Abilities packet202abilities) {
+        this.player.abilities.isFlying = packet202abilities.b && this.player.abilities.canFly;
+	}
+
     public EntityPlayer getPlayerEntity() {
     	return this.player;
     }
-    
+
     // CraftBukkit start
     @Override
     public void a(Packet250CustomPayload packet) {
     	MessageManager inst = MessageManager.getInstance();
-    	if (packet.tag.equals("REGISTER")) {
+        if (packet.tag.equals("REGISTER")) {
             try {
                 String channels = new String(packet.data, "UTF8");
                 for (String channel : channels.split("\0")) {

@@ -140,7 +140,7 @@ public class EntityPlayer extends EntityHuman implements ICrafting {
         return 1.62F;
     }
 
-    public void G_() {
+    public void F_() {
         this.itemInWorldManager.c();
         --this.invulnerableTicks;
         this.activeContainer.a();
@@ -221,7 +221,7 @@ public class EntityPlayer extends EntityHuman implements ICrafting {
         }
     }
 
-    protected boolean C_() {
+    protected boolean C() {
         return this.server.pvpMode;
     }
 
@@ -230,7 +230,7 @@ public class EntityPlayer extends EntityHuman implements ICrafting {
     }
 
     public void a(boolean flag) {
-        super.G_();
+        super.F_();
 
         for (int i = 0; i < this.inventory.getSize(); ++i) {
             ItemStack itemstack = this.inventory.getItem(i);
@@ -410,7 +410,7 @@ public class EntityPlayer extends EntityHuman implements ICrafting {
         this.activeContainer.a();
     }
 
-    public void D() {
+    public void C_() {
         if (!this.t) {
             this.u = -1;
             this.t = true;
@@ -632,7 +632,7 @@ public class EntityPlayer extends EntityHuman implements ICrafting {
         }
     }
 
-    public void J() {
+    public void D_() {
         this.cf = -99999999;
         this.lastSentExp = -1; // CraftBukkit - Added to reset
     }
@@ -687,6 +687,12 @@ public class EntityPlayer extends EntityHuman implements ICrafting {
         EntityTracker entitytracker = this.server.getTracker(this.dimension);
 
         entitytracker.sendPacketToEntity(this, new Packet18ArmAnimation(entity, 7));
+    }
+
+    public void updateAbilities() {
+        if (this.netServerHandler != null) {
+            this.netServerHandler.sendPacket(new Packet202Abilities(this.abilities));
+        }
     }
 
     // CraftBukkit start

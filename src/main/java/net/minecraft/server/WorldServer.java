@@ -185,7 +185,7 @@ public class WorldServer extends World implements BlockChangeDelegate {
     protected void c(Entity entity) {
         super.c(entity);
         this.entitiesById.a(entity.id, entity);
-        Entity[] aentity = entity.ba();
+        Entity[] aentity = entity.bb();
 
         if (aentity != null) {
             for (int i = 0; i < aentity.length; ++i) {
@@ -197,7 +197,7 @@ public class WorldServer extends World implements BlockChangeDelegate {
     protected void d(Entity entity) {
         super.d(entity);
         this.entitiesById.d(entity.id);
-        Entity[] aentity = entity.ba();
+        Entity[] aentity = entity.bb();
 
         if (aentity != null) {
             for (int i = 0; i < aentity.length; ++i) {

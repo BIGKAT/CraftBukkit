@@ -2,6 +2,7 @@ package net.minecraft.server;
 
 // CraftBukkit start
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 import org.bukkit.Location;
@@ -17,6 +18,7 @@ import org.bukkit.event.vehicle.VehicleUpdateEvent;
 import org.bukkit.util.Vector;
 import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.craftbukkit.entity.CraftHumanEntity;
+import org.bukkit.craftbukkit.inventory.CraftItemStack;
 // CraftBukkit end
 
 import forge.ForgeHooks;
@@ -186,23 +188,31 @@ public class EntityMinecart extends Entity implements IInventory {
             this.aV();
             this.setDamage(this.getDamage() + i * 10);
             if (this.getDamage() > 40) {
-                if (this.passenger != null) {
-                    this.passenger.mount(this);
-                }
-
                 // CraftBukkit start
-                VehicleDestroyEvent destroyEvent = new VehicleDestroyEvent(vehicle, passenger);
+                List<org.bukkit.inventory.ItemStack> drops = new ArrayList<org.bukkit.inventory.ItemStack>();
+                drops.add(new CraftItemStack(Item.MINECART.id,1));
+                if (this.type == 1) {
+                    drops.add(new CraftItemStack(Block.CHEST.id,1));
+                } else if (this.type == 2) {
+                    drops.add(new org.bukkit.inventory.ItemStack(Block.FURNACE.id,1));
+                }
+                VehicleDestroyEvent destroyEvent = new VehicleDestroyEvent(vehicle, passenger, drops);
                 this.world.getServer().getPluginManager().callEvent(destroyEvent);
 
                 if (destroyEvent.isCancelled()) {
                     this.setDamage(40); // Maximize damage so this doesn't get triggered again right away
                     return true;
                 }
+
                 // CraftBukkit end
+
+                if (this.passenger != null) {
+                    this.passenger.mount(this);
+                }
 
                 this.die();
                 dropCartAsItem();
-                                }
+                }
             return true;
         } else {
             return true;
@@ -230,8 +240,12 @@ public class EntityMinecart extends Entity implements IInventory {
                     }
 
                     itemstack.count -= j;
-                    // CraftBukkit - include enchantments in the new itemstack
-                    EntityItem entityitem = new EntityItem(this.world, this.locX + (double) f, this.locY + (double) f1, this.locZ + (double) f2, new ItemStack(itemstack.id, j, itemstack.getData(), itemstack.getEnchantments()));
+                    EntityItem entityitem = new EntityItem(this.world, this.locX + (double) f, this.locY + (double) f1, this.locZ + (double) f2, new ItemStack(itemstack.id, j, itemstack.getData()));
+
+                    if (itemstack.hasTag()) {
+                        entityitem.itemStack.setTag((NBTTagCompound) itemstack.getTag().clone());
+                    }
+
                     float f3 = 0.05F;
 
                     entityitem.motX = (double) ((float) this.random.nextGaussian() * f3);
@@ -245,7 +259,7 @@ public class EntityMinecart extends Entity implements IInventory {
         super.die();
     }
 
-    public void G_() {
+    public void F_() {
         // CraftBukkit start
         double prevX = this.locX;
         double prevY = this.locY;
@@ -262,8 +276,11 @@ public class EntityMinecart extends Entity implements IInventory {
             this.setDamage(this.getDamage() - 1);
         }
 
-        if (this.k() && this.random.nextInt(4) == 0 && type == 2 && getClass() == EntityMinecart.class) {
-            this.world.a("largesmoke", this.locX, this.locY + 0.8D, this.locZ, 0.0D, 0.0D, 0.0D);
+        if (this.locY < -64.0D) {
+            this.aI();
+        }
+
+        if (this.k() && this.random.nextInt(4) == 0 && type == 2 && getClass() == EntityMinecart.class) {            this.world.a("largesmoke", this.locX, this.locY + 0.8D, this.locZ, 0.0D, 0.0D, 0.0D);
         }
 
         if (this.world.isStatic) {

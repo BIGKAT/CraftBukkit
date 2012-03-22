@@ -292,13 +292,13 @@ public class BlockVine extends Block implements IShearable {
 
 	public boolean isShearable(ItemStack item, World world, int x, int y, int z) {
 		return true;
-	}
+    }
 
 	public ArrayList<ItemStack> onSheared(ItemStack item, World world, int x, int y, int z, int fortune) {
 		ArrayList<ItemStack> ret = new ArrayList<ItemStack>();
 		ret.add(new ItemStack(this, 1, 0));
 		return ret;
-	}
+        }
 	@Override
 	public boolean isLadder(World world, int x, int y, int z) {
 		return true;
