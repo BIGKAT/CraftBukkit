@@ -77,8 +77,7 @@ public class BlockTrapdoor extends Block {
 		this.interact(world, i, j, k, entityhuman);
 	}
 
-	public boolean interact(World world, int i, int j, int k,
-			EntityHuman entityhuman) {
+	public boolean interact(World world, int i, int j, int k, EntityHuman entityhuman) {
 		if (this.material == Material.ORE) {
 			return true;
 		} else {
@@ -122,40 +121,31 @@ public class BlockTrapdoor extends Block {
 				--j1;
 			}
 
-			if (!h(world.getTypeId(j1, j, k1))
-					|| world.isBlockSolidOnSide(j1, j, k1, (i1 & 3) + 2)) {
+			if (!(h(world.getTypeId(j1, j, k1)) || world.isBlockSolidOnSide(j1, j, k1, (i1 & 3) + 2))) {
 				world.setTypeId(i, j, k, 0);
 				this.b(world, i, j, k, i1, 0);
 			}
 
 			// CraftBukkit start
-			if (l == 0 || l > 0 && Block.byId[l] != null
-					&& Block.byId[l].isPowerSource()) {
+			if (l == 0 || l > 0 && Block.byId[l] != null && Block.byId[l].isPowerSource()) {
 				org.bukkit.World bworld = world.getWorld();
 				org.bukkit.block.Block block = bworld.getBlockAt(i, j, k);
 
 				int power = block.getBlockPower();
 				int oldPower = (world.getData(i, j, k) & 4) > 0 ? 15 : 0;
 
-				if (oldPower == 0
-						^ power == 0
-						|| (Block.byId[l] != null && Block.byId[l]
-								.isPowerSource())) {
-					BlockRedstoneEvent eventRedstone = new BlockRedstoneEvent(
-							block, oldPower, power);
-					world.getServer().getPluginManager()
-							.callEvent(eventRedstone);
+				if (oldPower == 0 ^ power == 0 || (Block.byId[l] != null && Block.byId[l].isPowerSource())) {
+					BlockRedstoneEvent eventRedstone = new BlockRedstoneEvent(block, oldPower, power);
+					world.getServer().getPluginManager().callEvent(eventRedstone);
 
-					this.setOpen(world, i, j, k,
-							eventRedstone.getNewCurrent() > 0);
+					this.setOpen(world, i, j, k, eventRedstone.getNewCurrent() > 0);
 				}
 				// CraftBukkit end
 			}
 		}
 	}
 
-	public MovingObjectPosition a(World world, int i, int j, int k,
-			Vec3D vec3d, Vec3D vec3d1) {
+	public MovingObjectPosition a(World world, int i, int j, int k, Vec3D vec3d, Vec3D vec3d1) {
 		this.updateShape(world, i, j, k);
 		return super.a(world, i, j, k, vec3d, vec3d1);
 	}
@@ -223,8 +213,7 @@ public class BlockTrapdoor extends Block {
 		} else {
 			Block block = Block.byId[i];
 
-			return block != null && block.material.j() && block.b()
-					|| block == Block.GLOWSTONE;
+			return block != null && block.material.j() && block.b() || block == Block.GLOWSTONE;
 		}
 	}
 }
