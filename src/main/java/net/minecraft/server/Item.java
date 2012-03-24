@@ -418,7 +418,7 @@ public class Item {
      */
     public boolean isRepairable() 
     {
-        return canRepair && e();
+        return canRepair && g();
     }
     /**
      * Call to disable repair recipes.
