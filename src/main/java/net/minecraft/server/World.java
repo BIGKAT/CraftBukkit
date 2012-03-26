@@ -1203,6 +1203,7 @@ public class World implements IBlockAccess {
         }
 
         // MethodProfiler.b("pendingTileEntities"); // CraftBukkit - not in production code
+        synchronized (this.J) {
         if (!this.J.isEmpty()) {
             Iterator iterator1 = this.J.iterator();
 
@@ -1237,6 +1238,7 @@ public class World implements IBlockAccess {
 
             this.J.clear();
         }
+        }
 
         // MethodProfiler.a(); // CraftBukkit - not in production code
         // MethodProfiler.a(); // CraftBukkit - not in production code
@@ -1244,10 +1246,12 @@ public class World implements IBlockAccess {
 
     public void a(Collection collection) {
     	List dest = Q ? J : tileEntityList;
+    	synchronized (this.J) {
     	for (Object entity : collection) {
     		if (((TileEntity)entity).canUpdate()) {
     			dest.add(entity);
     		}
+    	}
     	}
     }
 
@@ -1625,14 +1629,16 @@ public class World implements IBlockAccess {
                 TileEntity tileentity = chunk.e(i & 15, j, k & 15);
 
                 if (tileentity == null) {
-                    Iterator iterator = this.J.iterator();
+                    synchronized (this.J) {
+                        Iterator iterator = this.J.iterator();
 
-                    while (iterator.hasNext()) {
-                        TileEntity tileentity1 = (TileEntity) iterator.next();
+                        while (iterator.hasNext()) {
+                            TileEntity tileentity1 = (TileEntity) iterator.next();
 
-                        if (!tileentity1.l() && tileentity1.x == i && tileentity1.y == j && tileentity1.z == k) {
-                            tileentity = tileentity1;
-                            break;
+                            if (!tileentity1.l() && tileentity1.x == i && tileentity1.y == j && tileentity1.z == k) {
+                                tileentity = tileentity1;
+                                break;
+                            }
                         }
                     }
                 }
@@ -1649,7 +1655,9 @@ public class World implements IBlockAccess {
     	List dest = Q ? J : tileEntityList;
     	if (tileentity.canUpdate())
     	{
+    	    synchronized (dest) {
     		dest.add(tileentity);
+            }
     	}
         // CraftBukkit - order matters, moved down
         // this.tileEntityList.add(tileentity);
@@ -2951,7 +2959,9 @@ public class World implements IBlockAccess {
         List dest = Q ? J : tileEntityList;
         if(entity.canUpdate())
         {
-            dest.add(entity);
+            synchronized (dest) {
+                dest.add(entity);
+            }
         }
     }
     
