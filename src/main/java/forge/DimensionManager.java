@@ -54,7 +54,7 @@ public class DimensionManager
 
     public static World getWorld(int id)
     {
-        return worlds.get(id);
+        return getWorlds()[id];
     }
 
     public static World[] getWorlds()

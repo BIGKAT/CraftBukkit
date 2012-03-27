@@ -741,37 +741,17 @@ public class EntityPlayer extends EntityHuman implements ICrafting {
     }
     // CraftBukkit end
 
-    /**
-     * Opens a Gui for the player. 
-     * 
-     * @param mod The mod associated with the gui
-     * @param ID The ID number for the Gui
-     * @param world The World
-     * @param x X Position
-     * @param y Y Position
-     * @param z Z Position
+    /* These functions are added to have compatibility with PlayerAPI. 
+     * If Divisor does not implement these functions, it is his fault, 
+     * these are specifically the functions he told me to use and would be guaranteed to be in PAPI.
      */
-    @Override
-    public void openGui(BaseMod mod, int ID, World world, int x, int y, int z)
+    public final void realGetNextWidowId()
     {
-        if (!(mod instanceof NetworkMod))
-        {
-            return;
-        }
-        IGuiHandler handler = MinecraftForge.getGuiHandler(mod);
-        if (handler != null)
-        {
-            Container container = handler.getGuiContainer(ID, this, world, x, y, z);
-            if (container != null)
-            {
-                nextContainerCounter();
-                H();
-                PacketOpenGUI pkt = new PacketOpenGUI(containerCounter, MinecraftForge.getModID((NetworkMod)mod), ID, x, y, z);
-                netServerHandler.sendPacket(pkt.getPacket());
-                activeContainer = container; 
-                activeContainer.windowId = containerCounter;
-                activeContainer.addSlotListener(this);
-            }
-        }
+        nextContainerCounter();
+    }
+
+    public final int getCurrentWindowIdField()
+    {
+        return containerCounter;
     }
 }

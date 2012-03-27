@@ -5,7 +5,11 @@ import java.util.List;
 
 import forge.ArmorProperties;
 import forge.ForgeHooks;
+import forge.IGuiHandler;
 import forge.ISpecialArmor;
+import forge.MinecraftForge;
+import forge.NetworkMod;
+import forge.packets.PacketOpenGUI;
 
 // CraftBukkit start
 import org.bukkit.Bukkit;
@@ -1301,5 +1305,31 @@ public abstract class EntityHuman extends EntityLiving {
      * @param Y Y Position
      * @param Z Z Position
      */
-    public void openGui(BaseMod mod, int ID, World world, int x, int y, int z){}
+    public void openGui(BaseMod mod, int ID, World world, int x, int y, int z)
+    {
+        if (!(this instanceof EntityPlayer))
+        {
+            return;
+        }
+        EntityPlayer player = (EntityPlayer)this;
+        if (!(mod instanceof NetworkMod))
+        {
+            return;
+        }
+        IGuiHandler handler = MinecraftForge.getGuiHandler(mod);
+        if (handler != null)
+        {
+            Container container = handler.getGuiContainer(ID, player, world, x, y, z);
+            if (container != null)
+            {
+                player.realGetNextWidowId();
+                player.H();
+                PacketOpenGUI pkt = new PacketOpenGUI(player.getCurrentWindowIdField(), MinecraftForge.getModID((NetworkMod)mod), ID, x, y, z);
+                player.netServerHandler.sendPacket(pkt.getPacket());
+                activeContainer = container; 
+                activeContainer.windowId = player.getCurrentWindowIdField();
+                activeContainer.addSlotListener(player);
+            }
+        }
+    }
 }

@@ -144,7 +144,15 @@ public abstract class Entity {
     	}
     	return customEntityData;
     }
-
+    /**
+     * Used in model rendering to determine if the entity riding this entity should be in the 'sitting' position.
+     * @return false to prevent an entity that is mounted to this entity from displaying the 'sitting' animation.
+     */
+    public boolean shouldRiderSit()
+    {
+        return true;
+    }
+    
     public DataWatcher getDataWatcher() {
         return this.datawatcher;
     }

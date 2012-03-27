@@ -1396,7 +1396,7 @@ public class NetServerHandler extends NetHandler implements ICommandListener {
             try {
                 String channels = new String(packet.data, "UTF8");
                 for (String channel : channels.split("\0")) {
-                    getPlayer().addChannel(channel);
+//                    getPlayer().addChannel(channel);
                     inst.addActiveChannel(networkManager, channel);
                 }
             } catch (UnsupportedEncodingException ex) {
@@ -1406,7 +1406,7 @@ public class NetServerHandler extends NetHandler implements ICommandListener {
             try {
                 String channels = new String(packet.data, "UTF8");
                 for (String channel : channels.split("\0")) {
-                    getPlayer().removeChannel(channel);
+//                    getPlayer().removeChannel(channel);
                     inst.removeActiveChannel(networkManager, channel);
                 }
             } catch (UnsupportedEncodingException ex) {
@@ -1414,7 +1414,7 @@ public class NetServerHandler extends NetHandler implements ICommandListener {
             }
         } else {
         	inst.dispatchIncomingMessage(networkManager, packet.tag, packet.data);
-            server.getMessenger().dispatchIncomingMessage(player.getBukkitEntity(), packet.tag, packet.data);
+//            server.getMessenger().dispatchIncomingMessage(player.getBukkitEntity(), packet.tag, packet.data);
         }
     }
     // CraftBukkit end

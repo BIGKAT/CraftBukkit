@@ -891,7 +891,7 @@ public class MinecraftForge
         {
             if (entry.getKey().isInstance(entity))
             {
-                if (!checkSupers || entry.getKey() == entry.getClass())
+                if (!checkSupers || entry.getKey() == entity.getClass())
                 {
                     return entry.getValue();
                 }
@@ -912,7 +912,7 @@ public class MinecraftForge
         for (Map.Entry<Class, EntityTrackerInfo> entry : ForgeHooks.entityTrackerMap.entrySet())
         {
             EntityTrackerInfo info = entry.getValue();
-            if (type == info.ID && modID == info.Mod.toString().hashCode())
+            if (type == info.ID && modID == getModID(info.Mod))
             {
                 return entry.getKey();
             }
@@ -1004,6 +1004,11 @@ public class MinecraftForge
     public static void registerArrowLooseHandler(IArrowLooseHandler handler)
     {
         ForgeHooks.arrowLooseHandlers.add(handler);
+    }
+    
+    public static boolean isClient()
+    {
+    	return false;
     }
     
     static
