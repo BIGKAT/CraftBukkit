@@ -725,6 +725,7 @@ public abstract class EntityHuman extends EntityLiving {
     }
 
     public void V() {
+        ItemStack orig = inventory.getItemInHand();
         this.inventory.setItem(this.inventory.itemInHandIndex, (ItemStack) null);
         ForgeHooks.onDestroyCurrentItem(this, orig);
     }

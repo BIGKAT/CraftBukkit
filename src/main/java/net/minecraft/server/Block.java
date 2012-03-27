@@ -3,6 +3,8 @@ package net.minecraft.server;
 import java.util.ArrayList;
 import java.util.Random;
 
+import forge.ForgeHooks;
+
 public class Block {
 
     public static final StepSound d = new StepSound("stone", 1.0F, 1.0F);

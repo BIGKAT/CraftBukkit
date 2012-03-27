@@ -107,7 +107,7 @@ public class BlockCrops extends BlockFlower {
 
                     entityitem.pickupDelay = 10;
                     world.addEntity(entityitem);
-                    // */
+                    //
                     this.a(world, i, j, k, new ItemStack(Item.SEEDS));
                 }
             }
