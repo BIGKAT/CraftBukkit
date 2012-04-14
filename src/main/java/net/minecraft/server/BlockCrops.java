@@ -1,6 +1,7 @@
 package net.minecraft.server;
 
 import java.util.Random;
+import java.util.ArrayList;
 
 public class BlockCrops extends BlockFlower {
 
@@ -89,7 +90,8 @@ public class BlockCrops extends BlockFlower {
         return 6;
     }
 
-    public void dropNaturally(World world, int i, int j, int k, int l, float f, int i1) {
+    //FORGE
+    /*public void dropNaturally(World world, int i, int j, int k, int l, float f, int i1) {
         super.dropNaturally(world, i, j, k, l, f, 0);
         if (!world.isStatic) {
             int j1 = 3 + i1;
@@ -107,6 +109,22 @@ public class BlockCrops extends BlockFlower {
                 }
             }
         }
+    }*/
+    
+    //FORGE
+    @Override 
+    public ArrayList<ItemStack> getBlockDropped(World world, int x, int y, int z, int metadata, int fortune) {
+        ArrayList<ItemStack> ret = new ArrayList<ItemStack>();
+        if (metadata == 7) {
+            ret.add(new ItemStack(Item.WHEAT));
+        }
+        
+        for (int n = 0; n < 3 + fortune; n++) {
+            if (world.random.nextInt(15) < metadata) {
+                ret.add(new ItemStack(Item.SEEDS));
+            }
+        }
+        return ret;
     }
 
     public int getDropType(int i, Random random, int j) {

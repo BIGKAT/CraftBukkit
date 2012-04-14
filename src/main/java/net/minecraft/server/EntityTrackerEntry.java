@@ -1,10 +1,13 @@
 package net.minecraft.server;
 
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
+
+import forge.ForgeHooks;
 
 public class EntityTrackerEntry {
 
@@ -284,6 +287,10 @@ public class EntityTrackerEntry {
             return null;
             // CraftBukkit end
         }
+		Packet pkt = ForgeHooks.getEntitySpawnPacket(this.tracker);
+		if (pkt != null) {
+			return pkt;
+		}
 
         if (this.tracker instanceof EntityItem) {
             EntityItem entityitem = (EntityItem) this.tracker;

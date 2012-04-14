@@ -3,7 +3,7 @@ package net.minecraft.server;
 import java.util.ArrayList;
 import java.util.List;
 
-class MinecartTrackLogic {
+public class MinecartTrackLogic {
 
     private World b;
     private int c;
@@ -13,6 +13,8 @@ class MinecartTrackLogic {
     private List g;
 
     final BlockMinecartTrack a;
+    //FORGE
+    private final boolean canMakeSlopes;
 
     public MinecartTrackLogic(BlockMinecartTrack blockminecarttrack, World world, int i, int j, int k) {
         this.a = blockminecarttrack;
@@ -23,15 +25,13 @@ class MinecartTrackLogic {
         this.e = k;
         int l = world.getTypeId(i, j, k);
         int i1 = world.getData(i, j, k);
+        //FORGE
+		BlockMinecartTrack target = (BlockMinecartTrack) Block.byId[l];
+		int var7 = target.getBasicRailMetadata(world, null, i, j, k);
+		f = !target.isFlexibleRail(world, i, j, k);
+		canMakeSlopes = target.canMakeSlopes(world, i, j, k);
 
-        if (BlockMinecartTrack.a((BlockMinecartTrack) Block.byId[l])) {
-            this.f = true;
-            i1 &= -9;
-        } else {
-            this.f = false;
-        }
-
-        this.a(i1);
+        this.a(var7);
     }
 
     private void a(int i) {
@@ -183,7 +183,7 @@ class MinecartTrackLogic {
             }
         }
 
-        if (b0 == 0) {
+        if (b0 == 0 && canMakeSlopes) {
             if (BlockMinecartTrack.g(this.b, this.c, this.d + 1, this.e - 1)) {
                 b0 = 4;
             }
@@ -193,7 +193,7 @@ class MinecartTrackLogic {
             }
         }
 
-        if (b0 == 1) {
+        if (b0 == 1 && canMakeSlopes) {
             if (BlockMinecartTrack.g(this.b, this.c + 1, this.d + 1, this.e)) {
                 b0 = 2;
             }
@@ -306,7 +306,7 @@ class MinecartTrackLogic {
             }
         }
 
-        if (b0 == 0) {
+        if (b0 == 0 && canMakeSlopes) {
             if (BlockMinecartTrack.g(this.b, this.c, this.d + 1, this.e - 1)) {
                 b0 = 4;
             }
@@ -316,7 +316,7 @@ class MinecartTrackLogic {
             }
         }
 
-        if (b0 == 1) {
+        if (b0 == 1 && canMakeSlopes) {
             if (BlockMinecartTrack.g(this.b, this.c + 1, this.d + 1, this.e)) {
                 b0 = 2;
             }
@@ -353,7 +353,7 @@ class MinecartTrackLogic {
         }
     }
 
-    static int a(MinecartTrackLogic minecarttracklogic) {
+    public static int a(MinecartTrackLogic minecarttracklogic) {
         return minecarttracklogic.b();
     }
 }

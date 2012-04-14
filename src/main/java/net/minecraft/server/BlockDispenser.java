@@ -8,6 +8,8 @@ import org.bukkit.event.block.BlockDispenseEvent;
 import org.bukkit.util.Vector;
 // CraftBukkit end
 
+import cpw.mods.fml.server.FMLBukkitHandler;
+
 public class BlockDispenser extends BlockContainer {
 
     private Random a = new Random();
@@ -144,7 +146,9 @@ public class BlockDispenser extends BlockContainer {
                 itemstack = CraftItemStack.createNMSItemStack(event.getItem());
                 // CraftBukkit end
 
-                if (itemstack.id == Item.ARROW.id) {
+                if (FMLBukkitHandler.instance().tryDispensingEntity(world, d0, d1, d2, b0, b1, itemstack)) {
+                	// Handled
+                } else if (itemstack.id == Item.ARROW.id) {
                     EntityArrow entityarrow = new EntityArrow(world, d0, d1, d2);
 
                     entityarrow.shoot((double) b0, 0.10000000149011612D, (double) b1, 1.1F, 6.0F);

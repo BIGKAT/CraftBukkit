@@ -1,9 +1,13 @@
 package net.minecraft.server;
 
+import forge.ForgeHooks;
+
 // CraftBukkit start
 import org.bukkit.craftbukkit.event.CraftEventFactory;
 import org.bukkit.event.player.PlayerPickupItemEvent;
 // CraftBukkit end
+
+import cpw.mods.fml.server.FMLBukkitHandler;
 
 public class EntityItem extends Entity {
 
@@ -158,6 +162,18 @@ public class EntityItem extends Entity {
                 this.pickupDelay = 0;
             }
             // CraftBukkit end
+
+            if (this.pickupDelay == 0 && !ForgeHooks.onItemPickup(entityhuman, this)) {
+            	FMLBukkitHandler.instance().notifyItemPickup(this,entityhuman);
+                this.world.makeSound(this, "random.pop", 0.2F, ((this.random.nextFloat() - this.random.nextFloat()) * 0.7F + 1.0F) * 2.0F);
+                entityhuman.receive(this, i);
+                if (this.itemStack.count <= 0) {
+                    this.die();
+                }
+                return;
+            }
+            
+            i = this.itemStack.count;
 
             if (this.pickupDelay == 0 && entityhuman.inventory.pickup(this.itemStack)) {
                 if (this.itemStack.id == Block.LOG.id) {

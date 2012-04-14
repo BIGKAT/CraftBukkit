@@ -12,6 +12,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
+import forge.ForgeHooks;
+
 public class ChunkRegionLoader implements IChunkLoader, IAsyncChunkSaver {
 
     private List a = new ArrayList();
@@ -70,6 +72,7 @@ public class ChunkRegionLoader implements IChunkLoader, IAsyncChunkSaver {
             }
 
             chunk.i();
+            ForgeHooks.onChunkLoadData(world, chunk, nbttagcompound);
             return chunk;
         }
     }
@@ -84,6 +87,7 @@ public class ChunkRegionLoader implements IChunkLoader, IAsyncChunkSaver {
             nbttagcompound.set("Level", nbttagcompound1);
             this.a(chunk, world, nbttagcompound1);
             this.a(chunk.k(), nbttagcompound);
+            ForgeHooks.onChunkSaveData(world, chunk, nbttagcompound);
         } catch (Exception exception) {
             exception.printStackTrace();
         }

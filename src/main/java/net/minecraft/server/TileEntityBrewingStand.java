@@ -2,6 +2,8 @@ package net.minecraft.server;
 
 import java.util.List;
 
+import forge.ISidedInventory;
+
 // CraftBukkit start
 import java.util.ArrayList;
 
@@ -12,7 +14,7 @@ import org.bukkit.event.inventory.BrewEvent;
 import org.bukkit.inventory.BrewerInventory;
 // CraftBukkit end
 
-public class TileEntityBrewingStand extends TileEntity implements IInventory {
+public class TileEntityBrewingStand extends TileEntity implements ISidedInventory {
 
     public ItemStack[] items = new ItemStack[4]; // CraftBukkit private -> public
     public int brewTime; // CraftBukkit private -> public
@@ -258,5 +260,17 @@ public class TileEntityBrewingStand extends TileEntity implements IInventory {
         }
 
         return i;
+    }
+
+    @Override
+    public int getStartInventorySide(int side) 
+    {
+        return (side == 1 ? 3 : 0);
+    }
+
+    @Override
+    public int getSizeInventorySide(int side) 
+    {
+        return (side == 1 ? 1 : 3);
     }
 }

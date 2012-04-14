@@ -1,5 +1,7 @@
 package net.minecraft.server;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -8,8 +10,11 @@ import java.util.Set;
 // CraftBukkit start
 import org.bukkit.craftbukkit.entity.CraftHumanEntity;
 import org.bukkit.craftbukkit.inventory.CraftInventory;
+import org.bukkit.event.inventory.InventoryType;
 import org.bukkit.inventory.InventoryView;
 // CraftBukkit end
+
+import forge.bukkit.ModInventoryView;
 
 public abstract class Container {
 
@@ -22,9 +27,22 @@ public abstract class Container {
 
     // CraftBukkit start
     public boolean checkReachable = true;
-    public abstract InventoryView getBukkitView();
+	private EntityHuman forgePlayer;
+    public InventoryView getBukkitView() {
+    	return new ModInventoryView(this, getPlayer());
+    }
     public void transferTo(Container other, CraftHumanEntity player) {
         InventoryView source = this.getBukkitView(), destination = other.getBukkitView();
+        boolean valid=validateBukkitContainer(source);
+        valid&=validateBukkitContainer(destination);
+        if (!valid) {
+        	StringWriter sw=new StringWriter();
+        	new Throwable().printStackTrace(new PrintWriter(sw));
+        	ModLoader.getLogger().severe(String.format("ALERT: SERIOUS BUKKIT PORTING ERROR. %s is a container that does not provide a valid player and inventory to bukkit.\n" +
+        			"The mod porter needs to provide a player through getPlayer() and an IInventory through getInventory().\n" +
+        			"You may encounter issues. File a bug with this message at mcportcentral.co.za, please.\n%s",getClass().getName(),sw.toString()));
+        	return;
+        }
         ((CraftInventory) source.getTopInventory()).getInventory().onClose(player);
         ((CraftInventory) source.getBottomInventory()).getInventory().onClose(player);
         ((CraftInventory) destination.getTopInventory()).getInventory().onOpen(player);
@@ -32,8 +50,21 @@ public abstract class Container {
     }
     // CraftBukkit end
 
+    private boolean validateBukkitContainer(InventoryView source) {
+		if (source.getType()==InventoryType.MOD) {
+			if (getInventory()==null || getPlayer()==null) {
+				return false;
+			}
+		}
+		return true;
+	}
+    
     public Container() {}
 
+    public EntityHuman getPlayer() {
+    	return this.forgePlayer;
+    }
+    
     protected void a(Slot slot) {
         slot.c = this.e.size();
         this.e.add(slot);
@@ -320,5 +351,11 @@ public abstract class Container {
         }
 
         return flag1;
+    }
+	public IInventory getInventory() {
+		return null;
+	}
+	public void setPlayer(EntityHuman player) {
+		this.forgePlayer=player;
     }
 }

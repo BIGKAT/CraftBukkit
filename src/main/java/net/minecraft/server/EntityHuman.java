@@ -3,6 +3,14 @@ package net.minecraft.server;
 import java.util.Iterator;
 import java.util.List;
 
+import forge.ArmorProperties;
+import forge.ForgeHooks;
+import forge.IGuiHandler;
+import forge.ISpecialArmor;
+import forge.MinecraftForge;
+import forge.NetworkMod;
+import forge.packets.PacketOpenGUI;
+
 // CraftBukkit start
 import org.bukkit.Bukkit;
 import org.bukkit.craftbukkit.entity.CraftItem;
@@ -122,6 +130,7 @@ public abstract class EntityHuman extends EntityLiving {
             if (itemstack != this.d) {
                 this.O();
             } else {
+                d.getItem().onUsingItemTick(d, this, e);
                 if (this.e <= 25 && this.e % 4 == 0) {
                     this.b(itemstack, 5);
                 }
@@ -391,7 +400,14 @@ public abstract class EntityHuman extends EntityLiving {
     }
 
     public EntityItem S() {
-        return this.a(this.inventory.splitStack(this.inventory.itemInHandIndex, 1), false);
+        ItemStack stack = inventory.getItemInHand();
+        if (stack == null) {
+            return null;
+        }
+        if (stack.getItem().onDroppedByPlayer(stack, this)) {
+	        return this.a(this.inventory.splitStack(this.inventory.itemInHandIndex, 1), false);
+        }
+        return null;
     }
 
     public EntityItem drop(ItemStack itemstack) {
@@ -451,8 +467,15 @@ public abstract class EntityHuman extends EntityLiving {
         this.world.addEntity(entityitem);
     }
 
+    @Deprecated
     public float a(Block block) {
-        float f = this.inventory.a(block);
+        return getCurrentPlayerStrVsBlock(block, 0);
+    }
+
+    public float getCurrentPlayerStrVsBlock(Block block, int meta) {
+        ItemStack stack = inventory.getItemInHand();
+        float f = (stack == null ? 1.0F : stack.getItem().getStrVsBlock(stack, block, meta));
+        //float f = this.inventory.a(block);
         float f1 = f;
         int i = EnchantmentManager.getDigSpeedEnchantmentLevel(this.inventory);
 
@@ -666,7 +689,12 @@ public abstract class EntityHuman extends EntityLiving {
             i = 1 + i >> 1;
         }
 
-        i = this.d(damagesource, i);
+        //i = this.d(damagesource, i);
+        i = ArmorProperties.ApplyArmor(this, inventory.armor, damagesource, i);
+        if (i <= 0) {
+            return;
+        }
+
         i = this.b(damagesource, i);
         this.c(damagesource.f());
         this.health -= i;
@@ -681,6 +709,10 @@ public abstract class EntityHuman extends EntityLiving {
     public void openBrewingStand(TileEntityBrewingStand tileentitybrewingstand) {}
 
     public void e(Entity entity) {
+        if (!ForgeHooks.onEntityInteract(this, entity, false))
+        {
+            return;
+        }
         if (!entity.b(this)) {
             ItemStack itemstack = this.U();
 
@@ -701,7 +733,9 @@ public abstract class EntityHuman extends EntityLiving {
     }
 
     public void V() {
+        ItemStack orig = inventory.getItemInHand();
         this.inventory.setItem(this.inventory.itemInHandIndex, (ItemStack) null);
+        ForgeHooks.onDestroyCurrentItem(this, orig);
     }
 
     public double W() {
@@ -716,6 +750,15 @@ public abstract class EntityHuman extends EntityLiving {
     }
 
     public void attack(Entity entity) {
+        if (!ForgeHooks.onEntityInteract(this, entity, true))
+        {
+            return;
+        }
+        ItemStack stack = this.inventory.getItemInHand();
+        if (stack != null && stack.getItem().onLeftClickEntity(stack, this, entity)) {
+            return;
+        }
+
         if (entity.k_()) {
             int i = this.inventory.a(entity);
 
@@ -833,6 +876,11 @@ public abstract class EntityHuman extends EntityLiving {
     }
 
     public EnumBedResult a(int i, int j, int k) {
+        EnumBedResult customSleep = ForgeHooks.sleepInBedAt(this, i, j, k);
+        if (customSleep != null) {
+            return customSleep;
+        }
+
         if (!this.world.isStatic) {
             if (this.isSleeping() || !this.isAlive()) {
                 return EnumBedResult.OTHER_PROBLEM;
@@ -1245,4 +1293,41 @@ public abstract class EntityHuman extends EntityLiving {
     }
 
     public void updateAbilities() {}
+    /**
+     * Opens a Gui for the player. 
+     * 
+     * @param mod The mod associated with the gui
+     * @param ID The ID number for the Gui
+     * @param world The World
+     * @param X X Position
+     * @param Y Y Position
+     * @param Z Z Position
+     */
+    public void openGui(BaseMod mod, int ID, World world, int x, int y, int z)
+    {
+        if (!(this instanceof EntityPlayer))
+        {
+            return;
+        }
+        EntityPlayer player = (EntityPlayer)this;
+        if (!(mod instanceof NetworkMod))
+        {
+            return;
+        }
+        IGuiHandler handler = MinecraftForge.getGuiHandler(mod);
+        if (handler != null)
+        {
+            Container container = (Container) handler.getGuiElement(ID, player, world, x, y, z);
+            if (container != null)
+            {
+                player.realGetNextWidowId();
+                player.H();
+                PacketOpenGUI pkt = new PacketOpenGUI(player.getCurrentWindowIdField(), MinecraftForge.getModID((NetworkMod)mod), ID, x, y, z);
+                player.netServerHandler.sendPacket(pkt.getPacket());
+                activeContainer = container; 
+                activeContainer.windowId = player.getCurrentWindowIdField();
+                activeContainer.addSlotListener(player);
+            }
+        }
+    }
 }

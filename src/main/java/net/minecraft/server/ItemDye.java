@@ -3,6 +3,8 @@ package net.minecraft.server;
 import org.bukkit.entity.Player; // CraftBukkit
 import org.bukkit.entity.Sheep;
 
+import forge.ForgeHooks;
+
 public class ItemDye extends Item {
 
     public static final String[] a = new String[] { "black", "red", "green", "brown", "blue", "purple", "cyan", "silver", "gray", "pink", "lime", "yellow", "lightBlue", "magenta", "orange", "white"};
@@ -21,11 +23,19 @@ public class ItemDye extends Item {
     }
 
     public boolean interactWith(ItemStack itemstack, EntityHuman entityhuman, World world, int i, int j, int k, int l) {
-        if (!entityhuman.d(i, j, k)) {
+        if (entityhuman!=null && !entityhuman.d(i, j, k)) {
             return false;
         } else {
             if (itemstack.getData() == 15) {
                 int i1 = world.getTypeId(i, j, k);
+                if (ForgeHooks.onUseBonemeal(world, i1, i, j, k))
+                {
+                    if (!world.isStatic)
+                    {
+                        itemstack.count--;
+                    }
+                    return true;
+                }
 
                 if (i1 == Block.SAPLING.id) {
                     if (!world.isStatic) {
@@ -91,10 +101,8 @@ public class ItemDye extends Item {
                             if (world.getTypeId(k1, l1, i2) == 0) {
                                 if (c.nextInt(10) != 0) {
                                     world.setTypeIdAndData(k1, l1, i2, Block.LONG_GRASS.id, 1);
-                                } else if (c.nextInt(3) != 0) {
-                                    world.setTypeId(k1, l1, i2, Block.YELLOW_FLOWER.id);
                                 } else {
-                                    world.setTypeId(k1, l1, i2, Block.RED_ROSE.id);
+                                    ForgeHooks.plantGrassPlant(world, k1, l1, i2);
                                 }
                             }
                         }

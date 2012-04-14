@@ -1,10 +1,14 @@
 package net.minecraft.server;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 // CraftBukkit start
 import org.bukkit.block.BlockState;
+import org.bukkit.craftbukkit.entity.CraftHumanEntity;
+import org.bukkit.entity.HumanEntity;
 import org.bukkit.inventory.InventoryHolder;
 // CraftBukkit end
 
@@ -19,6 +23,7 @@ public class TileEntity {
     protected boolean o;
     public int p = -1;
     public Block q;
+	private List<HumanEntity> transaction=new ArrayList<HumanEntity>(2);
 
     public TileEntity() {}
 
@@ -133,4 +138,30 @@ public class TileEntity {
         return null;
     }
     // CraftBukkit end
+
+	public void onOpen(CraftHumanEntity who) {
+		transaction.add(who);
+	}
+
+	public void onClose(CraftHumanEntity who) {
+		transaction.remove(who);
+	}
+
+	public List<HumanEntity> getViewers() {
+		return transaction;
+	}
+
+
+    /**
+     * Determines if this TileEntity requires update calls.
+     * @return True if you want updateEntity() to be called, false if not
+     */
+    public boolean canUpdate()
+    {
+        return true;
+    }
+
+	public static void addNewTileEntityMapping(Class<? extends TileEntity> tileEntityClass, String id) {
+		a(tileEntityClass,id);
+	}
 }

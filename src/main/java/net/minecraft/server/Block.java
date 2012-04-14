@@ -3,6 +3,8 @@ package net.minecraft.server;
 import java.util.ArrayList;
 import java.util.Random;
 
+import forge.ForgeHooks;
+
 public class Block {
 
     public static final StepSound d = new StepSound("stone", 1.0F, 1.0F);
@@ -262,7 +264,8 @@ public class Block {
     }
 
     public boolean o() {
-        return this.isTileEntity;
+        //return this.isTileEntity;
+        return hasTileEntity(0);
     }
 
     public void a(float f, float f1, float f2, float f3, float f4, float f5) {
@@ -332,8 +335,10 @@ public class Block {
         return this.id;
     }
 
+    @Deprecated
     public float getDamage(EntityHuman entityhuman) {
-        return this.strength < 0.0F ? 0.0F : (!entityhuman.b(this) ? 1.0F / this.strength / 100.0F : entityhuman.a(this) / this.strength / 30.0F);
+        //return this.strength < 0.0F ? 0.0F : (!entityhuman.b(this) ? 1.0F / this.strength / 100.0F : entityhuman.a(this) / this.strength / 30.0F);
+        return blockStrength(entityhuman, 0);
     }
 
     public final void b(World world, int i, int j, int k, int l, int i1) {
@@ -344,7 +349,7 @@ public class Block {
         if (!world.isStatic) {
             int j1 = this.getDropCount(i1, world.random);
 
-            for (int k1 = 0; k1 < j1; ++k1) {
+           /*for (int k1 = 0; k1 < j1; ++k1) {
                 // CraftBukkit - <= to < to allow for plugins to completely disable block drops from explosions
                 if (world.random.nextFloat() < f) {
                     int l1 = this.getDropType(l, world.random, i1);
@@ -352,6 +357,12 @@ public class Block {
                     if (l1 > 0) {
                         this.a(world, i, j, k, new ItemStack(l1, 1, this.getDropData(l)));
                     }
+                }
+            }*/
+            ArrayList<ItemStack> items = getBlockDropped(world, i, j, k, l, i1);
+            for (ItemStack item : items) {
+                if (world.random.nextFloat() < f) {
+                    this.a(world, i, j, k, item);
                 }
             }
         }
@@ -529,8 +540,7 @@ public class Block {
     public void a(World world, EntityHuman entityhuman, int i, int j, int k, int l) {
         entityhuman.a(StatisticList.C[this.id], 1);
         entityhuman.c(0.025F);
-
-        if (this.h() && EnchantmentManager.hasSilkTouchEnchantment(entityhuman.inventory)) {
+        if (this.b() && !hasTileEntity(l) && EnchantmentManager.hasSilkTouchEnchantment(entityhuman.inventory)) {
             ItemStack itemstack = this.a_(l);
 
             if (itemstack != null) {
@@ -596,6 +606,376 @@ public class Block {
     }
 
     public void a(World world, int i, int j, int k, Entity entity, float f) {}
+
+    /* =================================================== FORGE START =====================================*/
+    /**
+     * Get a light value for this block, normal ranges are between 0 and 15
+     * 
+     * @param world The current world
+     * @param x X Position
+     * @param y Y position
+     * @param z Z position
+     * @return The light value
+     */
+    public int getLightValue(IBlockAccess world, int x, int y, int z) 
+    {
+        return lightEmission[id];
+    }
+
+    /**
+     * Checks if a player or entity can use this block to 'climb' like a ladder.
+     * 
+     * @param world The current world
+     * @param x X Position
+     * @param y Y position
+     * @param z Z position
+     * @return True if the block should act like a ladder
+     */
+    public boolean isLadder(World world, int x, int y, int z) 
+    {
+        return false;
+    }
+    
+    /**
+     * Return true if the block is a normal, solid cube.  This
+     * determines indirect power state, entity ejection from blocks, and a few
+     * others.
+     * 
+     * @param world The current world
+     * @param x X Position
+     * @param y Y position
+     * @param z Z position
+     * @return True if the block is a full cube
+     */
+    public boolean isBlockNormalCube(World world, int x, int y, int z) 
+    {
+        return material.j() && b();
+    }
+
+    /**
+     * Checks if the block is a solid face on the given side, used by placement logic.
+     * 
+     * @param world The current world
+     * @param x X Position
+     * @param y Y position
+     * @param z Z position
+     * @param size The side to check
+     * @return True if the block is solid on the specified side.
+     */
+    public boolean isBlockSolidOnSide(World world, int x, int y, int z, int side) 
+    {
+        int meta = world.getData(x, y, z);
+        if (this instanceof BlockStep)
+        {
+            return (((meta & 8) == 8 && (side == 1)) || b());
+        }
+        else if (this instanceof BlockSoil)
+        {
+            return (side != 1 && side != 0);
+        }
+        else if (this instanceof BlockStairs)
+        {
+            boolean flipped = ((meta & 4) != 0);
+            return ((meta & 3) + side == 5) || (side == 1 && flipped);
+        }
+        return isBlockNormalCube(world, x, y, z);
+    }
+
+    /**
+     * Determines if a new block can be replace the space occupied by this one,
+     * Used in the player's placement code to make the block act like water, and lava.
+     * 
+     * @param world The current world
+     * @param x X Position
+     * @param y Y position
+     * @param z Z position
+     * @return True if the block is replaceable by another block
+     */
+    public boolean isBlockReplaceable(World world, int x, int y, int z) 
+    {
+        return false;
+    }
+
+    /**
+     * Determines if this block should set fire and deal fire damage
+     * to entities coming into contact with it.
+     * 
+     * @param world The current world
+     * @param x X Position
+     * @param y Y position
+     * @param z Z position
+     * @return True if the block should deal damage
+     */
+    public boolean isBlockBurning(World world, int x, int y, int z) 
+    {
+        return false;
+    }
+    
+    /**
+     * Determines this block should be treated as an air block
+     * by the rest of the code. This method is primarily
+     * useful for creating pure logic-blocks that will be invisible 
+     * to the player and otherwise interact as air would.
+     * 
+     * @param world The current world
+     * @param x X Position
+     * @param y Y position
+     * @param z Z position
+     * @return True if the block considered air
+     */
+    public boolean isAirBlock(World world, int x, int y, int z) 
+    {
+        return false;
+    }
+
+    /**
+     * Metadata sensitive version of the default getHardness function.
+     * 
+     * @param meta The block's current metatdata
+     * @return Block hardness
+     */
+    public float getHardness(int meta) 
+    {
+        return strength;
+    }
+
+    /**
+     * Determines this block's strength against being destroyed by a player.
+     * 
+     * @param world The current world
+     * @param player The player damaging the block, may be null
+     * @param x X Position
+     * @param y Y position
+     * @param z Z position
+     * @return A value 
+     */
+    public float blockStrength(World world, EntityHuman player, int x, int y, int z) 
+    {
+        return blockStrength(player, world.getData(x, y, z));
+    }
+
+    /**
+     * Determines this block's strength against being destroyed by a player.
+     * 
+     * @param player The player damaging the block, may be null
+     * @param meta The block's current metadata
+     * @return The larger the value, the faster it breaks.
+     */
+    public float blockStrength(EntityHuman player, int meta) 
+    {
+        return ForgeHooks.blockStrength(this, player, meta);
+    }
+
+    /**
+     * Determines if the player can harvest this block, obtaining it's drops when the block is destroyed.
+     * 
+     * @param player The player damaging the block, may be null
+     * @param meta The block's current metadata
+     * @return True tospawn the drops
+     */
+    public boolean canHarvestBlock(EntityHuman player, int meta) 
+    {
+        return ForgeHooks.canHarvestBlock(this, player, meta);
+    }
+
+    /**
+     * Called when a player removes a block.  This is responsible for
+     * actually destroying the block, and the block is intact at time of call.
+     * This is called regardless of whether the player can harvest the block or
+     * not.  
+     * 
+     * Return true if the block is actually destroyed.
+     *
+     * Note: When used in multiplayer, this is called on both client and
+     * server sides!
+     * 
+     * @param world The current world
+     * @param player The player damaging the block, may be null
+     * @param x X Position
+     * @param y Y position
+     * @param z Z position
+     * @return True if the block is actually destroyed.
+     */
+    public boolean removeBlockByPlayer(World world, EntityHuman player, int x, int y, int z) 
+    {
+        return world.setTypeId(x, y, z, 0);
+    }
+
+    /**
+     * Called when a new CreativeContainer is opened, populate the list 
+     * with all of the items for this block you want a player in creative mode
+     * to have access to.
+     * 
+     * @param itemList The list of items to display on the creative inventory.
+     */
+    public void addCreativeItems(ArrayList itemList)
+    {       
+    }
+    
+    protected static int blockFireSpreadSpeed[] = new int[256];
+    protected static int blockFlammability[] = new int[256];
+    
+    /**
+     * Chance that fire will spread and consume this block.
+     * 300 being a 100% chance, 0, being a 0% chance.
+     * 
+     * @param world The current world
+     * @param x The blocks X position
+     * @param y The blocks Y position
+     * @param z The blocks Z position
+     * @param metadata The blocks current metadata
+     * @param face The face that the fire is coming from
+     * @return A number ranging from 0 to 300 relating used to determine if the block will be consumed by fire
+     */
+    public int getFlammability(IBlockAccess world, int x, int y, int z, int metadata, int face)
+    {
+        return blockFlammability[id];
+    }
+    
+    /**
+     * Called when fire is updating, checks if a block face can catch fire.
+     * 
+     * 
+     * @param world The current world
+     * @param x The blocks X position
+     * @param y The blocks Y position
+     * @param z The blocks Z position
+     * @param metadata The blocks current metadata
+     * @param face The face that the fire is coming from
+     * @return True if the face can be on fire, false otherwise.
+     */
+    public boolean isFlammable(IBlockAccess world, int x, int y, int z, int metadata, int face)
+    {
+        return getFlammability(world, x, y, z, metadata, face) > 0;
+    }
+    
+    /**
+     * Called when fire is updating on a neighbor block.
+     * The higher the number returned, the faster fire will spread around this block.
+     * 
+     * @param world The current world
+     * @param x The blocks X position
+     * @param y The blocks Y position
+     * @param z The blocks Z position
+     * @param metadata The blocks current metadata
+     * @param face The face that the fire is coming from
+     * @return A number that is used to determine the speed of fire growth around the block
+     */
+    public int getFireSpreadSpeed(World world, int x, int y, int z, int metadata, int face)
+    {
+        return blockFireSpreadSpeed[id];
+    }
+    
+    /**
+     * Currently only called by fire when it is on top of this block.
+     * Returning true will prevent the fire from naturally dying during updating.
+     * Also prevents firing from dying from rain.
+     * 
+     * @param world The current world
+     * @param x The blocks X position
+     * @param y The blocks Y position
+     * @param z The blocks Z position
+     * @param metadata The blocks current metadata
+     * @param face The face that the fire is coming from
+     * @return 
+     */
+    public boolean isFireSource(World world, int x, int y, int z, int metadata, int face)
+    {
+        if (id == Block.NETHERRACK.id && face == 0)
+        {
+            return true;
+        }
+        if ((world.worldProvider instanceof WorldProviderTheEnd) && id == Block.BEDROCK.id && face == 0)
+        {
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Called by BlockFire to setup the burn values of vanilla blocks.
+     * @param id The block id
+     * @param encouragement How much the block encourages fire to spread
+     * @param flammability how easy a block is to catch fire
+     */
+    public static void setBurnProperties(int id, int encouragement, int flammability)
+    {
+        blockFireSpreadSpeed[id] = encouragement;
+        blockFlammability[id] = flammability;
+    }
+
+    /**
+     * Called throughout the code as a replacement for block instanceof BlockContainer
+     * Moving this to the Block base class allows for mods that wish to extend vinella 
+     * blocks, and also want to have a tile entity on that block, may.
+     * 
+     * Return true from this function to specify this block has a tile entity.
+     * 
+     * @param metadata Metadata of the current block
+     * @return True if block has a tile entity, false otherwise
+     */
+    public boolean hasTileEntity(int metadata)
+    {
+        return isTileEntity;
+    }
+    
+    /**
+     * Called throughout the code as a replacement for BlockContainer.getBlockEntity
+     * Return the same thing you would from that function.
+     * This will fall back to BlockContainer.getBlockEntity if this block is a BlockContainer.
+     * 
+     * @param metadata The Metadata of the current block
+     * @return A instance of a class extending TileEntity
+     */
+    public TileEntity getTileEntity(int metadata)
+    {
+        if (this instanceof BlockContainer)
+        {
+            return ((BlockContainer)this).getBlockEntity(metadata);
+        }
+        return null;
+    }    
+    
+    /**
+     * Metadata and fortune sensitive version, this replaces the old (int meta, Random rand)
+     * version in 1.1. 
+     * 
+     * @param meta Blocks Metadata
+     * @param fortune Current item fortune level
+     * @param random Random number generator
+     * @return The number of items to drop
+     */
+    public int quantityDropped(int meta, int fortune, Random random)
+    {
+        return getDropCount(fortune, random);
+    }
+    
+    /**
+     * This returns a complete list of items dropped from this block.
+     * 
+     * @param world The current world
+     * @param x X Position
+     * @param Y Y Position
+     * @param Z Z Position
+     * @param metadata Current metadata
+     * @param fortune Breakers fortune level
+     * @return A ArrayList containing all items this block drops
+     */
+    public ArrayList<ItemStack> getBlockDropped(World world, int x, int y, int z, int metadata, int fortune)
+    {
+        ArrayList<ItemStack> ret = new ArrayList<ItemStack>();
+        
+        int count = quantityDropped(metadata, fortune, world.random);
+        for(int i = 0; i < count; i++)
+        {
+            int id = getDropType(metadata, world.random, 0);
+            if (id > 0)
+            {
+                ret.add(new ItemStack(id, 1, getDropData(metadata)));
+            }
+        }
+        return ret;
+    }
 
     static {
         Item.byId[WOOL.id] = (new ItemCloth(WOOL.id - 256)).a("cloth");

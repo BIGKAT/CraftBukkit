@@ -13,8 +13,9 @@ import org.bukkit.material.MaterialData;
 
 public class BlockFire extends Block {
 
-    private int[] a = new int[256];
-    private int[] b = new int[256];
+	//FORGE
+    private int[] a = Block.blockFireSpreadSpeed;
+    private int[] b = Block.blockFlammability;
 
     protected BlockFire(int i, int j) {
         super(i, j, Material.FIRE);
@@ -35,8 +36,8 @@ public class BlockFire extends Block {
     }
 
     private void a(int i, int j, int k) {
-        this.a[i] = j;
-        this.b[i] = k;
+    	//FORGE
+        Block.setBurnProperties(i, j, k);
     }
 
     public AxisAlignedBB e(World world, int i, int j, int k) {
@@ -64,7 +65,9 @@ public class BlockFire extends Block {
     }
 
     public void a(World world, int i, int j, int k, Random random) {
-        boolean flag = world.getTypeId(i, j - 1, k) == Block.NETHERRACK.id;
+    	//FORGE
+        Block base = Block.byId[world.getTypeId(i, j - 1, k)];
+        boolean flag = (base != null && base.isFireSource(world, i, j - 1, k, world.getData(i, j - 1, k), 0));
 
         if (world.worldProvider instanceof WorldProviderTheEnd && world.getTypeId(i, j - 1, k) == Block.BEDROCK.id) {
             flag = true;
@@ -85,10 +88,10 @@ public class BlockFire extends Block {
 
             world.c(i, j, k, this.id, this.d() + random.nextInt(10));
             if (!flag && !this.g(world, i, j, k)) {
-                if (!world.e(i, j - 1, k) || l > 3) {
+                if (!world.isBlockSolidOnSide(i, j - 1, k, 1) || l > 3) {
                     fireExtinguished(world, i, j, k);   // CraftBukkit - burn out
                 }
-            } else if (!flag && !this.c(world, i, j - 1, k) && l == 15 && random.nextInt(4) == 0) {
+            } else if (!flag && !this.canBlockCatchFire(world, i, j - 1, k, 1) && l == 15 && random.nextInt(4) == 0) {
                 fireExtinguished(world, i, j, k);   // CraftBukkit - burn out
             } else {
                 boolean flag1 = world.z(i, j, k);
@@ -98,12 +101,12 @@ public class BlockFire extends Block {
                     b0 = -50;
                 }
 
-                this.a(world, i + 1, j, k, 300 + b0, random, l);
-                this.a(world, i - 1, j, k, 300 + b0, random, l);
-                this.a(world, i, j - 1, k, 250 + b0, random, l);
-                this.a(world, i, j + 1, k, 250 + b0, random, l);
-                this.a(world, i, j, k - 1, 300 + b0, random, l);
-                this.a(world, i, j, k + 1, 300 + b0, random, l);
+                this.tryToCatchBlockOnFire(world, i + 1, j, k, 300 + b0, random, l, 4);
+                this.tryToCatchBlockOnFire(world, i - 1, j, k, 300 + b0, random, l, 5);
+                this.tryToCatchBlockOnFire(world, i, j - 1, k, 250 + b0, random, l, 1);
+                this.tryToCatchBlockOnFire(world, i, j + 1, k, 250 + b0, random, l, 0);
+                this.tryToCatchBlockOnFire(world, i, j, k - 1, 300 + b0, random, l, 3);
+                this.tryToCatchBlockOnFire(world, i, j, k + 1, 300 + b0, random, l, 2);
 
                 // CraftBukkit start - Call to stop spread of fire.
                 org.bukkit.Server server = world.getServer();
@@ -171,8 +174,21 @@ public class BlockFire extends Block {
         }
     }
 
+    @Deprecated
     private void a(World world, int i, int j, int k, int l, Random random, int i1) {
-        int j1 = this.b[world.getTypeId(i, j, k)];
+        tryToCatchBlockOnFire(world, i, j, k, l, random, i1, 0);
+    }
+    
+    private void tryToCatchBlockOnFire(World world, int i, int j, int k, int l, Random random, int i1, int face)
+    {
+        int j1 = 0;
+        Block block = Block.byId[world.getTypeId(i, j, k)];
+        if (block != null)
+        {
+            j1 = block.getFlammability(world, i, j, k, world.getData(i, j, k), face);
+        }
+
+        //int j1 = this.b[world.getTypeId(i, j, k)];
 
         if (random.nextInt(l) < j1) {
             boolean flag = world.getTypeId(i, j, k) == Block.TNT.id;
@@ -205,8 +221,13 @@ public class BlockFire extends Block {
         }
     }
 
-    private boolean g(World world, int i, int j, int k) {
-        return this.c(world, i + 1, j, k) ? true : (this.c(world, i - 1, j, k) ? true : (this.c(world, i, j - 1, k) ? true : (this.c(world, i, j + 1, k) ? true : (this.c(world, i, j, k - 1) ? true : this.c(world, i, j, k + 1)))));
+    private boolean g(World par1World, int par2, int par3, int par4) {
+        return this.canBlockCatchFire(par1World, par2 + 1, par3, par4, 4) ||
+               this.canBlockCatchFire(par1World, par2 - 1, par3, par4, 5) ||
+               this.canBlockCatchFire(par1World, par2, par3 - 1, par4, 1) ||
+               this.canBlockCatchFire(par1World, par2, par3 + 1, par4, 0) ||
+               this.canBlockCatchFire(par1World, par2, par3, par4 - 1, 3) ||
+               this.canBlockCatchFire(par1World, par2, par3, par4 + 1, 2);
     }
 
     private int h(World world, int i, int j, int k) {
@@ -215,14 +236,22 @@ public class BlockFire extends Block {
         if (!world.isEmpty(i, j, k)) {
             return 0;
         } else {
-            int l = this.f(world, i + 1, j, k, b0);
+            /*int l = this.f(world, i + 1, j, k, b0);
 
             l = this.f(world, i - 1, j, k, l);
             l = this.f(world, i, j - 1, k, l);
             l = this.f(world, i, j + 1, k, l);
             l = this.f(world, i, j, k - 1, l);
-            l = this.f(world, i, j, k + 1, l);
-            return l;
+            l = this.f(world, i, j, k + 1, l);*/
+            
+            int var6 = this.getChanceToEncourageFire(world, i + 1, j, k, b0, 4);
+            var6 = this.getChanceToEncourageFire(world, i - 1, j, k, var6, 5);
+            var6 = this.getChanceToEncourageFire(world, i, j - 1, k, var6, 1);
+            var6 = this.getChanceToEncourageFire(world, i, j + 1, k, var6, 0);
+            var6 = this.getChanceToEncourageFire(world, i, j, k - 1, var6, 3);
+            var6 = this.getChanceToEncourageFire(world, i, j, k + 1, var6, 2);
+
+            return var6;
         }
     }
 
@@ -230,29 +259,33 @@ public class BlockFire extends Block {
         return false;
     }
 
+    @Deprecated
     public boolean c(IBlockAccess iblockaccess, int i, int j, int k) {
-        return this.a[iblockaccess.getTypeId(i, j, k)] > 0;
+        //return this.a[iblockaccess.getTypeId(i, j, k)] > 0;
+        return canBlockCatchFire(iblockaccess, i, j, k, 0);
     }
 
+    @Deprecated
     public int f(World world, int i, int j, int k, int l) {
-        int i1 = this.a[world.getTypeId(i, j, k)];
+        /*int i1 = this.a[world.getTypeId(i, j, k)];
 
-        return i1 > l ? i1 : l;
+        return i1 > l ? i1 : l;*/
+        return getChanceToEncourageFire(world, i, j, k, l, 0);
     }
 
     public boolean canPlace(World world, int i, int j, int k) {
-        return world.e(i, j - 1, k) || this.g(world, i, j, k);
+        return world.isBlockSolidOnSide(i, j - 1, k, 1) || this.g(world, i, j, k);
     }
 
     public void doPhysics(World world, int i, int j, int k, int l) {
-        if (!world.e(i, j - 1, k) && !this.g(world, i, j, k)) {
+        if (!world.isBlockSolidOnSide(i, j - 1, k, 1) && !this.g(world, i, j, k)) {
             fireExtinguished(world, i, j, k);   // CraftBukkit - fuel block gone
         }
     }
 
     public void onPlace(World world, int i, int j, int k) {
         if (world.worldProvider.dimension > 0 || world.getTypeId(i, j - 1, k) != Block.OBSIDIAN.id || !Block.PORTAL.b_(world, i, j, k)) {
-            if (!world.e(i, j - 1, k) && !this.g(world, i, j, k)) {
+            if (!world.isBlockSolidOnSide(i, j - 1, k, 1) && !this.g(world, i, j, k)) {
                 fireExtinguished(world, i, j, k);   // CraftBukkit - fuel block broke
             } else {
                 world.c(i, j, k, this.id, this.d() + world.random.nextInt(10));
@@ -266,4 +299,46 @@ public class BlockFire extends Block {
         }
     }
     // CraftBukkit end
+
+    /**
+     * Side sensitive version that calls the block function.
+     * 
+     * @param world The current world
+     * @param x X Position
+     * @param y Y Position
+     * @param z Z Position
+     * @param face The side the fire is coming from
+     * @return True if the face can catch fire.
+     */
+    public boolean canBlockCatchFire(IBlockAccess world, int x, int y, int z, int face)
+    {
+        Block block = Block.byId[world.getTypeId(x, y, z)];
+        if (block != null)
+        {
+            return block.isFlammable(world, x, y, z, world.getData(x, y, z), face);
+        }
+        return false;
+    }
+    
+    /**
+     * Side sensitive version that calls the block function.
+     * 
+     * @param world The current world
+     * @param x X Position
+     * @param y Y Position
+     * @param z Z Position
+     * @param oldChance The previous maximum chance.
+     * @param face The side the fire is coming from
+     * @return The chance of the block catching fire, or oldChance if it is higher
+     */
+    public int getChanceToEncourageFire(World world, int x, int y, int z, int oldChance, int face)
+    {
+        int newChance = 0;
+        Block block = Block.byId[world.getTypeId(x, y, z)];
+        if (block != null)
+        {
+            newChance = block.getFireSpreadSpeed(world, x, y, z, world.getData(x, y, z), face);
+        }
+        return (newChance > oldChance ? newChance : oldChance);
+    }  
 }

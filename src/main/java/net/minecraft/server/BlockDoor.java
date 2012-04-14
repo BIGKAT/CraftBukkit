@@ -160,7 +160,8 @@ public class BlockDoor extends Block {
                 flag = true;
             }
 
-            if (!world.e(i, j - 1, k)) {
+            //FORGE
+            if (!world.isBlockSolidOnSide(i, j - 1, k,1)) {
                 world.setTypeId(i, j, k, 0);
                 flag = true;
                 if (world.getTypeId(i, j + 1, k) == this.id) {
@@ -204,7 +205,8 @@ public class BlockDoor extends Block {
     }
 
     public boolean canPlace(World world, int i, int j, int k) {
-        return j >= 255 ? false : world.e(i, j - 1, k) && super.canPlace(world, i, j, k) && super.canPlace(world, i, j + 1, k);
+    	//FORGE
+        return j >= 255 ? false : world.isBlockSolidOnSide(i, j - 1, k,1) && super.canPlace(world, i, j, k) && super.canPlace(world, i, j + 1, k);
     }
 
     public int g() {

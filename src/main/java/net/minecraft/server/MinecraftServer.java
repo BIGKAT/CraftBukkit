@@ -36,6 +36,8 @@ import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.PluginLoadOrder;
 // CraftBukkit end
 
+import cpw.mods.fml.server.FMLBukkitHandler;
+
 public class MinecraftServer implements Runnable, ICommandListener, IMinecraftServer {
 
     public static Logger log = Logger.getLogger("Minecraft");
@@ -113,6 +115,7 @@ public class MinecraftServer implements Runnable, ICommandListener, IMinecraftSe
         // CraftBukkit end
 
         log.info("Starting minecraft server version 1.2.5");
+        FMLBukkitHandler.instance().onPreLoad(this);
         if (Runtime.getRuntime().maxMemory() / 1024L / 1024L < 512L) {
             log.warning("**** NOT ENOUGH RAM!");
             log.warning("To start the server with more ram, launch it as \"java -Xmx1024M -Xms1024M -jar minecraft_server.jar\"");
@@ -153,6 +156,7 @@ public class MinecraftServer implements Runnable, ICommandListener, IMinecraftSe
             log.warning("To change this, set \"online-mode\" to \"true\" in the server.properties file."); // CraftBukkit - type. Seriously. :D
         }
 
+        FMLBukkitHandler.instance().onLoadComplete();
         this.serverConfigurationManager = new ServerConfigurationManager(this);
         // CraftBukkit - removed trackers
         long i = System.nanoTime();
@@ -487,6 +491,7 @@ public class MinecraftServer implements Runnable, ICommandListener, IMinecraftSe
     }
 
     private void w() {
+    	FMLBukkitHandler.instance().onPreTick();
         long i = System.nanoTime();
         ArrayList arraylist = new ArrayList();
         Iterator iterator = trackerList.keySet().iterator();
@@ -576,6 +581,7 @@ public class MinecraftServer implements Runnable, ICommandListener, IMinecraftSe
         this.G = Packet.l;
         this.x[this.ticks % 100] = Packet.m - this.H;
         this.H = Packet.m;
+    	FMLBukkitHandler.instance().onPostTick();
     }
 
     public void issueCommand(String s, ICommandListener icommandlistener) {

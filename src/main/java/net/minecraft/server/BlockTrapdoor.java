@@ -4,6 +4,8 @@ import org.bukkit.event.block.BlockRedstoneEvent; // CraftBukkit
 
 public class BlockTrapdoor extends Block {
 
+	public static boolean disableValidation = false;
+
     protected BlockTrapdoor(int i, Material material) {
         super(i, material);
         this.textureId = 84;
@@ -119,7 +121,7 @@ public class BlockTrapdoor extends Block {
                 --j1;
             }
 
-            if (!h(world.getTypeId(j1, j, k1))) {
+			if (!(h(world.getTypeId(j1, j, k1)) || world.isBlockSolidOnSide(j1, j, k1, (i1 & 3) + 2))) {
                 world.setTypeId(i, j, k, 0);
                 this.b(world, i, j, k, i1, 0);
             }
@@ -172,6 +174,10 @@ public class BlockTrapdoor extends Block {
     }
 
     public boolean canPlace(World world, int i, int j, int k, int l) {
+		if (disableValidation) {
+			return true;
+		}
+
         if (l == 0) {
             return false;
         } else if (l == 1) {
@@ -193,7 +199,7 @@ public class BlockTrapdoor extends Block {
                 --i;
             }
 
-            return h(world.getTypeId(i, j, k));
+			return h(world.getTypeId(i, j, k)) || world.isBlockSolidOnSide(i, j, k, l);
         }
     }
 

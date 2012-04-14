@@ -9,9 +9,13 @@ import org.bukkit.entity.HumanEntity;
 import org.bukkit.event.inventory.FurnaceBurnEvent;
 import org.bukkit.event.inventory.FurnaceSmeltEvent;
 import org.bukkit.craftbukkit.entity.CraftHumanEntity;
+
+import cpw.mods.fml.server.FMLBukkitHandler;
 // CraftBukkit end
 
-public class TileEntityFurnace extends TileEntity implements IInventory {
+import forge.ISidedInventory;
+
+public class TileEntityFurnace extends TileEntity implements IInventory, ISidedInventory {
 
     private ItemStack[] items = new ItemStack[3];
     public int burnTime = 0;
@@ -224,16 +228,18 @@ public class TileEntityFurnace extends TileEntity implements IInventory {
         if (this.items[0] == null) {
             return false;
         } else {
-            ItemStack itemstack = FurnaceRecipes.getInstance().getResult(this.items[0].getItem().id);
-
-            // CraftBukkit - consider resultant count instead of current count
-            return itemstack == null ? false : (this.items[2] == null ? true : (!this.items[2].doMaterialsMatch(itemstack) ? false : (this.items[2].count + itemstack.count <= this.getMaxStackSize() && this.items[2].count < this.items[2].getMaxStackSize() ? true : this.items[2].count + itemstack.count <= itemstack.getMaxStackSize())));
+            ItemStack var1 = FurnaceRecipes.getInstance().getSmeltingResult(this.items[0]);
+            if (var1 == null) return false;
+            if (this.items[2] == null) return true;
+            if (!this.items[2].doMaterialsMatch(var1)) return false;
+            int result = items[2].count + var1.count;
+            return (result < this.getMaxStackSize() && result < this.items[2].getMaxStackSize());
         }
     }
 
     public void burn() {
         if (this.canBurn()) {
-            ItemStack itemstack = FurnaceRecipes.getInstance().getResult(this.items[0].getItem().id);
+            ItemStack itemstack = FurnaceRecipes.getInstance().getSmeltingResult(this.items[0]);
 
             // CraftBukkit start
             CraftItemStack source = new CraftItemStack(this.items[0]);
@@ -271,7 +277,7 @@ public class TileEntityFurnace extends TileEntity implements IInventory {
         } else {
             int i = itemstack.getItem().id;
 
-            return i < 256 && Block.byId[i].material == Material.WOOD ? 300 : (i == Item.STICK.id ? 100 : (i == Item.COAL.id ? 1600 : (i == Item.LAVA_BUCKET.id ? 20000 : (i == Block.SAPLING.id ? 100 : (i == Item.BLAZE_ROD.id ? 2400 : 0)))));
+            return i < 256 && Block.byId[i].material == Material.WOOD ? 300 : (i == Item.STICK.id ? 100 : (i == Item.COAL.id ? 1600 : (i == Item.LAVA_BUCKET.id ? 20000 : (i == Block.SAPLING.id ? 100 : (i == Item.BLAZE_ROD.id ? 2400 : FMLBukkitHandler.instance().fuelLookup(itemstack.id, itemstack.getData()))))));
         }
     }
 
@@ -286,4 +292,17 @@ public class TileEntityFurnace extends TileEntity implements IInventory {
     public void f() {}
 
     public void g() {}
+
+    @Override
+    public int getStartInventorySide(int side) 
+    {
+        if (side == 0) return 1;
+        if (side == 1) return 0;
+        return 2;
+    }
+    @Override
+    public int getSizeInventorySide(int side) 
+    {
+        return 1;
+    }
 }

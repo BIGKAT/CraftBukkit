@@ -1,5 +1,6 @@
 package net.minecraft.server;
 
+import java.io.UnsupportedEncodingException;
 import java.net.Socket;
 import java.util.Iterator;
 import java.util.Random;
@@ -10,6 +11,11 @@ import org.bukkit.ChatColor;
 import org.bukkit.craftbukkit.event.CraftEventFactory;
 import org.bukkit.event.server.ServerListPingEvent;
 // CraftBukkit end
+
+import forge.ForgeHooks;
+import forge.ForgeHooksServer;
+import forge.MessageManager;
+import forge.packets.ForgePacket;
 
 public class NetLoginHandler extends NetHandler {
 
@@ -28,6 +34,7 @@ public class NetLoginHandler extends NetHandler {
         this.server = minecraftserver;
         this.networkManager = new NetworkManager(socket, s, this);
         this.networkManager.f = 0;
+        ForgeHooks.onConnect(networkManager);
     }
 
     // CraftBukkit start
@@ -112,7 +119,7 @@ public class NetLoginHandler extends NetHandler {
 
             entityplayer.itemInWorldManager.b(worldserver.getWorldData().getGameType());
             NetServerHandler netserverhandler = new NetServerHandler(this.server, this.networkManager, entityplayer);
-
+/*
             // CraftBukkit start -- Don't send a higher than 60 MaxPlayer size, otherwise the PlayerInfo window won't render correctly.
             int maxPlayers = this.server.serverConfigurationManager.getMaxPlayers();
             if (maxPlayers > 60) {
@@ -126,7 +133,9 @@ public class NetLoginHandler extends NetHandler {
             netserverhandler.sendPacket(new Packet202Abilities(entityplayer.abilities));
             this.server.serverConfigurationManager.a(entityplayer, worldserver);
             // this.server.serverConfigurationManager.sendAll(new Packet3Chat("\u00A7e" + entityplayer.name + " joined the game.")); // CraftBukkit - message moved to join event
+             */
             this.server.serverConfigurationManager.c(entityplayer);
+            /*
             netserverhandler.a(entityplayer.locX, entityplayer.locY, entityplayer.locZ, entityplayer.yaw, entityplayer.pitch);
             this.server.networkListenThread.a(netserverhandler);
             netserverhandler.sendPacket(new Packet4UpdateTime(entityplayer.getPlayerTime())); // CraftBukkit - add support for player specific time
@@ -139,6 +148,8 @@ public class NetLoginHandler extends NetHandler {
             }
 
             entityplayer.syncInventory();
+            */
+            ForgeHooksServer.handleLoginPacket(packet1login, netserverhandler, networkManager);
         }
 
         this.c = true;

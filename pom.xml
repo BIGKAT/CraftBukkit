@@ -4,7 +4,7 @@
   <groupId>org.bukkit</groupId>
   <artifactId>craftbukkit</artifactId>
   <packaging>jar</packaging>
-  <version>1.2.5-R1.3</version>
+  <version>1.2.5-R1.3-MCPC-SNAPSHOT</version>
   <name>CraftBukkit</name>
   <url>http://www.bukkit.org</url>
 
@@ -15,9 +15,9 @@
   </properties>
 
   <scm>
-    <connection>scm:git:git://github.com/Bukkit/CraftBukkit.git</connection>
-    <developerConnection>scm:git:ssh://git@github.com/Bukkit/CraftBukkit.git</developerConnection>
-    <url>https://github.com/Bukkit/CraftBukkit</url>
+    <connection>scm:git:git://github.com/MinecraftPortCentral/CraftBukkit.git</connection>
+    <developerConnection>scm:git:ssh://git@github.com/MinecraftPortCentral/CraftBukkit.git</developerConnection>
+    <url>https://github.com/MinecraftPortCentral/CraftBukkit</url>
   </scm>
 
   <distributionManagement>
@@ -51,7 +51,7 @@
     <dependency>
       <groupId>org.bukkit</groupId>
       <artifactId>bukkit</artifactId>
-      <version>1.2.5-R1.3</version>
+      <version>1.2.5-R1.3-MCPC-SNAPSHOT</version>
       <type>jar</type>
       <scope>compile</scope>
     </dependency>
@@ -178,7 +178,7 @@
               <Specification-Title>Bukkit</Specification-Title>
               <Specification-Version>${api.version}</Specification-Version>
               <Specification-Vendor>Bukkit Team</Specification-Vendor>
-              <Sealed>true</Sealed>
+              <Sealed>false</Sealed>
             </manifestEntries>
             <manifestSections>
               <manifestSection>
@@ -228,8 +228,8 @@
         <artifactId>maven-compiler-plugin</artifactId>
         <version>2.0.2</version>
         <configuration>
-          <source>1.5</source>
-          <target>1.5</target>
+          <source>1.6</source>
+          <target>1.6</target>
         </configuration>
       </plugin>
       <plugin>
@@ -239,6 +239,24 @@
         <configuration>
           <workingDirectory>${basedir}/target/test-server</workingDirectory>
         </configuration>
+      </plugin>
+      <plugin>
+        <groupId>com.github.github</groupId>
+        <artifactId>downloads-maven-plugin</artifactId>
+        <version>0.4</version>
+        <configuration>
+          <description>${project.version} (${BUILD_NUMBER}) release of ${project.name}</description>
+          <suffix>-${BUILD_NUMBER}</suffix>
+          <override>true</override>
+        </configuration>
+		<executions>
+		  <execution>
+		    <goals>
+		      <goal>upload</goal>
+		    </goals>
+		    <phase>install</phase>
+		  </execution>
+		</executions>
       </plugin>
     </plugins>
     <pluginManagement>
