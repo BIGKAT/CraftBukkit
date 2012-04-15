@@ -1,6 +1,6 @@
 package forge;
 
-import net.minecraft.server.EntityPlayer;
+import net.minecraft.server.EntityHuman;
 import net.minecraft.server.World;
 
 public interface IGuiHandler
@@ -18,5 +18,5 @@ public interface IGuiHandler
      * @param z Z Position
      * @return A GuiScreen/Container to be displayed to the user, null if none.
      */
-    public Object getGuiElement(int ID, EntityPlayer player, World world, int x, int y, int z);
+    public Object getGuiElement(int ID, EntityHuman player, World world, int x, int y, int z);
 }
