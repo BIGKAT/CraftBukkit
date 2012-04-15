@@ -11,12 +11,14 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.logging.Level;
 
+import cpw.mods.fml.server.FMLBukkitHandler;
+
 import net.minecraft.server.*;
 import forge.packets.*;
 
 public class PacketHandlerServer implements IPacketHandler
 {
-    public static boolean DEBUG = false;
+    public static boolean DEBUG = true;
     @Override
     public void onPacketData(NetworkManager network, String channel, byte[] bytes)
     {
@@ -148,9 +150,8 @@ public class PacketHandlerServer implements IPacketHandler
         netserverhandler.sendPacket(new Packet202Abilities(entityplayer.abilities));
         netserverhandler.minecraftServer.serverConfigurationManager.a(entityplayer, worldserver);
         // this.server.serverConfigurationManager.sendAll(new Packet3Chat("\u00A7e" + entityplayer.name + " joined the game.")); // CraftBukkit - message moved to join event
-
+        netserverhandler.minecraftServer.serverConfigurationManager.c(entityplayer);
         netserverhandler.a(entityplayer.locX, entityplayer.locY, entityplayer.locZ, entityplayer.yaw, entityplayer.pitch);
-        netserverhandler.minecraftServer.networkListenThread.a(netserverhandler);
         netserverhandler.sendPacket(new Packet4UpdateTime(entityplayer.getPlayerTime())); // CraftBukkit - add support for player specific time
         Iterator iterator = entityplayer.getEffects().iterator();
 
@@ -161,5 +162,6 @@ public class PacketHandlerServer implements IPacketHandler
         }
 
         entityplayer.syncInventory();
+        FMLBukkitHandler.instance().announceLogin(entityplayer);
     }
 }

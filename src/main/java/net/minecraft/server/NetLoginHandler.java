@@ -10,6 +10,8 @@ import java.util.logging.Logger;
 import org.bukkit.ChatColor;
 import org.bukkit.craftbukkit.event.CraftEventFactory;
 import org.bukkit.event.server.ServerListPingEvent;
+
+import cpw.mods.fml.server.FMLBukkitHandler;
 // CraftBukkit end
 
 import forge.ForgeHooks;
@@ -133,11 +135,11 @@ public class NetLoginHandler extends NetHandler {
             netserverhandler.sendPacket(new Packet202Abilities(entityplayer.abilities));
             this.server.serverConfigurationManager.a(entityplayer, worldserver);
             // this.server.serverConfigurationManager.sendAll(new Packet3Chat("\u00A7e" + entityplayer.name + " joined the game.")); // CraftBukkit - message moved to join event
-             */
             this.server.serverConfigurationManager.c(entityplayer);
-            /*
             netserverhandler.a(entityplayer.locX, entityplayer.locY, entityplayer.locZ, entityplayer.yaw, entityplayer.pitch);
+             */
             this.server.networkListenThread.a(netserverhandler);
+            /*
             netserverhandler.sendPacket(new Packet4UpdateTime(entityplayer.getPlayerTime())); // CraftBukkit - add support for player specific time
             Iterator iterator = entityplayer.getEffects().iterator();
 
@@ -150,6 +152,7 @@ public class NetLoginHandler extends NetHandler {
             entityplayer.syncInventory();
             */
             ForgeHooksServer.handleLoginPacket(packet1login, netserverhandler, networkManager);
+            FMLBukkitHandler.instance().handleLogin(packet1login, networkManager);
         }
 
         this.c = true;
