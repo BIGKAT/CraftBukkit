@@ -628,7 +628,7 @@ public class ForgeHooks
     //This number is incremented every time a interface changes, and reset every Minecraft version
     public static final int revisionVersion = 1;
     //This number is incremented every time Jenkins builds Forge, and never reset. Should always be 0 in the repo code.
-    public static final int buildVersion    = 75;
+    public static final int buildVersion    = 84;
     static
     {
         plantGrassList = new ArrayList<ProbableItem>();

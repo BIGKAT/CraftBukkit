@@ -326,22 +326,7 @@ public class EntityMinecart extends Entity implements IInventory {
                     this.locY = (double) (j + 1);
                 }
 
-                if (i1 == 2) {
-                    this.motX -= d5;
-                }
-
-                if (i1 == 3) {
-                    this.motX += d5;
-                }
-
-                if (i1 == 4) {
-                    this.motZ += d5;
-                }
-
-                if (i1 == 5) {
-                    this.motZ -= d5;
-                }
-
+                adjustSlopeVelocities(i1);
                 int[][] aint = matrix[i1];
                 double d6 = (double) (aint[1][0] - aint[0][0]);
                 double d7 = (double) (aint[1][2] - aint[0][2]);
@@ -1241,6 +1226,31 @@ public class EntityMinecart extends Entity implements IInventory {
         if (e <= 0) b = c = 0.0D;
         a(e > 0);
     }
+    
+    /**
+     * Moved to allow overrides, This code handle slopes affecting velocity.
+     * @param metadata The blocks position metadata 
+     */
+    protected void adjustSlopeVelocities(int metadata) 
+    {
+        double acceleration = 0.0078125D;
+        if (metadata == 2)
+        {
+            motX -= acceleration;
+        }
+        else if (metadata == 3)
+        {
+            motX += acceleration;
+        }
+        else if (metadata == 4)
+        {
+            motZ += acceleration;
+        }
+        else if (metadata == 5)
+        {
+            motZ -= acceleration;
+        }
+	}
     
     /**
      * Getters/setters for physics variables

@@ -14,8 +14,8 @@ import org.bukkit.material.MaterialData;
 public class BlockFire extends Block {
 
 	//FORGE
-    private int[] a = Block.blockFireSpreadSpeed;
-    private int[] b = Block.blockFlammability;
+    private int[] a = new int[256];
+    private int[] b = new int[256];
 
     protected BlockFire(int i, int j) {
         super(i, j, Material.FIRE);
@@ -23,6 +23,8 @@ public class BlockFire extends Block {
     }
 
     public void k() {
+    	a=Block.blockFireSpreadSpeed;
+    	b=Block.blockFlammability;
         this.a(Block.WOOD.id, 5, 20);
         this.a(Block.FENCE.id, 5, 20);
         this.a(Block.WOOD_STAIRS.id, 5, 20);

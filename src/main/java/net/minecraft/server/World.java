@@ -33,6 +33,12 @@ import org.bukkit.block.BlockState;
 import forge.ForgeHooks;
 
 public class World implements IBlockAccess {
+	/**
+	 * Used in the getEntitiesWithinAABB functions to expand the search area for entities.
+	 * Modders should change this variable to a higher value if it is less then the radius 
+	 * of one of there entities.
+	 */
+	public static double MAX_ENTITY_RADIUS = 2.0D;
 
     public boolean a = false;
     public List entityList = new ArrayList();
@@ -1695,7 +1701,7 @@ public class World implements IBlockAccess {
             if (chunk != null && !chunk.isEmpty()) {
                 Block block = Block.byId[this.getTypeId(i, j, k)];
 
-                return block == null ? false : block.material.j() && block.b();
+                return block == null ? false : e(i,j,k);
             } else {
                 return flag;
             }
@@ -2456,10 +2462,10 @@ public class World implements IBlockAccess {
 
     public List getEntities(Entity entity, AxisAlignedBB axisalignedbb) {
         this.S.clear();
-        int i = MathHelper.floor((axisalignedbb.a - 2.0D) / 16.0D);
-        int j = MathHelper.floor((axisalignedbb.d + 2.0D) / 16.0D);
-        int k = MathHelper.floor((axisalignedbb.c - 2.0D) / 16.0D);
-        int l = MathHelper.floor((axisalignedbb.f + 2.0D) / 16.0D);
+        int i = MathHelper.floor((axisalignedbb.a - MAX_ENTITY_RADIUS) / 16.0D);
+        int j = MathHelper.floor((axisalignedbb.d + MAX_ENTITY_RADIUS) / 16.0D);
+        int k = MathHelper.floor((axisalignedbb.c - MAX_ENTITY_RADIUS) / 16.0D);
+        int l = MathHelper.floor((axisalignedbb.f + MAX_ENTITY_RADIUS) / 16.0D);
 
         for (int i1 = i; i1 <= j; ++i1) {
             for (int j1 = k; j1 <= l; ++j1) {
@@ -2473,10 +2479,10 @@ public class World implements IBlockAccess {
     }
 
     public List a(Class oclass, AxisAlignedBB axisalignedbb) {
-        int i = MathHelper.floor((axisalignedbb.a - 2.0D) / 16.0D);
-        int j = MathHelper.floor((axisalignedbb.d + 2.0D) / 16.0D);
-        int k = MathHelper.floor((axisalignedbb.c - 2.0D) / 16.0D);
-        int l = MathHelper.floor((axisalignedbb.f + 2.0D) / 16.0D);
+        int i = MathHelper.floor((axisalignedbb.a - MAX_ENTITY_RADIUS) / 16.0D);
+        int j = MathHelper.floor((axisalignedbb.d + MAX_ENTITY_RADIUS) / 16.0D);
+        int k = MathHelper.floor((axisalignedbb.c - MAX_ENTITY_RADIUS) / 16.0D);
+        int l = MathHelper.floor((axisalignedbb.f + MAX_ENTITY_RADIUS) / 16.0D);
         ArrayList arraylist = new ArrayList();
 
         for (int i1 = i; i1 <= j; ++i1) {
