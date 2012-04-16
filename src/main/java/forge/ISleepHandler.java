@@ -6,7 +6,6 @@
 package forge;
 
 import net.minecraft.server.EntityHuman;
-import net.minecraft.server.EntityPlayer;
 import net.minecraft.server.EnumBedResult;
 
 public interface ISleepHandler

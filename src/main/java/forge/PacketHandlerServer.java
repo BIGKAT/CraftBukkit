@@ -18,7 +18,7 @@ import forge.packets.*;
 
 public class PacketHandlerServer implements IPacketHandler
 {
-    public static boolean DEBUG = true;
+    public static boolean DEBUG = false;
     @Override
     public void onPacketData(NetworkManager network, String channel, byte[] bytes)
     {

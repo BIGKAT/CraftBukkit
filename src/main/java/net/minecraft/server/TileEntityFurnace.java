@@ -13,6 +13,7 @@ import org.bukkit.craftbukkit.entity.CraftHumanEntity;
 import cpw.mods.fml.server.FMLBukkitHandler;
 // CraftBukkit end
 
+import forge.ForgeHooks;
 import forge.ISidedInventory;
 
 public class TileEntityFurnace extends TileEntity implements IInventory, ISidedInventory {
@@ -276,8 +277,14 @@ public class TileEntityFurnace extends TileEntity implements IInventory, ISidedI
             return 0;
         } else {
             int i = itemstack.getItem().id;
-
-            return i < 256 && Block.byId[i].material == Material.WOOD ? 300 : (i == Item.STICK.id ? 100 : (i == Item.COAL.id ? 1600 : (i == Item.LAVA_BUCKET.id ? 20000 : (i == Block.SAPLING.id ? 100 : (i == Item.BLAZE_ROD.id ? 2400 : FMLBukkitHandler.instance().fuelLookup(itemstack.id, itemstack.getData()))))));
+            if (i < 256 && Block.byId[i].material == Material.WOOD) return  300;
+            if (i == Item.STICK.id) return 100;
+            if (i == Item.COAL.id) return 1600;
+            if (i == Item.LAVA_BUCKET.id) return 20000;
+            if (i == Block.SAPLING.id) return 100;
+            if (i == Item.BLAZE_ROD.id) return 2400;
+            int ret = ForgeHooks.getItemBurnTime(itemstack);
+            return (ret > 0 ? ret : FMLBukkitHandler.instance().fuelLookup(itemstack.id, itemstack.getData()));
         }
     }
 

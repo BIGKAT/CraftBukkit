@@ -46,7 +46,8 @@ public class ForgeHooksServer
         }
     }
 
-    public static void handleLoginPacket(Packet1Login pktLogin, NetServerHandler net, NetworkManager manager) {
+    public static void handleLoginPacket(Packet1Login pktLogin, NetServerHandler net, NetworkManager manager)
+	{
         init();
         if (pktLogin.d == ForgePacket.FORGE_ID)
         {

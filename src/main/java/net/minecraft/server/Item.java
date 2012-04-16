@@ -492,4 +492,19 @@ public class Item {
          */
         return 0;
     }
+
+	/**
+	 * Returns the number of render passes/layers this item has. Usually equates
+	 * to ItemRenderer.renderItem being called for this many passes. Does not
+	 * get called unless func_46058_c() is true;
+	 * 
+	 * Not called on the server
+	 * 
+	 * @param metadata
+	 *            The item's metadata
+	 * @return The number of passes to run.
+	 */
+	public int getRenderPasses(int metadata) {
+		return 1; // return func_46058_c() ? 2 : 1;
+	}
 }
