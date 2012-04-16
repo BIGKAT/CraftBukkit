@@ -1310,7 +1310,6 @@ public class NetServerHandler extends NetHandler implements ICommandListener {
     // CraftBukkit start
     @Override
     public void a(Packet250CustomPayload packet) {
-    	System.out.printf("Got a 250 %s\n", packet.tag);
     	FMLBukkitHandler.instance().handlePacket250(packet, player);
     	MessageManager inst = MessageManager.getInstance();
         if (packet.tag.equals("REGISTER")) {
@@ -1319,7 +1318,6 @@ public class NetServerHandler extends NetHandler implements ICommandListener {
                 for (String channel : channels.split("\0")) {
                     getPlayer().addChannel(channel);
                     inst.addActiveChannel(networkManager, channel);
-                	System.out.printf("250 REGISTER %s\n", channel);
                 }
             } catch (UnsupportedEncodingException ex) {
                 Logger.getLogger(NetServerHandler.class.getName()).log(Level.SEVERE, "Could not parse REGISTER payload in plugin message packet", ex);
