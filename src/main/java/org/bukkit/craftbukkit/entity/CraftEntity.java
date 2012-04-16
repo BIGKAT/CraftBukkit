@@ -11,13 +11,14 @@ import org.bukkit.Server;
 import org.bukkit.World;
 import org.bukkit.craftbukkit.CraftServer;
 import org.bukkit.craftbukkit.CraftWorld;
+import org.bukkit.entity.EntityType;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.player.PlayerTeleportEvent.TeleportCause;
 import org.bukkit.metadata.MetadataValue;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.util.Vector;
 
-public abstract class CraftEntity implements org.bukkit.entity.Entity {
+public class CraftEntity implements org.bukkit.entity.Entity {
     protected final CraftServer server;
     protected Entity entity;
     private EntityDamageEvent lastDamageEvent;
@@ -136,7 +137,8 @@ public abstract class CraftEntity implements org.bukkit.entity.Entity {
         else if (entity instanceof EntityPainting) { return new CraftPainting(server, (EntityPainting) entity); }
         else if (entity instanceof EntityTNTPrimed) { return new CraftTNTPrimed(server, (EntityTNTPrimed) entity); }
 
-        throw new IllegalArgumentException("Unknown entity");
+        // TODO allow plugins to add in new entity types
+        return new CraftEntity(server, entity);
     }
 
     public Location getLocation() {
@@ -352,5 +354,10 @@ public abstract class CraftEntity implements org.bukkit.entity.Entity {
         }
 
         return getHandle().vehicle.getBukkitEntity();
+    }
+
+	@Override
+	public EntityType getType() {
+		return EntityType.UNKNOWN;
     }
 }
