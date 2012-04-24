@@ -81,7 +81,9 @@ public class Chunk {
         for (int l = 0; l < 16; ++l) {
             for (int i1 = 0; i1 < 16; ++i1) {
                 for (int j1 = 0; j1 < k; ++j1) {
-                    byte b0 = abyte[l << 11 | i1 << 7 | j1];
+                    /* FORGE: The following change, a cast from unsigned byte to int,
+                     * fixes a vanilla bug when generating new chunks that contain a block ID > 127 */
+                    int b0 = abyte[l << 11 | i1 << 7 | j1] & 0xFF;
 
                     if (b0 != 0) {
                         int k1 = j1 >> 4;
@@ -97,6 +99,44 @@ public class Chunk {
         }
     }
 
+    /**
+     * Metadata sensitive Chunk constructor for use in new ChunkProviders that 
+     * use metadata sensitive blocks during generation.
+     * 
+     * @param world The world this chunk belongs to
+     * @param ids A ByteArray containing all the BlockID's to set this chunk to 
+     * @param metadata A ByteArray containing all the metadata to set this chunk to
+     * @param chunkX The chunk's X position
+     * @param chunkZ The Chunk's Z position
+     */
+    public Chunk(World world, byte[] ids, byte[] metadata, int chunkX, int chunkZ)
+    {
+        this(world, chunkX, chunkZ);
+        int height = ids.length / 256;
+        for (int x = 0; x < 16; ++x)
+        {
+            for (int z = 0; z < 16; ++z)
+            {
+                for (int y = 0; y < height; ++y)
+                {
+                    int index = x << 11 | z << 7 | y;
+                    int id    = ids[index] & 0xFF;
+                    int meta  = metadata[index] & 0x0F;
+                    if (id != 0)
+                    {
+                        int chunkY = y >> 4;
+                        if (sections[chunkY] == null)
+                        {
+                            sections[chunkY] = new ChunkSection(chunkY << 4);
+                        }
+                        sections[chunkY].a(x, y & 15, z, id);
+                        sections[chunkY].b(x, y & 15, z, meta);
+                    }
+                }
+            }
+        }
+    }
+    
     public boolean a(int i, int j) {
         return i == this.x && j == this.z;
     }
@@ -334,7 +374,7 @@ public class Chunk {
     }
 
     public int getTypeId(int i, int j, int k) {
-        if (j >> 4 >= this.sections.length) {
+        if (j >> 4 >= this.sections.length || j >> 4 < 0) {
             return 0;
         } else {
             ChunkSection chunksection = this.sections[j >> 4];
@@ -344,7 +384,7 @@ public class Chunk {
     }
 
     public int getData(int i, int j, int k) {
-        if (j >> 4 >= this.sections.length) {
+        if (j >> 4 >= this.sections.length || j >> 4 < 0) {
             return 0;
         } else {
             ChunkSection chunksection = this.sections[j >> 4];
@@ -370,6 +410,9 @@ public class Chunk {
         if (l1 == l && this.getData(i, j, k) == i1) {
             return false;
         } else {
+        	if (j >> 4 >= sections.length || j >> 4 < 0) {
+        		return false;
+        	}
             ChunkSection chunksection = this.sections[j >> 4];
             boolean flag = false;
 
@@ -441,7 +484,7 @@ public class Chunk {
     }
 
     public boolean b(int i, int j, int k, int l) {
-        ChunkSection chunksection = this.sections[j >> 4];
+        ChunkSection chunksection = j >> 4 >=sections.length || j >> 4 < 0 ? null : this.sections[j >> 4];
 
         if (chunksection == null) {
             return false;
@@ -470,13 +513,13 @@ public class Chunk {
     }
 
     public int getBrightness(EnumSkyBlock enumskyblock, int i, int j, int k) {
-        ChunkSection chunksection = this.sections[j >> 4];
+        ChunkSection chunksection = j >> 4 >=sections.length || j >> 4 < 0 ? null : this.sections[j >> 4];
 
         return chunksection == null ? enumskyblock.c : (enumskyblock == EnumSkyBlock.SKY ? chunksection.c(i, j & 15, k) : (enumskyblock == EnumSkyBlock.BLOCK ? chunksection.d(i, j & 15, k) : enumskyblock.c));
     }
 
     public void a(EnumSkyBlock enumskyblock, int i, int j, int k, int l) {
-        ChunkSection chunksection = this.sections[j >> 4];
+        ChunkSection chunksection = j >> 4 >=sections.length || j >> 4 < 0 ? null : this.sections[j >> 4];
 
         if (chunksection == null) {
             chunksection = this.sections[j >> 4] = new ChunkSection(j >> 4 << 4);
@@ -498,7 +541,7 @@ public class Chunk {
     }
 
     public int c(int i, int j, int k, int l) {
-        ChunkSection chunksection = this.sections[j >> 4];
+        ChunkSection chunksection = j >> 4 >=sections.length || j >> 4 < 0 ? null : this.sections[j >> 4];
 
         if (chunksection == null) {
             return !this.world.worldProvider.e && l < EnumSkyBlock.SKY.c ? EnumSkyBlock.SKY.c - l : 0;
@@ -692,8 +735,8 @@ public class Chunk {
     }
 
     public void a(Entity entity, AxisAlignedBB axisalignedbb, List list) {
-        int i = MathHelper.floor((axisalignedbb.b - 2.0D) / 16.0D);
-        int j = MathHelper.floor((axisalignedbb.e + 2.0D) / 16.0D);
+        int i = MathHelper.floor((axisalignedbb.b - World.MAX_ENTITY_RADIUS) / 16.0D);
+        int j = MathHelper.floor((axisalignedbb.e + World.MAX_ENTITY_RADIUS) / 16.0D);
 
         if (i < 0) {
             i = 0;
@@ -727,8 +770,8 @@ public class Chunk {
     }
 
     public void a(Class oclass, AxisAlignedBB axisalignedbb, List list) {
-        int i = MathHelper.floor((axisalignedbb.b - 2.0D) / 16.0D);
-        int j = MathHelper.floor((axisalignedbb.e + 2.0D) / 16.0D);
+        int i = MathHelper.floor((axisalignedbb.b - World.MAX_ENTITY_RADIUS) / 16.0D);
+        int j = MathHelper.floor((axisalignedbb.e + World.MAX_ENTITY_RADIUS) / 16.0D);
 
         if (i < 0) {
             i = 0;

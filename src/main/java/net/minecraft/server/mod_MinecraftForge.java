@@ -1,5 +1,7 @@
 package net.minecraft.server;
 
+import java.util.Set;
+
 import forge.ForgeHooks;
 import forge.MinecraftForge;
 import forge.NetworkMod;
@@ -26,20 +28,13 @@ public class mod_MinecraftForge extends NetworkMod
         {
             if (mod instanceof NetworkMod)
             {
+            	if (x == Item.MAP.id) {
+            		x++;
+            	}
                 ForgeHooks.networkMods.put(x++, (NetworkMod)mod);
             }
         }
+        ((Set)ModLoader.getPrivateValue(Packet.class, null, 3)).add(131);
+        ((Set)ModLoader.getPrivateValue(Packet.class, null, 3)).add(132);
     }
-
-	@Override
-	public boolean clientSideRequired() 
-	{
-		return false;
-	}
-
-	@Override
-	public boolean serverSideRequired() 
-	{
-		return false;
-	}
 }

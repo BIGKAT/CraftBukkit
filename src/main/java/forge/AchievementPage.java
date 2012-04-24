@@ -3,13 +3,13 @@
  * License v1.0.
  */
 
-package net.minecraft.src.forge;
+package forge;
 
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 
-import net.minecraft.src.Achievement;
+import net.minecraft.server.Achievement;
 
 public class AchievementPage
 {

@@ -5,6 +5,7 @@
 
 package forge;
 
+import net.minecraft.server.Achievement;
 import net.minecraft.server.BaseMod;
 import net.minecraft.server.Block;
 import net.minecraft.server.Entity;
@@ -12,6 +13,10 @@ import net.minecraft.server.EntityMinecart;
 import net.minecraft.server.Item;
 import net.minecraft.server.ItemStack;
 import net.minecraft.server.ModLoader;
+import net.minecraft.server.NetworkManager;
+import net.minecraft.server.Packet;
+import net.minecraft.server.Packet131ItemData;
+import net.minecraft.server.Packet132TileEntityData;
 import net.minecraft.server.World;
 
 import java.util.*;
@@ -1153,10 +1158,10 @@ public class MinecraftForge
             throw new IllegalArgumentException(String.format("Data argument was to long, must not be longer then 255 bytes was %d", data.length));
         }
         
-        Packet131MapData pkt = new Packet131MapData();
-        pkt.itemID   = (short)getModID(mod);
-        pkt.uniqueID = id;
-        pkt.itemData = data;
+        Packet131ItemData pkt = new Packet131ItemData();
+        pkt.a   = (short)getModID(mod);
+        pkt.b = id;
+        pkt.c = data;
         sendPacket(net, pkt);
     }
     
@@ -1176,13 +1181,13 @@ public class MinecraftForge
     public static void sendTileEntityPacket(NetworkManager net, int x, short y, int z, byte action, int par1, int par2, int par3)
     {
         Packet132TileEntityData pkt = new Packet132TileEntityData();
-        pkt.xPosition    = x;
-        pkt.yPosition    = y;
-        pkt.zPosition    = z;
-        pkt.actionType   = action;
-        pkt.customParam1 = par1;
-        pkt.customParam2 = par2;
-        pkt.customParam3 = par3;
+        pkt.a    = x;
+        pkt.b    = y;
+        pkt.c    = z;
+        pkt.d   = action;
+        pkt.e = par1;
+        pkt.f = par2;
+        pkt.g = par3;
         sendPacket(net, pkt);
     }
     

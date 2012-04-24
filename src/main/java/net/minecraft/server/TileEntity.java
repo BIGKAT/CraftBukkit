@@ -151,8 +151,11 @@ public class TileEntity {
 		return transaction;
 	}
 
+	public static void addNewTileEntityMapping(Class<? extends TileEntity> tileEntityClass, String id) {
+		a(tileEntityClass,id);
+	}
 
-    /**
+	/**
      * Determines if this TileEntity requires update calls.
      * @return True if you want updateEntity() to be called, false if not
      */
@@ -160,8 +163,14 @@ public class TileEntity {
     {
         return true;
     }
-
-	public static void addNewTileEntityMapping(Class<? extends TileEntity> tileEntityClass, String id) {
-		a(tileEntityClass,id);
-	}
+    /**
+     * Called when you receive a TileEntityData packet for the location this
+     * TileEntity is currently in. On the client, the NetworkManager will always
+     * be the remote server. On the server, it will be whomever is responsible for 
+     * sending the packet.
+     * 
+     * @param net The NetworkManager the packet originated from 
+     * @param pkt The data packet
+     */
+    public void onDataPacket(NetworkManager net, Packet132TileEntityData pkt){}
 }

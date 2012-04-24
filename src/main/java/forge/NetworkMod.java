@@ -1,6 +1,7 @@
 package forge;
 
 import net.minecraft.server.BaseMod;
+import net.minecraft.server.NetworkManager;
 
 /**
  * This is for mods that are designed to be used on the server side alone,

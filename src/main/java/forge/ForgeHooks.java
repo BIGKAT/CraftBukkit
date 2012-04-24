@@ -22,16 +22,19 @@ import net.minecraft.server.ModLoader;
 import net.minecraft.server.NBTTagCompound;
 import net.minecraft.server.NetworkManager;
 import net.minecraft.server.Packet;
+import net.minecraft.server.Packet131ItemData;
 import net.minecraft.server.Packet1Login;
 import net.minecraft.server.Packet250CustomPayload;
 import net.minecraft.server.World;
 import forge.packets.PacketEntitySpawn;
+import forge.packets.PacketHandlerBase;
 
 import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.*;
+import java.util.logging.Level;
 
 import org.bukkit.craftbukkit.CraftWorld;
 import org.bukkit.craftbukkit.util.LongHashset;
@@ -435,13 +438,13 @@ public class ForgeHooks
         ItemStack stack = player.inventory.getItemInHand();
         if (stack == null)
         {
-            return false;
+            return player.b(block);
         }
 
         List info = (List)toolClasses.get(stack.id);
         if (info == null)
         {
-            return stack.b(block);
+            return player.b(block);
         }
         Object[] tmp = info.toArray();
         String toolClass = (String)tmp[0];
@@ -450,7 +453,7 @@ public class ForgeHooks
         Integer blockHarvestLevel = (Integer)toolHarvestLevels.get(Arrays.asList(block.id, metadata, toolClass));
         if (blockHarvestLevel == null)
         {
-            return stack.b(block);
+            return player.b(block);
         }
         if (blockHarvestLevel > harvestLevel)
         {
@@ -649,8 +652,8 @@ public class ForgeHooks
     static HashMap toolHarvestLevels = new HashMap();
     static HashSet toolEffectiveness = new HashSet();
 
-    private static IPacketHandler forgePacketHandler = null;
-    public static void setPacketHandler(IPacketHandler handler)
+    private static PacketHandlerBase forgePacketHandler = null;
+    public static void setPacketHandler(PacketHandlerBase handler)
     {
         if (forgePacketHandler != null)
         {
@@ -658,20 +661,20 @@ public class ForgeHooks
         }
         forgePacketHandler = handler;
     }
-    public static IPacketHandler getPacketHandler()
+    public static PacketHandlerBase getPacketHandler()
     {
         return forgePacketHandler;
     }
 
-    public static boolean onItemDataPacket(NetworkManager net, Packet131MapData pkt) 
+    public static boolean onItemDataPacket(NetworkManager net, Packet131ItemData pkt) 
     {
-        NetworkMod mod = MinecraftForge.getModByID(pkt.itemID);
+        NetworkMod mod = MinecraftForge.getModByID(pkt.a);
         if (mod == null)
         {
-            ModLoader.getLogger().log(Level.WARNING, String.format("Received Unknown MapData packet %d:%d", pkt.itemID, pkt.uniqueID));
+            ModLoader.getLogger().log(Level.WARNING, String.format("Received Unknown MapData packet %d:%d", pkt.a, pkt.b));
             return false;
         }
-        mod.onPacketData(net, pkt.uniqueID, pkt.itemData);
+        mod.onPacketData(net, pkt.b, pkt.c);
         return true;
 	}
 

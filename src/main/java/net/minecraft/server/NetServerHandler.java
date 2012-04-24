@@ -50,6 +50,7 @@ import org.bukkit.inventory.Recipe;
 import cpw.mods.fml.server.FMLBukkitHandler;
 // CraftBukkit end
 
+import forge.ForgeHooks;
 import forge.MessageManager;
 
 public class NetServerHandler extends NetHandler implements ICommandListener {
@@ -729,7 +730,7 @@ public class NetServerHandler extends NetHandler implements ICommandListener {
                 this.networkManager.queue(new Packet3Chat(line));
             }
             packet = null;
-        } else if (packet != null && packet.lowPriority == true) {
+        } else if (packet.lowPriority == true) {
             // Reroute all low-priority packets through to compression thread.
             ChunkCompressionThread.sendPacket(this.player, packet);
             packet = null;
@@ -1337,5 +1338,28 @@ public class NetServerHandler extends NetHandler implements ICommandListener {
             server.getMessenger().dispatchIncomingMessage(player.getBukkitEntity(), packet.tag, packet.data);
         }
     }
+
     // CraftBukkit end
+	@Override
+	public void a(Packet131ItemData par1Packet131MapData) {
+		ForgeHooks.onItemDataPacket(networkManager, par1Packet131MapData);
+	}
+
+	@Override
+	public void a(Packet132TileEntityData pkt) {
+		World world = this.getPlayerEntity().world;
+		if (world.isLoaded(pkt.a, pkt.b, pkt.c)) {
+			TileEntity te = world.getTileEntity(pkt.a, pkt.b, pkt.c);
+			if (te != null) {
+				te.onDataPacket(networkManager, pkt);
+			} else {
+				ModLoader.getLogger().log(Level.WARNING,String.format(
+										"Received a TileEntityData packet for a location that did not have a TileEntity: (%d, %d, %d) %d: %d, %d, %d",
+										pkt.a, pkt.b,
+										pkt.c, pkt.d,
+										pkt.e, pkt.f,
+										pkt.g));
+			}
+		}
+	}
 }
