@@ -16,7 +16,7 @@ import cpw.mods.fml.server.FMLBukkitHandler;
 import net.minecraft.server.*;
 import forge.packets.*;
 
-public class PacketHandlerServer implements IPacketHandler
+public class PacketHandlerServer extends PacketHandlerBase
 {
     public static boolean DEBUG = false;
     @Override
@@ -163,5 +163,12 @@ public class PacketHandlerServer implements IPacketHandler
 
         entityplayer.syncInventory();
         FMLBukkitHandler.instance().announceLogin(entityplayer);
+    }
+
+    @Override
+    public void sendPacket(NetworkManager network, Packet packet) 
+    {
+        NetServerHandler net = (NetServerHandler)network.getNetHandler();
+        net.sendPacket(packet);
     }
 }

@@ -749,6 +749,73 @@ public class MinecraftForge
         return null;
     }
 
+    //Achievement Pages ----------------------------------------
+    private static LinkedList<AchievementPage> achievementPages = new LinkedList<AchievementPage>();
+    
+    /**
+     * Registers an achievement page.
+     * @param page The page.
+     */
+    public static void registerAchievementPage(AchievementPage page)
+    {
+        if (getAchievementPage(page.getName()) != null)
+        {
+            throw new RuntimeException("Duplicate achievement page name \"" + page.getName() + "\"!");
+        }
+        achievementPages.add(page);
+    }
+    
+    /**
+     * Will return an achievement page by its index on the list.
+     * @param index The page's index.
+     * @return the achievement page corresponding to the index or null if invalid index
+     */
+    public static AchievementPage getAchievementPage(int index)
+    {
+        return achievementPages.get(index);
+    }
+    
+    /**
+     * Will return an achievement page by its name.
+     * @param name The page's name.
+     * @return the achievement page with the given name or null if no such page
+     */
+    public static AchievementPage getAchievementPage(String name)
+    {
+        for (AchievementPage page : achievementPages)
+        {
+            if (page.getName().equals(name))
+            {
+                return page;
+            }
+        }
+        return null;
+    }
+    
+    /**
+     * Will return the list of achievement pages.
+     * @return the list's size
+     */
+    public static Set<AchievementPage> getAchievementPages()
+    {
+        return new HashSet<AchievementPage>(achievementPages);
+    }
+    
+    /**
+     * Will return whether an achievement is in any page or not.
+     * @param achievement The achievement.
+     */
+    public static boolean isAchievementInPages(Achievement achievement)
+    {
+        for (AchievementPage page : achievementPages)
+        {
+            if (page.getAchievements().contains(achievement)) 
+            {
+                return true;
+            }
+        }
+        return false;
+    }
 
     //Minecart Dictionary --------------------------------------
     private static Map<MinecartKey, ItemStack> itemForMinecart = new HashMap<MinecartKey, ItemStack>();
@@ -1053,6 +1120,73 @@ public class MinecraftForge
         ForgeHooks.arrowLooseHandlers.add(handler);
     }
     
+    /**
+     * Sends a packet on the specified NetworkManager
+     * 
+     * @param net The manager to send the packet on
+     * @param packet The packet to be sent
+     */
+    public static void sendPacket(NetworkManager net, Packet packet)
+    {
+        ForgeHooks.getPacketHandler().sendPacket(net, packet);
+    }
+    
+    /**
+     * Sends a 'small' payload packet to the specified manager.
+     * It uses the Packet131MapData packet for it's communication
+     * so things are limited.
+     * 
+     * @param net The manager to send the packet to
+     * @param mod The mod associated with this packet
+     * @param id The ID number used to identify this packet
+     * @param data The data to be sent, must be no larger then 255 bytes.
+     */
+    public static void sendPacket(NetworkManager net, NetworkMod mod, short id, byte[] data)
+    {   
+        if (data == null)
+        {
+            data = new byte[0];
+        }
+        
+        if (data.length > 255)
+        {
+            throw new IllegalArgumentException(String.format("Data argument was to long, must not be longer then 255 bytes was %d", data.length));
+        }
+        
+        Packet131MapData pkt = new Packet131MapData();
+        pkt.itemID   = (short)getModID(mod);
+        pkt.uniqueID = id;
+        pkt.itemData = data;
+        sendPacket(net, pkt);
+    }
+    
+    /**
+     * Helper function for wrapping and sending a Packet132TileEntityData packet,
+     * useful so we don't have to edit the packet class itself to add the constructor on the client side.
+     * 
+     * @param net The manager to send the packet to
+     * @param x Position X
+     * @param y Position Y
+     * @param z Position Z
+     * @param action Action ID
+     * @param par1 Custom Parameter 1
+     * @param par2 Custom Parameter 2
+     * @param par3 Custom Parameter 3
+     */
+    public static void sendTileEntityPacket(NetworkManager net, int x, short y, int z, byte action, int par1, int par2, int par3)
+    {
+        Packet132TileEntityData pkt = new Packet132TileEntityData();
+        pkt.xPosition    = x;
+        pkt.yPosition    = y;
+        pkt.zPosition    = z;
+        pkt.actionType   = action;
+        pkt.customParam1 = par1;
+        pkt.customParam2 = par2;
+        pkt.customParam3 = par3;
+        sendPacket(net, pkt);
+    }
+    
+    private static int isClient = -1;
     public static boolean isClient()
     {
     	return false;

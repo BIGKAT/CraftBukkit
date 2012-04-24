@@ -624,11 +624,11 @@ public class ForgeHooks
     //This number is incremented every Minecraft version, and never reset
     public static final int majorVersion=3;
     //This number is incremented every official release, and reset every Minecraft version
-    public static final int minorVersion=0;
+    public static final int minorVersion    = 1;
     //This number is incremented every time a interface changes, and reset every Minecraft version
-    public static final int revisionVersion = 1;
+    public static final int revisionVersion = 2;
     //This number is incremented every time Jenkins builds Forge, and never reset. Should always be 0 in the repo code.
-    public static final int buildVersion    = 84;
+    public static final int buildVersion    = 94;
     static
     {
         plantGrassList = new ArrayList<ProbableItem>();
@@ -662,6 +662,18 @@ public class ForgeHooks
     {
         return forgePacketHandler;
     }
+
+    public static boolean onItemDataPacket(NetworkManager net, Packet131MapData pkt) 
+    {
+        NetworkMod mod = MinecraftForge.getModByID(pkt.itemID);
+        if (mod == null)
+        {
+            ModLoader.getLogger().log(Level.WARNING, String.format("Received Unknown MapData packet %d:%d", pkt.itemID, pkt.uniqueID));
+            return false;
+        }
+        mod.onPacketData(net, pkt.uniqueID, pkt.itemData);
+        return true;
+	}
 
 	public static void addActiveChunks(World world, LongHashset chunkTickList) {
 		
