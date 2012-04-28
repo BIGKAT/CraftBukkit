@@ -2226,7 +2226,7 @@ public class World implements IBlockAccess {
     }
 
     public void b(EnumSkyBlock enumskyblock, int i, int j, int k) {
-        if (this.areChunksLoaded(i, j, k, 17)) {
+        if (this.areChunksLoaded(i, j, k, 17) && !this.suppressPhysics) {
             int l = 0;
             int i1 = 0;
 
