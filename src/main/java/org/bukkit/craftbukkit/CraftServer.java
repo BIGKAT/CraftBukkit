@@ -398,7 +398,13 @@ public final class CraftServer implements Server {
     public boolean getWarnOnOverload() {
         return this.configuration.getBoolean("settings.warn-on-overload");
     }
-
+    
+    // MCPortCentral
+    public boolean getKickOnSpeedHack() {
+        return this.configuration.getBoolean("settings.kick-on-speedhack");
+    }
+    // END MCPortCentral
+    
     public boolean hasWhitelist() {
         return this.getConfigBoolean("white-list", false);
     }
