@@ -1197,7 +1197,7 @@ public class World implements IBlockAccess {
                     Chunk chunk = this.getChunkAt(tileentity.x >> 4, tileentity.z >> 4);
 
                     if (chunk != null) {
-                        chunk.f(tileentity.x & 15, tileentity.y, tileentity.z & 15);
+                        chunk.cleanChunkBlockTileEntity(tileentity.x & 15, tileentity.y, tileentity.z & 15);
                     }
                 }
             }
