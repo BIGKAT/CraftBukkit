@@ -771,7 +771,7 @@ public class MinecraftServer implements Runnable, ICommandListener, IMinecraftSe
     }
     
     public String getServerModName() {
-        return "craftbukkit"; // CraftBukkit - cb > vanilla!
+        return "craftbukkit+forge"; // CraftBukkit - cb > vanilla!
     }
 
     public static boolean isRunning(MinecraftServer minecraftserver) {
