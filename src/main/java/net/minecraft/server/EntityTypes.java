@@ -156,6 +156,6 @@ public class EntityTypes {
 
 	@SuppressWarnings("unchecked")
 	public static Map<String,Class<? extends Entity>> getEntityToClassMapping() {
-		return a;
+		return b;
 	}
 }
