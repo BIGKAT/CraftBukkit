@@ -54,20 +54,12 @@ public class DimensionManager
 
     public static World getWorld(int id)
     {
-        return getWorlds()[id];
+        return worlds.get(id);
     }
 
     public static World[] getWorlds()
     {
-    	CraftServer cs=(CraftServer)Bukkit.getServer();
-    	int len=cs.getWorlds().size();
-    	World[] res=new World[len];
-    	int i=0;
-    	for (org.bukkit.World w : cs.getWorlds()) {
-    		CraftWorld cw=(CraftWorld)w;
-    		res[i++]=cw.getHandle();
-    	}
-    	return res;
+    	return worlds.values().toArray(new World[0]);
     }
 
     public static boolean shouldLoadSpawn(int id)

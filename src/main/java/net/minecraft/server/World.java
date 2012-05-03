@@ -172,8 +172,8 @@ public class World implements IBlockAccess {
 
         this.g();
         this.B();
-        ForgeHooks.onWorldLoad(this);
         this.getServer().addWorld(this.world); // CraftBukkit
+        ForgeHooks.onWorldLoad(this);
     }
 
     protected IChunkProvider b() {

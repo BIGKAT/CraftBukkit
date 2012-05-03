@@ -31,6 +31,7 @@ public class WorldServer extends World implements BlockChangeDelegate {
         }
 
         this.dimension = i;
+        forge.DimensionManager.setWorld(i, this);
         this.pvpMode = minecraftserver.pvpMode;
         this.manager = new PlayerManager(minecraftserver, this.dimension, minecraftserver.propertyManager.getInt("view-distance", 10));
     }
