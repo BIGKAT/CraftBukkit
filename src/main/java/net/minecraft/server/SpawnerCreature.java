@@ -14,6 +14,8 @@ import org.bukkit.craftbukkit.util.LongHash;
 import org.bukkit.event.entity.CreatureSpawnEvent.SpawnReason;
 // CraftBukkit end
 
+import forge.ForgeHooks;
+
 public final class SpawnerCreature {
     // CraftBukkit start
     // private static HashMap b = new HashMap(); // Moved local to spawnEntities
@@ -42,7 +44,7 @@ public final class SpawnerCreature {
     protected static ChunkPosition getRandomPosition(World world, int i, int j) {
         Chunk chunk = world.getChunkAt(i, j);
         int k = i * 16 + world.random.nextInt(16);
-        int l = world.random.nextInt(chunk == null ? 128 : Math.max(128, chunk.g()));
+        int l = world.random.nextInt(chunk == null ? 128 : Math.max(128, chunk.g() + 15)); //Vanilla Bug that causes mobs to not spawn on the topmost chunk with blocks.
         int i1 = j * 16 + world.random.nextInt(16);
 
         return new ChunkPosition(k, l, i1);
@@ -215,12 +217,18 @@ public final class SpawnerCreature {
         } else {
             int l = world.getTypeId(i, j - 1, k);
 
-            return Block.g(l) && l != Block.BEDROCK.id && !world.e(i, j, k) && !world.getMaterial(i, j, k).isLiquid() && !world.e(i, j + 1, k);
+            boolean spawnBlock = (Block.byId[l] != null && Block.byId[l].canCreatureSpawn(enumcreaturetype, world, i, j - 1, k));
+            return spawnBlock && l != Block.BEDROCK.id && !world.e(i, j, k) && !world.getMaterial(i, j, k).isLiquid() && !world.e(i, j + 1, k);
         }
     }
 
     private static void a(EntityLiving entityliving, World world, float f, float f1, float f2) {
         if (entityliving.dead) return; // CraftBukkit
+        if (ForgeHooks.onEntitySpawnSpecial(entityliving, world, f, f1, f2))
+        {
+        	return;
+        }
+
         if (entityliving instanceof EntitySpider && world.random.nextInt(100) == 0) {
             EntitySkeleton entityskeleton = new EntitySkeleton(world);
 

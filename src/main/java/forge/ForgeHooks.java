@@ -12,6 +12,7 @@ import net.minecraft.server.ChunkCoordIntPair;
 import net.minecraft.server.Entity;
 import net.minecraft.server.EntityHuman;
 import net.minecraft.server.EntityItem;
+import net.minecraft.server.EntityLiving;
 import net.minecraft.server.EntityMinecart;
 import net.minecraft.server.EntityPlayer;
 import net.minecraft.server.IInventory;
@@ -344,6 +345,19 @@ public class ForgeHooks
     }
     static LinkedList<IFuelHandler> fuelHandlers = new LinkedList<IFuelHandler>();
 
+    public static boolean onEntitySpawnSpecial(EntityLiving entity, World world, float x, float y, float z) 
+    {
+        for (ISpecialMobSpawnHandler handler : specialMobSpawnHandlers)
+        {
+            if (handler.onSpecialEntitySpawn(entity, world, x, y, z))
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+    static LinkedList<ISpecialMobSpawnHandler> specialMobSpawnHandlers = new LinkedList<ISpecialMobSpawnHandler>();
+
     // Plant Management
     // ------------------------------------------------------------
     static class ProbableItem
@@ -629,9 +643,30 @@ public class ForgeHooks
     //This number is incremented every official release, and reset every Minecraft version
     public static final int minorVersion    = 1;
     //This number is incremented every time a interface changes, and reset every Minecraft version
-    public static final int revisionVersion = 2;
+    public static final int revisionVersion = 3;
     //This number is incremented every time Jenkins builds Forge, and never reset. Should always be 0 in the repo code.
-    public static final int buildVersion    = 94;
+    public static final int buildVersion    = 105;
+    
+    public static int getMajorVersion()
+    {
+        return majorVersion;
+    }
+    
+    public static int getMinorVersion()
+    {
+        return minorVersion;
+    }
+    
+    public static int getRevisionVersion()
+    {
+        return revisionVersion;
+    }
+    
+    public static int getBuildVersion()
+    {
+        return buildVersion;
+    }    
+    
     static
     {
         plantGrassList = new ArrayList<ProbableItem>();
@@ -643,7 +678,7 @@ public class ForgeHooks
         seedGrassList.add(new ProbableItem(Item.SEEDS.id, 0, 1, 0, 10));
         seedGrassWeight = 10;
         
-        System.out.printf("MinecraftForge v%d.%d.%d.%d Initialized\n", majorVersion, minorVersion, revisionVersion, buildVersion);
+        System.out.println(String.format("MinecraftForge v%d.%d.%d.%d Initialized\n", majorVersion, minorVersion, revisionVersion, buildVersion));
         ModLoader.getLogger().info(String.format("MinecraftForge v%d.%d.%d.%d Initialized\n", majorVersion, minorVersion, revisionVersion, buildVersion));
     }
 

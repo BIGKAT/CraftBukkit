@@ -234,7 +234,7 @@ public class TileEntityFurnace extends TileEntity implements IInventory, ISidedI
             if (this.items[2] == null) return true;
             if (!this.items[2].doMaterialsMatch(var1)) return false;
             int result = items[2].count + var1.count;
-            return (result < this.getMaxStackSize() && result < this.items[2].getMaxStackSize());
+            return (result <= this.getMaxStackSize() && result <= this.items[2].getMaxStackSize());
         }
     }
 

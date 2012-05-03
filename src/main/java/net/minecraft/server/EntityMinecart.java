@@ -613,7 +613,11 @@ public class EntityMinecart extends Entity implements IInventory {
         if (isPoweredCart()) {
             this.b = nbttagcompound.getDouble("PushX");
             this.c = nbttagcompound.getDouble("PushZ");
-            this.e = nbttagcompound.getInt("Fuel");
+            try {
+            	this.e = nbttagcompound.getInt("Fuel");
+            } catch (ClassCastException cce) {
+            	this.e = nbttagcompound.getShort("Fuel");
+            }
         } else if (getSize()>0) {
             NBTTagList nbttaglist = nbttagcompound.getList("Items");
 

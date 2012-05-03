@@ -926,6 +926,11 @@ public abstract class EntityHuman extends EntityLiving {
         if (this.world.isLoaded(i, j, k)) {
             int l = this.world.getData(i, j, k);
             int i1 = BlockBed.b(l);
+            Block block = Block.byId[world.getTypeId(i,j,k)];
+            if (block != null)
+            {
+            	i1 = block.getBedDirection(world, i, j, k);
+            }
             float f = 0.5F;
             float f1 = 0.5F;
 
@@ -992,9 +997,10 @@ public abstract class EntityHuman extends EntityLiving {
         ChunkCoordinates chunkcoordinates = this.F;
         ChunkCoordinates chunkcoordinates1 = this.F;
 
-        if (chunkcoordinates != null && this.world.getTypeId(chunkcoordinates.x, chunkcoordinates.y, chunkcoordinates.z) == Block.BED.id) {
-            BlockBed.a(this.world, chunkcoordinates.x, chunkcoordinates.y, chunkcoordinates.z, false);
-            chunkcoordinates1 = BlockBed.f(this.world, chunkcoordinates.x, chunkcoordinates.y, chunkcoordinates.z, 0);
+        Block block = (chunkcoordinates == null ? null : Block.byId[world.getTypeId(chunkcoordinates.x, chunkcoordinates.y, chunkcoordinates.z)]);
+        if (chunkcoordinates != null && block != null && block.isBed(world, chunkcoordinates.x, chunkcoordinates.y, chunkcoordinates.z, this)) {
+        	block.setBedOccupied(this.world, chunkcoordinates.x, chunkcoordinates.y, chunkcoordinates.z, this, false);
+        	chunkcoordinates1 = block.getBedSpawnPosition(this.world, chunkcoordinates.x, chunkcoordinates.y, chunkcoordinates.z, this);
             if (chunkcoordinates1 == null) {
                 chunkcoordinates1 = new ChunkCoordinates(chunkcoordinates.x, chunkcoordinates.y + 1, chunkcoordinates.z);
             }
@@ -1035,7 +1041,9 @@ public abstract class EntityHuman extends EntityLiving {
     }
 
     private boolean G() {
-        return this.world.getTypeId(this.F.x, this.F.y, this.F.z) == Block.BED.id;
+    	ChunkCoordinates c = F;
+    	int blockID = world.getTypeId(c.x, c.y, c.z);
+    	return Block.byId[blockID] != null && Block.byId[blockID].isBed(world, c.x, c.y, c.z, this);
     }
 
     public static ChunkCoordinates getBed(World world, ChunkCoordinates chunkcoordinates) {
@@ -1045,11 +1053,12 @@ public abstract class EntityHuman extends EntityLiving {
         ichunkprovider.getChunkAt(chunkcoordinates.x + 3 >> 4, chunkcoordinates.z - 3 >> 4);
         ichunkprovider.getChunkAt(chunkcoordinates.x - 3 >> 4, chunkcoordinates.z + 3 >> 4);
         ichunkprovider.getChunkAt(chunkcoordinates.x + 3 >> 4, chunkcoordinates.z + 3 >> 4);
-        if (world.getTypeId(chunkcoordinates.x, chunkcoordinates.y, chunkcoordinates.z) != Block.BED.id) {
+        ChunkCoordinates c = chunkcoordinates;
+        Block block = Block.byId[world.getTypeId(c.x, c.y, c.z)];
+        if (block == null || !block.isBed(world, c.x, c.y, c.z, null)) {
             return null;
         } else {
-            ChunkCoordinates chunkcoordinates1 = BlockBed.f(world, chunkcoordinates.x, chunkcoordinates.y, chunkcoordinates.z, 0);
-
+        	ChunkCoordinates chunkcoordinates1 = block.getBedSpawnPosition(world, c.x, c.y, c.z, null);
             return chunkcoordinates1;
         }
     }

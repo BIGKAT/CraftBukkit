@@ -11,6 +11,9 @@ import forge.NetworkMod;
  */
 public class mod_MinecraftForge extends NetworkMod
 {
+    @MLProp(info = "Set to false to reproduce a vanilla bug that prevents mobs from spawning on inverted half-slabs and inverted stairs.")
+    public static boolean SPAWNER_ALLOW_ON_INVERTED = true;
+    
     @Override
     public String getVersion()
     {
