@@ -24,6 +24,7 @@ import net.minecraft.server.Enchantment;
 import net.minecraft.server.EntityPlayer;
 import net.minecraft.server.EntityTracker;
 import net.minecraft.server.FurnaceRecipes;
+import net.minecraft.server.ICommandListener;
 import net.minecraft.server.IProgressUpdate;
 import net.minecraft.server.IWorldAccess;
 import net.minecraft.server.Item;
@@ -120,6 +121,8 @@ import com.avaje.ebeaninternal.server.lib.sql.TransactionIsolation;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.MapMaker;
 
+import forge.bukkit.ForgeCommandMap;
+
 import jline.ConsoleReader;
 
 public final class CraftServer implements Server {
@@ -128,7 +131,7 @@ public final class CraftServer implements Server {
     private final String bukkitVersion = Versioning.getBukkitVersion();
     private final ServicesManager servicesManager = new SimpleServicesManager();
     private final BukkitScheduler scheduler = new CraftScheduler();
-    private final SimpleCommandMap commandMap = new SimpleCommandMap(this);
+    private final ForgeCommandMap commandMap = new ForgeCommandMap(this);
     private final SimpleHelpMap helpMap = new SimpleHelpMap(this);
     private final StandardMessenger messenger = new StandardMessenger();
     private final PluginManager pluginManager = new SimplePluginManager(this, commandMap);

@@ -848,8 +848,12 @@ public class NetServerHandler extends NetHandler implements ICommandListener {
 				}
 			}
 
-			// CraftBukkit start
-			this.chat(s);
+			if (FMLBukkitHandler.instance().handleChatPacket(packet3chat, player)) {
+				
+			} else {
+				// CraftBukkit start
+				this.chat(s);
+			}
 		}
 	}
 
@@ -877,6 +881,10 @@ public class NetServerHandler extends NetHandler implements ICommandListener {
 					return true;
 				}
 
+				s = ForgeHooks.onServerChat(this.player, s);
+				if (s == null) {
+					return true;
+				}
 				s = String.format(event.getFormat(), event.getPlayer().getDisplayName(), event.getMessage());
 				minecraftServer.console.sendMessage(s);
 				for (Player recipient : event.getRecipients()) {
