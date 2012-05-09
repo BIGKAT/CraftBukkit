@@ -122,6 +122,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.MapMaker;
 
 import forge.bukkit.ForgeCommandMap;
+import forge.bukkit.ForgePluginManager;
 
 import jline.ConsoleReader;
 
@@ -155,7 +156,7 @@ public final class CraftServer implements Server {
 
     public CraftServer(MinecraftServer console, ServerConfigurationManager server) {
     	this.commandMap = new ForgeCommandMap(this, console);
-    	this.pluginManager = new SimplePluginManager(this, commandMap);
+    	this.pluginManager = new ForgePluginManager(this, commandMap);
         this.console = console;
         this.server = server;
         this.serverVersion = CraftServer.class.getPackage().getImplementationVersion();
