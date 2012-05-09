@@ -19,9 +19,9 @@ import forge.ForgeHooks;
 
 public class ForgeCommandMap extends SimpleCommandMap {
 	private MinecraftServer mcServer;
-	public ForgeCommandMap(Server server) {
+	public ForgeCommandMap(Server server, MinecraftServer mcServer) {
 		super(server);
-		mcServer=((CraftServer)server).getServer();
+		this.mcServer=mcServer;
 	}
 
 	public boolean dispatch(CommandSender sender, String commandLine) throws CommandException {

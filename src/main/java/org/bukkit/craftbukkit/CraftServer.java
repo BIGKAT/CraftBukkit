@@ -131,10 +131,10 @@ public final class CraftServer implements Server {
     private final String bukkitVersion = Versioning.getBukkitVersion();
     private final ServicesManager servicesManager = new SimpleServicesManager();
     private final BukkitScheduler scheduler = new CraftScheduler();
-    private final ForgeCommandMap commandMap = new ForgeCommandMap(this);
+    private final ForgeCommandMap commandMap;
     private final SimpleHelpMap helpMap = new SimpleHelpMap(this);
     private final StandardMessenger messenger = new StandardMessenger();
-    private final PluginManager pluginManager = new SimplePluginManager(this, commandMap);
+    private final PluginManager pluginManager;
     protected final MinecraftServer console;
     protected final ServerConfigurationManager server;
     private final Map<String, World> worlds = new LinkedHashMap<String, World>();
@@ -154,6 +154,8 @@ public final class CraftServer implements Server {
     }
 
     public CraftServer(MinecraftServer console, ServerConfigurationManager server) {
+    	this.commandMap = new ForgeCommandMap(this, console);
+    	this.pluginManager = new SimplePluginManager(this, commandMap);
         this.console = console;
         this.server = server;
         this.serverVersion = CraftServer.class.getPackage().getImplementationVersion();
