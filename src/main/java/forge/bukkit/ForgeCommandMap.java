@@ -37,7 +37,7 @@ public class ForgeCommandMap extends SimpleCommandMap {
 				// It appears we have an invalid listener. RCon maybe?
 			}
 		}
-        if (player!=null && ForgeHooks.onChatCommand(player, sender.hasPermission("forge.onChatCommand"), commandLine))
+        if (player!=null && ForgeHooks.onChatCommand(player, sender.hasPermission("forge.chatCommands"), commandLine))
         {
             MinecraftServer.log.info("Forge: " + sender.getName() + " issues command: " + commandLine);
             return true;
@@ -45,19 +45,19 @@ public class ForgeCommandMap extends SimpleCommandMap {
 
 		if (commandLine.startsWith("say ") && commandLine.length()>4) {
 			String msg=ForgeHooks.onServerCommandSay(listener, sender.getName(), commandLine.substring(4));
-			if (msg!=null) {
-				MinecraftServer.log.info("[" + sender.getName() + "] " + msg);
-            	mcServer.serverConfigurationManager.sendAll(new Packet3Chat("\u00a7d[Server] " + msg));
+			if (msg==null) {
+				return true;
 			}
+			commandLine="say "+msg;
 		}
 		
 		if (super.dispatch(sender, commandLine)) {
 			return true;
 		}
 		
-		if (FMLBukkitHandler.instance().handleServerCommand(commandLine, sender.getName(), listener)) {
+		if (sender.hasPermission("fml.serverCommands") && FMLBukkitHandler.instance().handleServerCommand(commandLine, sender.getName(), listener)) {
 			return true;
-		} else if (ForgeHooks.onServerCommand(listener, sender.getName(), commandLine)) {
+		} else if (sender.hasPermission("forge.serverCommands") && ForgeHooks.onServerCommand(listener, sender.getName(), commandLine)) {
 			return true;
 		} else {
 			return false;
