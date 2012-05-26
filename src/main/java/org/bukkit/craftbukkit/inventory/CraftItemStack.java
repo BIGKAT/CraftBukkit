@@ -234,6 +234,9 @@ public class CraftItemStack extends ItemStack {
         if (original == null || original.getTypeId() <= 0) {
             return null;
         }
+        if (original instanceof CraftItemStack) {
+            return ((CraftItemStack)original).getHandle();
+        }
         return new CraftItemStack(original).getHandle();
     }
 }
