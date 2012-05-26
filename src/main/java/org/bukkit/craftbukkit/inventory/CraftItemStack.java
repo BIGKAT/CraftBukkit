@@ -25,7 +25,7 @@ public class CraftItemStack extends ItemStack {
 
     public CraftItemStack(CraftItemStack item) {
         this((ItemStack)item);
-        this.item = item.item;
+        this.item = item.item != null ? item.item.cloneItemStack() : null;
     }
 
     public CraftItemStack(ItemStack item) {
