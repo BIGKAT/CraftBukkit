@@ -23,6 +23,11 @@ public class CraftItemStack extends ItemStack {
         this.item = item;
     }
 
+    public CraftItemStack(CraftItemStack item) {
+        this((ItemStack)item);
+        this.item = item.item;
+    }
+
     public CraftItemStack(ItemStack item) {
         this(item.getTypeId(), item.getAmount(), item.getDurability());
         addUnsafeEnchantments(item.getEnchantments());
