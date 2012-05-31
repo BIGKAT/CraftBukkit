@@ -443,6 +443,8 @@ public class CraftWorld implements World {
         // Forces the client to update to the new time immediately
         for (Player p : getPlayers()) {
             CraftPlayer cp = (CraftPlayer) p;
+            if (cp.getHandle().netServerHandler == null) continue;
+
             cp.getHandle().netServerHandler.sendPacket(new Packet4UpdateTime(cp.getHandle().getPlayerTime()));
         }
     }
@@ -523,11 +525,11 @@ public class CraftWorld implements World {
     }
 
     public double getTemperature(int x, int z) {
-        throw new UnsupportedOperationException("Not compatible with 1.8");
+        return this.world.getBiome(x, z).F;
     }
 
     public double getHumidity(int x, int z) {
-        throw new UnsupportedOperationException("Not compatible with 1.8");
+        return this.world.getBiome(x, z).G;
     }
 
     public List<Entity> getEntities() {
@@ -767,6 +769,8 @@ public class CraftWorld implements World {
         radius *= radius;
 
         for (Player player : getPlayers()) {
+            if (((CraftPlayer) player).getHandle().netServerHandler == null) continue;
+
             distance = (int) player.getLocation().distanceSquared(location);
             if (distance <= radius) {
                 ((CraftPlayer) player).getHandle().netServerHandler.sendPacket(packet);

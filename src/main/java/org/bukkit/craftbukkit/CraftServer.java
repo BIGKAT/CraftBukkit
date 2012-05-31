@@ -124,7 +124,7 @@ import com.google.common.collect.MapMaker;
 import forge.bukkit.ForgeCommandMap;
 import forge.bukkit.ForgePluginManager;
 
-import jline.ConsoleReader;
+import jline.console.ConsoleReader;
 
 public final class CraftServer implements Server {
     private final String serverName = "CraftBukkit";
@@ -410,7 +410,7 @@ public final class CraftServer implements Server {
         return this.configuration.getBoolean("settings.kick-on-speedhack");
     }
     // END MCPortCentral
-    
+
     public boolean hasWhitelist() {
         return this.getConfigBoolean("white-list", false);
     }

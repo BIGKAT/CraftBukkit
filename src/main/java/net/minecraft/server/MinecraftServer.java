@@ -16,7 +16,7 @@ import java.util.logging.Logger;
 import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.net.UnknownHostException;
-import jline.ConsoleReader;
+import jline.console.ConsoleReader;
 import joptsimple.OptionSet;
 import org.bukkit.World.Environment;
 import org.bukkit.command.ConsoleCommandSender;
@@ -93,9 +93,19 @@ public class MinecraftServer implements Runnable, ICommandListener, IMinecraftSe
         // CraftBukkit start
         this.options = options;
         try {
-            this.reader = new ConsoleReader(System.in, new PrintWriter(System.out)); // CraftBukkit - Added "System.in, new PrintWriter(System.out)" in the constuctor
-        } catch (IOException ex) {
-            Logger.getLogger(MinecraftServer.class.getName()).log(Level.SEVERE, null, ex);
+            this.reader = new ConsoleReader(System.in, System.out);
+            this.reader.setExpandEvents(false); // Avoid parsing exceptions for uncommonly used event designators
+        } catch (Exception e) {
+            try {
+                // Try again with jline disabled for Windows users without C++ 2008 Redistributable
+                System.setProperty("jline.terminal", "jline.UnsupportedTerminal");
+                System.setProperty("user.language", "en");
+                org.bukkit.craftbukkit.Main.useJline = false;
+                this.reader = new ConsoleReader(System.in, System.out);
+                this.reader.setExpandEvents(false);
+            } catch (IOException ex) {
+                Logger.getLogger(MinecraftServer.class.getName()).log(Level.SEVERE, null, ex);
+            }
         }
         Runtime.getRuntime().addShutdownHook(new ServerShutdownThread(this));
         // CraftBukkit end
@@ -482,6 +492,12 @@ public class MinecraftServer implements Runnable, ICommandListener, IMinecraftSe
             try {
                 this.stop();
                 this.isStopped = true;
+                // CraftBukkit start - restore terminal to original settings
+                try {
+                    this.reader.getTerminal().restore();
+                } catch (Exception e) {
+                }
+                // CraftBukkit end
             } catch (Throwable throwable1) {
                 throwable1.printStackTrace();
             } finally {
