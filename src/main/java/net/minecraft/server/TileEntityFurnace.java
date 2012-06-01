@@ -10,6 +10,7 @@ import org.bukkit.event.inventory.FurnaceBurnEvent;
 import org.bukkit.event.inventory.FurnaceSmeltEvent;
 import org.bukkit.craftbukkit.entity.CraftHumanEntity;
 
+import cpw.mods.fml.common.FMLCommonHandler;
 import cpw.mods.fml.server.FMLBukkitHandler;
 // CraftBukkit end
 
@@ -284,7 +285,7 @@ public class TileEntityFurnace extends TileEntity implements IInventory, ISidedI
             if (i == Block.SAPLING.id) return 100;
             if (i == Item.BLAZE_ROD.id) return 2400;
             int ret = ForgeHooks.getItemBurnTime(itemstack);
-            return (ret > 0 ? ret : FMLBukkitHandler.instance().fuelLookup(itemstack.id, itemstack.getData()));
+            return (ret > 0 ? ret : FMLCommonHandler.instance().fuelLookup(itemstack.id, itemstack.getData()));
         }
     }
 

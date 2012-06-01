@@ -7,6 +7,8 @@ import java.util.Enumeration;
 import java.util.Properties;
 import java.util.TreeMap;
 
+import cpw.mods.fml.common.FMLCommonHandler;
+
 public class LocaleLanguage {
 
     private static LocaleLanguage a = new LocaleLanguage();
@@ -58,6 +60,7 @@ public class LocaleLanguage {
                 }
             }
         }
+        FMLCommonHandler.instance().handleLanguageLoad(properties, s);
     }
 
     public void a(String s) {

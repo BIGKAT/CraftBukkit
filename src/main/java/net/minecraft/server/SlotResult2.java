@@ -1,5 +1,7 @@
 package net.minecraft.server;
 
+import cpw.mods.fml.server.FMLBukkitHandler;
+
 public class SlotResult2 extends Slot {
 
     private EntityHuman a;
@@ -35,6 +37,9 @@ public class SlotResult2 extends Slot {
     protected void b(ItemStack itemstack) {
         itemstack.a(this.a.world, this.a, this.f);
         this.f = 0;
+        
+        FMLBukkitHandler.instance().onItemSmelted(this.a, itemstack);
+        
         if (itemstack.id == Item.IRON_INGOT.id) {
             this.a.a((Statistic) AchievementList.k, 1);
         }
