@@ -5,7 +5,7 @@ import java.util.Random;
 
 import forge.ForgeHooks;
 
-public class Block {
+public class Block implements net.minecraft.src.Block {
 
     public static final StepSound d = new StepSound("stone", 1.0F, 1.0F);
     public static final StepSound e = new StepSound("wood", 1.0F, 1.0F);

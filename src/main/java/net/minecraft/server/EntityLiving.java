@@ -16,7 +16,7 @@ import org.bukkit.event.entity.EntityRegainHealthEvent;
 import org.bukkit.event.entity.EntityRegainHealthEvent.RegainReason;
 // CraftBukkit end
 
-public abstract class EntityLiving extends Entity {
+public abstract class EntityLiving extends Entity implements net.minecraft.src.EntityLiving {
 
     public int maxNoDamageTicks = 20;
     public float T;

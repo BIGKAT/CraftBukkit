@@ -25,7 +25,7 @@ import org.bukkit.plugin.PluginManager;
 import org.bukkit.util.NumberConversions;
 // CraftBukkit end
 
-public abstract class Entity {
+public abstract class Entity implements net.minecraft.src.Entity {
     // CraftBukkit start -  size of entity for clipping calculations
     public enum EntitySize {
         SIZE_1,

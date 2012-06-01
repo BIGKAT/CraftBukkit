@@ -12,7 +12,7 @@ import org.bukkit.entity.HumanEntity;
 import org.bukkit.inventory.InventoryHolder;
 // CraftBukkit end
 
-public class TileEntity {
+public class TileEntity implements net.minecraft.src.TileEntity {
 
     private static Map a = new HashMap();
     private static Map b = new HashMap();

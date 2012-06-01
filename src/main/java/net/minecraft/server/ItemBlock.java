@@ -6,7 +6,7 @@ import org.bukkit.craftbukkit.event.CraftEventFactory;
 import org.bukkit.event.block.BlockPlaceEvent;
 // CraftBukkit end
 
-public class ItemBlock extends Item {
+public class ItemBlock extends Item implements net.minecraft.src.ItemBlock {
 
     private int id;
 
