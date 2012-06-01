@@ -255,7 +255,6 @@ public class Item {
 
     public Item a(String s) {
         this.name = "item." + s;
-        org.bukkit.Material.setMaterialName(this.id, s); // MCPC
         return this;
     }
 
