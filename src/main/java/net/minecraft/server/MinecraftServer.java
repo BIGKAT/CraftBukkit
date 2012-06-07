@@ -507,7 +507,7 @@ public class MinecraftServer implements Runnable, ICommandListener, IMinecraftSe
     }
 
     private void w() {
-    	FMLBukkitHandler.instance().onPreTick();
+    	FMLBukkitHandler.instance().onServerPreTick();
         long i = System.nanoTime();
         ArrayList arraylist = new ArrayList();
         Iterator iterator = trackerList.keySet().iterator();
@@ -556,6 +556,7 @@ public class MinecraftServer implements Runnable, ICommandListener, IMinecraftSe
                 }
                 // CraftBukkit end */
 
+            	FMLBukkitHandler.instance().onPreWorldTick(worldserver);
                 worldserver.doTick();
 
                 while (true) {
@@ -564,6 +565,7 @@ public class MinecraftServer implements Runnable, ICommandListener, IMinecraftSe
                         break;
                     }
                 }
+            	FMLBukkitHandler.instance().onPostWorldTick(worldserver);
             }
 
             // this.g[k][this.ticks % 100] = System.nanoTime() - l; // CraftBukkit
@@ -597,7 +599,7 @@ public class MinecraftServer implements Runnable, ICommandListener, IMinecraftSe
         this.G = Packet.l;
         this.x[this.ticks % 100] = Packet.m - this.H;
         this.H = Packet.m;
-    	FMLBukkitHandler.instance().onPostTick();
+    	FMLBukkitHandler.instance().onServerPostTick();
     }
 
     public void issueCommand(String s, ICommandListener icommandlistener) {
