@@ -37,6 +37,8 @@ import org.bukkit.plugin.PluginLoadOrder;
 // CraftBukkit end
 
 import cpw.mods.fml.server.FMLBukkitHandler;
+import forge.DimensionManager;
+import forge.EnumHelper;
 
 public class MinecraftServer implements Runnable, ICommandListener, IMinecraftServer {
 
@@ -243,37 +245,36 @@ public class MinecraftServer implements Runnable, ICommandListener, IMinecraftSe
         boolean generateStructures = this.propertyManager.getBoolean("generate-structures", true);
         int worldCount = 3;
 
-        for (int k = 0; k < worldCount; ++k) {
+        for (Integer id: DimensionManager.getIDs()) {
+        	int k = id;
             WorldServer world;
-            int dimension = 0;
+            int dimension = id;
 
-            if (k == 1) {
-                if (this.propertyManager.getBoolean("allow-nether", true)) {
-                    dimension = -1;
-                } else {
-                    continue;
-                }
+            if (k == -1 && !this.propertyManager.getBoolean("allow-nether", true)) {
+                continue;
             }
 
-            if (k == 2) {
-                // CraftBukkit - (+ don't do this in server.properties, do it in bukkit.yml)
-                if (this.server.getAllowEnd()) {
-                    dimension = 1;
-                } else {
-                    continue;
-                }
+            if (k == 1 && !this.server.getAllowEnd()) {
+            	continue;
             }
-
-            String worldType = Environment.getEnvironment(dimension).toString().toLowerCase();
+            
+            Environment env = Environment.getEnvironment(dimension);
+            if (env == null)
+            {
+            	env = EnumHelper.addBukkitEnvironment(dimension, DimensionManager.getProvider(dimension).getSaveFolder());
+            	Environment.registerEnvironment(env);
+            }
+            
+            String worldType = env.toString().toLowerCase();
             String name = (dimension == 0) ? s : s + "_" + worldType;
 
             ChunkGenerator gen = this.server.getGenerator(name);
             WorldSettings settings = new WorldSettings(i, j, generateStructures, false, worldtype);
 
             if (k == 0) {
-                world = new WorldServer(this, new ServerNBTManager(server.getWorldContainer(), s, true), s, dimension, settings, org.bukkit.World.Environment.getEnvironment(dimension), gen); // CraftBukkit
+                world = new WorldServer(this, new ServerNBTManager(server.getWorldContainer(), s, true), s, dimension, settings, env, gen); // CraftBukkit
             } else {
-                String dim = "DIM" + dimension;
+                String dim = DimensionManager.getProvider(dimension).getSaveFolder();
 
                 File newWorld = new File(new File(name), dim);
                 File oldWorld = new File(new File(s), dim);
@@ -306,7 +307,7 @@ public class MinecraftServer implements Runnable, ICommandListener, IMinecraftSe
                     convertable.convert(name, new ConvertProgressUpdater(this));
                 }
 
-                world = new SecondaryWorldServer(this, new ServerNBTManager(server.getWorldContainer(), name, true), name, dimension, settings, this.worlds.get(0), org.bukkit.World.Environment.getEnvironment(dimension), gen); // CraftBukkit
+                world = new SecondaryWorldServer(this, new ServerNBTManager(server.getWorldContainer(), name, true), name, dimension, settings, this.worlds.get(0), env, gen); // CraftBukkit
             }
 
             if (gen != null) {

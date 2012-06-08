@@ -89,4 +89,32 @@ public abstract class WorldProvider {
     public int getSeaLevel() {
         return this.type == WorldType.FLAT ? 4 : 64;
     }
+    /**
+     * Returns the sub-folder of the world folder that this WorldProvider saves to.
+     * EXA: DIM1, DIM-1
+     * @return The sub-folder name to save this world's chunks to.
+     */
+    public abstract String getSaveFolder();
+    /**
+     * A message to display to the user when they transfer to this dimension.
+     * 
+     * @return The message to be displayed
+     */
+    public abstract String getWelcomeMessage();
+    /**
+     * A Message to display to the user when they transfer out of this dismension.
+     * 
+     * @return The message to be displayed
+     */
+    public abstract String getDepartMessage();
+    /**
+     * The dimensions movement factor. Relative to normal overworld. 
+     * It is applied to the players position when they transfer dimensions.
+     * Exa: Nether movement is 8.0
+     * @return The movement factor
+     */
+    public double getMovementFactor()
+    {
+        return 1.0;
+    }
 }
