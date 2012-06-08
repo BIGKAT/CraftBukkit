@@ -4,7 +4,9 @@ import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -243,18 +245,20 @@ public class MinecraftServer implements Runnable, ICommandListener, IMinecraftSe
         log.info("Default game type: " + j);
         // CraftBukkit start (+ removed worldsettings and servernbtmanager)
         boolean generateStructures = this.propertyManager.getBoolean("generate-structures", true);
-        int worldCount = 3;
 
-        for (Integer id: DimensionManager.getIDs()) {
-        	int k = id;
+        Integer[] dimensions = DimensionManager.getIDs();
+        Arrays.sort(dimensions, new Comparator<Integer>() {
+        	@Override
+        	public int compare(Integer o1, Integer o2) {
+        		return Math.abs(o1) - Math.abs(o2);
+        	}
+        });
+        for (int k = 0; k < dimensions.length; k++) {
             WorldServer world;
-            int dimension = id;
-
-            if (k == -1 && !this.propertyManager.getBoolean("allow-nether", true)) {
+            int dimension = dimensions[k];
+            if (dimension == -1 && !this.propertyManager.getBoolean("allow-nether", true)) {
                 continue;
-            }
-
-            if (k == 1 && !this.server.getAllowEnd()) {
+            } else if (dimension == 1 && !this.server.getAllowEnd()) {
             	continue;
             }
             
