@@ -1,5 +1,9 @@
 package net.minecraft.server;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
 public class WorldType {
 
     public static final WorldType[] types = new WorldType[16];
@@ -11,6 +15,8 @@ public class WorldType {
     private boolean g;
     private boolean h;
 
+    private BiomeBase[] biomesForWorldType;
+
     private WorldType(int i, String s) {
         this(i, s, 0);
     }
@@ -20,6 +26,14 @@ public class WorldType {
         this.version = j;
         this.g = true;
         types[i] = this;
+        switch (i) {
+        case 8:
+        	biomesForWorldType = new BiomeBase[] { BiomeBase.DESERT, BiomeBase.FOREST, BiomeBase.EXTREME_HILLS, BiomeBase.SWAMPLAND, BiomeBase.PLAINS, BiomeBase.TAIGA};
+        	break;
+        default:
+        	biomesForWorldType = new BiomeBase[] { BiomeBase.DESERT, BiomeBase.FOREST, BiomeBase.EXTREME_HILLS, BiomeBase.SWAMPLAND, BiomeBase.PLAINS, BiomeBase.TAIGA, BiomeBase.JUNGLE};
+        	break;
+        }
     }
 
     public String name() {
@@ -57,7 +71,24 @@ public class WorldType {
 
         return null;
     }
-
+    public BiomeBase[] getBiomesForWorldType() {
+        return biomesForWorldType;
+    }
+    
 	public void addNewBiome(BiomeBase biome) {
+		List<BiomeBase> newBiomesForWorld = new ArrayList<BiomeBase>();
+		newBiomesForWorld.addAll(Arrays.asList(biomesForWorldType));
+		
+		if (!newBiomesForWorld.contains(biome))
+			newBiomesForWorld.add(biome);
+		biomesForWorldType = newBiomesForWorld.toArray(new BiomeBase[0]);
 	}
+    
+    public void removeBiome(BiomeBase biome) {
+		List<BiomeBase> newBiomesForWorld = new ArrayList<BiomeBase>();
+		newBiomesForWorld.addAll(Arrays.asList(biomesForWorldType));
+		
+		newBiomesForWorld.remove(biome);
+		biomesForWorldType = newBiomesForWorld.toArray(new BiomeBase[0]);
+    }
 }
