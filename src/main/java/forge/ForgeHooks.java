@@ -39,6 +39,7 @@ import java.util.logging.Level;
 
 import org.bukkit.craftbukkit.CraftWorld;
 import org.bukkit.craftbukkit.util.LongHashset;
+import org.bukkit.craftbukkit.util.LongHash;
 
 public class ForgeHooks
 {
@@ -714,7 +715,10 @@ public class ForgeHooks
 	}
 
 	public static void addActiveChunks(World world, LongHashset chunkTickList) {
-		
+		Set<ChunkCoordIntPair> s=new HashSet<ChunkCoordIntPair>();
+		addActiveChunks(world,s);
+		for (ChunkCoordIntPair c : s)
+			chunkTickList.add(LongHash.toLong(c.x,c.z));
 	}
 }
 
