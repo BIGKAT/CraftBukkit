@@ -173,4 +173,9 @@ public class TileEntity implements net.minecraft.src.TileEntity {
      * @param pkt The data packet
      */
     public void onDataPacket(NetworkManager net, Packet132TileEntityData pkt){}
+    
+    /**
+     * Called when the chunk this TileEntity is on is Unloaded.
+     */
+    public void onChunkUnload(){}
 }

@@ -1202,6 +1202,11 @@ public class World implements IBlockAccess {
 
         this.Q = false;
         if (!this.K.isEmpty()) {
+        	for (Object tile : this.K)
+        	{
+        		((TileEntity)tile).onChunkUnload();
+        	}
+        	
             this.tileEntityList.removeAll(this.K);
             this.K.clear();
         }
@@ -1247,13 +1252,13 @@ public class World implements IBlockAccess {
     }
 
     public void a(Collection collection) {
-    	List dest = Q ? J : tileEntityList;
-    	synchronized (this.J) {
-    	for (Object entity : collection) {
-    		if (((TileEntity)entity).canUpdate()) {
-    			dest.add(entity);
-    		}
-    	}
+        List dest = Q ? J : tileEntityList;
+        for(Object entity : collection)
+        {
+            if(((TileEntity)entity).canUpdate()) 
+            {
+                dest.add(entity);
+            }
         }
     }
 

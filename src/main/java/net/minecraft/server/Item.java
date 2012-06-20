@@ -3,7 +3,9 @@ package net.minecraft.server;
 import java.util.ArrayList;
 import java.util.Random;
 
-public class Item {
+import forge.ITextureProvider;
+
+public class Item implements ITextureProvider {
 
     protected static Random c = new Random();
     public static Item[] byId = new Item[32000];
@@ -359,6 +361,9 @@ public class Item {
         StatisticList.c();
     }
     /* =========================================================== FORGE START ===============================================================*/
+    public boolean isDefaultTexture = true;
+    private String currentTexture = "/gui/items.png";
+    
     /**
      * Called when a new CreativeContainer is opened, populate the list 
      * with all of the items for this item you want a player in creative mode
@@ -507,4 +512,29 @@ public class Item {
 	public int getRenderPasses(int metadata) {
 		return 1; // return func_46058_c() ? 2 : 1;
 	}
+	
+    /**
+     * Grabs the current texture file used for this block
+     */
+    @Override
+    public String getTextureFile()
+    {
+        if (this instanceof ItemBlock)
+        {
+            return Block.byId[((ItemBlock)this).a()].getTextureFile();
+        }
+        return currentTexture;
+    }
+    
+    /**
+     * Sets the current texture file for this item, used when rendering.
+     * Default is "/gui/items.png"
+     * 
+     * @param texture The texture file
+     */
+    public void setTextureFile(String texture)
+    {
+        currentTexture = texture;
+        isDefaultTexture = false;
+    }
 }

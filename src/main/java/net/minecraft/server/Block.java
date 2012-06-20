@@ -4,8 +4,9 @@ import java.util.ArrayList;
 import java.util.Random;
 
 import forge.ForgeHooks;
+import forge.ITextureProvider;
 
-public class Block implements net.minecraft.src.Block {
+public class Block implements net.minecraft.src.Block, ITextureProvider {
 
     public static final StepSound d = new StepSound("stone", 1.0F, 1.0F);
     public static final StepSound e = new StepSound("wood", 1.0F, 1.0F);
@@ -608,6 +609,10 @@ public class Block implements net.minecraft.src.Block {
     public void a(World world, int i, int j, int k, Entity entity, float f) {}
 
     /* =================================================== FORGE START =====================================*/
+    protected static int blockFireSpreadSpeed[] = new int[byId.length];
+    protected static int blockFlammability[] = new int[byId.length];
+    protected String currentTexture = "/terrain.png";
+    public boolean isDefaultTexture = true;
     /**
      * Get a light value for this block, normal ranges are between 0 and 15
      * 
@@ -811,9 +816,6 @@ public class Block implements net.minecraft.src.Block {
     public void addCreativeItems(ArrayList itemList)
     {       
     }
-    
-    protected static int blockFireSpreadSpeed[] = new int[256];
-    protected static int blockFlammability[] = new int[256];
     
     /**
      * Chance that fire will spread and consume this block.
@@ -1087,6 +1089,109 @@ public class Block implements net.minecraft.src.Block {
         return BlockBed.d(world.getData(x,  y, z));
     }
     
+    /**
+     * Called when a leaf should start its decay process.
+     * 
+     * @param world The current world
+     * @param x X Position
+     * @param y Y Position
+     * @param z Z Position
+     */
+    public void beginLeavesDecay(World world, int x, int y, int z)
+    {
+    	
+    }
+    
+    /**
+     * Determines if this block can prevent leaves connected to it from decaying.
+     * 
+     * @param world The current world
+     * @param x X Position
+     * @param y Y Position
+     * @param z Z Position
+     * @return true if the presence this block can prevent leaves from decaying.
+     */
+    public boolean canSustainLeaves(World world, int x, int y, int z)
+    {
+        return false;
+    }
+    
+    /**
+     * Determines if this block is considered a leaf block, used to apply the leaf decay and generation system.
+     * 
+     * @param world The current world
+     * @param x X Position
+     * @param y Y Position
+     * @param z Z Position
+     * @return true if this block is considered leaves.
+     */
+    public boolean isLeaves(World world, int x, int y, int z)
+    {
+        return false;
+    }
+    
+    /**
+     * Used during tree growth to determine if newly generated leaves can replace this block.
+     * 
+     * @param world The current world
+     * @param x X Position
+     * @param y Y Position
+     * @param z Z Position
+     * @return true if this block can be replaced by growing leaves.
+     */
+    public boolean canBeReplacedByLeaves(World world, int x, int y, int z)
+    {
+        return !Block.n[this.id];
+    }
+    
+    /**
+     * 
+     * @param world The current world
+     * @param x X Position
+     * @param y Y Position
+     * @param z Z Position
+     * @return  true if the block is wood (logs)
+     */
+    public boolean isWood(World world, int x, int y, int z)
+    {
+         return false;
+    }
+    
+    /**
+     * Determines if the current block is replaceable by Ore veins during world generation.
+     * 
+     * @param world The current world
+     * @param x X Position
+     * @param y Y Position
+     * @param z Z Position
+     * @return True to allow this block to be replaced by a ore
+     */
+    public boolean isGenMineableReplaceable(World world, int x, int y, int z)
+    {
+        return id == STONE.id;
+    }
+    
+    /**
+     * Grabs the current texture file used for this block
+     */
+    @Override
+    public String getTextureFile()
+    {
+        return currentTexture;
+    }
+    
+    /**
+     * Sets the current texture file for this block, used when rendering.
+     * Default is "/terrain.png"
+     * 
+     * @param texture The texture file
+     */
+    public void setTextureFile(String texture)
+    {
+        currentTexture = texture;
+        isDefaultTexture = false;
+    }
+
 
     static {
         Item.byId[WOOL.id] = (new ItemCloth(WOOL.id - 256)).a("cloth");

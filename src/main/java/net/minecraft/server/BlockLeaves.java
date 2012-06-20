@@ -28,10 +28,8 @@ public class BlockLeaves extends BlockTransparant implements IShearable {
                     for (int k1 = -b0; k1 <= b0; ++k1) {
                         int l1 = world.getTypeId(i + i1, j + j1, k + k1);
 
-                        if (l1 == Block.LEAVES.id) {
-                            int i2 = world.getData(i + i1, j + j1, k + k1);
-
-                            world.setRawData(i + i1, j + j1, k + k1, i2 | 8);
+                        if (Block.byId[l1]!=null) {
+                        	Block.byId[l1].beginLeavesDecay(world, i + i1, j + j1, k + k1);
                         }
                     }
                 }
@@ -65,9 +63,12 @@ public class BlockLeaves extends BlockTransparant implements IShearable {
                         for (i2 = -b0; i2 <= b0; ++i2) {
                             for (j2 = -b0; j2 <= b0; ++j2) {
                                 k2 = world.getTypeId(i + l1, j + i2, k + j2);
-                                if (k2 == Block.LOG.id) {
+                                
+                                Block block = Block.byId[k2];
+                                
+                                if (block!=null && block.canSustainLeaves(world, i + l1, j + i2, k + j2)) {
                                     this.a[(l1 + k1) * j1 + (i2 + k1) * b1 + j2 + k1] = 0;
-                                } else if (k2 == Block.LEAVES.id) {
+                                } else if (block!=null && block.isLeaves(world, i + l1, j + i2, k + j2)) {
                                     this.a[(l1 + k1) * j1 + (i2 + k1) * b1 + j2 + k1] = -2;
                                 } else {
                                     this.a[(l1 + k1) * j1 + (i2 + k1) * b1 + j2 + k1] = -1;
@@ -194,5 +195,17 @@ public class BlockLeaves extends BlockTransparant implements IShearable {
         ArrayList<ItemStack> ret = new ArrayList<ItemStack>();
         ret.add(new ItemStack(this, 1, world.getData(x, y, z) & 3));
         return ret;
+    }
+    
+    @Override
+    public void beginLeavesDecay(World world, int x, int y, int z)
+    {
+        world.setData(x, y, z, world.getData(x, y, z) | 8);
+    }
+    
+    @Override
+    public boolean isLeaves(World world, int x, int y, int z)
+    {
+        return true;
     }
 }

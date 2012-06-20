@@ -194,7 +194,8 @@ public class EntityOcelot extends EntityTameableAnimal {
 
                 int l = this.world.getTypeId(i, j - 1, k);
 
-                if (l == Block.GRASS.id || l == Block.LEAVES.id) {
+                Block block = Block.byId[l];
+                if (l == Block.GRASS.id || (block!=null && block.isLeaves(world, i, j - 1, k))) {
                     return true;
                 }
             }
