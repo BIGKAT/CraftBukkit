@@ -34,15 +34,11 @@ public abstract class WorldProvider {
     }
 
     protected void a() {
-        if (this.a.getWorldData().getType() == WorldType.FLAT) {
-            this.c = new WorldChunkManagerHell(BiomeBase.PLAINS, 0.5F, 0.5F);
-        } else {
-            this.c = new WorldChunkManager(this.a);
-        }
+    	this.c = this.type.getChunkManager(this.a);
     }
 
     public IChunkProvider getChunkProvider() {
-        return (IChunkProvider) (this.type == WorldType.FLAT ? new ChunkProviderFlat(this.a, this.a.getSeed(), this.a.getWorldData().shouldGenerateMapFeatures()) : new ChunkProviderGenerate(this.a, this.a.getSeed(), this.a.getWorldData().shouldGenerateMapFeatures()));
+    	return this.type.getChunkGenerator(this.a);
     }
 
     public boolean canSpawn(int i, int j) {
@@ -87,7 +83,7 @@ public abstract class WorldProvider {
     }
 
     public int getSeaLevel() {
-        return this.type == WorldType.FLAT ? 4 : 64;
+        return this.type.getMinimumSpawnHeight(this.a);
     }
     /**
      * Returns the sub-folder of the world folder that this WorldProvider saves to.

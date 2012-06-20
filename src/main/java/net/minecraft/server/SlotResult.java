@@ -59,7 +59,7 @@ public class SlotResult extends Slot {
     }
 
     public void c(ItemStack itemstack) {
-    	FMLBukkitHandler.instance().onItemCrafted(f, itemstack, inventory);
+    	FMLBukkitHandler.instance().onItemCrafted(f, itemstack, a);
         ForgeHooks.onTakenFromCrafting(f, itemstack, a);
 
         this.b(itemstack);

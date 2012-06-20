@@ -15,13 +15,13 @@ public class WorldType {
     private boolean g;
     private boolean h;
 
-    private BiomeBase[] biomesForWorldType;
+    protected BiomeBase[] biomesForWorldType;
 
-    private WorldType(int i, String s) {
+    protected WorldType(int i, String s) {
         this(i, s, 0);
     }
 
-    private WorldType(int i, String s, int j) {
+    protected WorldType(int i, String s, int j) {
         this.name = s;
         this.version = j;
         this.g = true;
@@ -71,6 +71,22 @@ public class WorldType {
 
         return null;
     }
+    
+    public WorldChunkManager getChunkManager(World world)
+    {
+       return this == FLAT ? new WorldChunkManagerHell(BiomeBase.PLAINS, 0.5F, 0.5F) : new WorldChunkManager(world);
+    }
+    
+    public IChunkProvider getChunkGenerator(World world)
+    {
+        return this == FLAT ? new ChunkProviderFlat(world, world.getSeed(), world.getWorldData().shouldGenerateMapFeatures()) : new ChunkProviderGenerate(world, world.getSeed(), world.getWorldData().shouldGenerateMapFeatures());
+    }
+    
+    public int getMinimumSpawnHeight(World world)
+    {
+        return this == FLAT ? 4 : 64;
+    }
+
     public BiomeBase[] getBiomesForWorldType() {
         return biomesForWorldType;
     }
