@@ -60,7 +60,9 @@ public class WorldGenHugeMushroom extends WorldGenerator implements BlockSapling
                     for (l1 = k - b0; l1 <= k + b0 && flag; ++l1) {
                         if (j1 >= 0 && j1 < 256) {
                             i2 = world.getTypeId(k1, j1, l1);
-                            if (i2 != 0 && i2 != Block.LEAVES.id) {
+                            Block block = Block.byId[i2];
+                            
+                            if (i2 != 0 && block!=null && block.canBeReplacedByLeaves((World)world, k1, j1, l1)) {
                                 flag = false;
                             }
                         } else {
