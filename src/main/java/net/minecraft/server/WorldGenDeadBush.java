@@ -13,10 +13,19 @@ public class WorldGenDeadBush extends WorldGenerator {
     public boolean a(World world, Random random, int i, int j, int k) {
         int l;
 
-        for (boolean flag = false; ((l = world.getTypeId(i, j, k)) == 0 || l == Block.LEAVES.id) && j > 0; --j) {
-            ;
+        Block block = null;
+        do 
+        {
+        	
+        	block = Block.byId[world.getTypeId(i, j, k)];
+        	if (block != null && !block.isLeaves(world, i, j, k))
+        	{
+        		break;
+        	}
+        	j--;
         }
-
+        while (j > 0);
+        
         for (int i1 = 0; i1 < 4; ++i1) {
             int j1 = i + random.nextInt(8) - random.nextInt(8);
             int k1 = j + random.nextInt(4) - random.nextInt(4);

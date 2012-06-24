@@ -46,7 +46,7 @@ public class WorldGenForest extends WorldGenerator implements BlockSapling.TreeG
                         if (i1 >= 0 && i1 < 256) {
                             l1 = world.getTypeId(j1, i1, k1);
                             Block block = Block.byId[l1];
-                            if (l1!=0 && block!=null && block.canBeReplacedByLeaves((World)world, j1, i1, k1)) {
+                            if (l1!=0 && block!=null && block.canBeReplacedByLeaves(world, j1, i1, k1)) {
                                 flag = false;
                             }
                         } else {
@@ -77,7 +77,7 @@ public class WorldGenForest extends WorldGenerator implements BlockSapling.TreeG
 
                                 Block block = Block.byId[world.getTypeId(l1, i2, k2)];
                                 if ((Math.abs(j2) != k1 || Math.abs(l2) != k1 || random.nextInt(2) != 0 && j1 != 0) &&
-                                		(block == null || block.canBeReplacedByLeaves((World)world, l1, i2, k2)))
+                                		(block == null || block.canBeReplacedByLeaves(world, l1, i2, k2)))
                                 {
                                     this.setTypeAndData(world, l1, i2, k2, Block.LEAVES.id, 2);
                                 }
@@ -89,7 +89,7 @@ public class WorldGenForest extends WorldGenerator implements BlockSapling.TreeG
                         j1 = world.getTypeId(i, j + i2, k);
                         Block block = Block.byId[j1];
                         
-                        if (j1 == 0 || ( block!=null && block.isLeaves((World)world, i, j + i2, k))) {
+                        if (j1 == 0 || ( block!=null && block.isLeaves(world, i, j + i2, k))) {
                             this.setTypeAndData(world, i, j + i2, k, Block.LOG.id, 2);
                         }
                     }

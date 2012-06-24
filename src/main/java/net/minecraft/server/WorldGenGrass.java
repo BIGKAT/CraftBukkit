@@ -15,9 +15,15 @@ public class WorldGenGrass extends WorldGenerator {
     public boolean a(World world, Random random, int i, int j, int k) {
         int l;
 
-        for (boolean flag = false; ((l = world.getTypeId(i, j, k)) == 0 || l == Block.LEAVES.id) && j > 0; --j) {
-            ;
+        Block bl = Block.byId[world.getTypeId(i, j, k)];
+        do {
+            if (bl != null && bl.canBeReplacedByLeaves(world, i, j, k))
+            {
+            	break;
+            }
+        	j--;
         }
+        while (j > 0);
 
         for (int i1 = 0; i1 < 128; ++i1) {
             int j1 = i + random.nextInt(8) - random.nextInt(8);

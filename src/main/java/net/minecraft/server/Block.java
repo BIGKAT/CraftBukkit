@@ -3,8 +3,11 @@ package net.minecraft.server;
 import java.util.ArrayList;
 import java.util.Random;
 
+import org.bukkit.BlockChangeDelegate;
+
 import forge.ForgeHooks;
 import forge.ITextureProvider;
+import forge.bukkit.BukkitForgeHooks;
 
 public class Block implements net.minecraft.src.Block, ITextureProvider {
 
@@ -1130,6 +1133,10 @@ public class Block implements net.minecraft.src.Block, ITextureProvider {
         return false;
     }
     
+    public final boolean isLeaves(BlockChangeDelegate world, int x, int y, int z)
+    {
+        return isLeaves(BukkitForgeHooks.unwrapBlockChangeDelegate(world), x, y, z);
+    }
     /**
      * Used during tree growth to determine if newly generated leaves can replace this block.
      * 
@@ -1144,6 +1151,9 @@ public class Block implements net.minecraft.src.Block, ITextureProvider {
         return !Block.n[this.id];
     }
     
+	public final boolean canBeReplacedByLeaves(BlockChangeDelegate world, int x, int y, int z) {
+		return canBeReplacedByLeaves(BukkitForgeHooks.unwrapBlockChangeDelegate(world), x, y, z);
+	}
     /**
      * 
      * @param world The current world
@@ -1157,6 +1167,10 @@ public class Block implements net.minecraft.src.Block, ITextureProvider {
          return false;
     }
     
+    public final boolean isWood(BlockChangeDelegate world, int x, int y, int z)
+    {
+         return isWood(BukkitForgeHooks.unwrapBlockChangeDelegate(world), x, y, z);
+    }
     /**
      * Determines if the current block is replaceable by Ore veins during world generation.
      * 
@@ -1249,4 +1263,5 @@ public class Block implements net.minecraft.src.Block, ITextureProvider {
         return block.getDropData(data);
     }
     // CraftBukkit end
+
 }

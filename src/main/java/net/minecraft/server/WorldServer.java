@@ -13,7 +13,9 @@ import org.bukkit.craftbukkit.generator.NormalChunkGenerator;
 import org.bukkit.craftbukkit.generator.SkyLandsChunkGenerator;
 import org.bukkit.event.weather.LightningStrikeEvent;
 
-public class WorldServer extends World implements BlockChangeDelegate {
+import forge.bukkit.BukkitForgeHooks.ForgeBlockChangeDelegate;
+
+public class WorldServer extends World implements ForgeBlockChangeDelegate {
     // CraftBukkit end
 
     public ChunkProviderServer chunkProviderServer;
@@ -278,4 +280,9 @@ public class WorldServer extends World implements BlockChangeDelegate {
             // CraftBukkit end
         }
     }
+
+	@Override
+	public World unwrap() {
+		return this;
+	}
 }
