@@ -56,6 +56,10 @@ public class PacketHandlerServer extends PacketHandlerBase
             net.disconnect("Invalid mod list response, Size: " + pkt.Length);
             return;
         }
+        if (!pkt.has4096)
+        {
+            net.disconnect("Must have Forge build #136+ (4096 fix) to connect to this server");
+        }
         if (pkt.Mods.length == 0)
         {
             ModLoader.getLogger().log(Level.INFO, net.getName() + " joined with no mods");

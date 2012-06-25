@@ -278,7 +278,7 @@ public class TileEntityFurnace extends TileEntity implements IInventory, ISidedI
             return 0;
         } else {
             int i = itemstack.getItem().id;
-            if (i < 256 && Block.byId[i].material == Material.WOOD) return  300;
+            if (itemstack.getItem() instanceof ItemBlock && Block.byId[i].material == Material.WOOD) return  300;
             if (i == Item.STICK.id) return 100;
             if (i == Item.COAL.id) return 1600;
             if (i == Item.LAVA_BUCKET.id) return 20000;

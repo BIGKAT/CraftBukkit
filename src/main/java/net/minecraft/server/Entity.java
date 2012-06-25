@@ -1,5 +1,6 @@
 package net.minecraft.server;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
@@ -146,7 +147,9 @@ public abstract class Entity implements net.minecraft.src.Entity {
 
     /** Forge: Used to store custom data for each entity. */
     private NBTTagCompound customEntityData;
-
+    protected boolean captureDrops = false;
+    protected ArrayList<EntityItem> capturedDrops = new ArrayList<EntityItem>();
+     
     public Entity(World world) {
         this.id = entityCount++;
         this.be = 1.0D;
@@ -1222,7 +1225,14 @@ public abstract class Entity implements net.minecraft.src.Entity {
         EntityItem entityitem = new EntityItem(this.world, this.locX, this.locY + (double) f, this.locZ, itemstack);
 
         entityitem.pickupDelay = 10;
-        this.world.addEntity(entityitem);
+        if (captureDrops)
+        {
+        	capturedDrops.add(entityitem);
+        }
+        else
+        {
+            this.world.addEntity(entityitem);
+        }
         return entityitem;
     }
 

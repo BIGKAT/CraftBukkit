@@ -63,7 +63,7 @@ public class Configuration
     {
         if (configBlocks == null)
         {
-            configBlocks = new boolean[/*Block.blocksList.length*/ 256];
+            configBlocks = new boolean[Block.byId.length];
 
             for (int i = 0; i < configBlocks.length; ++i)
             {
@@ -169,7 +169,8 @@ public class Configuration
 
     public void load()
     {
-        try
+    	BufferedReader buffer = null;
+    	try
         {
             if (file.getParentFile() != null)
             {
@@ -184,7 +185,7 @@ public class Configuration
             if (file.canRead())
             {
                 FileInputStream fileinputstream = new FileInputStream(file);
-                BufferedReader buffer = new BufferedReader(new InputStreamReader(fileinputstream, "8859_1"));
+                buffer = new BufferedReader(new InputStreamReader(fileinputstream, "8859_1"));
 
                 String line;
                 Map<String, Property> currentMap = null;
@@ -265,6 +266,16 @@ public class Configuration
         {
             e.printStackTrace();
         }
+    	finally
+    	{
+    		if (buffer != null)
+    		{
+    			try
+    			{
+    				buffer.close();
+    			} catch (IOException ioe) {}
+    		}
+    	}
     }
 
     public void save()

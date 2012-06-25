@@ -164,7 +164,7 @@ public class Item implements ITextureProvider {
     protected Item(int i) {
         this.id = 256 + i;
         if (byId[256 + i] != null) {
-            System.out.println("CONFLICT @ " + i);
+            System.out.println("CONFLICT @ " + i + " item slot already occupied by " + byId[256 + i] + " while adding " + this);
         }
 
         byId[256 + i] = this;

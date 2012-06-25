@@ -693,7 +693,10 @@ public class World implements IBlockAccess {
                 int l1 = this.getData(l, i1, j1);
                 Block block = Block.byId[k1];
 
-                if ((!flag1 || block == null || block.e(this, l, i1, j1) != null) && k1 > 0 && block.a(l1, flag)) {
+                if (block != null &&  //BugFix NPE on missconfigured block ids.
+                		(!flag1 || block == null || block.e(this, l, i1, j1) != null) && 
+                		k1 > 0 && block.a(l1, flag))
+                {
                     MovingObjectPosition movingobjectposition = block.a(this, l, i1, j1, vec3d, vec3d1);
 
                     if (movingobjectposition != null) {
@@ -2924,7 +2927,7 @@ public class World implements IBlockAccess {
     }
 
     public int getHeight() {
-        return 256;
+        return worldProvider.e ? 128 : 256;
     }
 
     public Random A(int i, int j, int k) {

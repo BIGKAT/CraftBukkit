@@ -9,6 +9,7 @@ import net.minecraft.server.BaseMod;
 import net.minecraft.server.Block;
 import net.minecraft.server.Chunk;
 import net.minecraft.server.ChunkCoordIntPair;
+import net.minecraft.server.DamageSource;
 import net.minecraft.server.Entity;
 import net.minecraft.server.EntityHuman;
 import net.minecraft.server.EntityItem;
@@ -27,6 +28,7 @@ import net.minecraft.server.Packet131ItemData;
 import net.minecraft.server.Packet1Login;
 import net.minecraft.server.Packet250CustomPayload;
 import net.minecraft.server.World;
+import net.minecraft.server.mod_MinecraftForge;
 import forge.packets.PacketEntitySpawn;
 import forge.packets.PacketHandlerBase;
 
@@ -346,6 +348,7 @@ public class ForgeHooks
     }
     static LinkedList<IFuelHandler> fuelHandlers = new LinkedList<IFuelHandler>();
 
+    @SuppressWarnings("deprecation") //Internal use only, I don't want to see these yet
     public static boolean onEntitySpawnSpecial(EntityLiving entity, World world, float x, float y, float z) 
     {
         for (ISpecialMobSpawnHandler handler : specialMobSpawnHandlers)
@@ -357,7 +360,108 @@ public class ForgeHooks
         }
         return false;
     }
+    @SuppressWarnings("deprecation")
     static LinkedList<ISpecialMobSpawnHandler> specialMobSpawnHandlers = new LinkedList<ISpecialMobSpawnHandler>();
+
+    
+    public static boolean onEntityLivingSpawn(EntityLiving entity, World world, float x, float y, float z) 
+    {
+        for (IEntityLivingHandler handler : entityLivingHandlers)
+        {
+            if (handler.onEntityLivingSpawn(entity, world, x, y, z))
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+    
+    public static boolean onEntityLivingDeath(EntityLiving entity, DamageSource killer)
+    {
+        for (IEntityLivingHandler handler : entityLivingHandlers)
+        {
+            if (handler.onEntityLivingDeath(entity, killer))
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+    
+    public static boolean onEntityLivingUpdate(EntityLiving entity)
+    {
+        for (IEntityLivingHandler handler : entityLivingHandlers)
+        {
+            if (handler.onEntityLivingUpdate(entity))
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+    
+    public static void onEntityLivingJump(EntityLiving entity)
+    {
+        for (IEntityLivingHandler handler : entityLivingHandlers)
+        {
+            handler.onEntityLivingJump(entity);
+        }
+    }
+    
+    public static boolean onEntityLivingFall(EntityLiving entity, float distance)
+    {
+        for (IEntityLivingHandler handler : entityLivingHandlers)
+        {
+            if (handler.onEntityLivingFall(entity, distance))
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+    
+    public static boolean onEntityLivingAttacked(EntityLiving entity, DamageSource attack, int damage)
+    {
+        for (IEntityLivingHandler handler : entityLivingHandlers)
+        {
+            if (handler.onEntityLivingAttacked(entity, attack, damage))
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+    
+    public static void onEntityLivingSetAttackTarget(EntityLiving entity, EntityLiving target)
+    {
+        for (IEntityLivingHandler handler : entityLivingHandlers)
+        {
+            handler.onEntityLivingSetAttackTarget(entity, target);
+        }
+    }
+
+    public static int onEntityLivingHurt(EntityLiving entity, DamageSource source, int damage)
+    {
+        for (IEntityLivingHandler handler : entityLivingHandlers)
+        {
+            damage = handler.onEntityLivingHurt(entity, source, damage);
+            if (damage == 0)
+            {
+                return 0;
+            }
+        }
+        return damage;
+    }
+
+    public static void onEntityLivingDrops(EntityLiving entity, DamageSource source, ArrayList<EntityItem> drops, int lootingLevel, boolean recentlyHit, int specialDropValue) 
+    {
+        for (IEntityLivingHandler handler : entityLivingHandlers)
+        {
+            handler.onEntityLivingDrops(entity, source, drops, lootingLevel, recentlyHit, specialDropValue);
+        }
+    }
+
+    static LinkedList<IEntityLivingHandler> entityLivingHandlers = new LinkedList<IEntityLivingHandler>();
 
     // Plant Management
     // ------------------------------------------------------------
@@ -412,9 +516,13 @@ public class ForgeHooks
     {
         int index = world.random.nextInt(plantGrassWeight);
         ProbableItem item = getRandomItem(plantGrassList, index);
-        if (item == null)
+        if (item == null || Block.byId[item.ItemID] == null)
         {
             return;
+        }
+        if (mod_MinecraftForge.DISABLE_DARK_ROOMS && !Block.byId[item.ItemID].f(world, x, y, z))
+        {
+        	return;
         }
         world.setTypeIdAndData(x, y, z, item.ItemID, item.Metadata);
     }
@@ -644,9 +752,9 @@ public class ForgeHooks
     //This number is incremented every official release, and reset every Minecraft version
     public static final int minorVersion    = 3;
     //This number is incremented every time a interface changes, and reset every Minecraft version
-    public static final int revisionVersion = 7;
+    public static final int revisionVersion = 8;
     //This number is incremented every time Jenkins builds Forge, and never reset. Should always be 0 in the repo code.
-    public static final int buildVersion    = 135;
+    public static final int buildVersion    = 152;
     
     public static int getMajorVersion()
     {

@@ -100,6 +100,10 @@ public class ItemDye extends Item {
 
                             if (world.getTypeId(k1, l1, i2) == 0) {
                                 if (c.nextInt(10) != 0) {
+                                	if (mod_MinecraftForge.DISABLE_DARK_ROOMS && !Block.LONG_GRASS.f(world, k1, l1, i2))
+                                	{
+                                		continue;
+                                	}
                                     world.setTypeIdAndData(k1, l1, i2, Block.LONG_GRASS.id, 1);
                                 } else {
                                     ForgeHooks.plantGrassPlant(world, k1, l1, i2);

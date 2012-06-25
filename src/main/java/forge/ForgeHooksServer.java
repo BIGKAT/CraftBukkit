@@ -74,7 +74,7 @@ public class ForgeHooksServer
         }
         else
         {
-            net.disconnect("This server requires you to have Minecraft Forge installed.");
+            net.disconnect(mod_MinecraftForge.NO_FORGE_KICK_MESSAGE);
         }
     }
     

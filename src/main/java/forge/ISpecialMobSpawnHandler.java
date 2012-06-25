@@ -3,6 +3,7 @@ package forge;
 import net.minecraft.server.EntityLiving;
 import net.minecraft.server.World;
 
+@Deprecated //See IEntityLivingHandler
 public interface ISpecialMobSpawnHandler 
 {
     /**

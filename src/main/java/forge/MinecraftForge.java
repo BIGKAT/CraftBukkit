@@ -12,6 +12,7 @@ import net.minecraft.server.Entity;
 import net.minecraft.server.EntityMinecart;
 import net.minecraft.server.Item;
 import net.minecraft.server.ItemStack;
+import net.minecraft.server.Material;
 import net.minecraft.server.ModLoader;
 import net.minecraft.server.NetworkManager;
 import net.minecraft.server.Packet;
@@ -21,6 +22,8 @@ import net.minecraft.server.World;
 
 import java.util.*;
 import java.util.Map.Entry;
+
+import cpw.mods.fml.common.ReflectionHelper;
 
 import forge.oredict.OreDictionary;
 
@@ -158,11 +161,26 @@ public class MinecraftForge
      * Register a new Special Mob Spawn handler
      * @param handler The handler to be registered
      */
+    @SuppressWarnings("unused")
+	@Deprecated
     public static void registerSpecialMobSpawnHandler(ISpecialMobSpawnHandler handler)
     {
+        if (false)
+        {
+            throw new RuntimeException("Still using deprecated method/interface MinecraftForge.registerSpecialModSpawnHandler()");
+        }
         ForgeHooks.specialMobSpawnHandlers.add(handler);
     }
 
+    /**
+     * Register a new EntityLiving Handler
+     * @param handler The handler to be registered
+     */
+    public static void registerEntityLivingHandler(IEntityLivingHandler handler)
+    {
+        ForgeHooks.entityLivingHandlers.add(handler);
+    }    
+    
     /**
      * This is not supposed to be called outside of Minecraft internals.
      */
@@ -1180,6 +1198,35 @@ public class MinecraftForge
     public static boolean isClient()
     {
     	return false;
+    }
+    
+    /**
+     * Method invoked by FML before any other mods are loaded.
+     */
+    public static void initialize()
+    {
+        //Cause the classes to initialize if they already haven't
+        Block.STONE.getTextureFile();
+        Item.GOLDEN_APPLE.getTextureFile();
+        
+        Block filler = null;
+        try 
+        {
+            filler = Block.class.getConstructor(int.class, Material.class).newInstance(256, Material.AIR);
+        }catch (Exception e){}
+        
+        if (filler == null)
+        {
+            throw new RuntimeException("Could not create Forge filler block");
+        }
+        
+        for (int x = 256; x < 4096; x++)
+        {
+            if (Item.byId[x - 256] != null)
+            {
+                Block.byId[x] = filler;
+            }
+        }
     }
     
     static

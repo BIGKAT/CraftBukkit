@@ -1,6 +1,7 @@
 package net.minecraft.server;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -116,6 +117,10 @@ public final class SpawnerCreature {
 
                 if ((!enumcreaturetype.d() || flag1) && (enumcreaturetype.d() || flag) && world.a(enumcreaturetype.a()) <= limit * b.size() / 256) { // CraftBukkit - use per-world limits
 
+                    if (mod_MinecraftForge.SPAWNER_MAKE_MORE_RANDOM)
+                    {
+                    	Collections.shuffle(b);
+                    }
                     // CraftBukkit start
                     label108:
                     for (EntryBase base : b) {
@@ -228,7 +233,10 @@ public final class SpawnerCreature {
         {
         	return;
         }
-
+        if (ForgeHooks.onEntityLivingSpawn(entityliving, world, f, f1, f2))
+        {
+        	return;
+        }
         if (entityliving instanceof EntitySpider && world.random.nextInt(100) == 0) {
             EntitySkeleton entityskeleton = new EntitySkeleton(world);
 
