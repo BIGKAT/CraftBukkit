@@ -1,10 +1,13 @@
 package forge;
 
 import java.util.Hashtable;
+import java.util.Map;
 
 import org.bukkit.Bukkit;
 import org.bukkit.craftbukkit.CraftServer;
 import org.bukkit.craftbukkit.CraftWorld;
+
+import cpw.mods.fml.common.FMLCommonHandler;
 
 import net.minecraft.server.*;
 
@@ -49,6 +52,17 @@ public class DimensionManager
 
     public static void setWorld(int id, World world)
     {
+    	WorldProvider wp = world.worldProvider;
+    	int wpid = 0;
+    	for (Map.Entry<Integer,WorldProvider> wpe : providers.entrySet())
+    	{
+    		if (wpe.getValue()==wp)
+    		{
+    			wpid = wpe.getKey();
+    			break;
+    		}
+    	}
+    	FMLCommonHandler.instance().getFMLLogger().info(String.format("Registering world %s, dimension %d, of providertype %s(%d) with Minecraft Forge", world.worldData.name, id, wp, wpid));
         worlds.put(id, world);
     }
 

@@ -122,6 +122,7 @@ import com.avaje.ebeaninternal.server.lib.sql.TransactionIsolation;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.MapMaker;
 
+import forge.DimensionManager;
 import forge.bukkit.ForgeCommandMap;
 import forge.bukkit.ForgePluginManager;
 
@@ -405,7 +406,7 @@ public final class CraftServer implements Server {
     public boolean getWarnOnOverload() {
         return this.configuration.getBoolean("settings.warn-on-overload");
     }
-    
+
     // MCPortCentral
     public boolean getKickOnSpeedHack() {
         return this.configuration.getBoolean("settings.kick-on-speedhack");
@@ -667,17 +668,13 @@ public final class CraftServer implements Server {
             converter.convert(name, new ConvertProgressUpdater(console));
         }
 
-        int dimension = 10 + console.worlds.size();
-        boolean used = false;
-        do {
-            for (WorldServer server : console.worlds) {
-                used = server.dimension == dimension;
-                if (used) {
-                    dimension++;
-                    break;
-                }
-            }
-        } while(used);
+        int dimension = 0;
+        for (net.minecraft.server.World w : DimensionManager.getWorlds())
+        {
+        	WorldServer ws = (WorldServer)w;
+        	dimension = Math.max(ws.dimension, dimension);
+        }
+        dimension++;
         boolean hardcore = false;
 
         WorldServer internal = new WorldServer(console, new ServerNBTManager(getWorldContainer(), name, true), name, dimension, new WorldSettings(creator.seed(), getDefaultGameMode().getValue(), generateStructures, hardcore, type), creator.environment(), generator);

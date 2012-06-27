@@ -34,7 +34,7 @@ public abstract class WorldProvider {
     }
 
     protected void a() {
-    	this.c = this.type.getChunkManager(this.a);
+    	this.c = this.a.getWorldData().getType().getChunkManager(this.a);
     }
 
     public IChunkProvider getChunkProvider() {
@@ -93,18 +93,18 @@ public abstract class WorldProvider {
     public abstract String getSaveFolder();
     /**
      * A message to display to the user when they transfer to this dimension.
-     * 
+     *
      * @return The message to be displayed
      */
     public abstract String getWelcomeMessage();
     /**
      * A Message to display to the user when they transfer out of this dismension.
-     * 
+     *
      * @return The message to be displayed
      */
     public abstract String getDepartMessage();
     /**
-     * The dimensions movement factor. Relative to normal overworld. 
+     * The dimensions movement factor. Relative to normal overworld.
      * It is applied to the players position when they transfer dimensions.
      * Exa: Nether movement is 8.0
      * @return The movement factor
