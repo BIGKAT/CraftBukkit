@@ -2,6 +2,7 @@ package forge;
 
 import java.util.Hashtable;
 import java.util.Map;
+import java.util.logging.Level;
 
 import org.bukkit.Bukkit;
 import org.bukkit.craftbukkit.CraftServer;
@@ -85,4 +86,16 @@ public class DimensionManager
     {
         init();
     }
+
+	public static WorldProvider createProviderFor(int i) {
+		try {
+			if (providers.containsKey(i))
+				return getProvider(i).getClass().newInstance();
+			else
+				return null;
+		} catch (Exception e) {
+			FMLCommonHandler.instance().getFMLLogger().log(Level.SEVERE,String.format("An error occured trying to create an instance of WorldProvider %d (%s)",i,getProvider(i).getClass().getSimpleName()),e);
+			throw new RuntimeException(e);
+		}
+	}
 }

@@ -75,7 +75,7 @@ public abstract class WorldProvider {
     }
 
     public static WorldProvider byDimension(int i) {
-        return DimensionManager.getProvider(i);
+        return DimensionManager.createProviderFor(i);
     }
 
     public ChunkCoordinates e() {
