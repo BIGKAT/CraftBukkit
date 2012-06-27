@@ -331,14 +331,14 @@ public class CraftWorld implements World {
         return spawnCreature(loc, creatureType.toEntityType());
     }
 
+    @Deprecated
     public LivingEntity spawnCreature(Location loc, EntityType creatureType) {
-        Entity result = spawn(loc, creatureType.getEntityClass());
+        Validate.isTrue(!creatureType.isAlive(), "EntityType not instance of LivingEntity");
+        return (LivingEntity) spawnEntity(loc, creatureType);
+    }
 
-        if (result == null) {
-            return null;
-        }
-
-        return (LivingEntity) result;
+    public Entity spawnEntity(Location loc, EntityType entityType) {
+        return spawn(loc, entityType.getEntityClass());
     }
 
     public LightningStrike strikeLightning(Location loc) {
@@ -763,6 +763,9 @@ public class CraftWorld implements World {
     }
 
     public void playEffect(Location location, Effect effect, int data, int radius) {
+        Validate.notNull(location, "Location cannot be null");
+        Validate.notNull(effect, "Effect cannot be null");
+        Validate.notNull(location.getWorld(), "World cannot be null");
         int packetData = effect.getId();
         Packet61WorldEvent packet = new Packet61WorldEvent(packetData, location.getBlockX(), location.getBlockY(), location.getBlockZ(), data);
         int distance;
@@ -770,6 +773,7 @@ public class CraftWorld implements World {
 
         for (Player player : getPlayers()) {
             if (((CraftPlayer) player).getHandle().netServerHandler == null) continue;
+            if (!location.getWorld().equals(player.getWorld())) continue;
 
             distance = (int) player.getLocation().distanceSquared(location);
             if (distance <= radius) {

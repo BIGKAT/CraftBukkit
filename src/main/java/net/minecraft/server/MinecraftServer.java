@@ -16,7 +16,6 @@ import java.util.logging.Logger;
 
 // CraftBukkit start
 import java.io.PrintStream;
-import java.io.PrintWriter;
 import java.net.UnknownHostException;
 import jline.console.ConsoleReader;
 import joptsimple.OptionSet;
@@ -89,6 +88,7 @@ public class MinecraftServer implements Runnable, ICommandListener, IMinecraftSe
     public RemoteConsoleCommandSender remoteConsole;
     public ConsoleReader reader;
     public static int currentTick;
+    public final Thread primaryThread;
     // CraftBukkit end
 
     public MinecraftServer(OptionSet options) { // CraftBukkit - adds argument OptionSet
@@ -112,6 +112,8 @@ public class MinecraftServer implements Runnable, ICommandListener, IMinecraftSe
             }
         }
         Runtime.getRuntime().addShutdownHook(new ServerShutdownThread(this));
+
+        primaryThread = new ThreadServerApplication("Server thread", this); // Moved from main
         // CraftBukkit end
     }
 
@@ -640,7 +642,7 @@ public class MinecraftServer implements Runnable, ICommandListener, IMinecraftSe
 
             // CraftBukkit - remove gui
 
-            (new ThreadServerApplication("Server thread", minecraftserver)).start();
+            minecraftserver.primaryThread.start(); // CraftBukkit - let MinecraftServer construct the thread
         } catch (Exception exception) {
             log.log(Level.SEVERE, "Failed to start the minecraft server", exception);
         }
@@ -741,7 +743,7 @@ public class MinecraftServer implements Runnable, ICommandListener, IMinecraftSe
         result.append(" on Bukkit ");
         result.append(server.getBukkitVersion());
 
-        if (plugins.length > 0) {
+        if (plugins.length > 0 && this.server.getQueryPlugins()) {
             result.append(": ");
 
             for (int i = 0; i < plugins.length; i++) {
@@ -794,7 +796,7 @@ public class MinecraftServer implements Runnable, ICommandListener, IMinecraftSe
     public String[] r() {
         return (String[]) this.serverConfigurationManager.getBannedPlayers().toArray(new String[0]);
     }
-    
+
     public String getServerModName() {
         return "craftbukkit+forge"; // CraftBukkit - cb > vanilla!
     }

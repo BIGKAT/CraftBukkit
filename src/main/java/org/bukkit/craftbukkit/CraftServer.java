@@ -9,6 +9,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -410,6 +411,10 @@ public final class CraftServer implements Server {
         return this.configuration.getBoolean("settings.kick-on-speedhack");
     }
     // END MCPortCentral
+
+    public boolean getQueryPlugins() {
+        return this.configuration.getBoolean("settings.query-plugins");
+    }
 
     public boolean hasWhitelist() {
         return this.getConfigBoolean("white-list", false);
@@ -1037,9 +1042,12 @@ public final class CraftServer implements Server {
     }
 
     public Set<OfflinePlayer> getWhitelistedPlayers() {
-        Set<OfflinePlayer> result = new HashSet<OfflinePlayer>();
+        Set<OfflinePlayer> result = new LinkedHashSet<OfflinePlayer>();
 
         for (Object name : server.getWhitelisted()) {
+            if (((String)name).length() == 0 || ((String)name).startsWith("#")) {
+                continue;
+            }
             result.add(getOfflinePlayer((String) name));
         }
 
@@ -1193,5 +1201,9 @@ public final class CraftServer implements Server {
 
     public int getWaterAnimalSpawnLimit() {
         return waterAnimalSpawn;
+    }
+
+    public boolean isPrimaryThread() {
+        return Thread.currentThread().equals(console.primaryThread);
     }
 }

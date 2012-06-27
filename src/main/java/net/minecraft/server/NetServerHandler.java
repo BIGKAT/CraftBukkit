@@ -42,6 +42,7 @@ import org.bukkit.event.player.PlayerToggleSprintEvent;
 import org.bukkit.event.player.PlayerPortalEvent;
 import org.bukkit.event.inventory.*;
 import org.bukkit.event.inventory.InventoryType.SlotType;
+import org.bukkit.event.player.PlayerToggleFlightEvent;
 import org.bukkit.inventory.CraftingInventory;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryView;
@@ -154,7 +155,7 @@ public class NetServerHandler extends NetHandler implements ICommandListener {
 
             // CraftBukkit start
             leaveMessage = event.getLeaveMessage();
-            if (leaveMessage != null) {
+            if (leaveMessage != null && leaveMessage.length() > 0) {
                 this.minecraftServer.serverConfigurationManager.sendAll(new Packet3Chat(leaveMessage));
             }
             getPlayer().disconnect(s);
@@ -1313,7 +1314,18 @@ public class NetServerHandler extends NetHandler implements ICommandListener {
     }
 
     public void a(Packet202Abilities packet202abilities) {
-        this.player.abilities.isFlying = packet202abilities.b && this.player.abilities.canFly;
+        // CraftBukkit start
+        if (this.player.abilities.canFly && this.player.abilities.isFlying != packet202abilities.b) {
+            PlayerToggleFlightEvent event = new PlayerToggleFlightEvent(this.server.getPlayer(this.player), packet202abilities.b);
+            this.server.getPluginManager().callEvent(event);
+            if (!event.isCancelled()) {
+                this.player.abilities.isFlying = packet202abilities.b; // Actually set the player's flying status
+            }
+            else {
+                this.player.updateAbilities(); // Tell the player their ability was reverted
+            }
+        }
+        // CraftBukkit end
     }
 
 	public EntityPlayer getPlayerEntity() {
