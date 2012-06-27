@@ -22,6 +22,7 @@ public class ForgeCommandMap extends SimpleCommandMap {
 	public ForgeCommandMap(Server server, MinecraftServer mcServer) {
 		super(server);
 		this.mcServer=mcServer;
+		register("forge",new ModTimingCommand("modtiming"));
 	}
 
 	public boolean dispatch(CommandSender sender, String commandLine) throws CommandException {
@@ -50,11 +51,11 @@ public class ForgeCommandMap extends SimpleCommandMap {
 			}
 			commandLine="say "+msg;
 		}
-		
+
 		if (super.dispatch(sender, commandLine)) {
 			return true;
 		}
-		
+
 		if (sender.hasPermission("fml.serverCommands") && FMLBukkitHandler.instance().handleServerCommand(commandLine, sender.getName(), listener)) {
 			return true;
 		} else if (sender.hasPermission("forge.serverCommands") && ForgeHooks.onServerCommand(listener, sender.getName(), commandLine)) {
@@ -63,7 +64,7 @@ public class ForgeCommandMap extends SimpleCommandMap {
 			return false;
 		}
 	}
-	
+
 	@Override
 	public Command getCommand(String name) {
 		return super.getCommand(name);
