@@ -180,7 +180,7 @@ public class BlockFire extends Block {
     private void a(World world, int i, int j, int k, int l, Random random, int i1) {
         tryToCatchBlockOnFire(world, i, j, k, l, random, i1, 0);
     }
-    
+
     private void tryToCatchBlockOnFire(World world, int i, int j, int k, int l, Random random, int i1, int face)
     {
         int j1 = 0;
@@ -245,7 +245,7 @@ public class BlockFire extends Block {
             l = this.f(world, i, j + 1, k, l);
             l = this.f(world, i, j, k - 1, l);
             l = this.f(world, i, j, k + 1, l);*/
-            
+
             int var6 = this.getChanceToEncourageFire(world, i + 1, j, k, b0, 4);
             var6 = this.getChanceToEncourageFire(world, i - 1, j, k, var6, 5);
             var6 = this.getChanceToEncourageFire(world, i, j - 1, k, var6, 1);
@@ -286,7 +286,7 @@ public class BlockFire extends Block {
     }
 
     public void onPlace(World world, int i, int j, int k) {
-        if (world.worldProvider.dimension > 0 || world.getTypeId(i, j - 1, k) != Block.OBSIDIAN.id || !Block.PORTAL.b_(world, i, j, k)) {
+        if (world.worldProvider.dimension == 1 || world.getTypeId(i, j - 1, k) != Block.OBSIDIAN.id || !Block.PORTAL.b_(world, i, j, k)) {
             if (!world.isBlockSolidOnSide(i, j - 1, k, 1) && !this.g(world, i, j, k)) {
                 fireExtinguished(world, i, j, k);   // CraftBukkit - fuel block broke
             } else {
@@ -304,7 +304,7 @@ public class BlockFire extends Block {
 
     /**
      * Side sensitive version that calls the block function.
-     * 
+     *
      * @param world The current world
      * @param x X Position
      * @param y Y Position
@@ -321,10 +321,10 @@ public class BlockFire extends Block {
         }
         return false;
     }
-    
+
     /**
      * Side sensitive version that calls the block function.
-     * 
+     *
      * @param world The current world
      * @param x X Position
      * @param y Y Position
@@ -342,5 +342,5 @@ public class BlockFire extends Block {
             newChance = block.getFireSpreadSpeed(world, x, y, z, world.getData(x, y, z), face);
         }
         return (newChance > oldChance ? newChance : oldChance);
-    }  
+    }
 }
