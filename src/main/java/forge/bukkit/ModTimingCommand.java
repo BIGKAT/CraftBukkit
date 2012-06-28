@@ -13,7 +13,7 @@ public class ModTimingCommand extends Command {
 	protected ModTimingCommand(String name) {
 		super(name);
         this.description = "Controls the forge mod timing tracker";
-        this.usageMessage = "/forgetiming < start [seconds] | stop | reset | show [ count ]>";
+        this.usageMessage = "/modtiming <start [seconds] | stop | reset | show [ count ]>";
         this.setPermission("bukkit.command.timings");
 	}
 
