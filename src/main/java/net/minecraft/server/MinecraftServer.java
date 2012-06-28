@@ -263,14 +263,8 @@ public class MinecraftServer implements Runnable, ICommandListener, IMinecraftSe
             } else if (dimension == 1 && !this.server.getAllowEnd()) {
             	continue;
             }
-            
+
             Environment env = Environment.getEnvironment(dimension);
-            if (env == null)
-            {
-            	env = EnumHelper.addBukkitEnvironment(dimension, DimensionManager.getProvider(dimension).getSaveFolder());
-            	Environment.registerEnvironment(env);
-            }
-            
             String worldType = env.toString().toLowerCase();
             String name = (dimension == 0) ? s : s + "_" + worldType;
 
@@ -444,7 +438,7 @@ public class MinecraftServer implements Runnable, ICommandListener, IMinecraftSe
                 long i = System.currentTimeMillis();
 
                 FMLBukkitHandler.instance().onWorldLoadTick();
-                
+
                 for (long j = 0L; this.isRunning; Thread.sleep(1L)) {
                     long k = System.currentTimeMillis();
                     long l = k - i;

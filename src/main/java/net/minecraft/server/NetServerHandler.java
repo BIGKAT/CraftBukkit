@@ -775,7 +775,7 @@ public class NetServerHandler extends NetHandler implements ICommandListener {
             }
 
 			if (FMLBukkitHandler.instance().handleChatPacket(packet3chat, player)) {
-				
+
 			} else {
 		        // CraftBukkit start
 		        this.chat(s);
@@ -1385,5 +1385,9 @@ public class NetServerHandler extends NetHandler implements ICommandListener {
 										pkt.g));
 			}
 		}
+	}
+
+	public CraftServer getServer() {
+		return server;
 	}
 }

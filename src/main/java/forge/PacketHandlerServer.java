@@ -11,6 +11,10 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.logging.Level;
 
+import org.bukkit.event.player.PlayerKickEvent;
+
+import com.google.common.base.Joiner;
+
 import cpw.mods.fml.server.FMLBukkitHandler;
 
 import net.minecraft.server.*;
@@ -121,20 +125,25 @@ public class PacketHandlerServer extends PacketHandlerBase
             System.out.println("S->C: " + pkt.toString(true));
         }
         net.sendPacket(pkt.getPacket());
-        disconnectUser(net);
+        disconnectUser(net, Joiner.on(", ").join(list));
     }
 
     /**
      * Disconnects the player just like kicking them, just without the kick message.
      * @param net The network handler
      */
-    private void disconnectUser(NetServerHandler net)
+    private void disconnectUser(NetServerHandler net, String list)
     {
-        MinecraftServer mc = ModLoader.getMinecraftServerInstance();
+        PlayerKickEvent event = new PlayerKickEvent(net.getServer().getPlayer(net.player), "mods missing "+list, "\247e" + net.getName() + " left the game.");
+        net.getServer().getPluginManager().callEvent(event);
         net.player.I();
         net.networkManager.d();
-        mc.serverConfigurationManager.sendAll(new Packet3Chat("\247e" + net.getName() + " left the game."));
-        mc.serverConfigurationManager.disconnect(net.player);
+        String leaveMessage = event.getLeaveMessage();
+        if (leaveMessage != null && leaveMessage.length() > 0) {
+            net.minecraftServer.serverConfigurationManager.sendAll(new Packet3Chat(leaveMessage));
+        }
+        net.getPlayer().disconnect(event.getReason());
+        net.minecraftServer.serverConfigurationManager.disconnect(net.player);
         net.disconnected = true;
     }
     private void finishLogin(NetServerHandler netserverhandler)
@@ -170,7 +179,7 @@ public class PacketHandlerServer extends PacketHandlerBase
     }
 
     @Override
-    public void sendPacket(NetworkManager network, Packet packet) 
+    public void sendPacket(NetworkManager network, Packet packet)
     {
         NetServerHandler net = (NetServerHandler)network.getNetHandler();
         net.sendPacket(packet);

@@ -5,6 +5,7 @@ import java.util.Map;
 import java.util.logging.Level;
 
 import org.bukkit.Bukkit;
+import org.bukkit.World.Environment;
 import org.bukkit.craftbukkit.CraftServer;
 import org.bukkit.craftbukkit.CraftWorld;
 
@@ -27,6 +28,11 @@ public class DimensionManager
         }
         providers.put(id, provider);
         spawnSettings.put(id, keepLoaded);
+        if (Environment.getEnvironment(id)==null)
+        {
+        	Environment env = EnumHelper.addBukkitEnvironment(id, provider.getSaveFolder());
+        	Environment.registerEnvironment(env);
+        }
         return true;
     }
 
