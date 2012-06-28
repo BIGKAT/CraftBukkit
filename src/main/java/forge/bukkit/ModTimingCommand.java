@@ -41,7 +41,14 @@ public class ModTimingCommand extends Command {
 				}
 			}
 			long secondsToRun =  FMLBukkitProfiler.beginProfiling(seconds);
-            sender.sendMessage(ChatColor.YELLOW + String.format("Timing run in progress. Timings will be gathered for another %d seconds.", secondsToRun));
+			if (secondsToRun > 0)
+			{
+				sender.sendMessage(ChatColor.YELLOW + String.format("Timing run in progress. Timings will be gathered for another %d seconds.", secondsToRun));
+			}
+			else
+			{
+				sender.sendMessage(ChatColor.YELLOW + String.format("Timing run is complete. Use show to view or reset to reset for another run"));
+			}
 			return true;
 		}
 		if ("stop".equals(args[0]))
