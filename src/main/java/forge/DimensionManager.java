@@ -93,14 +93,14 @@ public class DimensionManager
         init();
     }
 
-	public static WorldProvider createProviderFor(int i) {
+	public static WorldProvider createProviderFor(int dimensionId) {
 		try {
-			if (providers.containsKey(i))
-				return getProvider(i).getClass().newInstance();
+			if (providers.containsKey(dimensionId))
+				return getProvider(dimensionId).getClass().newInstance();
 			else
 				return null;
 		} catch (Exception e) {
-			FMLCommonHandler.instance().getFMLLogger().log(Level.SEVERE,String.format("An error occured trying to create an instance of WorldProvider %d (%s)",i,getProvider(i).getClass().getSimpleName()),e);
+			FMLCommonHandler.instance().getFMLLogger().log(Level.SEVERE,String.format("An error occured trying to create an instance of WorldProvider %d (%s)",dimensionId,getProvider(dimensionId).getClass().getSimpleName()),e);
 			throw new RuntimeException(e);
 		}
 	}

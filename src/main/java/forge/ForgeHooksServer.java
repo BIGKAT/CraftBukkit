@@ -33,12 +33,12 @@ public class ForgeHooksServer
     {
         NetworkMod[] list = MinecraftForge.getNetworkMods();
         PacketModList pkt = new PacketModList(true);
-        
+
         for (NetworkMod mod : list)
         {
             pkt.ModIDs.put(MinecraftForge.getModID(mod), mod.toString());
         }
-        
+
         ((NetServerHandler)net.getNetHandler()).sendPacket(pkt.getPacket());
         if (((PacketHandlerServer)ForgeHooks.getPacketHandler()).DEBUG)
         {
@@ -51,8 +51,8 @@ public class ForgeHooksServer
         init();
         if (pktLogin.d == ForgePacket.FORGE_ID)
         {
-            ForgeHooks.onLogin(manager, pktLogin);  
-            
+            ForgeHooks.onLogin(manager, pktLogin);
+
             String[] channels = MessageManager.getInstance().getRegisteredChannels(manager);
             StringBuilder tmp = new StringBuilder();
             tmp.append("Forge");
@@ -61,7 +61,7 @@ public class ForgeHooksServer
                 tmp.append("\0");
                 tmp.append(channel);
             }
-            Packet250CustomPayload pkt = new Packet250CustomPayload(); 
+            Packet250CustomPayload pkt = new Packet250CustomPayload();
             pkt.tag = "REGISTER";
             try {
                 pkt.data = tmp.toString().getBytes("UTF8");
@@ -77,8 +77,8 @@ public class ForgeHooksServer
             net.disconnect(mod_MinecraftForge.NO_FORGE_KICK_MESSAGE);
         }
     }
-    
-    
+
+
     private static boolean hasInit = false;
     public static void init()
     {

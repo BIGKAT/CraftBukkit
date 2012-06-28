@@ -15,6 +15,7 @@ import org.bukkit.event.player.PlayerKickEvent;
 
 import com.google.common.base.Joiner;
 
+import cpw.mods.fml.common.FMLCommonHandler;
 import cpw.mods.fml.server.FMLBukkitHandler;
 
 import net.minecraft.server.*;
@@ -63,6 +64,7 @@ public class PacketHandlerServer extends PacketHandlerBase
         if (!pkt.has4096)
         {
             net.disconnect("Must have Forge build #136+ (4096 fix) to connect to this server");
+            return;
         }
         if (pkt.Mods.length == 0)
         {
@@ -125,16 +127,17 @@ public class PacketHandlerServer extends PacketHandlerBase
             System.out.println("S->C: " + pkt.toString(true));
         }
         net.sendPacket(pkt.getPacket());
-        disconnectUser(net, Joiner.on(", ").join(list));
+        disconnectUser(net, "Missing mods "+Joiner.on(", ").join(list));
+        FMLCommonHandler.instance().getMinecraftLogger().log(Level.INFO, String.format("%s was disconnected because they are missing the following mods %s.\n", net.getName(), Joiner.on(", ").join(list)));
     }
 
     /**
      * Disconnects the player just like kicking them, just without the kick message.
      * @param net The network handler
      */
-    private void disconnectUser(NetServerHandler net, String list)
+    void disconnectUser(NetServerHandler net, String list)
     {
-        PlayerKickEvent event = new PlayerKickEvent(net.getServer().getPlayer(net.player), "mods missing "+list, "\247e" + net.getName() + " left the game.");
+        PlayerKickEvent event = new PlayerKickEvent(net.getServer().getPlayer(net.player), list, "\247e" + net.getName() + " left the game.");
         net.getServer().getPluginManager().callEvent(event);
         net.player.I();
         net.networkManager.d();
