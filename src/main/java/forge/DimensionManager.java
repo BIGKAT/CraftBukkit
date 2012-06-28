@@ -96,7 +96,11 @@ public class DimensionManager
 	public static WorldProvider createProviderFor(int dimensionId) {
 		try {
 			if (providers.containsKey(dimensionId))
-				return getProvider(dimensionId).getClass().newInstance();
+			{
+				WorldProvider provider = getProvider(dimensionId).getClass().newInstance();
+				provider.dimension = dimensionId;
+				return provider;
+			}
 			else
 				return null;
 		} catch (Exception e) {
