@@ -13,6 +13,7 @@ import org.bukkit.craftbukkit.generator.NormalChunkGenerator;
 import org.bukkit.craftbukkit.generator.SkyLandsChunkGenerator;
 import org.bukkit.event.weather.LightningStrikeEvent;
 
+import forge.ForgeHooks;
 import forge.bukkit.BukkitForgeHooks.ForgeBlockChangeDelegate;
 
 public class WorldServer extends World implements ForgeBlockChangeDelegate {
@@ -33,6 +34,8 @@ public class WorldServer extends World implements ForgeBlockChangeDelegate {
         }
 
         this.dimension = i;
+        this.worldProvider.dimension = i;
+        ForgeHooks.onWorldLoad(this);
         forge.DimensionManager.setWorld(i, this);
         this.pvpMode = minecraftserver.pvpMode;
         this.manager = new PlayerManager(minecraftserver, this.dimension, minecraftserver.propertyManager.getInt("view-distance", 10));
@@ -141,7 +144,7 @@ public class WorldServer extends World implements ForgeBlockChangeDelegate {
 
         for(int x = (i >> 4); x <= (l >> 4); x++)
         {
-            for(int z = (k >> 4); z <= (j1 >> 4); z++) 
+            for(int z = (k >> 4); z <= (j1 >> 4); z++)
             {
                 Chunk chunk = getChunkAt(x, z);
                 if (chunk != null)
@@ -151,7 +154,7 @@ public class WorldServer extends World implements ForgeBlockChangeDelegate {
                         TileEntity entity = (TileEntity)obj;
                         if (!entity.l())
                         {
-                            if (entity.x >= i && entity.y >= j && entity.z >= k && 
+                            if (entity.x >= i && entity.y >= j && entity.z >= k &&
                                 entity.x <= l && entity.y <= i1 && entity.z <= j1)
                             {
                                 arraylist.add(entity);

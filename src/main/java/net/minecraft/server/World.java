@@ -35,7 +35,7 @@ import forge.ForgeHooks;
 public class World implements IBlockAccess {
 	/**
 	 * Used in the getEntitiesWithinAABB functions to expand the search area for entities.
-	 * Modders should change this variable to a higher value if it is less then the radius 
+	 * Modders should change this variable to a higher value if it is less then the radius
 	 * of one of there entities.
 	 */
 	public static double MAX_ENTITY_RADIUS = 2.0D;
@@ -173,7 +173,6 @@ public class World implements IBlockAccess {
         this.g();
         this.B();
         this.getServer().addWorld(this.world); // CraftBukkit
-        ForgeHooks.onWorldLoad(this);
     }
 
     protected IChunkProvider b() {
@@ -694,7 +693,7 @@ public class World implements IBlockAccess {
                 Block block = Block.byId[k1];
 
                 if (block != null &&  //BugFix NPE on missconfigured block ids.
-                		(!flag1 || block == null || block.e(this, l, i1, j1) != null) && 
+                		(!flag1 || block == null || block.e(this, l, i1, j1) != null) &&
                 		k1 > 0 && block.a(l1, flag))
                 {
                     MovingObjectPosition movingobjectposition = block.a(this, l, i1, j1, vec3d, vec3d1);
@@ -1209,7 +1208,7 @@ public class World implements IBlockAccess {
         	{
         		((TileEntity)tile).onChunkUnload();
         	}
-        	
+
             this.tileEntityList.removeAll(this.K);
             this.K.clear();
         }
@@ -1258,7 +1257,7 @@ public class World implements IBlockAccess {
         List dest = Q ? J : tileEntityList;
         for(Object entity : collection)
         {
-            if(((TileEntity)entity).canUpdate()) 
+            if(((TileEntity)entity).canUpdate())
             {
                 dest.add(entity);
             }
@@ -1439,7 +1438,7 @@ public class World implements IBlockAccess {
                         if (j2 == Block.FIRE.id || j2 == Block.LAVA.id || j2 == Block.STATIONARY_LAVA.id) {
                             return true;
                         }
-                        else 
+                        else
                         {
                             if (j2 > 0 && Block.byId[j2] != null && Block.byId[j2].isBlockBurning(this, k1, l1, i2))
                             {
@@ -2583,7 +2582,7 @@ public class World implements IBlockAccess {
             if (block != null && (block == Block.WATER || block == Block.STATIONARY_WATER || block == Block.LAVA || block == Block.STATIONARY_LAVA || block == Block.FIRE || block.material.isReplacable())) {
                 block = null;
             }
-            
+
             if (block != null && block.isBlockReplaceable(this, j, k, l)) {
                 block = null;
             }
@@ -2962,7 +2961,7 @@ public class World implements IBlockAccess {
      * TODO: Eloraam fully describe the bug this fixes.
      * @param entity The TileEntity to be added.
      */
-    public void addTileEntity(TileEntity entity) 
+    public void addTileEntity(TileEntity entity)
     {
         List dest = Q ? J : tileEntityList;
         if(entity.canUpdate())
@@ -2972,11 +2971,11 @@ public class World implements IBlockAccess {
             }
         }
     }
-    
+
 	/**
 	 * Determine if the given block is considered solid on the specified side.
 	 * Used by placement logic.
-	 * 
+	 *
 	 * @param x
 	 *            Block X Position
 	 * @param y
