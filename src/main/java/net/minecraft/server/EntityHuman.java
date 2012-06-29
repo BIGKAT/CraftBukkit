@@ -1,5 +1,6 @@
 package net.minecraft.server;
 
+import java.util.EnumSet;
 import java.util.Iterator;
 import java.util.List;
 
@@ -22,6 +23,9 @@ import org.bukkit.event.player.PlayerBedEnterEvent;
 import org.bukkit.event.player.PlayerBedLeaveEvent;
 import org.bukkit.event.player.PlayerDropItemEvent;
 // CraftBukkit end
+
+import cpw.mods.fml.common.FMLCommonHandler;
+import cpw.mods.fml.common.TickType;
 
 public abstract class EntityHuman extends EntityLiving {
 
@@ -124,6 +128,7 @@ public abstract class EntityHuman extends EntityLiving {
     }
 
     public void F_() {
+    	FMLCommonHandler.instance().tickStart(EnumSet.of(TickType.PLAYER), this, this.world);
         if (this.d != null) {
             ItemStack itemstack = this.inventory.getItemInHand();
 
@@ -224,6 +229,7 @@ public abstract class EntityHuman extends EntityLiving {
         if (!this.world.isStatic) {
             this.foodData.a(this);
         }
+    	FMLCommonHandler.instance().tickEnd(EnumSet.of(TickType.PLAYER), this, this.world);
     }
 
     protected void b(ItemStack itemstack, int i) {
@@ -1303,8 +1309,8 @@ public abstract class EntityHuman extends EntityLiving {
 
     public void updateAbilities() {}
     /**
-     * Opens a Gui for the player. 
-     * 
+     * Opens a Gui for the player.
+     *
      * @param mod The mod associated with the gui
      * @param ID The ID number for the Gui
      * @param world The World
@@ -1333,7 +1339,7 @@ public abstract class EntityHuman extends EntityLiving {
                 player.H();
                 PacketOpenGUI pkt = new PacketOpenGUI(player.getCurrentWindowIdField(), MinecraftForge.getModID((NetworkMod)mod), ID, x, y, z);
                 player.netServerHandler.sendPacket(pkt.getPacket());
-                activeContainer = container; 
+                activeContainer = container;
                 activeContainer.windowId = player.getCurrentWindowIdField();
                 activeContainer.addSlotListener(player);
             }

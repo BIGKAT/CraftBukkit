@@ -37,6 +37,7 @@ import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.PluginLoadOrder;
 // CraftBukkit end
 
+import cpw.mods.fml.common.FMLCommonHandler;
 import cpw.mods.fml.server.FMLBukkitHandler;
 import forge.DimensionManager;
 import forge.EnumHelper;
@@ -510,6 +511,7 @@ public class MinecraftServer implements Runnable, ICommandListener, IMinecraftSe
     }
 
     private void w() {
+    	FMLCommonHandler.instance().rescheduleTicks();
     	FMLBukkitHandler.instance().onServerPreTick();
         long i = System.nanoTime();
         ArrayList arraylist = new ArrayList();
