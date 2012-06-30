@@ -34,6 +34,7 @@ public class WorldServer extends World implements ForgeBlockChangeDelegate {
         }
 
         this.dimension = i;
+        this.worldProvider.dimension = i;
         ForgeHooks.onWorldLoad(this);
         forge.DimensionManager.setWorld(i, this);
         this.pvpMode = minecraftserver.pvpMode;
