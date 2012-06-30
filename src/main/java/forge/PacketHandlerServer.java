@@ -158,7 +158,7 @@ public class PacketHandlerServer extends PacketHandlerBase
         if (maxPlayers > 60) {
             maxPlayers = 60;
         }
-        netserverhandler.sendPacket(new Packet1Login("", entityplayer.id, worldserver.getWorldData().getType(), entityplayer.itemInWorldManager.getGameMode(), worldserver.worldProvider.dimension, (byte) worldserver.difficulty, (byte) worldserver.getHeight(), (byte) maxPlayers));
+        netserverhandler.sendPacket(new Packet1Login("", entityplayer.id, worldserver.getWorldData().getType(), entityplayer.itemInWorldManager.getGameMode(), worldserver.getWorld().getEnvironment().getId(), (byte) worldserver.difficulty, (byte) worldserver.getHeight(), (byte) maxPlayers));
         entityplayer.getBukkitEntity().sendSupportedChannels();
         // CraftBukkit end
 
