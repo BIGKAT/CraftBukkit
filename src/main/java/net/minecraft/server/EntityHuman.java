@@ -26,6 +26,7 @@ import org.bukkit.event.player.PlayerDropItemEvent;
 
 import cpw.mods.fml.common.FMLCommonHandler;
 import cpw.mods.fml.common.TickType;
+import org.bukkit.craftbukkit.event.CraftEventFactory;
 
 public abstract class EntityHuman extends EntityLiving {
 
@@ -1335,13 +1336,17 @@ public abstract class EntityHuman extends EntityLiving {
             Container container = (Container) handler.getGuiElement(ID, player, world, x, y, z);
             if (container != null)
             {
-                player.realGetNextWidowId();
-                player.H();
-                PacketOpenGUI pkt = new PacketOpenGUI(player.getCurrentWindowIdField(), MinecraftForge.getModID((NetworkMod)mod), ID, x, y, z);
-                player.netServerHandler.sendPacket(pkt.getPacket());
-                activeContainer = container;
-                activeContainer.windowId = player.getCurrentWindowIdField();
-                activeContainer.addSlotListener(player);
+                container = CraftEventFactory.callInventoryOpenEvent(player, container);
+                if (container != null)
+                {
+                    player.realGetNextWidowId();
+                    player.H();
+                    PacketOpenGUI pkt = new PacketOpenGUI(player.getCurrentWindowIdField(), MinecraftForge.getModID((NetworkMod)mod), ID, x, y, z);
+                    player.netServerHandler.sendPacket(pkt.getPacket());
+                    activeContainer = container;
+                    activeContainer.windowId = player.getCurrentWindowIdField();
+                    activeContainer.addSlotListener(player);
+                }
             }
         }
     }
