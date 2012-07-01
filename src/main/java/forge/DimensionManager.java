@@ -98,7 +98,6 @@ public class DimensionManager
 			if (providers.containsKey(dimensionId))
 			{
 				WorldProvider provider = getProvider(dimensionId).getClass().newInstance();
-				provider.dimension = dimensionId;
 				return provider;
 			}
 			else
