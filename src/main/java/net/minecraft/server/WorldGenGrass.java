@@ -17,7 +17,7 @@ public class WorldGenGrass extends WorldGenerator {
 
         Block bl = Block.byId[world.getTypeId(i, j, k)];
         do {
-            if (bl != null && bl.canBeReplacedByLeaves(world, i, j, k))
+            if (bl != null && !bl.isLeaves(world, i, j, k))
             {
             	break;
             }
