@@ -33,8 +33,8 @@ public abstract class Container {
     }
     public void transferTo(Container other, CraftHumanEntity player) {
         InventoryView source = this.getBukkitView(), destination = other.getBukkitView();
-        boolean validSource=validateBukkitContainer(source);
-        boolean validDest=validateBukkitContainer(destination);
+        boolean validSource=validateBukkitContainer(source, this);
+        boolean validDest=validateBukkitContainer(destination, other);
         if (!validSource || !validDest) {
         	StringWriter sw=new StringWriter();
         	new Throwable().printStackTrace(new PrintWriter(sw));
@@ -50,9 +50,9 @@ public abstract class Container {
     }
     // CraftBukkit end
 
-    private boolean validateBukkitContainer(InventoryView source) {
+    private boolean validateBukkitContainer(InventoryView source, Container cont) {
 		if (source.getType()==InventoryType.MOD) {
-			if (getInventory()==null || getPlayer()==null) {
+			if (cont.getInventory()==null || cont.getPlayer()==null) {
 				return false;
 			}
 		}
