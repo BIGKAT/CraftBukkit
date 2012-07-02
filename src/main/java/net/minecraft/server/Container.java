@@ -33,14 +33,14 @@ public abstract class Container {
     }
     public void transferTo(Container other, CraftHumanEntity player) {
         InventoryView source = this.getBukkitView(), destination = other.getBukkitView();
-        boolean valid=validateBukkitContainer(source);
-        valid&=validateBukkitContainer(destination);
-        if (!valid) {
+        boolean validSource=validateBukkitContainer(source);
+        boolean validDest=validateBukkitContainer(destination);
+        if (!validSource || !validDest) {
         	StringWriter sw=new StringWriter();
         	new Throwable().printStackTrace(new PrintWriter(sw));
-        	ModLoader.getLogger().severe(String.format("ALERT: SERIOUS BUKKIT PORTING ERROR. %s is a container that does not provide a valid player and inventory to bukkit.\n" +
+        	ModLoader.getLogger().severe(String.format("ALERT: SERIOUS BUKKIT PORTING ERROR. %s (%b) or %s (%b) is a container that does not provide a valid player and inventory to bukkit.\n" +
         			"The mod porter needs to provide a player through getPlayer() and an IInventory through getInventory().\n" +
-        			"You may encounter issues. File a bug with this message at mcportcentral.co.za, please.\n%s",getClass().getName(),sw.toString()));
+        			"You may encounter issues. File a bug with this message at mcportcentral.co.za, please.\n%s",getClass().getName(), validSource, other.getClass().getName(), validDest, sw.toString()));
         	return;
         }
         ((CraftInventory) source.getTopInventory()).getInventory().onClose(player);
@@ -58,13 +58,13 @@ public abstract class Container {
 		}
 		return true;
 	}
-    
+
     public Container() {}
 
     public EntityHuman getPlayer() {
     	return this.forgePlayer;
     }
-    
+
     protected void a(Slot slot) {
         slot.c = this.e.size();
         this.e.add(slot);
