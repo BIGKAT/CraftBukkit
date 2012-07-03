@@ -269,7 +269,7 @@
             <configuration>
               <artifacts>
                 <artifact>
-                  <file>${project.build.directory}/mcp-bukkit-toolkit-${BUILD_NUMBER}</file>
+                  <file>${project.build.directory}/mcp-bukkit-toolkit-${BUILD_NUMBER}.zip</file>
                   <type>zip</type>
                   <classifier>optional</classifier>
                 </artifact>
