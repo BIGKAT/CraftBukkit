@@ -7,29 +7,37 @@
      cpw
      ====================================================================== -->
 <project name="MCPgenerator" default="create-mcp-version">
-	<target name="create-mcp-version">
-		<!--		java -classpath ../bin/SrgTools.jar:../bin/asm-all-3.3.1.jar SrgCollisions -srg generated/server_bukkit_mcp_1.2.5_auto.srg -in
-		java -classpath ../bin/SrgTools.jar:../bin/asm-all-3.3.1.jar ApplySrg -srg ../mappings/generated/server_bukkit_mcp_1.2.5.srg -transform ${jar} {$outjar}
-		-->
+	<target name="init">
 		<property environment="env" />
 		<condition property="version.build" value="${env.BUILD_NUMBER}" else="1">
 			<isset property="env.BUILD_NUMBER" />
 		</condition>
 		<property name="mcp" location="${basedir}" />
-		<property name="asm" location="${mcp}/asm-all-3.3.1.jar"/>
-		<property name="srgtool" location="${mcp}/srgtooling.jar"/>
-		<property name="srg" location="${mcp}/server_bukkit_mcp_1.2.5.srg"/>
-		<property name="xslfixes" location="${mcp}/fixes.xsl"/>
-		<property name="bukkitjar" location="${maven.project.dir}/${maven.project.finalName}.jar"/>
-		<property name="tmpjar" location="${mcp}/${maven.project.finalName}-tmpmcp.jar"/>
-		<property name="mcpjar" location="${mcp}/${maven.project.finalName}-MCP-${version.build}.jar"/>
+		<property name="asm" location="${mcp}/asm-all-3.3.1.jar" />
+		<property name="srgtool" location="${mcp}/srgtooling.jar" />
+		<property name="tomcpsrg" location="${mcp}/server_bukkit_mcp_1.2.5.srg" />
+		<property name="tobukkitsrg" location="${mcp}/server_mcp_bukkit_1.2.5.srg" />
+	</target>
+
+	<target name="build-init" depends="init">
+		<property file="mcpbukkit.properties" />
+	</target>
+
+	<target name="maven-init" depends="init">
+		<property name="xslfixes" location="${mcp}/fixes.xsl" />
+		<property name="bukkitjar" location="${maven.project.dir}/${maven.project.finalName}.jar" />
+		<property name="tmpjar" location="${mcp}/${maven.project.finalName}-tmpmcp.jar" />
+		<property name="mcpjar" location="${mcp}/${maven.project.finalName}-MCP-${version.build}.jar" relative="true" />
+	</target>
+
+	<target name="create-mcp-version" depends="maven-init">
 		<java classname="nl.hardijzer.fw.applysrg.ApplySrg" failonerror="true" fork="true">
 			<classpath>
 				<pathelement location="${asm}" />
 				<pathelement location="${srgtool}" />
 			</classpath>
 			<arg value="--srg" />
-			<arg value="${srg}" />
+			<arg value="${tomcpsrg}" />
 			<arg value="--translate" />
 			<arg value="${bukkitjar}" />
 			<arg value="${tmpjar}" />
@@ -48,9 +56,41 @@
 			<arg value="-xslt" />
 			<arg value="${xslfixes}" />
 		</java>
-		<delete file="${tmpjar}"/>
+		<delete file="${tmpjar}" />
+		<propertyfile file="mcpbukkit.properties">
+			<entry key="bukkitmcp.jar" value="${mcpjar}" />
+		</propertyfile>
 		<zip destfile="${maven.project.dir}/mcp-bukkit-toolkit-${version.build}.zip">
-			<zipfileset dir="${mcp}" includes="*"/>
+			<zipfileset dir="${mcp}" includes="*" />
 		</zip>
+	</target>
+
+
+	<!-- call through <ant> task with properties modname, bukkit.mcp.srcdir, bukkit.compile.ref and bukkit.output.jar set to your desired values. Make sure to set useNativeBasedir="true" on your <ant> task call -->
+	<target name="convert-mcp-to-bukkit" depends="build-init">
+		<mkdir dir="${basedir}/build" />
+		<path id="internal.bukkit.compile.ref">
+			<path refid="bukkit.compile.ref" />
+			<pathelement location="${bukkitmcp.jar}" />
+		</path>
+		<javac target="1.6" source="1.6" destdir="${basedir}/build" classpathref="internal.bukkit.compile.ref" includeAntRuntime="false">
+			<src path="${bukkit.mcp.srcdir}" />
+		</javac>
+		<jar destfile="${basedir}/${modname}-bukkitmcp.jar" basedir="${basedir}/build" />
+		<java classname="nl.hardijzer.fw.applysrg.ApplySrg" failonerror="true" fork="true">
+			<classpath>
+				<pathelement location="${asm}" />
+				<pathelement location="${srgtool}" />
+			</classpath>
+			<arg value="--srg" />
+			<arg value="${tobukkitsrg}" />
+			<arg value="--inheritance" />
+			<arg value="${bukkitmcp.jar}" />
+			<arg value="--translate" />
+			<arg value="${basedir}/${modname}-bukkitmcp.jar" />
+			<arg value="${bukkit.output.jar}" />
+		</java>
+		<delete name="${basedir}/${modname}-bukkitmcp.jar" />
+		<delete dir="${basedir}/build" />
 	</target>
 </project>
