@@ -32,6 +32,19 @@ public class EnumHelper
 
     private static boolean[] decompiledFlags = new boolean[ctrs.length];
 
+    public static org.bukkit.block.Biome addBukkitBiome(String name)
+    {
+        if (!isSetup)
+        {
+            setup();
+        }
+
+        return addEnum(decompiledFlags[0], org.bukkit.block.Biome.class, name,
+            new Class[] {},
+            new Object[] {});
+    }
+
+
     public static org.bukkit.World.Environment addBukkitEnvironment(int id, String name)
     {
         if (!isSetup)

@@ -23,6 +23,8 @@ import org.bukkit.metadata.MetadataValue;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.util.BlockVector;
 
+import forge.EnumHelper;
+
 import java.util.List;
 
 public class CraftBlock implements Block {
@@ -390,7 +392,7 @@ public class CraftBlock implements Block {
     /* Build biome index based lookup table for BiomeBase to Biome mapping */
     static {
         BIOME_MAPPING = new Biome[BiomeBase.biomes.length];
-        BIOMEBASE_MAPPING = new BiomeBase[Biome.values().length];
+        BIOMEBASE_MAPPING = new BiomeBase[BiomeBase.biomes.length];
         BIOME_MAPPING[BiomeBase.SWAMPLAND.id] = Biome.SWAMPLAND;
         BIOME_MAPPING[BiomeBase.FOREST.id] = Biome.FOREST;
         BIOME_MAPPING[BiomeBase.TAIGA.id] = Biome.TAIGA;
@@ -418,7 +420,12 @@ public class CraftBlock implements Block {
         /* Helps avoid missed biomes when we upgrade bukkit to new code with new biomes */
         for (int i = 0; i < BIOME_MAPPING.length; i++) {
             if ((BiomeBase.biomes[i] != null) && (BIOME_MAPPING[i] == null)) {
-                throw new IllegalArgumentException("Missing Biome mapping for BiomeBase[" + i + "]");
+                String name = BiomeBase.biomes[i].y;
+                int id = BiomeBase.biomes[i].id;
+
+                System.out.println("Adding biome mapping "+BiomeBase.biomes[i].id+" "+name+" at BiomeBase["+i+"]");
+                EnumHelper.addBukkitBiome(name);
+                BIOME_MAPPING[BiomeBase.biomes[i].id] = Enum.valueOf(Biome.class, name);
             }
             if (BIOME_MAPPING[i] != null) {  /* Build reverse mapping for setBiome */
                 BIOMEBASE_MAPPING[BIOME_MAPPING[i].ordinal()] = BiomeBase.biomes[i];
