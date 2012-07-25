@@ -289,17 +289,20 @@ public class ItemInWorldManager {
 
     // TODO: Review this code, it changed in 1.8 but I'm not sure if we need to update or not
     public boolean interact(EntityHuman entityhuman, World world, ItemStack itemstack, int i, int j, int k, int l) {
-        if (itemstack != null && itemstack.getItem().onItemUseFirst(itemstack, entityhuman, world, i, j, k, l))
+        // Forge: Reorder event to before onItemUseFirst.
+        PlayerInteractEvent event = CraftEventFactory.callPlayerInteractEvent(entityhuman, Action.RIGHT_CLICK_BLOCK, i, j, k, l, itemstack);
+
+        if (itemstack != null && event.useItemInHand() != Event.Result.DENY && event.useInteractedBlock() != Event.Result.DENY && itemstack.getItem().onItemUseFirst(itemstack, entityhuman, world, i, j, k, l))
         {
             return true;
         }
+        // Forge end
         
         int i1 = world.getTypeId(i, j, k);
 
         // CraftBukkit start - Interact
         boolean result = false;
         if (i1 > 0) {
-            PlayerInteractEvent event = CraftEventFactory.callPlayerInteractEvent(entityhuman, Action.RIGHT_CLICK_BLOCK, i, j, k, l, itemstack);
             if (event.useInteractedBlock() == Event.Result.DENY) {
                 // If we denied a door from opening, we need to send a correcting update to the client, as it already opened the door.
                 if (i1 == Block.WOODEN_DOOR.id) {
