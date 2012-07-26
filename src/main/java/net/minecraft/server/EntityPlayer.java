@@ -11,14 +11,11 @@ import forge.NetworkMod;
 import forge.packets.PacketOpenGUI;
 
 // CraftBukkit start
-import java.util.EnumSet;
 import org.bukkit.Bukkit;
-import org.bukkit.craftbukkit.ChunkCompressionThread;
 import org.bukkit.craftbukkit.CraftWorld;
 import org.bukkit.craftbukkit.entity.CraftPlayer;
 import org.bukkit.craftbukkit.event.CraftEventFactory;
 import org.bukkit.craftbukkit.inventory.CraftItemStack;
-import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.inventory.InventoryType;
 // CraftBukkit end
 
@@ -93,7 +90,7 @@ public class EntityPlayer extends EntityHuman implements ICrafting {
 
     public void spawnIn(World world) {
         super.spawnIn(world);
-        // CraftBukkit - world fallback code, either respawn location or global spawn
+        // CraftBukkit start - world fallback code, either respawn location or global spawn
         if (world == null) {
             this.dead = false;
             ChunkCoordinates position = null;
@@ -112,10 +109,7 @@ public class EntityPlayer extends EntityHuman implements ICrafting {
             this.setPosition(position.x + 0.5, position.y, position.z + 0.5);
         }
         this.dimension = ((WorldServer) this.world).dimension;
-        int oldMode = itemInWorldManager.getGameMode();
-        this.itemInWorldManager = new ItemInWorldManager((WorldServer) world);
-        this.itemInWorldManager.player = this;
-        this.itemInWorldManager.setGameMode(oldMode);
+        this.itemInWorldManager.a((WorldServer) world);
         // CraftBukkit end
     }
 
@@ -175,7 +169,7 @@ public class EntityPlayer extends EntityHuman implements ICrafting {
             }
         }
 
-        PlayerDeathEvent event = CraftEventFactory.callPlayerDeathEvent(this, loot, damagesource.getLocalizedDeathMessage(this));
+        org.bukkit.event.entity.PlayerDeathEvent event = CraftEventFactory.callPlayerDeathEvent(this, loot, damagesource.getLocalizedDeathMessage(this));
 
         String deathMessage = event.getDeathMessage();
 
@@ -183,7 +177,7 @@ public class EntityPlayer extends EntityHuman implements ICrafting {
             this.server.serverConfigurationManager.sendAll(new Packet3Chat(event.getDeathMessage()));
         }
 
-        // CraftBukkit start - we clean the player's inventory after the EntityDeathEvent is called so plugins can get the exact state of the inventory.
+        // CraftBukkit - we clean the player's inventory after the EntityDeathEvent is called so plugins can get the exact state of the inventory.
         for (int i = 0; i < this.inventory.items.length; ++i) {
             this.inventory.items[i] = null;
         }
@@ -262,7 +256,7 @@ public class EntityPlayer extends EntityHuman implements ICrafting {
                 boolean flag1 = false;
 
                 // CraftBukkit - Add check against Chunk Packets in the ChunkCompressionThread.
-                if (this.netServerHandler.lowPriorityCount() + ChunkCompressionThread.getPlayerQueueSize(this) < 4) {
+                if (this.netServerHandler.lowPriorityCount() + org.bukkit.craftbukkit.ChunkCompressionThread.getPlayerQueueSize(this) < 4) {
                     flag1 = true;
                 }
 
@@ -571,7 +565,7 @@ public class EntityPlayer extends EntityHuman implements ICrafting {
         this.netServerHandler.sendPacket(new Packet104WindowItems(container.windowId, list));
         this.netServerHandler.sendPacket(new Packet103SetSlot(-1, -1, this.inventory.getCarried()));
         // CraftBukkit start - send a Set Slot to update the crafting result slot
-        if (EnumSet.of(InventoryType.CRAFTING,InventoryType.WORKBENCH).contains(container.getBukkitView().getType())) {
+        if (java.util.EnumSet.of(InventoryType.CRAFTING,InventoryType.WORKBENCH).contains(container.getBukkitView().getType())) {
             this.netServerHandler.sendPacket(new Packet103SetSlot(container.windowId, 0, container.getSlot(0).getItem()));
         }
         // CraftBukkit end

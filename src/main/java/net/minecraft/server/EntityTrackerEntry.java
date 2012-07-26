@@ -8,6 +8,10 @@ import java.util.List;
 import java.util.Set;
 
 import forge.ForgeHooks;
+// CraftBukkit start
+import org.bukkit.entity.Player;
+import org.bukkit.event.player.PlayerVelocityEvent;
+// CraftBukkit end
 
 public class EntityTrackerEntry {
 
@@ -171,10 +175,10 @@ public class EntityTrackerEntry {
             boolean cancelled = false;
 
             if (this.tracker instanceof EntityPlayer) {
-                org.bukkit.entity.Player player = (org.bukkit.entity.Player) this.tracker.getBukkitEntity();
+                Player player = (Player) this.tracker.getBukkitEntity();
                 org.bukkit.util.Vector velocity = player.getVelocity();
 
-                org.bukkit.event.player.PlayerVelocityEvent event = new org.bukkit.event.player.PlayerVelocityEvent(player, velocity);
+                PlayerVelocityEvent event = new PlayerVelocityEvent(player, velocity);
                 this.tracker.world.getServer().getPluginManager().callEvent(event);
 
                 if (event.isCancelled()) {
@@ -228,7 +232,7 @@ public class EntityTrackerEntry {
                 if (!this.trackedPlayers.contains(entityplayer)) {
                     // CraftBukkit start
                     if (tracker instanceof EntityPlayer) {
-                        org.bukkit.entity.Player player = ((EntityPlayer) tracker).getBukkitEntity();
+                        Player player = ((EntityPlayer) tracker).getBukkitEntity();
                         if (!entityplayer.getBukkitEntity().canSee(player)) {
                             return;
                         }

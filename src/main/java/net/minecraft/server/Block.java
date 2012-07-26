@@ -544,7 +544,7 @@ public class Block implements net.minecraft.src.Block, ITextureProvider {
     public void a(World world, EntityHuman entityhuman, int i, int j, int k, int l) {
         entityhuman.a(StatisticList.C[this.id], 1);
         entityhuman.c(0.025F);
-        if (this.b() && !hasTileEntity(l) && EnchantmentManager.hasSilkTouchEnchantment(entityhuman.inventory)) {
+        if (this.h() && !hasTileEntity(l) && EnchantmentManager.hasSilkTouchEnchantment(entityhuman.inventory)) {
             ItemStack itemstack = this.a_(l);
 
             if (itemstack != null) {

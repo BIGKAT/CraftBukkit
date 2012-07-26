@@ -6,17 +6,19 @@ import java.util.Random;
 
 // CraftBukkit start
 import java.util.UUID;
+
 import org.bukkit.Bukkit;
+import org.bukkit.Server;
 import org.bukkit.block.BlockFace;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Painting;
 import org.bukkit.entity.Vehicle;
-import org.bukkit.event.entity.EntityCombustByBlockEvent;
 import org.bukkit.event.entity.EntityCombustByEntityEvent;
 import org.bukkit.event.painting.PaintingBreakByEntityEvent;
 import org.bukkit.event.vehicle.VehicleBlockCollisionEvent;
 import org.bukkit.event.vehicle.VehicleEnterEvent;
 import org.bukkit.event.vehicle.VehicleExitEvent;
+import org.bukkit.craftbukkit.CraftWorld;
 import org.bukkit.craftbukkit.entity.CraftPlayer;
 import org.bukkit.event.entity.EntityCombustEvent;
 import org.bukkit.event.entity.EntityDamageByBlockEvent;
@@ -144,6 +146,7 @@ public abstract class Entity implements net.minecraft.src.Entity {
     public boolean cd;
     public boolean ce;
     public UUID uniqueId = UUID.randomUUID(); // CraftBukkit
+    public boolean valid = true; // CraftBukkit
 
     /** Forge: Used to store custom data for each entity. */
     private NBTTagCompound customEntityData;
@@ -373,6 +376,7 @@ public abstract class Entity implements net.minecraft.src.Entity {
                         this.world.getServer().getPluginManager().callEvent(event);
 
                         if (!event.isCancelled()) {
+                            event.getEntity().setLastDamageCause(event);
                             this.damageEntity(DamageSource.BURN, event.getDamage());
                         }
                     } else {
@@ -407,7 +411,7 @@ public abstract class Entity implements net.minecraft.src.Entity {
         if (!this.fireProof) {
             // CraftBukkit start - fallen in lava TODO: this event spams!
             if (this instanceof EntityLiving) {
-                org.bukkit.Server server = this.world.getServer();
+                Server server = this.world.getServer();
 
                 // TODO: shouldn't be sending null for the block.
                 org.bukkit.block.Block damager = null; // ((WorldServer) this.l).getWorld().getBlockAt(i, j, k);
@@ -417,12 +421,13 @@ public abstract class Entity implements net.minecraft.src.Entity {
                 server.getPluginManager().callEvent(event);
 
                 if (!event.isCancelled()) {
+                    damagee.setLastDamageCause(event);
                     this.damageEntity(DamageSource.LAVA, event.getDamage());
                 }
 
                 if (this.fireTicks <= 0) {
                     // not on fire yet
-                    EntityCombustEvent combustEvent = new EntityCombustByBlockEvent(damager, damagee, 15);
+                    EntityCombustEvent combustEvent = new org.bukkit.event.entity.EntityCombustByBlockEvent(damager, damagee, 15);
                     server.getPluginManager().callEvent(combustEvent);
 
                     if (!combustEvent.isCancelled()) {
@@ -829,6 +834,7 @@ public abstract class Entity implements net.minecraft.src.Entity {
                 }
 
                 i = event.getDamage();
+                event.getEntity().setLastDamageCause(event);
             }
             // CraftBukkit end
             this.damageEntity(DamageSource.FIRE, i);
@@ -919,7 +925,7 @@ public abstract class Entity implements net.minecraft.src.Entity {
         // CraftBukkit start
         if (world == null) {
             this.die();
-            this.world = ((org.bukkit.craftbukkit.CraftWorld) Bukkit.getServer().getWorlds().get(0)).getHandle();
+            this.world = ((CraftWorld) Bukkit.getServer().getWorlds().get(0)).getHandle();
             return;
         }
         // CraftBukkit end
@@ -1155,7 +1161,7 @@ public abstract class Entity implements net.minecraft.src.Entity {
 
         // CraftBukkit start - reset world
         if (this instanceof EntityPlayer) {
-            org.bukkit.Server server = Bukkit.getServer();
+            Server server = Bukkit.getServer();
             org.bukkit.World bworld = null;
 
             // TODO: Remove World related checks, replaced with WorldUID.
@@ -1172,7 +1178,7 @@ public abstract class Entity implements net.minecraft.src.Entity {
                 bworld = ((org.bukkit.craftbukkit.CraftServer) server).getServer().getWorldServer(entityPlayer.dimension).getWorld();
             }
 
-            this.spawnIn(bworld == null ? null : ((org.bukkit.craftbukkit.CraftWorld) bworld).getHandle());
+            this.spawnIn(bworld == null ? null : ((CraftWorld) bworld).getHandle());
         }
         // CraftBukkit end
     }
@@ -1488,6 +1494,7 @@ public abstract class Entity implements net.minecraft.src.Entity {
             return;
         }
 
+        thisBukkitEntity.setLastDamageCause(event);
         this.burn(event.getDamage());
         // CraftBukkit end
 
