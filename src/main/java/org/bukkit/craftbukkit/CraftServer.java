@@ -411,6 +411,15 @@ public final class CraftServer implements Server {
     public boolean getKickOnSpeedHack() {
         return this.configuration.getBoolean("settings.kick-on-speedhack");
     }
+
+    public String getOutdatedServerMessage() {
+        return this.configuration.getString("settings.outdated-server-message", "Outdated server!");
+    }
+
+    public String getOutdatedClientMessage() {
+        return this.configuration.getString("settings.outdated-client-message", "Outdated client!");
+    }
+
     // END MCPortCentral
 
     public boolean getQueryPlugins() {

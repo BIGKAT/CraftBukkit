@@ -66,7 +66,7 @@ public class NetLoginHandler extends NetHandler {
     public void a(Packet2Handshake packet2handshake) {
         // CraftBukkit start - 1.3 detection
         if (packet2handshake.a == null) {
-                disconnect("Outdated server!");
+                disconnect(this.server.server.getOutdatedServerMessage());
                 return;
         }
         // CraftBukkit end
@@ -88,9 +88,9 @@ public class NetLoginHandler extends NetHandler {
         this.g = packet1login.name;
         if (packet1login.a != 29) {
             if (packet1login.a > 29) {
-                this.disconnect("Outdated server!");
+                disconnect(this.server.server.getOutdatedServerMessage());
             } else {
-                this.disconnect("Outdated client!");
+                disconnect(this.server.server.getOutdatedClientMessage());
             }
         } else {
             if (!this.server.onlineMode) {
