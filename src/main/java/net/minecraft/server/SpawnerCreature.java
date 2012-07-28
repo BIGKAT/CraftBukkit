@@ -8,7 +8,6 @@ import java.util.List;
 import java.util.Random;
 
 // CraftBukkit start
-import java.util.ArrayList;
 import org.bukkit.craftbukkit.util.LongBaseHashtable;
 import org.bukkit.craftbukkit.util.EntryBase;
 import org.bukkit.craftbukkit.util.LongHash;
@@ -88,7 +87,7 @@ public final class SpawnerCreature {
 
             i = 0;
             ChunkCoordinates chunkcoordinates = world.getSpawn();
-            ArrayList<EntryBase> b = chunkCoords.entries(); // CraftBukkit
+            java.util.ArrayList<EntryBase> b = chunkCoords.entries(); // CraftBukkit
             EnumCreatureType[] aenumcreaturetype = EnumCreatureType.values();
 
             j = aenumcreaturetype.length;

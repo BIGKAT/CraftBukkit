@@ -4,13 +4,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 // CraftBukkit start
-import org.bukkit.BlockChangeDelegate;
-import org.bukkit.generator.ChunkGenerator;
-import org.bukkit.craftbukkit.generator.CustomChunkGenerator;
-import org.bukkit.craftbukkit.generator.InternalChunkGenerator;
-import org.bukkit.craftbukkit.generator.NetherChunkGenerator;
-import org.bukkit.craftbukkit.generator.NormalChunkGenerator;
-import org.bukkit.craftbukkit.generator.SkyLandsChunkGenerator;
 import org.bukkit.event.weather.LightningStrikeEvent;
 
 import forge.ForgeHooks;
@@ -26,7 +19,7 @@ public class WorldServer extends World implements ForgeBlockChangeDelegate {
     private IntHashMap entitiesById;
 
     // CraftBukkit start - change signature
-    public WorldServer(MinecraftServer minecraftserver, IDataManager idatamanager, String s, int i, WorldSettings worldsettings, org.bukkit.World.Environment env, ChunkGenerator gen) {
+    public WorldServer(MinecraftServer minecraftserver, IDataManager idatamanager, String s, int i, WorldSettings worldsettings, org.bukkit.World.Environment env, org.bukkit.generator.ChunkGenerator gen) {
         super(idatamanager, s, worldsettings, WorldProvider.byDimension(env.getId()), gen, env);
         this.server = minecraftserver;
         if (this.entitiesById == null) {
@@ -120,16 +113,16 @@ public class WorldServer extends World implements ForgeBlockChangeDelegate {
         IChunkLoader ichunkloader = this.dataManager.createChunkLoader(this.worldProvider);
 
         // CraftBukkit start
-        InternalChunkGenerator gen;
+        org.bukkit.craftbukkit.generator.InternalChunkGenerator gen;
 
         if (this.generator != null) {
-            gen = new CustomChunkGenerator(this, this.getSeed(), this.generator);
+            gen = new org.bukkit.craftbukkit.generator.CustomChunkGenerator(this, this.getSeed(), this.generator);
         } else if (this.worldProvider instanceof WorldProviderHell) {
-            gen = new NetherChunkGenerator(this, this.getSeed());
+            gen = new org.bukkit.craftbukkit.generator.NetherChunkGenerator(this, this.getSeed());
         } else if (this.worldProvider instanceof WorldProviderTheEnd) {
-            gen = new SkyLandsChunkGenerator(this, this.getSeed());
+            gen = new org.bukkit.craftbukkit.generator.SkyLandsChunkGenerator(this, this.getSeed());
         } else {
-            gen = new NormalChunkGenerator(this, this.getSeed());
+            gen = new org.bukkit.craftbukkit.generator.NormalChunkGenerator(this, this.getSeed());
         }
 
         this.chunkProviderServer = new ChunkProviderServer(this, ichunkloader, gen);

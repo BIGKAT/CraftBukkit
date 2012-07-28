@@ -1,11 +1,7 @@
 package net.minecraft.server;
 
-// CraftBukkit start
-import org.bukkit.craftbukkit.event.CraftEventFactory;
-import org.bukkit.event.entity.EntityShootBowEvent;
 
 import forge.ForgeHooks;
-// CraftBukkit end
 
 public class ItemBow extends Item {
 
@@ -59,7 +55,7 @@ public class ItemBow extends Item {
             }
 
             // CraftBukkit start
-            EntityShootBowEvent event = CraftEventFactory.callEntityShootBowEvent(entityhuman, itemstack, entityarrow, f);
+            org.bukkit.event.entity.EntityShootBowEvent event = org.bukkit.craftbukkit.event.CraftEventFactory.callEntityShootBowEvent(entityhuman, itemstack, entityarrow, f);
             if (event.isCancelled()) {
                 event.getProjectile().remove();
                 return;

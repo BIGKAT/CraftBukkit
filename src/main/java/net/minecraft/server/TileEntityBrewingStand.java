@@ -5,13 +5,9 @@ import java.util.List;
 import forge.ISidedInventory;
 
 // CraftBukkit start
-import java.util.ArrayList;
-
-import org.bukkit.Bukkit;
 import org.bukkit.craftbukkit.entity.CraftHumanEntity;
 import org.bukkit.entity.HumanEntity;
 import org.bukkit.event.inventory.BrewEvent;
-import org.bukkit.inventory.BrewerInventory;
 // CraftBukkit end
 
 public class TileEntityBrewingStand extends TileEntity implements ISidedInventory {
@@ -24,7 +20,7 @@ public class TileEntityBrewingStand extends TileEntity implements ISidedInventor
     public TileEntityBrewingStand() {}
 
     // CraftBukkit start
-    public List<HumanEntity> transaction = new ArrayList<HumanEntity>();
+    public List<HumanEntity> transaction = new java.util.ArrayList<HumanEntity>();
     private int maxStack = 1;
 
     public void onOpen(CraftHumanEntity who) {
@@ -130,8 +126,8 @@ public class TileEntityBrewingStand extends TileEntity implements ISidedInventor
 
             // CraftBukkit start - fire BREW event
             if (getOwner() != null) {
-                BrewEvent event = new BrewEvent(world.getWorld().getBlockAt(x, y, z), (BrewerInventory) this.getOwner().getInventory());
-                Bukkit.getPluginManager().callEvent(event);
+                BrewEvent event = new BrewEvent(world.getWorld().getBlockAt(x, y, z), (org.bukkit.inventory.BrewerInventory) this.getOwner().getInventory());
+                org.bukkit.Bukkit.getPluginManager().callEvent(event);
                 if(event.isCancelled()) {
                     return;
                 }
