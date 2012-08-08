@@ -411,6 +411,15 @@ public final class CraftServer implements Server {
     public boolean getKickOnSpeedHack() {
         return this.configuration.getBoolean("settings.kick-on-speedhack");
     }
+
+    public String getOutdatedServerMessage() {
+        return this.configuration.getString("settings.outdated-server-message", "Outdated server!");
+    }
+
+    public String getOutdatedClientMessage() {
+        return this.configuration.getString("settings.outdated-client-message", "Outdated client!");
+    }
+
     // END MCPortCentral
 
     public boolean getQueryPlugins() {
@@ -517,6 +526,7 @@ public final class CraftServer implements Server {
         console.spawnAnimals = config.getBoolean("spawn-animals", console.spawnAnimals);
         console.pvpMode = config.getBoolean("pvp", console.pvpMode);
         console.allowFlight = config.getBoolean("allow-flight", console.allowFlight);
+        console.motd = config.getString("motd", console.motd);
         monsterSpawn = configuration.getInt("spawn-limits.monsters");
         animalSpawn = configuration.getInt("spawn-limits.animals");
         waterAnimalSpawn = configuration.getInt("spawn-limits.water-animals");
@@ -1202,5 +1212,9 @@ public final class CraftServer implements Server {
 
     public boolean isPrimaryThread() {
         return Thread.currentThread().equals(console.primaryThread);
+    }
+
+    public String getMotd() {
+        return console.motd;
     }
 }

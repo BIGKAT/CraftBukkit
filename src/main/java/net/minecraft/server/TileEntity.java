@@ -6,9 +6,6 @@ import java.util.List;
 import java.util.Map;
 
 // CraftBukkit start
-import org.bukkit.block.BlockState;
-import org.bukkit.craftbukkit.entity.CraftHumanEntity;
-import org.bukkit.entity.HumanEntity;
 import org.bukkit.inventory.InventoryHolder;
 // CraftBukkit end
 
@@ -23,7 +20,7 @@ public class TileEntity implements net.minecraft.src.TileEntity {
     protected boolean o;
     public int p = -1;
     public Block q;
-	private List<HumanEntity> transaction=new ArrayList<HumanEntity>(2);
+	private List<org.bukkit.entity.HumanEntity> transaction=new ArrayList<org.bukkit.entity.HumanEntity>(2);
 
     public TileEntity() {}
 
@@ -133,21 +130,21 @@ public class TileEntity implements net.minecraft.src.TileEntity {
 
     // CraftBukkit start
     public InventoryHolder getOwner() {
-        BlockState state = world.getWorld().getBlockAt(x, y, z).getState();
+        org.bukkit.block.BlockState state = world.getWorld().getBlockAt(x, y, z).getState();
         if(state instanceof InventoryHolder) return (InventoryHolder) state;
         return null;
     }
     // CraftBukkit end
 
-	public void onOpen(CraftHumanEntity who) {
+	public void onOpen(org.bukkit.craftbukkit.entity.CraftHumanEntity who) {
 		transaction.add(who);
 	}
 
-	public void onClose(CraftHumanEntity who) {
+	public void onClose(org.bukkit.craftbukkit.entity.CraftHumanEntity who) {
 		transaction.remove(who);
 	}
 
-	public List<HumanEntity> getViewers() {
+	public List<org.bukkit.entity.HumanEntity> getViewers() {
 		return transaction;
 	}
 

@@ -1,5 +1,6 @@
 package net.minecraft.server;
 
+// import java.awt.GraphicsEnvironment; // CraftBukkit
 import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
@@ -16,25 +17,14 @@ import java.util.logging.Logger;
 
 // CraftBukkit start
 import java.io.PrintStream;
-import java.net.UnknownHostException;
 import jline.console.ConsoleReader;
 import joptsimple.OptionSet;
+
 import org.bukkit.World.Environment;
-import org.bukkit.command.ConsoleCommandSender;
-import org.bukkit.command.RemoteConsoleCommandSender;
-import org.bukkit.craftbukkit.command.CraftRemoteConsoleCommandSender;
-import org.bukkit.craftbukkit.CraftServer;
 import org.bukkit.craftbukkit.LoggerOutputStream;
-import org.bukkit.craftbukkit.scheduler.CraftScheduler;
-import org.bukkit.craftbukkit.util.ServerShutdownThread;
 import org.bukkit.event.server.ServerCommandEvent;
 import org.bukkit.event.server.RemoteServerCommandEvent;
-import org.bukkit.event.world.WorldInitEvent;
-import org.bukkit.event.world.WorldLoadEvent;
 import org.bukkit.event.world.WorldSaveEvent;
-import org.bukkit.generator.ChunkGenerator;
-import org.bukkit.plugin.Plugin;
-import org.bukkit.plugin.PluginLoadOrder;
 // CraftBukkit end
 
 import cpw.mods.fml.common.FMLCommonHandler;
@@ -83,10 +73,10 @@ public class MinecraftServer implements Runnable, ICommandListener, IMinecraftSe
 
     // CraftBukkit start
     public List<WorldServer> worlds = new ArrayList<WorldServer>();
-    public CraftServer server;
+    public org.bukkit.craftbukkit.CraftServer server;
     public OptionSet options;
-    public ConsoleCommandSender console;
-    public RemoteConsoleCommandSender remoteConsole;
+    public org.bukkit.command.ConsoleCommandSender console;
+    public org.bukkit.command.RemoteConsoleCommandSender remoteConsole;
     public ConsoleReader reader;
     public static int currentTick;
     public final Thread primaryThread;
@@ -112,13 +102,13 @@ public class MinecraftServer implements Runnable, ICommandListener, IMinecraftSe
                 Logger.getLogger(MinecraftServer.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
-        Runtime.getRuntime().addShutdownHook(new ServerShutdownThread(this));
+        Runtime.getRuntime().addShutdownHook(new org.bukkit.craftbukkit.util.ServerShutdownThread(this));
 
         primaryThread = new ThreadServerApplication("Server thread", this); // Moved from main
         // CraftBukkit end
     }
 
-    private boolean init() throws UnknownHostException { // CraftBukkit - added throws UnknownHostException
+    private boolean init() throws java.net.UnknownHostException { // CraftBukkit - added throws UnknownHostException
         this.consoleCommandHandler = new ConsoleCommandHandler(this);
         ThreadCommandReader threadcommandreader = new ThreadCommandReader(this);
 
@@ -220,7 +210,7 @@ public class MinecraftServer implements Runnable, ICommandListener, IMinecraftSe
             log.info("Starting remote control listener");
             this.J = new RemoteControlListener(this);
             this.J.a();
-            this.remoteConsole = new CraftRemoteConsoleCommandSender();
+            this.remoteConsole = new org.bukkit.craftbukkit.command.CraftRemoteConsoleCommandSender(); // CraftBukkit
         }
 
         // CraftBukkit start
@@ -269,7 +259,7 @@ public class MinecraftServer implements Runnable, ICommandListener, IMinecraftSe
             String worldType = env.toString().toLowerCase();
             String name = (dimension == 0) ? s : s + "_" + worldType;
 
-            ChunkGenerator gen = this.server.getGenerator(name);
+            org.bukkit.generator.ChunkGenerator gen = this.server.getGenerator(name);
             WorldSettings settings = new WorldSettings(i, j, generateStructures, false, worldtype);
 
             if (k == 0) {
@@ -315,7 +305,7 @@ public class MinecraftServer implements Runnable, ICommandListener, IMinecraftSe
                 world.getWorld().getPopulators().addAll(gen.getDefaultPopulators(world.getWorld()));
             }
 
-            this.server.getPluginManager().callEvent(new WorldInitEvent(world.getWorld()));
+            this.server.getPluginManager().callEvent(new org.bukkit.event.world.WorldInitEvent(world.getWorld()));
 
             world.tracker = new EntityTracker(this, world); // CraftBukkit
             world.addIWorldAccess(new WorldManager(this, world));
@@ -367,7 +357,7 @@ public class MinecraftServer implements Runnable, ICommandListener, IMinecraftSe
 
         // CraftBukkit start
         for (World world : this.worlds) {
-            this.server.getPluginManager().callEvent(new WorldLoadEvent(world.getWorld()));
+            this.server.getPluginManager().callEvent(new org.bukkit.event.world.WorldLoadEvent(world.getWorld()));
         }
         // CraftBukkit end
 
@@ -384,7 +374,7 @@ public class MinecraftServer implements Runnable, ICommandListener, IMinecraftSe
         this.k = null;
         this.l = 0;
 
-        this.server.enablePlugins(PluginLoadOrder.POSTWORLD); // CraftBukkit
+        this.server.enablePlugins(org.bukkit.plugin.PluginLoadOrder.POSTWORLD); // CraftBukkit
     }
 
     void saveChunks() { // CraftBukkit - private -> default
@@ -540,7 +530,7 @@ public class MinecraftServer implements Runnable, ICommandListener, IMinecraftSe
 
         // CraftBukkit start - only send timeupdates to the people in that world
 
-        ((CraftScheduler) this.server.getScheduler()).mainThreadHeartbeat(this.ticks);
+        ((org.bukkit.craftbukkit.scheduler.CraftScheduler) this.server.getScheduler()).mainThreadHeartbeat(this.ticks);
 
         // Send timeupdates to everyone, it will get the right time from the world the player is in.
         if (this.ticks % 20 == 0) {
@@ -733,7 +723,7 @@ public class MinecraftServer implements Runnable, ICommandListener, IMinecraftSe
     public String getPlugins() {
         // CraftBukkit start - whole method
         StringBuilder result = new StringBuilder();
-        Plugin[] plugins = server.getPluginManager().getPlugins();
+        org.bukkit.plugin.Plugin[] plugins = server.getPluginManager().getPlugins();
 
         result.append(server.getName());
         result.append(" on Bukkit ");

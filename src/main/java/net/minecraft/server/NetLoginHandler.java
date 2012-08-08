@@ -6,13 +6,7 @@ import java.util.Iterator;
 import java.util.Random;
 import java.util.logging.Logger;
 
-// CraftBukkit start
-import org.bukkit.ChatColor;
-import org.bukkit.craftbukkit.event.CraftEventFactory;
-import org.bukkit.event.server.ServerListPingEvent;
-
 import cpw.mods.fml.server.FMLBukkitHandler;
-// CraftBukkit end
 
 import forge.ForgeHooks;
 import forge.ForgeHooksServer;
@@ -70,6 +64,12 @@ public class NetLoginHandler extends NetHandler {
     }
 
     public void a(Packet2Handshake packet2handshake) {
+        // CraftBukkit start - 1.3 detection
+        if (packet2handshake.a == null) {
+                disconnect(this.server.server.getOutdatedServerMessage());
+                return;
+        }
+        // CraftBukkit end
         // CraftBukkit start
         int i = packet2handshake.a.indexOf(';');
         if (i == -1) {
@@ -88,14 +88,14 @@ public class NetLoginHandler extends NetHandler {
         this.g = packet1login.name;
         if (packet1login.a != 29) {
             if (packet1login.a > 29) {
-                this.disconnect("Outdated server!");
+                disconnect(this.server.server.getOutdatedServerMessage());
             } else {
-                this.disconnect("Outdated client!");
+                disconnect(this.server.server.getOutdatedClientMessage());
             }
         } else {
             if (!this.server.onlineMode) {
                 // CraftBukkit start - disallow colour in names
-                if (!packet1login.name.equals(ChatColor.stripColor(packet1login.name))) {
+                if (!packet1login.name.equals(org.bukkit.ChatColor.stripColor(packet1login.name))) {
                     this.disconnect("Colourful names are not permitted!");
                     return;
                 }
@@ -167,7 +167,7 @@ public class NetLoginHandler extends NetHandler {
         if (this.networkManager.getSocket() == null) return; // CraftBukkit - fix NPE when a client queries a server that is unable to handle it.
         try {
             // CraftBukkit start
-            ServerListPingEvent pingEvent = CraftEventFactory.callServerListPingEvent(this.server.server, getSocket().getInetAddress(), this.server.motd, this.server.serverConfigurationManager.getPlayerCount(), this.server.serverConfigurationManager.getMaxPlayers());
+            org.bukkit.event.server.ServerListPingEvent pingEvent = org.bukkit.craftbukkit.event.CraftEventFactory.callServerListPingEvent(this.server.server, getSocket().getInetAddress(), this.server.motd, this.server.serverConfigurationManager.getPlayerCount(), this.server.serverConfigurationManager.getMaxPlayers());
             String s = pingEvent.getMotd() + "\u00A7" + this.server.serverConfigurationManager.getPlayerCount() + "\u00A7" + pingEvent.getMaxPlayers();
             // CraftBukkit end
 

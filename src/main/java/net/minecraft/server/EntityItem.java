@@ -2,10 +2,7 @@ package net.minecraft.server;
 
 import forge.ForgeHooks;
 
-// CraftBukkit start
-import org.bukkit.craftbukkit.event.CraftEventFactory;
-import org.bukkit.event.player.PlayerPickupItemEvent;
-// CraftBukkit end
+import org.bukkit.event.player.PlayerPickupItemEvent; // CraftBukkit
 
 import cpw.mods.fml.server.FMLBukkitHandler;
 
@@ -92,7 +89,7 @@ public class EntityItem extends Entity {
         ++this.age;
         if (this.age >= 6000) {
             // CraftBukkit start
-            if (CraftEventFactory.callItemDespawnEvent(this).isCancelled()) {
+            if (org.bukkit.craftbukkit.event.CraftEventFactory.callItemDespawnEvent(this).isCancelled()) {
                 this.age = 0;
                 return;
             }

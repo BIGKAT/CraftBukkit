@@ -3,8 +3,8 @@ package net.minecraft.server;
 import java.util.ArrayList;
 import java.util.List;
 
+// CraftBukkit - We import this because the compiler hates package-private methods in an external jar
 public class MinecartTrackLogic {
-
     private World b;
     private int c;
     private int d;

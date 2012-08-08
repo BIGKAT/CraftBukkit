@@ -8,7 +8,6 @@ import java.util.List;
 import java.util.Set;
 
 // CraftBukkit start
-import org.bukkit.craftbukkit.entity.CraftHumanEntity;
 import org.bukkit.craftbukkit.inventory.CraftInventory;
 import org.bukkit.event.inventory.InventoryType;
 import org.bukkit.inventory.InventoryView;
@@ -31,7 +30,7 @@ public abstract class Container {
     public InventoryView getBukkitView() {
     	return new ModInventoryView(this, getPlayer());
     }
-    public void transferTo(Container other, CraftHumanEntity player) {
+    public void transferTo(Container other, org.bukkit.craftbukkit.entity.CraftHumanEntity player) {
         InventoryView source = this.getBukkitView(), destination = other.getBukkitView();
         boolean validSource=validateBukkitContainer(source, this);
         boolean validDest=validateBukkitContainer(destination, other);

@@ -4,9 +4,8 @@ import java.util.ArrayList;
 import java.util.Random;
 
 // CraftBukkit start
-import org.bukkit.Material;
-import org.bukkit.craftbukkit.event.CraftEventFactory;
-import org.bukkit.entity.Sheep;
+import org.bukkit.event.entity.SheepRegrowWoolEvent;
+import org.bukkit.event.player.PlayerShearEntityEvent;
 // CraftBukkit end
 
 import forge.IShearable;
@@ -69,7 +68,7 @@ public class EntitySheep extends EntityAnimal implements IShearable {
             loot.add(new org.bukkit.inventory.ItemStack(org.bukkit.Material.WOOL, 1, (short) 0, (byte) this.getColor()));
         }
 
-        CraftEventFactory.callEntityDeathEvent(this, loot);
+        org.bukkit.craftbukkit.event.CraftEventFactory.callEntityDeathEvent(this, loot);
         // CraftBukkit end
     }
 
@@ -83,7 +82,7 @@ public class EntitySheep extends EntityAnimal implements IShearable {
         if (itemstack != null && itemstack.id == Item.SHEARS.id && !this.isSheared() && !this.isBaby()) {
             if (!this.world.isStatic) {
                 // CraftBukkit start
-                org.bukkit.event.player.PlayerShearEntityEvent event = new org.bukkit.event.player.PlayerShearEntityEvent((org.bukkit.entity.Player) entityhuman.getBukkitEntity(), this.getBukkitEntity());
+                PlayerShearEntityEvent event = new PlayerShearEntityEvent((org.bukkit.entity.Player) entityhuman.getBukkitEntity(), this.getBukkitEntity());
                 this.world.getServer().getPluginManager().callEvent(event);
 
                 if (event.isCancelled()) {
@@ -177,7 +176,7 @@ public class EntitySheep extends EntityAnimal implements IShearable {
 
     public void z() {
         // CraftBukkit start
-        org.bukkit.event.entity.SheepRegrowWoolEvent event = new org.bukkit.event.entity.SheepRegrowWoolEvent((Sheep) this.getBukkitEntity());
+        SheepRegrowWoolEvent event = new SheepRegrowWoolEvent((org.bukkit.entity.Sheep) this.getBukkitEntity());
         this.world.getServer().getPluginManager().callEvent(event);
 
         if (!event.isCancelled()) {
