@@ -308,7 +308,7 @@ public class CraftEventFactory {
                 victim.a(((CraftItemStack) stack).getHandle(), 0.0f);
             }
             else {
-                world.dropItemNaturally(entity.getLocation(), stack);
+                victim.a((new CraftItemStack(stack)).getHandle(), 0.0f);
             }
         }
 
