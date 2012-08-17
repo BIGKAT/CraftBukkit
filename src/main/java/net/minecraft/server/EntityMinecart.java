@@ -587,7 +587,8 @@ public class EntityMinecart extends Entity implements IInventory {
             nbttagcompound.setDouble("PushX", this.b);
             nbttagcompound.setDouble("PushZ", this.c);
             nbttagcompound.setInt("Fuel", this.e);
-        } else if (getSize()>0) {
+        }
+        if (getSize()>0) {
             NBTTagList nbttaglist = new NBTTagList();
 
             for (int i = 0; i < this.items.length; ++i) {
@@ -614,7 +615,8 @@ public class EntityMinecart extends Entity implements IInventory {
             } catch (ClassCastException cce) {
             	this.e = nbttagcompound.getShort("Fuel");
             }
-        } else if (getSize()>0) {
+        }
+        if (getSize()>0) {
             NBTTagList nbttaglist = nbttagcompound.getList("Items");
 
             this.items = new ItemStack[this.getSize()];
