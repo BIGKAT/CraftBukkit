@@ -22,8 +22,21 @@ import org.bukkit.event.weather.WeatherChangeEvent;
 import org.bukkit.event.weather.ThunderChangeEvent;
 // CraftBukkit end
 
-public abstract class World implements IBlockAccess {
+import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.common.ForgeDirection;
+import net.minecraftforge.event.entity.EntityEvent;
+import net.minecraftforge.event.world.WorldEvent;
+import net.minecraftforge.event.entity.PlaySoundAtEntityEvent;
 
+public abstract class World implements IBlockAccess {
+	
+	/**
+     * Used in the getEntitiesWithinAABB functions to expand the search area for entities.
+     * Modders should change this variable to a higher value if it is less then the radius 
+     * of one of there entities.
+     */
+    public static double MAX_ENTITY_RADIUS = 2.0D;
+    
     public boolean e = false;
     public List entityList = new ArrayList();
     protected List g = new ArrayList();
@@ -142,7 +155,8 @@ public abstract class World implements IBlockAccess {
 
         this.v();
         this.a();
-
+        
+        MinecraftForge.EVENT_BUS.post(new WorldEvent.Load(this));
         this.getServer().addWorld(this.world); // CraftBukkit
     }
 
@@ -171,13 +185,16 @@ public abstract class World implements IBlockAccess {
     }
 
     public boolean isEmpty(int i, int j, int k) {
-        return this.getTypeId(i, j, k) == 0;
+    	int id = getTypeId(i, j, k);
+    	return id == 0 || Block.byId[id] == null || Block.byId[id].isAirBlock(this, i, j, k);
     }
 
     public boolean isTileEntity(int i, int j, int k) {
         int l = this.getTypeId(i, j, k);
-
-        return Block.byId[l] != null && Block.byId[l].s();
+//
+//        return Block.byId[l] != null && Block.byId[l].s();
+    	int meta = this.getData(i, j, k);
+    	return Block.byId[l] != null && Block.byId[l].hasTileEntity(meta);
     }
 
     public boolean isLoaded(int i, int j, int k) {
@@ -611,7 +628,8 @@ public abstract class World implements IBlockAccess {
                 int l1 = this.getData(l, i1, j1);
                 Block block = Block.byId[k1];
 
-                if ((!flag1 || block == null || block.e(this, l, i1, j1) != null) && k1 > 0 && block.a(l1, flag)) {
+                //if ((!flag1 || block == null || block.e(this, l, i1, j1) != null) && k1 > 0 && block.a(l1, flag)) 
+                if (block != null && (!flag1 || block == null || block.e(this, l, i1, j1) != null) && k1 > 0 && block.a(l1, flag)) {
                     MovingObjectPosition movingobjectposition = block.a(this, l, i1, j1, vec3d, vec3d1);
 
                     if (movingobjectposition != null) {
@@ -760,7 +778,13 @@ public abstract class World implements IBlockAccess {
     }
 
     public void makeSound(Entity entity, String s, float f, float f1) {
-        if (entity != null && s != null) {
+    	PlaySoundAtEntityEvent event = new PlaySoundAtEntityEvent(entity, s, f, f1);
+        if (MinecraftForge.EVENT_BUS.post(event))
+        {
+            return;
+        }
+        s = event.name;
+    	if (entity != null && s != null) {
             Iterator iterator = this.x.iterator();
 
             while (iterator.hasNext()) {
@@ -1165,7 +1189,7 @@ public abstract class World implements IBlockAccess {
                     Chunk chunk = this.getChunkAt(tileentity.x >> 4, tileentity.z >> 4);
 
                     if (chunk != null) {
-                        chunk.f(tileentity.x & 15, tileentity.y, tileentity.z & 15);
+                    	chunk.cleanChunkBlockTileEntity(tileentity.x & 0xF, tileentity.y, tileentity.z & 0xF);   //chunk.f(tileentity.x & 15, tileentity.y, tileentity.z & 15);
                     }
                 }
             }
@@ -1173,6 +1197,10 @@ public abstract class World implements IBlockAccess {
 
         this.L = false;
         if (!this.b.isEmpty()) {
+        	for (Object tile : b) {
+
+            ((TileEntity)tile).onChunkUnload();
+          }
             this.tileEntityList.removeAll(this.b);
             this.b.clear();
         }
@@ -1190,7 +1218,9 @@ public abstract class World implements IBlockAccess {
                         this.tileEntityList.add(tileentity1);
                     }
                     // CraftBukkit end */
-
+                }
+                else
+                {
                     if (this.isChunkLoaded(tileentity1.x >> 4, tileentity1.z >> 4)) {
                         Chunk chunk1 = this.getChunkAt(tileentity1.x >> 4, tileentity1.z >> 4);
 
@@ -1216,11 +1246,13 @@ public abstract class World implements IBlockAccess {
     }
 
     public void a(Collection collection) {
-        if (this.L) {
-            this.a.addAll(collection);
-        } else {
-            this.tileEntityList.addAll(collection);
-        }
+    	List dest = this.Q ? this.J : this.tileEntityList;
+        for (Iterator i$ = collection.iterator(); i$.hasNext(); ) { Object entity = i$.next();
+
+          if (((TileEntity)entity).canUpdate())
+          {
+            dest.add(entity);
+          } }
     }
 
     public void playerJoinedWorld(Entity entity) {
@@ -1232,7 +1264,15 @@ public abstract class World implements IBlockAccess {
         int j = MathHelper.floor(entity.locZ);
         byte b0 = 32;
 
-        if (!flag || this.c(i - b0, 0, j - b0, i + b0, 0, j + b0)) {
+       // if (!flag || this.c(i - b0, 0, j - b0, i + b0, 0, j + b0)) {
+        boolean canUpdate = !flag || this.c(i - b0, 0, j - b0, i + b0, 0, j + b0);
+        if (!canUpdate)
+        {
+            EntityEvent.CanUpdate event = new EntityEvent.CanUpdate(entity);
+            MinecraftForge.EVENT_BUS.post(event);
+            canUpdate = event.canUpdate;
+        }
+        if (canUpdate) {
             entity.S = entity.locX;
             entity.T = entity.locY;
             entity.U = entity.locZ;
@@ -1404,6 +1444,14 @@ public abstract class World implements IBlockAccess {
                         if (j2 == Block.FIRE.id || j2 == Block.LAVA.id || j2 == Block.STATIONARY_LAVA.id) {
                             return true;
                         }
+                        else
+	                        {
+	                            Block block = Block.byId[j2];
+	                            if (block != null && block.isBlockBurning(this, k1, l1, i2))
+	                            {
+	                                return true;
+	                            }
+	                        }
                     }
                 }
             }
@@ -1617,41 +1665,60 @@ public abstract class World implements IBlockAccess {
     }
 
     public void setTileEntity(int i, int j, int k, TileEntity tileentity) {
-        if (tileentity != null && !tileentity.p()) {
-            if (this.L) {
-                tileentity.x = i;
-                tileentity.y = j;
-                tileentity.z = k;
-                this.a.add(tileentity);
-            } else {
-                this.tileEntityList.add(tileentity);
-                Chunk chunk = this.getChunkAt(i >> 4, k >> 4);
-
-                if (chunk != null) {
-                    chunk.a(i & 15, j, k & 15, tileentity);
-                }
-            }
+//        if (tileentity != null && !tileentity.p()) {
+//            if (this.L) {
+//                tileentity.x = i;
+//                tileentity.y = j;
+//                tileentity.z = k;
+//                this.a.add(tileentity);
+//            } else {
+//                this.tileEntityList.add(tileentity);
+//                Chunk chunk = this.getChunkAt(i >> 4, k >> 4);
+//
+//                if (chunk != null) {
+//                    chunk.a(i & 15, j, k & 15, tileentity);
+//                }
+//            }
+        if (tileentity == null || tileentity.p())
+	        {
+	            return;
+	        }
+	
+	        if (tileentity.canUpdate())
+	        {
+	            List dest = L ? a : tileEntityList;
+	            dest.add(tileentity);
+	        }
+	
+	        Chunk chunk = getChunkAt(i >> 4, k >> 4);
+	        if (chunk != null)
+	        {
+	            chunk.a(i & 15, j, k & 15, tileentity);
         }
     }
 
     public void q(int i, int j, int k) {
-        TileEntity tileentity = this.getTileEntity(i, j, k);
+//        TileEntity tileentity = this.getTileEntity(i, j, k);
+//
+//        if (tileentity != null && this.L) {
+//            tileentity.j();
+//            this.a.remove(tileentity);
+//        } else {
+//            if (tileentity != null) {
+//                this.a.remove(tileentity);
+//                this.tileEntityList.remove(tileentity);
+//            }
+//
+//            Chunk chunk = this.getChunkAt(i >> 4, k >> 4);
+//
+//            if (chunk != null) {
+//                chunk.f(i & 15, j, k & 15);
+//            }
+//        }
+    	 Chunk chunk = getChunkAt(i >> 4, k >> 4);
 
-        if (tileentity != null && this.L) {
-            tileentity.j();
-            this.a.remove(tileentity);
-        } else {
-            if (tileentity != null) {
-                this.a.remove(tileentity);
-                this.tileEntityList.remove(tileentity);
-            }
-
-            Chunk chunk = this.getChunkAt(i >> 4, k >> 4);
-
-            if (chunk != null) {
-                chunk.f(i & 15, j, k & 15);
-            }
-        }
+    	    if (chunk != null)
+    	      chunk.f(i & 15, j, k & 15);
     }
 
     public void a(TileEntity tileentity) {
@@ -1665,13 +1732,16 @@ public abstract class World implements IBlockAccess {
     }
 
     public boolean s(int i, int j, int k) {
-        return Block.i(this.getTypeId(i, j, k));
+        //return Block.i(this.getTypeId(i, j, k));
+    	 Block block = Block.byId[getTypeId(i, j, k)];
+	    return (block != null) && (block.isBlockNormalCube(this, i, j, k));
     }
 
     public boolean t(int i, int j, int k) {
-        Block block = Block.byId[this.getTypeId(i, j, k)];
-
-        return block == null ? false : (block.material.k() && block.c() ? true : (block instanceof BlockStairs ? (this.getData(i, j, k) & 4) == 4 : (block instanceof BlockStepAbstract ? (this.getData(i, j, k) & 8) == 8 : false)));
+//        Block block = Block.byId[this.getTypeId(i, j, k)];
+//
+//        return block == null ? false : (block.material.k() && block.c() ? true : (block instanceof BlockStairs ? (this.getData(i, j, k) & 4) == 4 : (block instanceof BlockStepAbstract ? (this.getData(i, j, k) & 8) == 8 : false)));
+    	return isBlockSolidOnSide(i, j, k, ForgeDirection.UP);
     }
 
     public boolean b(int i, int j, int k, boolean flag) {
@@ -1681,7 +1751,8 @@ public abstract class World implements IBlockAccess {
             if (chunk != null && !chunk.isEmpty()) {
                 Block block = Block.byId[this.getTypeId(i, j, k)];
 
-                return block == null ? false : block.material.k() && block.c();
+//                return block == null ? false : block.material.k() && block.c();
+                return block == null ? false : s(i, j, k);
             } else {
                 return flag;
             }
@@ -2006,7 +2077,8 @@ public abstract class World implements IBlockAccess {
     }
 
     private int f(int i, int j, int k, int l, int i1, int j1) {
-        int k1 = Block.lightEmission[i1];
+//        int k1 = Block.lightEmission[i1];
+    	int k1 = (i1 == 0) || (Block.byId[i1] == null) ? 0 : Block.byId[i1].getLightValue(this, j, k, l);
         int l1 = this.b(EnumSkyBlock.BLOCK, j - 1, k, l) - j1;
         int i2 = this.b(EnumSkyBlock.BLOCK, j + 1, k, l) - j1;
         int j2 = this.b(EnumSkyBlock.BLOCK, j, k - 1, l) - j1;
@@ -2218,10 +2290,10 @@ public abstract class World implements IBlockAccess {
 
     public List getEntities(Entity entity, AxisAlignedBB axisalignedbb) {
         this.N.clear();
-        int i = MathHelper.floor((axisalignedbb.a - 2.0D) / 16.0D);
-        int j = MathHelper.floor((axisalignedbb.d + 2.0D) / 16.0D);
-        int k = MathHelper.floor((axisalignedbb.c - 2.0D) / 16.0D);
-        int l = MathHelper.floor((axisalignedbb.f + 2.0D) / 16.0D);
+        int i = MathHelper.floor((axisalignedbb.a - MAX_ENTITY_RADIUS) / 16.0D);
+        int j = MathHelper.floor((axisalignedbb.d + MAX_ENTITY_RADIUS) / 16.0D);
+        int k = MathHelper.floor((axisalignedbb.c - MAX_ENTITY_RADIUS) / 16.0D);
+        int l = MathHelper.floor((axisalignedbb.f + MAX_ENTITY_RADIUS) / 16.0D);
 
         for (int i1 = i; i1 <= j; ++i1) {
             for (int j1 = k; j1 <= l; ++j1) {
@@ -2235,10 +2307,10 @@ public abstract class World implements IBlockAccess {
     }
 
     public List a(Class oclass, AxisAlignedBB axisalignedbb) {
-        int i = MathHelper.floor((axisalignedbb.a - 2.0D) / 16.0D);
-        int j = MathHelper.floor((axisalignedbb.d + 2.0D) / 16.0D);
-        int k = MathHelper.floor((axisalignedbb.c - 2.0D) / 16.0D);
-        int l = MathHelper.floor((axisalignedbb.f + 2.0D) / 16.0D);
+    	int i = MathHelper.floor((axisalignedbb.a - MAX_ENTITY_RADIUS) / 16.0D);
+        int j = MathHelper.floor((axisalignedbb.d + MAX_ENTITY_RADIUS) / 16.0D);
+        int k = MathHelper.floor((axisalignedbb.c - MAX_ENTITY_RADIUS) / 16.0D);
+        int l = MathHelper.floor((axisalignedbb.f + MAX_ENTITY_RADIUS) / 16.0D);
         ArrayList arraylist = new ArrayList();
 
         for (int i1 = i; i1 <= j; ++i1) {
@@ -2331,6 +2403,10 @@ public abstract class World implements IBlockAccess {
                 block = null;
             }
 
+            if ((block != null) && (block.isBlockReplaceable(this, j, k, l))) {
+                block = null;
+              }
+            
             defaultReturn = i > 0 && block == null && block1.canPlace(this, j, k, l, i1);
         }
 
@@ -2621,5 +2697,70 @@ public abstract class World implements IBlockAccess {
 
             iworldaccess.a(i, j, k, l, i1);
         }
+    }
+    
+
+    /**
+     * Adds a single TileEntity to the world.
+     * @param entity The TileEntity to be added.
+     */
+    public void addTileEntity(TileEntity entity)
+    {
+      List dest = this.Q ? this.J : this.tileEntityList;
+      if (entity.canUpdate())
+      {
+        synchronized (dest) {
+          dest.add(entity);
+        }
+      }
+    }
+
+    /**
+     * Determine if the given block is considered solid on the
+     * specified side.  Used by placement logic.
+     * 
+     * @param X Block X Position
+     * @param Y Block Y Position
+     * @param Z Block Z Position
+     * @param side The Side in question
+     * @return True if the side is solid
+     */
+    public boolean isBlockSolidOnSide(int X, int Y, int Z, ForgeDirection side)
+    {
+        return isBlockSolidOnSide(X, Y, Z, side, false);
+    }
+
+   
+    /**
+     * Determine if the given block is considered solid on the
+     * specified side.  Used by placement logic.
+     * 
+     * @param X Block X Position
+     * @param Y Block Y Position
+     * @param Z Block Z Position
+     * @param side The Side in question
+     * @param _default The defult to return if the block doesn't exist.
+     * @return True if the side is solid
+     */
+    public boolean isBlockSolidOnSide(int X, int Y, int Z, ForgeDirection side, boolean _default)
+    {
+        if (X < -30000000 || Z < -30000000 || X >= 30000000 || Z >= 30000000)
+        {
+            return _default;
+        }
+
+        Chunk var5 = this.chunkProvider.getOrCreateChunk(X >> 4, Z >> 4);
+        if (var5 == null || var5.isEmpty())
+        {
+            return _default;
+        }
+
+        Block block = Block.byId[getTypeId(X, Y, Z)];
+        if(block == null)
+        {
+            return false;
+        }
+
+        return block.isBlockSolidOnSide(this, X, Y, Z, side);
     }
 }
