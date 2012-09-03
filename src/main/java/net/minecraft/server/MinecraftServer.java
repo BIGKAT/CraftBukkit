@@ -6,6 +6,7 @@ import java.security.KeyPair;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -21,6 +22,8 @@ import org.bukkit.event.server.RemoteServerCommandEvent;
 import org.bukkit.event.world.WorldSaveEvent;
 import org.bukkit.event.player.PlayerChatEvent;
 // CraftBukkit end
+
+import net.minecraftforge.common.DimensionManager;
 
 public abstract class MinecraftServer implements Runnable, IMojangStatistics, ICommandListener {
 
@@ -57,7 +60,10 @@ public abstract class MinecraftServer implements Runnable, IMojangStatistics, IC
     public final long[] h = new long[100];
     public final long[] i = new long[100];
     public final long[] j = new long[100];
-    public long[][] k;
+    //public long[][] k;
+    public List<WorldServer> worlds = new ArrayList<WorldServer>();
+    public Hashtable<Integer, long[]> worldTickTimes = new Hashtable<Integer, long[]>();
+    public int spawnProtectionSize = 16;
     private KeyPair I;
     private String J;
     private String K;
@@ -810,7 +816,7 @@ public abstract class MinecraftServer implements Runnable, IMojangStatistics, IC
     }
 
     public String getServerModName() {
-        return "craftbukkit"; // CraftBukkit - cb > vanilla!
+        return "craftbukkit+forge"; // CraftBukkit - cb > vanilla!
     }
 
     public CrashReport b(CrashReport crashreport) {
