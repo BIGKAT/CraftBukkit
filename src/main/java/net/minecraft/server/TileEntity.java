@@ -139,4 +139,41 @@ public class TileEntity {
         return null;
     }
     // CraftBukkit end
+    
+    /**
+     * Determines if this TileEntity requires update calls.
+     * @return True if you want updateEntity() to be called, false if not
+     */
+    public boolean canUpdate()
+    {
+        return true;
+    }
+
+    /**
+     * Called when you receive a TileEntityData packet for the location this
+     * TileEntity is currently in. On the client, the NetworkManager will always
+     * be the remote server. On the server, it will be whomever is responsible for 
+     * sending the packet.
+     * 
+     * @param net The NetworkManager the packet originated from 
+     * @param pkt The data packet
+     */
+    public void onDataPacket(NetworkManager net, Packet132TileEntityData pkt)
+    {
+    }
+
+    /**
+     * Called when the chunk this TileEntity is on is Unloaded.
+     */
+    public void onChunkUnload()
+    {
+    }
+
+    /**
+     *  @return The maximum distance between the player and the TileEntity at which the TileEntitySpecialRenderer will be called
+     */
+    public double getRenderDistance()
+    {
+        return 64;
+    }
 }

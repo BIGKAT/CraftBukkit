@@ -1246,7 +1246,7 @@ public abstract class World implements IBlockAccess {
     }
 
     public void a(Collection collection) {
-    	List dest = this.Q ? this.J : this.tileEntityList;
+    	List dest = this.L ? this.a : this.tileEntityList;
         for (Iterator i$ = collection.iterator(); i$.hasNext(); ) { Object entity = i$.next();
 
           if (((TileEntity)entity).canUpdate())
@@ -2706,7 +2706,7 @@ public abstract class World implements IBlockAccess {
      */
     public void addTileEntity(TileEntity entity)
     {
-      List dest = this.Q ? this.J : this.tileEntityList;
+      List dest = this.L ? this.a : this.tileEntityList;
       if (entity.canUpdate())
       {
         synchronized (dest) {

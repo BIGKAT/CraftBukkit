@@ -1274,7 +1274,7 @@ public class Block {
      */
     public boolean canPlaceTorchOnTop(World world, int x, int y, int z)
     {
-        if (world.doesBlockHaveSolidTopSurface(x, y, z))
+        if (world.t(x, y, z))
         {
             return true;
         }
