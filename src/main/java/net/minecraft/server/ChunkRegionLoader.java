@@ -11,6 +11,9 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
+import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.event.world.ChunkDataEvent;
+
 public class ChunkRegionLoader implements IAsyncChunkSaver, IChunkLoader {
 
     private List a = new ArrayList();
@@ -71,7 +74,7 @@ public class ChunkRegionLoader implements IAsyncChunkSaver, IChunkLoader {
                 nbttagcompound.getCompound("Level").setInt("zPos", j); // CraftBukkit - .getCompound("Level")
                 chunk = this.a(world, nbttagcompound.getCompound("Level"));
             }
-
+            MinecraftForge.EVENT_BUS.post(new ChunkDataEvent.Load(chunk, nbttagcompound));
             return chunk;
         }
     }
@@ -92,6 +95,7 @@ public class ChunkRegionLoader implements IAsyncChunkSaver, IChunkLoader {
             nbttagcompound.set("Level", nbttagcompound1);
             this.a(chunk, world, nbttagcompound1);
             this.a(chunk.l(), nbttagcompound);
+            MinecraftForge.EVENT_BUS.post(new ChunkDataEvent.Save(chunk, nbttagcompound));
         } catch (Exception exception) {
             exception.printStackTrace();
         }
