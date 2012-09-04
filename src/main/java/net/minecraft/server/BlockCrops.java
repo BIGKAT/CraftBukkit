@@ -1,5 +1,6 @@
 package net.minecraft.server;
 
+import java.util.ArrayList;
 import java.util.Random;
 
 public class BlockCrops extends BlockFlower {
@@ -108,6 +109,22 @@ public class BlockCrops extends BlockFlower {
                 }
             }
         }
+    }
+    
+    @Override
+    public ArrayList<ItemStack> getBlockDropped(World world, int x, int y, int z, int metadata, int fortune)
+    {
+      ArrayList ret = new ArrayList();
+      if (metadata == 7) {
+        ret.add(new ItemStack(Item.WHEAT));
+      }
+
+      for (int n = 0; n < 3 + fortune; n++) {
+        if (world.random.nextInt(15) < metadata) {
+          ret.add(new ItemStack(Item.SEEDS));
+        }
+      }
+      return ret;
     }
 
     public int getDropType(int i, Random random, int j) {
