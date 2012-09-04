@@ -1,6 +1,8 @@
 package net.minecraft.server;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -11,6 +13,9 @@ import org.bukkit.craftbukkit.util.LongObjectHashMap;
 import org.bukkit.craftbukkit.util.LongHash;
 import org.bukkit.event.entity.CreatureSpawnEvent.SpawnReason;
 // CraftBukkit end
+
+import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.event.entity.living.LivingSpecialSpawnEvent;
 
 public final class SpawnerCreature {
 
@@ -89,7 +94,10 @@ public final class SpawnerCreature {
 
                 if ((!enumcreaturetype.d() || flag1) && (enumcreaturetype.d() || flag) && worldserver.a(enumcreaturetype.a()) <= limit * b.size() / 256) { // CraftBukkit - use per-world limits
                     Iterator iterator = b.keySet().iterator();
-
+                    ArrayList<ChunkCoordIntPair> tmp = new ArrayList(b.keySet());
+                    Collections.shuffle(tmp);
+                    iterator = tmp.iterator();
+                    
                     label108:
                     while (iterator.hasNext()) {
                         // CraftBukkit start
@@ -191,11 +199,20 @@ public final class SpawnerCreature {
         } else {
             int l = world.getTypeId(i, j - 1, k);
 
-            return l != Block.BEDROCK.id && !world.s(i, j, k) && !world.getMaterial(i, j, k).isLiquid() && !world.s(i, j + 1, k);
+//            return l != Block.BEDROCK.id && !world.s(i, j, k) && !world.getMaterial(i, j, k).isLiquid() && !world.s(i, j + 1, k);
+            boolean spawnBlock = (Block.byId[l] != null && Block.byId[l].canCreatureSpawn(enumcreaturetype, world, i, j - 1, k));
+            return spawnBlock && l != Block.BEDROCK.id && !world.s(i, j, k) && !world.getMaterial(i, j, k).isLiquid() && !world.s(i, j + 1, k);
         }
     }
 
     private static void a(EntityLiving entityliving, World world, float f, float f1, float f2) {
+    	LivingSpecialSpawnEvent event = new LivingSpecialSpawnEvent(entityliving, world, f, f1, f2);
+        MinecraftForge.EVENT_BUS.post(event);
+        if (event.isHandeled())
+        {
+            return;
+        }
+        
         if (entityliving.dead) return; // CraftBukkit
         if (entityliving instanceof EntitySpider && world.random.nextInt(100) == 0) {
             EntitySkeleton entityskeleton = new EntitySkeleton(world);
