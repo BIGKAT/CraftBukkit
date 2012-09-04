@@ -1,5 +1,9 @@
 package net.minecraft.server;
 
+import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.event.entity.player.ArrowLooseEvent;
+import net.minecraftforge.event.entity.player.ArrowNockEvent;
+
 public class ItemBow extends Item {
 
     public ItemBow(int i) {
@@ -10,10 +14,20 @@ public class ItemBow extends Item {
     }
 
     public void a(ItemStack itemstack, World world, EntityHuman entityhuman, int i) {
+    	int j = this.a(itemstack) - i;
+        
+        ArrowLooseEvent forgeevent = new ArrowLooseEvent(entityhuman, itemstack, var6);
+        MinecraftForge.EVENT_BUS.post(forgeevent);
+        if (forgeevent.isCanceled())
+        {
+            return;
+        }
+        j = forgeevent.charge;
+        
         boolean flag = entityhuman.abilities.canInstantlyBuild || EnchantmentManager.getEnchantmentLevel(Enchantment.ARROW_INFINITE.id, itemstack) > 0;
 
         if (flag || entityhuman.inventory.e(Item.ARROW.id)) {
-            int j = this.a(itemstack) - i;
+//            int j = this.a(itemstack) - i;
             float f = (float) j / 20.0F;
 
             f = (f * f + f * 2.0F) / 3.0F;
@@ -83,6 +97,12 @@ public class ItemBow extends Item {
     }
 
     public ItemStack a(ItemStack itemstack, World world, EntityHuman entityhuman) {
+    	ArrowNockEvent event = new ArrowNockEvent(entityhuman, itemstack);
+        MinecraftForge.EVENT_BUS.post(event);
+        if (event.isCanceled())
+        {
+            return event.result;
+        }
         if (entityhuman.abilities.canInstantlyBuild || entityhuman.inventory.e(Item.ARROW.id)) {
             entityhuman.a(itemstack, this.a(itemstack));
         }
