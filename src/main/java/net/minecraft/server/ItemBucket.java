@@ -7,6 +7,9 @@ import org.bukkit.event.player.PlayerBucketEmptyEvent;
 import org.bukkit.event.player.PlayerBucketFillEvent;
 // CraftBukkit end
 
+import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.event.entity.player.FillBucketEvent;
+
 public class ItemBucket extends Item {
 
     private int a;
@@ -29,6 +32,16 @@ public class ItemBucket extends Item {
         if (movingobjectposition == null) {
             return itemstack;
         } else {
+        	FillBucketEvent event = new FillBucketEvent(entityhuman, itemstack, world, movingobjectposition);
+            if (MinecraftForge.EVENT_BUS.post(event))
+            {
+                return itemstack;
+            }
+
+            if (event.isHandeled())
+            {
+                return event.result;
+            }
             if (movingobjectposition.type == EnumMovingObjectType.TILE) {
                 int i = movingobjectposition.b;
                 int j = movingobjectposition.c;
