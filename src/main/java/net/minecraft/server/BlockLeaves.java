@@ -1,10 +1,13 @@
 package net.minecraft.server;
 
+import java.util.ArrayList;
 import java.util.Random;
 
 import org.bukkit.event.block.LeavesDecayEvent; // CraftBukkit
 
-public class BlockLeaves extends BlockTransparant {
+import net.minecraftforge.common.IShearable;
+
+public class BlockLeaves extends BlockTransparant implements IShearable {
 
     private int cr;
     public static final String[] a = new String[] { "oak", "spruce", "birch", "jungle"};
@@ -27,10 +30,8 @@ public class BlockLeaves extends BlockTransparant {
                     for (int i2 = -b0; i2 <= b0; ++i2) {
                         int j2 = world.getTypeId(i + k1, j + l1, k + i2);
 
-                        if (j2 == Block.LEAVES.id) {
-                            int k2 = world.getData(i + k1, j + l1, k + i2);
-
-                            world.setRawData(i + k1, j + l1, k + i2, k2 | 8);
+                        if (Block.byId[l1] != null) {
+                            Block.byId[l1].beginLeavesDecay(world, i + i1, j + j1, k + k1);
                         }
                     }
                 }
@@ -64,9 +65,13 @@ public class BlockLeaves extends BlockTransparant {
                         for (i2 = -b0; i2 <= b0; ++i2) {
                             for (j2 = -b0; j2 <= b0; ++j2) {
                                 k2 = world.getTypeId(i + l1, j + i2, k + j2);
-                                if (k2 == Block.LOG.id) {
+//                                if (k2 == Block.LOG.id) 
+                                Block block = Block.byId[k2];
+
+                                if ((block != null) && (block.canSustainLeaves(world, i + l1, j + i2, k + j2))) {
                                     this.b[(l1 + k1) * j1 + (i2 + k1) * b1 + j2 + k1] = 0;
-                                } else if (k2 == Block.LEAVES.id) {
+                                } //else if (k2 == Block.LEAVES.id) 
+                                else if ((block != null) && (block.isLeaves(world, i + l1, j + i2, k + j2))) {
                                     this.b[(l1 + k1) * j1 + (i2 + k1) * b1 + j2 + k1] = -2;
                                 } else {
                                     this.b[(l1 + k1) * j1 + (i2 + k1) * b1 + j2 + k1] = -1;
@@ -163,12 +168,13 @@ public class BlockLeaves extends BlockTransparant {
     }
 
     public void a(World world, EntityHuman entityhuman, int i, int j, int k, int l) {
-        if (!world.isStatic && entityhuman.bC() != null && entityhuman.bC().id == Item.SHEARS.id) {
-            entityhuman.a(StatisticList.C[this.id], 1);
-            this.a(world, i, j, k, new ItemStack(Block.LEAVES.id, 1, l & 3));
-        } else {
-            super.a(world, entityhuman, i, j, k, l);
-        }
+    	super.a(world, entityhuman, i, j, k, l);
+//        if (!world.isStatic && entityhuman.bC() != null && entityhuman.bC().id == Item.SHEARS.id) {
+//            entityhuman.a(StatisticList.C[this.id], 1);
+//            this.a(world, i, j, k, new ItemStack(Block.LEAVES.id, 1, l & 3));
+//        } else {
+//            super.a(world, entityhuman, i, j, k, l);
+//        }
     }
 
     protected int getDropData(int i) {
@@ -181,5 +187,30 @@ public class BlockLeaves extends BlockTransparant {
 
     public int a(int i, int j) {
         return (j & 3) == 1 ? this.textureId + 80 : ((j & 3) == 3 ? this.textureId + 144 : this.textureId);
+    }
+    
+    public boolean isShearable(ItemStack item, World world, int x, int y, int z)
+    {
+      return true;
+    }
+    
+    @Override
+    public ArrayList<ItemStack> onSheared(ItemStack item, World world, int x, int y, int z, int fortune)
+    {
+      ArrayList ret = new ArrayList();
+      ret.add(new ItemStack(this, 1, world.getData(x, y, z) & 0x3));
+      return ret;
+    }
+
+    @Override
+    public void beginLeavesDecay(World world, int x, int y, int z)
+    {
+      world.setData(x, y, z, world.getData(x, y, z) | 0x8);
+    }
+
+    @Override
+    public boolean isLeaves(World world, int x, int y, int z)
+    {
+      return true;
     }
 }
