@@ -397,7 +397,7 @@ public class NetServerHandler extends NetHandler {
                 this.player.setLocation(d1, d2, d3, f2, f3);
                 boolean flag2 = worldserver.getCubes(this.player, this.player.boundingBox.clone().shrink((double) f4, (double) f4, (double) f4)).isEmpty();
 
-                if (flag && (flag1 || !flag2) && !this.player.isSleeping()) {
+                if (flag && (flag1 || !flag2) && !this.player.isSleeping() && !this.player.X) { //X = noclip
                     this.a(this.y, this.z, this.q, f2, f3);
                     return;
                 }
@@ -519,8 +519,11 @@ public class NetServerHandler extends NetHandler {
                 double d1 = this.player.locY - ((double) j + 0.5D) + 1.5D;
                 double d2 = this.player.locZ - ((double) k + 0.5D);
                 double d3 = d0 * d0 + d1 * d1 + d2 * d2;
+ 
+                double dist = player.itemInWorldManager.getBlockReachDistance() + 1;
+                dist *= dist;
 
-                if (d3 > 36.0D) {
+                if (d3 > dist) {
                     return;
                 }
 
@@ -639,6 +642,7 @@ public class NetServerHandler extends NetHandler {
                 j1 = i1;
             }
 
+            //TODO Forge patches this part too, i kept Bukkits code for now -muCkk
             // CraftBukkit start - Check if we can actually do something over this large a distance
             Location eyeLoc = this.getPlayer().getEyeLocation();
             if (Math.pow(eyeLoc.getX() - i, 2) + Math.pow(eyeLoc.getY() - j, 2) + Math.pow(eyeLoc.getZ() - k, 2) > PLACE_DISTANCE_SQUARED) {
