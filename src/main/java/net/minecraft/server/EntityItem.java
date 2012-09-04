@@ -4,6 +4,9 @@ import java.util.Iterator;
 
 import org.bukkit.event.player.PlayerPickupItemEvent; // CraftBukkit
 
+import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.event.entity.player.EntityItemPickupEvent;
+
 public class EntityItem extends Entity {
 
     public ItemStack itemStack;
@@ -108,6 +111,10 @@ public class EntityItem extends Entity {
             // CraftBukkit end
             this.die();
         }
+        if (this.itemStack == null || this.itemStack.count <= 0)
+        {
+            this.die();
+        }
     }
 
     public boolean a(EntityItem entityitem) {
@@ -174,7 +181,7 @@ public class EntityItem extends Entity {
         NBTTagCompound nbttagcompound1 = nbttagcompound.getCompound("Item");
 
         this.itemStack = ItemStack.a(nbttagcompound1);
-        if (this.itemStack == null) {
+        if (this.itemStack == null || this.itemStack.count <= 0) {
             this.die();
         }
     }
@@ -182,7 +189,19 @@ public class EntityItem extends Entity {
     public void b_(EntityHuman entityhuman) {
         if ((!this.world.isStatic) && (this.itemStack != null)) { // CraftBukkit - nullcheck
             int i = this.itemStack.count;
+            
+            if (this.pickupDelay > 0)
+            {
+                return;
+            }
 
+            EntityItemPickupEvent event = new EntityItemPickupEvent(entityhuman, this);
+
+            if (MinecraftForge.EVENT_BUS.post(event))
+            {
+                return;
+            }
+            
             // CraftBukkit start
             int canHold = entityhuman.inventory.canHold(this.itemStack);
             int remaining = this.itemStack.count - canHold;
@@ -202,7 +221,8 @@ public class EntityItem extends Entity {
             }
             // CraftBukkit end
 
-            if (this.pickupDelay == 0 && entityhuman.inventory.pickup(this.itemStack)) {
+//            if (this.pickupDelay == 0 && entityhuman.inventory.pickup(this.itemStack)) 
+            	if (this.pickupDelay <= 0 && (event.isHandled() || i <= 0 || entityhuman.inventory.pickup(this.itemStack))) {
                 if (this.itemStack.id == Block.LOG.id) {
                     entityhuman.a((Statistic) AchievementList.g);
                 }
