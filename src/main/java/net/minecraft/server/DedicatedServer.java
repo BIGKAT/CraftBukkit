@@ -67,6 +67,7 @@ public class DedicatedServer extends MinecraftServer implements IMinecraftServer
         this.setAllowFlight(this.propertyManager.getBoolean("allow-flight", false));
         this.setTexturePack(this.propertyManager.getString("texture-pack", ""));
         this.setMotd(this.propertyManager.getString("motd", "A Minecraft Server"));
+        spawnProtectionSize = this.propertyManager.getInt("spawn-protection-size", 16);
         this.generateStructures = this.propertyManager.getBoolean("generate-structures", true);
         int i = this.propertyManager.getInt("gamemode", EnumGamemode.SURVIVAL.a());
 
