@@ -79,4 +79,14 @@ public abstract class Enchantment {
         this.name = s;
         return this;
     }
+    
+    /**
+     * Called to determine if this enchantment can be applied to a ItemStack
+     * @param item The ItemStack that the enchantment might be put on
+     * @return True if the item is valid, false otherwise
+     */
+     public boolean canEnchantItem(ItemStack item) 
+     {
+         return this.slot.canEnchant(item.getItem());
+     }
 }
