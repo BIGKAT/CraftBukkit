@@ -2,8 +2,13 @@ package net.minecraft.server;
 
 import org.bukkit.event.block.BlockRedstoneEvent; // CraftBukkit
 
+import net.minecraftforge.common.ForgeDirection;
+
 public class BlockTrapdoor extends Block {
 
+    /** Set this to allow trapdoors to remain free-floating */
+    public static boolean disableValidation = false;
+	
     protected BlockTrapdoor(int i, Material material) {
         super(i, material);
         this.textureId = 84;
@@ -120,7 +125,8 @@ public class BlockTrapdoor extends Block {
                 --j1;
             }
 
-            if (!j(world.getTypeId(j1, j, k1))) {
+//            if (!j(world.getTypeId(j1, j, k1))) {
+            if (!(j(world.getTypeId(j1, j, k1)) || world.isBlockSolidOnSide(j1, j, k, ForgeDirection.getOrientation((i1 & 3) + 2)))) {
                 world.setTypeId(i, j, k, 0);
                 this.c(world, i, j, k, i1, 0);
             }
@@ -173,6 +179,10 @@ public class BlockTrapdoor extends Block {
     }
 
     public boolean canPlace(World world, int i, int j, int k, int l) {
+    	 if (disableValidation) {
+    	      return true;
+    	    }
+    	 
         if (l == 0) {
             return false;
         } else if (l == 1) {
@@ -194,7 +204,8 @@ public class BlockTrapdoor extends Block {
                 --i;
             }
 
-            return j(world.getTypeId(i, j, k));
+//            return j(world.getTypeId(i, j, k));
+            return (j(world.getTypeId(i, j, k))) || (world.isBlockSolidOnSide(i, j, k, l));
         }
     }
 
@@ -203,7 +214,12 @@ public class BlockTrapdoor extends Block {
     }
 
     private static boolean j(int i) {
-        if (i <= 0) {
+    	if (disableValidation)
+        {
+            return true;
+        }
+    	
+    	if (i <= 0) {
             return false;
         } else {
             Block block = Block.byId[i];
