@@ -25,6 +25,8 @@ import org.bukkit.event.player.PlayerTeleportEvent.TeleportCause;
 import org.bukkit.Bukkit;
 // CraftBukkit end
 
+import net.minecraftforge.common.DimensionManager;
+
 public abstract class ServerConfigurationManagerAbstract {
 
     private static final SimpleDateFormat e = new SimpleDateFormat("yyyy-MM-dd \'at\' HH:mm:ss z");
@@ -335,6 +337,7 @@ public abstract class ServerConfigurationManagerAbstract {
         org.bukkit.World fromWorld = entityplayer1.getBukkitEntity().getWorld();
         entityplayer1.viewingCredits = false;
         entityplayer1.copyTo(entityplayer, flag);
+        entityplayer1.dimension = i;
 
         ChunkCoordinates chunkcoordinates1;
 
@@ -415,6 +418,7 @@ public abstract class ServerConfigurationManagerAbstract {
         return entityplayer1;
     }
 
+    //TODO No forge patch applied here (see transferPlayerToDimension() )
     public void changeDimension(EntityPlayer entityplayer, int i) {
         // CraftBukkit start -- Replaced the standard handling of portals with a more customised method.
         int dimension = i;
