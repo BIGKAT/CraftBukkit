@@ -4,6 +4,8 @@ import java.util.Random;
 
 import org.bukkit.event.block.BlockRedstoneEvent; // CraftBukkit
 
+import static net.minecraftforge.common.ForgeDirection.*;
+
 public class BlockDoor extends Block {
 
     protected BlockDoor(int i, Material material) {
@@ -111,7 +113,7 @@ public class BlockDoor extends Block {
 
     public boolean interact(World world, int i, int j, int k, EntityHuman entityhuman, int l, float f, float f1, float f2) {
         if (this.material == Material.ORE) {
-            return true;
+        	return false; //Allow items to interact with the door
         } else {
             int i1 = this.b_(world, i, j, k);
             int j1 = i1 & 7;
