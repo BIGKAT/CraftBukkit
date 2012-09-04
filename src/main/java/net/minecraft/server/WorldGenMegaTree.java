@@ -48,7 +48,12 @@ public class WorldGenMegaTree extends WorldGenerator implements BlockSapling.Tre
                     for (k1 = k - b0; k1 <= k + b0 && flag; ++k1) {
                         if (i1 >= 0 && i1 < 256) {
                             l1 = world.getTypeId(j1, i1, k1);
-                            if (l1 != 0 && l1 != Block.LEAVES.id && l1 != Block.GRASS.id && l1 != Block.DIRT.id && l1 != Block.LOG.id && l1 != Block.SAPLING.id) {
+                            if (l1 != 0 && 
+                            (Block.byId[l1] != null && !Block.byId[l1].isLeaves((World) world, j1, i1, k1)) && 
+                            l1 != Block.GRASS.id && 
+                            		l1 != Block.DIRT.id && 
+                            (Block.byId[l1] != null && !Block.byId[l1].isWood((World) world, j1, i1, k1)) &&  //TODO cast to World
+                            l1 != Block.SAPLING.id) {
                                 flag = false;
                             }
                         } else {
@@ -85,7 +90,7 @@ public class WorldGenMegaTree extends WorldGenerator implements BlockSapling.Tre
 
                     for (j1 = 0; j1 < l; ++j1) {
                         k1 = world.getTypeId(i, j + j1, k);
-                        if (k1 == 0 || k1 == Block.LEAVES.id) {
+                        if ((k1 == 0) || (Block.byId[k1] == null) || (Block.byId[k1].isLeaves((World)world, i, j + j1, k))) { //cast to World
                             this.setTypeAndData(world, i, j + j1, k, Block.LOG.id, this.b);
                             if (j1 > 0) {
                                 if (random.nextInt(3) > 0 && world.isEmpty(i - 1, j + j1, k)) {
@@ -100,7 +105,7 @@ public class WorldGenMegaTree extends WorldGenerator implements BlockSapling.Tre
 
                         if (j1 < l - 1) {
                             k1 = world.getTypeId(i + 1, j + j1, k);
-                            if (k1 == 0 || k1 == Block.LEAVES.id) {
+                            if ((k1 == 0) || (Block.byId[k1] == null) || (Block.byId[k1].isLeaves((World)world, i + 1, j + j1, k))) { //cast to World
                                 this.setTypeAndData(world, i + 1, j + j1, k, Block.LOG.id, this.b);
                                 if (j1 > 0) {
                                     if (random.nextInt(3) > 0 && world.isEmpty(i + 2, j + j1, k)) {
@@ -114,7 +119,7 @@ public class WorldGenMegaTree extends WorldGenerator implements BlockSapling.Tre
                             }
 
                             k1 = world.getTypeId(i + 1, j + j1, k + 1);
-                            if (k1 == 0 || k1 == Block.LEAVES.id) {
+                            if ((k1 == 0) || (Block.byId[k1] == null) || (Block.byId[k1].isLeaves((World)world, i + 1, j + j1, k + 1))) { //TODO cast to World
                                 this.setTypeAndData(world, i + 1, j + j1, k + 1, Block.LOG.id, this.b);
                                 if (j1 > 0) {
                                     if (random.nextInt(3) > 0 && world.isEmpty(i + 2, j + j1, k + 1)) {
@@ -128,7 +133,7 @@ public class WorldGenMegaTree extends WorldGenerator implements BlockSapling.Tre
                             }
 
                             k1 = world.getTypeId(i, j + j1, k + 1);
-                            if (k1 == 0 || k1 == Block.LEAVES.id) {
+                            if ((k1 == 0) || (Block.byId[k1] == null) || (Block.byId[k1].isLeaves((World)world, i, j + j1, k + 1))) { //TODO cast to World
                                 this.setTypeAndData(world, i, j + j1, k + 1, Block.LOG.id, this.b);
                                 if (j1 > 0) {
                                     if (random.nextInt(3) > 0 && world.isEmpty(i - 1, j + j1, k + 1)) {
@@ -167,7 +172,9 @@ public class WorldGenMegaTree extends WorldGenerator implements BlockSapling.Tre
                 for (int j2 = j - k1; j2 <= j + k1 + 1; ++j2) {
                     int k2 = j2 - j;
 
-                    if ((i2 >= 0 || k2 >= 0 || i2 * i2 + k2 * k2 <= k1 * k1) && (i2 <= 0 && k2 <= 0 || i2 * i2 + k2 * k2 <= (k1 + 1) * (k1 + 1)) && (random.nextInt(4) != 0 || i2 * i2 + k2 * k2 <= (k1 - 1) * (k1 - 1)) && !Block.n[world.getTypeId(l1, i1, j2)]) {
+                    Block bl = Block.byId[world.getTypeId(l1, i1, j2)];
+                    if (((i2 < 0) && (k2 < 0) && (i2 * i2 + k2 * k2 > k1 * k1)) || (((i2 > 0) || (k2 > 0)) && ((i2 * i2 + k2 * k2 > (k1 + 1) * (k1 + 1)) || ((random.nextInt(4) == 0) && (i2 * i2 + k2 * k2 > (k1 - 1) * (k1 - 1))) || ((bl != null) && (!bl.canBeReplacedByLeaves((World)world, l1, i1, j2)))))) { //TODO cast to World
+//                    if ((i2 >= 0 || k2 >= 0 || i2 * i2 + k2 * k2 <= k1 * k1) && (i2 <= 0 && k2 <= 0 || i2 * i2 + k2 * k2 <= (k1 + 1) * (k1 + 1)) && (random.nextInt(4) != 0 || i2 * i2 + k2 * k2 <= (k1 - 1) * (k1 - 1)) && !Block.n[world.getTypeId(l1, i1, j2)]) {
                         this.setTypeAndData(world, l1, i1, j2, Block.LEAVES.id, this.c);
                     }
                 }
