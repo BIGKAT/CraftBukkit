@@ -2,7 +2,11 @@ package net.minecraft.server;
 
 import org.bukkit.event.player.PlayerShearEntityEvent; // CraftBukkit
 
-public class EntityMushroomCow extends EntityCow {
+import java.util.ArrayList;
+
+import net.minecraftforge.common.IShearable;
+
+public class EntityMushroomCow extends EntityCow implements IShearable
 
     public EntityMushroomCow(World world) {
         super(world);
@@ -25,38 +29,62 @@ public class EntityMushroomCow extends EntityCow {
             }
         }
 
-        if (itemstack != null && itemstack.id == Item.SHEARS.id && this.getAge() >= 0) {
-            // CraftBukkit start
-            PlayerShearEntityEvent event = new PlayerShearEntityEvent((org.bukkit.entity.Player) entityhuman.getBukkitEntity(), this.getBukkitEntity());
-            this.world.getServer().getPluginManager().callEvent(event);
-
-            if (event.isCancelled()) {
-                return false;
-            }
-            // CraftBukkit end
-
-            this.die();
-            this.world.a("largeexplode", this.locX, this.locY + (double) (this.length / 2.0F), this.locZ, 0.0D, 0.0D, 0.0D);
-            if (!this.world.isStatic) {
-                EntityCow entitycow = new EntityCow(this.world);
-
-                entitycow.setPositionRotation(this.locX, this.locY, this.locZ, this.yaw, this.pitch);
-                entitycow.setHealth(this.getHealth());
-                entitycow.aq = this.aq;
-                this.world.addEntity(entitycow);
-
-                for (int i = 0; i < 5; ++i) {
-                    this.world.addEntity(new EntityItem(this.world, this.locX, this.locY + (double) this.length, this.locZ, new ItemStack(Block.RED_MUSHROOM)));
-                }
-            }
-
-            return true;
-        } else {
+//        if (itemstack != null && itemstack.id == Item.SHEARS.id && this.getAge() >= 0) {
+//            // CraftBukkit start
+//            PlayerShearEntityEvent event = new PlayerShearEntityEvent((org.bukkit.entity.Player) entityhuman.getBukkitEntity(), this.getBukkitEntity());
+//            this.world.getServer().getPluginManager().callEvent(event);
+//
+//            if (event.isCancelled()) {
+//                return false;
+//            }
+//            // CraftBukkit end
+//
+//            this.die();
+//            this.world.a("largeexplode", this.locX, this.locY + (double) (this.length / 2.0F), this.locZ, 0.0D, 0.0D, 0.0D);
+//            if (!this.world.isStatic) {
+//                EntityCow entitycow = new EntityCow(this.world);
+//
+//                entitycow.setPositionRotation(this.locX, this.locY, this.locZ, this.yaw, this.pitch);
+//                entitycow.setHealth(this.getHealth());
+//                entitycow.aq = this.aq;
+//                this.world.addEntity(entitycow);
+//
+//                for (int i = 0; i < 5; ++i) {
+//                    this.world.addEntity(new EntityItem(this.world, this.locX, this.locY + (double) this.length, this.locZ, new ItemStack(Block.RED_MUSHROOM)));
+//                }
+//            }
+//
+//            return true;
+//        } else {
             return super.c(entityhuman);
-        }
+//        }
     }
 
     public EntityAnimal createChild(EntityAnimal entityanimal) {
         return new EntityMushroomCow(this.world);
+    }
+    
+    @Override
+    public boolean isShearable(ItemStack item, World world, int x, int y, int z)
+    {
+      return getAge() >= 0;
+    }
+
+    @Override
+    public ArrayList<ItemStack> onSheared(ItemStack item, World world, int x, int y, int z, int fortune)
+    {
+      die();
+      die();
+      this.world.a("largeexplode", this.locX, this.locY + this.length / 2.0F, this.locZ, 0.0D, 0.0D, 0.0D);
+      EntityCow entitycow = new EntityCow(this.world);
+      entitycow.setPositionRotation(this.locX, this.locY, this.locZ, this.yaw, this.pitch);
+      entitycow.setHealth(getHealth());
+      entitycow.V = this.V;
+      this.world.addEntity(entitycow);
+      ArrayList ret = new ArrayList();
+      for (int i = 0; i < 5; i++) {
+        ret.add(new ItemStack(Block.RED_MUSHROOM));
+      }
+      return ret;
     }
 }
