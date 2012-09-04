@@ -13,6 +13,11 @@ import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.EntityRegainHealthEvent;
 // CraftBukkit end
 
+import net.minecraftforge.common.ForgeHooks;
+import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.event.entity.living.*;
+import static net.minecraftforge.event.entity.living.LivingEvent.*;
+
 public abstract class EntityLiving extends Entity {
 
     public int maxNoDamageTicks = 20;
@@ -184,6 +189,7 @@ public abstract class EntityLiving extends Entity {
 
     public void b(EntityLiving entityliving) {
         this.bz = entityliving;
+        ForgeHooks.onLivingSetAttackTarget(this, entityliving);
     }
 
     public boolean a(Class oclass) {
@@ -224,6 +230,7 @@ public abstract class EntityLiving extends Entity {
     public void c(EntityLiving entityliving) {
         this.lastDamager = entityliving;
         this.c = this.lastDamager != null ? 60 : 0;
+        ForgeHooks.onLivingSetAttackTarget(this, entityliving);
     }
 
     protected void a() {
@@ -432,6 +439,11 @@ public abstract class EntityLiving extends Entity {
     }
 
     public void h_() {
+    	if (ForgeHooks.onLivingUpdate(this))
+        {
+            return;
+        }
+    	
         super.h_();
         if (this.bd > 0) {
             if (this.be <= 0) {
@@ -574,6 +586,11 @@ public abstract class EntityLiving extends Entity {
     }
 
     public boolean damageEntity(DamageSource damagesource, int i) {
+    	 if (ForgeHooks.onLivingAttack(this, damagesource, i))
+         {
+             return false;
+         }
+    	 
         if (this.world.isStatic) {
             return false;
         } else {
@@ -707,6 +724,11 @@ public abstract class EntityLiving extends Entity {
     }
 
     protected void d(DamageSource damagesource, int i) {
+    	 i = ForgeHooks.onLivingHurt(this, damagesource, i);
+         if (i <= 0)
+         {
+             return;
+         }
         i = this.b(damagesource, i);
         i = this.c(damagesource, i);
         this.health -= i;
@@ -745,6 +767,11 @@ public abstract class EntityLiving extends Entity {
     }
 
     public void die(DamageSource damagesource) {
+    	if (ForgeHooks.onLivingDeath(this, damagesource))
+        {
+            return;
+        }
+    	
         Entity entity = damagesource.getEntity();
 
         if (this.aE >= 0 && entity != null) {
@@ -762,11 +789,15 @@ public abstract class EntityLiving extends Entity {
             if (entity instanceof EntityHuman) {
                 i = EnchantmentManager.getBonusMonsterLootEnchantmentLevel(((EntityHuman) entity).inventory);
             }
+            
+            captureDrops = true;
+            capturedDrops.clear();
+            int j = 0;
 
             if (!this.isBaby()) {
                 this.dropDeathLoot(this.lastDamageByPlayerTime > 0, i);
                 if (false && this.lastDamageByPlayerTime > 0) { // CraftBukkit - move rare item drop call to dropDeathLoot
-                    int j = this.random.nextInt(200) - i;
+                    j = this.random.nextInt(200) - i;
 
                     if (j < 5) {
                         this.l(j <= 0 ? 1 : 0);
@@ -774,6 +805,15 @@ public abstract class EntityLiving extends Entity {
                 }
             } else { // CraftBukkit
                 CraftEventFactory.callEntityDeathEvent(this); // CraftBukkit
+            }
+            captureDrops = false;
+
+            if (!ForgeHooks.onLivingDrops(this, damagesource, capturedDrops, i, lastDamageByPlayerTime > 0, j))
+            {
+                for (EntityItem item : capturedDrops)
+                {
+                    world.addEntity(item);
+                }
             }
         }
 
@@ -824,6 +864,12 @@ public abstract class EntityLiving extends Entity {
     }
 
     protected void a(float f) {
+    	f = ForgeHooks.onLivingFall(this, f);
+        if (f <= 0)
+        {
+            return;
+        }
+        
         super.a(f);
         int i = MathHelper.f(f - 3.0F);
 
@@ -980,7 +1026,7 @@ public abstract class EntityLiving extends Entity {
         int k = MathHelper.floor(this.locZ);
         int l = this.world.getTypeId(i, j, k);
 
-        return l == Block.LADDER.id || l == Block.VINE.id;
+        return ForgeHooks.isLivingOnLadder(Block.byId[l], world, i, j, k);
     }
 
     public void b(NBTTagCompound nbttagcompound) {
@@ -1174,6 +1220,7 @@ public abstract class EntityLiving extends Entity {
         }
 
         this.al = true;
+        ForgeHooks.onLivingJump(this);
     }
 
     protected boolean ba() {
