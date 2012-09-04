@@ -44,7 +44,8 @@ public class WorldGenSwampTree extends WorldGenerator implements BlockSapling.Tr
                     for (k1 = k - b0; k1 <= k + b0 && flag; ++k1) {
                         if (i1 >= 0 && i1 < 128) {
                             l1 = world.getTypeId(j1, i1, k1);
-                            if (l1 != 0 && l1 != Block.LEAVES.id) {
+//                            if (l1 != 0 && l1 != Block.LEAVES.id) 
+                            if ((l1 != 0) && (Block.byId[l1] != null) && (!Block.byId[l1].isLeaves((World)world, j1, i1, k1))) { //TODO  cast to World (scroll down)
                                 if (l1 != Block.STATIONARY_WATER.id && l1 != Block.WATER.id) {
                                     flag = false;
                                 } else if (i1 > j) {
@@ -78,7 +79,9 @@ public class WorldGenSwampTree extends WorldGenerator implements BlockSapling.Tr
                             for (int k2 = k - k1; k2 <= k + k1; ++k2) {
                                 int l2 = k2 - k;
 
-                                if ((Math.abs(i2) != k1 || Math.abs(l2) != k1 || random.nextInt(2) != 0 && j1 != 0) && !Block.n[world.getTypeId(l1, j2, k2)]) {
+                                Block bl = Block.byId[world.getTypeId(l1, j2, k2)];
+                                if (((Math.abs(i2) == k1) && (Math.abs(l2) == k1) && ((random.nextInt(2) == 0) || (j1 == 0))) || ((bl != null) && (!bl.canBeReplacedByLeaves((World)world, l1, j2, k2)))) { // cast to World
+//                                if ((Math.abs(i2) != k1 || Math.abs(l2) != k1 || random.nextInt(2) != 0 && j1 != 0) && !Block.n[world.getTypeId(l1, j2, k2)]) {
                                     this.setType(world, l1, j2, k2, Block.LEAVES.id);
                                 }
                             }
@@ -87,7 +90,9 @@ public class WorldGenSwampTree extends WorldGenerator implements BlockSapling.Tr
 
                     for (j2 = 0; j2 < l; ++j2) {
                         j1 = world.getTypeId(i, j + j2, k);
-                        if (j1 == 0 || j1 == Block.LEAVES.id || j1 == Block.WATER.id || j1 == Block.STATIONARY_WATER.id) {
+                        Block bl = Block.byId[j1];
+                        if ((j1 == 0) || ((bl != null) && (bl.isLeaves((World)world, i, j + j2, k))) || (j1 == Block.WATER.id) || (j1 == Block.STATIONARY_WATER.id)) { // cast to World
+//                        if (j1 == 0 || j1 == Block.LEAVES.id || j1 == Block.WATER.id || j1 == Block.STATIONARY_WATER.id) {
                             this.setType(world, i, j + j2, k, Block.LOG.id);
                         }
                     }
@@ -98,7 +103,9 @@ public class WorldGenSwampTree extends WorldGenerator implements BlockSapling.Tr
 
                         for (l1 = i - k1; l1 <= i + k1; ++l1) {
                             for (i2 = k - k1; i2 <= k + k1; ++i2) {
-                                if (world.getTypeId(l1, j2, i2) == Block.LEAVES.id) {
+//                                if (world.getTypeId(l1, j2, i2) == Block.LEAVES.id) {
+                            	 Block bl = Block.byId[world.getTypeId(l1, j2, i2)];
+                                 if ((bl != null) && (bl.isLeaves((World)world, l1, j2, i2))) {     // cast to World
                                     if (random.nextInt(4) == 0 && world.getTypeId(l1 - 1, j2, i2) == 0) {
                                         this.b(world, l1 - 1, j2, i2, 8);
                                     }
