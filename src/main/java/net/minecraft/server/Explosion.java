@@ -83,7 +83,8 @@ public class Explosion {
                             int k1 = this.world.getTypeId(l, i1, j1);
 
                             if (k1 > 0) {
-                                f1 -= (Block.byId[k1].a(this.source) + 0.3F) * f2;
+//                                f1 -= (Block.byId[k1].a(this.source) + 0.3F) * f2;
+                            	f1 -= (Block.byId[k1].getExplosionResistance(this.source, world, l, i1, j1, posX, posY, posZ) + 0.3F) * f2;
                             }
 
                             if (f1 > 0.0F && i1 < 256 && i1 >= 0) { // CraftBukkit - don't wrap explosions
