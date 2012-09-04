@@ -406,7 +406,7 @@ public class Item {
      * @param side The side of the target hit
      * @return Return true to prevent any further processing.
      */
-    public boolean onItemUseFirst(ItemStack stack, EntityPlayer player, World world, int x, int y, int z, int side, float hitX, float hitY, float hitZ) 
+    public boolean onItemUseFirst(ItemStack stack, EntityHuman player, World world, int x, int y, int z, int side, float hitX, float hitY, float hitZ) 
     {
         return onItemUseFirst(stack, player, world, x, y, z, side);
     }
@@ -416,7 +416,7 @@ public class Item {
      * Only here for compaibility.
      */
     @Deprecated
-    public boolean onItemUseFirst(ItemStack stack, EntityPlayer player, World world, int x, int y, int z, int side) 
+    public boolean onItemUseFirst(ItemStack stack, EntityHuman player, World world, int x, int y, int z, int side) 
     {
         return false;
     }

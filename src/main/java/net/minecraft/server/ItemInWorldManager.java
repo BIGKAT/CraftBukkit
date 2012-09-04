@@ -8,8 +8,14 @@ import org.bukkit.event.block.Action;
 import org.bukkit.event.player.PlayerInteractEvent;
 // CraftBukkit end
 
-public class ItemInWorldManager {
+import net.minecraftforge.common.ForgeHooks;
+import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.event.entity.player.PlayerDestroyItemEvent;
 
+public class ItemInWorldManager {
+	/** Forge reach distance */
+    private double blockReachDistance = 5.0d;
+    
     public World world;
     public EntityPlayer player;
     private EnumGamemode gamemode;
@@ -232,8 +238,8 @@ public class ItemInWorldManager {
             block.a(this.world, i, j, k, l, this.player);
         }
 
-        boolean flag = this.world.setTypeId(i, j, k, 0);
-
+        boolean flag = (block != null && block.removeBlockByPlayer(world, player, i, j, k));
+        
         if (block != null && flag) {
             block.postBreak(this.world, i, j, k, l);
         }
@@ -288,25 +294,39 @@ public class ItemInWorldManager {
             // CraftBukkit end
             return false;
         } else {
+        	ItemStack stack = player.b(0); //item in hand
+            if (stack != null && stack.getItem().onBlockStartBreak(stack, i, j, k, player))
+            {
+                return false;
+            }
             int l = this.world.getTypeId(i, j, k);
             if (Block.byId[l] == null) return false; // CraftBukkit - a plugin set block to air without cancelling
             int i1 = this.world.getData(i, j, k);
 
             this.world.a(this.player, 2001, i, j, k, l + (this.world.getData(i, j, k) << 12));
-            boolean flag = this.d(i, j, k);
+            boolean flag = false; //this.d(i, j, k);
 
             if (this.isCreative()) {
+            	flag = this.d(i, j, k);
                 this.player.netServerHandler.sendPacket(new Packet53BlockChange(i, j, k, this.world));
             } else {
                 ItemStack itemstack = this.player.bC();
-                boolean flag1 = this.player.b(Block.byId[l]);
-
+                boolean flag1 = false; //this.player.b(Block.byId[l]);
+                Block block = Block.byId[l];
+                if (block != null)
+                {
+                	flag1 = block.canHarvestBlock(player, i1);
+                }
+                
                 if (itemstack != null) {
                     itemstack.a(this.world, l, i, j, k, this.player);
                     if (itemstack.count == 0) {
                         this.player.bD();
+                        MinecraftForge.EVENT_BUS.post(new PlayerDestroyItemEvent(player, itemstack));
                     }
                 }
+                
+                flag = this.d(i, j, k);
 
                 if (flag && flag1) {
                     Block.byId[l].a(this.world, this.player, i, j, k, i1);
@@ -339,6 +359,7 @@ public class ItemInWorldManager {
 
             if (itemstack1.count == 0) {
                 entityhuman.inventory.items[entityhuman.inventory.itemInHandIndex] = null;
+                MinecraftForge.EVENT_BUS.post(new PlayerDestroyItemEvent(player, itemstack1));
             }
 
             return true;
@@ -347,6 +368,13 @@ public class ItemInWorldManager {
 
     // CraftBukkit - TODO: Review this code, it changed in 1.8 but I'm not sure if we need to update or not
     public boolean interact(EntityHuman entityhuman, World world, ItemStack itemstack, int i, int j, int k, int l, float f, float f1, float f2) {
+    	if (itemstack != null &&
+    			itemstack.getItem() != null &&
+    					itemstack.getItem().onItemUseFirst(itemstack, entityhuman, world, i, j, k, l, f, f1, f2))
+            {
+                return true;
+            }
+    	
         int i1 = world.getTypeId(i, j, k);
 
         // CraftBukkit start - Interact
@@ -381,6 +409,10 @@ public class ItemInWorldManager {
             if (itemstack != null && ((!result && event.useItemInHand() != Event.Result.DENY) || event.useItemInHand() == Event.Result.ALLOW)) {
                 this.useItem(entityhuman, world, itemstack);
             }
+            if (itemstack != null && itemstack.count <= 0)
+	        {
+	            MinecraftForge.EVENT_BUS.post(new PlayerDestroyItemEvent(player, itemstack));
+	        }
         }
         return result;
         // CraftBukkit end
@@ -388,5 +420,22 @@ public class ItemInWorldManager {
 
     public void a(WorldServer worldserver) {
         this.world = worldserver;
+    }
+    
+    /**
+     * Sets the world instance.
+     */
+    public void setWorld(WorldServer par1WorldServer)
+    {
+        a(par1WorldServer);
+    }
+
+    public double getBlockReachDistance()
+    {
+        return blockReachDistance;
+    }
+    public void setBlockReachDistance(double distance)
+    {
+        blockReachDistance = distance;
     }
 }
