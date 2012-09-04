@@ -1,5 +1,6 @@
 package net.minecraft.server;
 
+import java.util.ArrayList;
 import java.util.Random;
 
 public class BlockNetherWart extends BlockFlower {
@@ -40,20 +41,21 @@ public class BlockNetherWart extends BlockFlower {
     }
 
     public void dropNaturally(World world, int i, int j, int k, int l, float f, int i1) {
-        if (!world.isStatic) {
-            int j1 = 1;
-
-            if (l >= 3) {
-                j1 = 2 + world.random.nextInt(3);
-                if (i1 > 0) {
-                    j1 += world.random.nextInt(i1 + 1);
-                }
-            }
-
-            for (int k1 = 0; k1 < j1; ++k1) {
-                this.a(world, i, j, k, new ItemStack(Item.NETHER_STALK));
-            }
-        }
+//        if (!world.isStatic) {
+//            int j1 = 1;
+//
+//            if (l >= 3) {
+//                j1 = 2 + world.random.nextInt(3);
+//                if (i1 > 0) {
+//                    j1 += world.random.nextInt(i1 + 1);
+//                }
+//            }
+//
+//            for (int k1 = 0; k1 < j1; ++k1) {
+//                this.a(world, i, j, k, new ItemStack(Item.NETHER_STALK));
+//            }
+//        }
+    	super.dropNaturally(world, i, j, k, l, f, i1);
     }
 
     public int getDropType(int i, Random random, int j) {
@@ -62,5 +64,24 @@ public class BlockNetherWart extends BlockFlower {
 
     public int a(Random random) {
         return 0;
+    }
+    
+    @Override
+    public ArrayList<ItemStack> getBlockDropped(World world, int x, int y, int z, int metadata, int fortune)
+    {
+        ArrayList<ItemStack> ret = new ArrayList<ItemStack>();
+        int count = 1;
+
+        if (metadata >= 3)
+        {
+            count = 2 + world.random.nextInt(3) + (fortune > 0 ? world.random.nextInt(fortune + 1) : 0);
+        }
+
+        for (int i = 0; i < count; i++)
+        {
+            ret.add(new ItemStack(Item.NETHER_STALK));
+        }
+
+        return ret;
     }
 }
