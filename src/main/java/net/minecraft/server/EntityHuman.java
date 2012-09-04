@@ -13,6 +13,15 @@ import org.bukkit.event.player.PlayerBedLeaveEvent;
 import org.bukkit.event.player.PlayerDropItemEvent;
 // CraftBukkit end
 
+import net.minecraftforge.common.ForgeHooks;
+import net.minecraftforge.common.ISpecialArmor.ArmorProperties;
+import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.event.entity.living.LivingHurtEvent;
+import net.minecraftforge.event.entity.player.AttackEntityEvent;
+import net.minecraftforge.event.entity.player.EntityInteractEvent;
+import net.minecraftforge.event.entity.player.PlayerDestroyItemEvent;
+import net.minecraftforge.event.entity.player.PlayerSleepInBedEvent;
+
 public abstract class EntityHuman extends EntityLiving implements ICommandListener {
 
     public PlayerInventory inventory = new PlayerInventory(this);
@@ -119,6 +128,7 @@ public abstract class EntityHuman extends EntityLiving implements ICommandListen
             ItemStack itemstack = this.inventory.getItemInHand();
 
             if (itemstack == this.e) {
+            	e.getItem().onUsingItemTick(e, this, f);
                 if (this.f <= 25 && this.f % 4 == 0) {
                     this.c(itemstack, 5);
                 }
@@ -386,7 +396,15 @@ public abstract class EntityHuman extends EntityLiving implements ICommandListen
     }
 
     public EntityItem bB() {
-        return this.a(this.inventory.splitStack(this.inventory.itemInHandIndex, 1), false);
+//        return this.a(this.inventory.splitStack(this.inventory.itemInHandIndex, 1), false);
+    	ItemStack stack = this.inventory.getItemInHand();
+        if (stack == null) {
+          return null;
+        }
+        if (stack.getItem().onDroppedByPlayer(stack, this)) {
+          return a(this.inventory.splitStack(this.inventory.itemInHandIndex, 1), false);
+        }
+        return null;
     }
 
     public EntityItem drop(ItemStack itemstack) {
@@ -446,32 +464,68 @@ public abstract class EntityHuman extends EntityLiving implements ICommandListen
         this.world.addEntity(entityitem);
     }
 
+    /**
+     * Returns how strong the player is against the specified block at this moment
+     * Deprecated in favor of the moresensitive version
+     */
+    @Deprecated
     public float a(Block block) {
-        float f = this.inventory.a(block);
+    	return getCurrentPlayerStrVsBlock(block, 0);
+//        float f = this.inventory.a(block);
+//        int i = EnchantmentManager.getDigSpeedEnchantmentLevel(this.inventory);
+//
+//        if (i > 0 && this.inventory.b(block)) {
+//            f += (float) (i * i + 1);
+//        }
+//
+//        if (this.hasEffect(MobEffectList.FASTER_DIG)) {
+//            f *= 1.0F + (float) (this.getEffect(MobEffectList.FASTER_DIG).getAmplifier() + 1) * 0.2F;
+//        }
+//
+//        if (this.hasEffect(MobEffectList.SLOWER_DIG)) {
+//            f *= 1.0F - (float) (this.getEffect(MobEffectList.SLOWER_DIG).getAmplifier() + 1) * 0.2F;
+//        }
+//
+//        if (this.a(Material.WATER) && !EnchantmentManager.hasWaterWorkerEnchantment(this.inventory)) {
+//            f /= 5.0F;
+//        }
+//
+//        if (!this.onGround) {
+//            f /= 5.0F;
+//        }
+//
+//        return f;
+    }
+    
+    public float getCurrentPlayerStrVsBlock(Block block, int meta) {
+        ItemStack stack = this.inventory.getItemInHand();
+        float f = stack == null ? 1.0F : stack.getItem().getStrVsBlock(stack, block, meta);
+
+        float f1 = f;
         int i = EnchantmentManager.getDigSpeedEnchantmentLevel(this.inventory);
 
-        if (i > 0 && this.inventory.b(block)) {
-            f += (float) (i * i + 1);
+        if ((i > 0) && (this.inventory.b(block))) {
+          f1 = f + (i * i + 1);
         }
 
-        if (this.hasEffect(MobEffectList.FASTER_DIG)) {
-            f *= 1.0F + (float) (this.getEffect(MobEffectList.FASTER_DIG).getAmplifier() + 1) * 0.2F;
+        if (hasEffect(MobEffectList.FASTER_DIG)) {
+          f1 *= (1.0F + (getEffect(MobEffectList.FASTER_DIG).getAmplifier() + 1) * 0.2F);
         }
 
-        if (this.hasEffect(MobEffectList.SLOWER_DIG)) {
-            f *= 1.0F - (float) (this.getEffect(MobEffectList.SLOWER_DIG).getAmplifier() + 1) * 0.2F;
+        if (hasEffect(MobEffectList.SLOWER_DIG)) {
+          f1 *= (1.0F - (getEffect(MobEffectList.SLOWER_DIG).getAmplifier() + 1) * 0.2F);
         }
 
-        if (this.a(Material.WATER) && !EnchantmentManager.hasWaterWorkerEnchantment(this.inventory)) {
-            f /= 5.0F;
+        if ((a(Material.WATER)) && (!EnchantmentManager.hasWaterWorkerEnchantment(this.inventory))) {
+          f1 /= 5.0F;
         }
 
         if (!this.onGround) {
-            f /= 5.0F;
+          f1 /= 5.0F;
         }
 
-        return f;
-    }
+        return f1;
+      }
 
     public boolean b(Block block) {
         return this.inventory.b(block);
@@ -661,11 +715,23 @@ public abstract class EntityHuman extends EntityLiving implements ICommandListen
     }
 
     protected void d(DamageSource damagesource, int i) {
+    	LivingHurtEvent event = new LivingHurtEvent(this, damagesource, i);
+        if (MinecraftForge.EVENT_BUS.post(event) || event.ammount == 0)
+        {
+            return;
+        }
+        i = event.ammount;
+        
         if (!damagesource.ignoresArmor() && this.aY()) {
             i = 1 + i >> 1;
         }
 
-        i = this.b(damagesource, i);
+//        i = this.b(damagesource, i);
+        i = ArmorProperties.ApplyArmor(this, inventory.armor, damagesource, i);
+        if (i <= 0)
+        {
+            return;
+        }
         i = this.c(damagesource, i);
         this.j(damagesource.d());
         this.health -= i;
@@ -684,6 +750,10 @@ public abstract class EntityHuman extends EntityLiving implements ICommandListen
     public void c(ItemStack itemstack) {}
 
     public boolean m(Entity entity) {
+    	 if (MinecraftForge.EVENT_BUS.post(new EntityInteractEvent(this, entity)))
+         {
+             return false;
+         }
         if (entity.c(this)) {
             return true;
         } else {
@@ -713,7 +783,9 @@ public abstract class EntityHuman extends EntityLiving implements ICommandListen
     }
 
     public void bD() {
+    	ItemStack orig = bC();
         this.inventory.setItem(this.inventory.itemInHandIndex, (ItemStack) null);
+        MinecraftForge.EVENT_BUS.post(new PlayerDestroyItemEvent(this, orig));
     }
 
     public double W() {
@@ -728,6 +800,15 @@ public abstract class EntityHuman extends EntityLiving implements ICommandListen
     }
 
     public void attack(Entity entity) {
+    	if (MinecraftForge.EVENT_BUS.post(new AttackEntityEvent(this, entity)))
+        {
+            return;
+        }
+        ItemStack stack = bC();
+        if (stack != null && stack.getItem().onLeftClickEntity(stack, this, entity))
+        {
+            return;
+        }
         if (entity.an()) {
             int i = this.inventory.a(entity);
 
@@ -846,6 +927,12 @@ public abstract class EntityHuman extends EntityLiving implements ICommandListen
     }
 
     public EnumBedResult a(int i, int j, int k) {
+    	PlayerSleepInBedEvent event = new PlayerSleepInBedEvent(this, i, j, k);
+        MinecraftForge.EVENT_BUS.post(event);
+        if (event.result != null)
+        {
+            return event.result;
+        }
         if (!this.world.isStatic) {
             if (this.isSleeping() || !this.isAlive()) {
                 return EnumBedResult.OTHER_PROBLEM;
@@ -891,6 +978,11 @@ public abstract class EntityHuman extends EntityLiving implements ICommandListen
         if (this.world.isLoaded(i, j, k)) {
             int l = this.world.getData(i, j, k);
             int i1 = BlockBed.d(l);
+            Block block = Block.byId[world.getTypeId(i, j, k)];
+            if (block != null)
+            {
+                i1 = block.getBedDirection(world, i, j, k);
+            }
             float f = 0.5F;
             float f1 = 0.5F;
 
@@ -955,9 +1047,15 @@ public abstract class EntityHuman extends EntityLiving implements ICommandListen
         ChunkCoordinates chunkcoordinates = this.bT;
         ChunkCoordinates chunkcoordinates1 = this.bT;
 
-        if (chunkcoordinates != null && this.world.getTypeId(chunkcoordinates.x, chunkcoordinates.y, chunkcoordinates.z) == Block.BED.id) {
-            BlockBed.a(this.world, chunkcoordinates.x, chunkcoordinates.y, chunkcoordinates.z, false);
-            chunkcoordinates1 = BlockBed.b(this.world, chunkcoordinates.x, chunkcoordinates.y, chunkcoordinates.z, 0);
+//        if (chunkcoordinates != null && this.world.getTypeId(chunkcoordinates.x, chunkcoordinates.y, chunkcoordinates.z) == Block.BED.id) {
+//            BlockBed.a(this.world, chunkcoordinates.x, chunkcoordinates.y, chunkcoordinates.z, false);
+//            chunkcoordinates1 = BlockBed.b(this.world, chunkcoordinates.x, chunkcoordinates.y, chunkcoordinates.z, 0);
+	    Block block = (chunkcoordinates == null ? null : Block.byId[world.getTypeId(chunkcoordinates.x, chunkcoordinates.y, chunkcoordinates.z)]);
+	
+	    if (chunkcoordinates != null && block != null && block.isBed(world, chunkcoordinates.x, chunkcoordinates.y, chunkcoordinates.z, this))
+	    {
+	        block.setBedOccupied(this.world, chunkcoordinates.x, chunkcoordinates.y, chunkcoordinates.z, this, false);
+	        chunkcoordinates1 = block.getBedSpawnPosition(world, chunkcoordinates.x, chunkcoordinates.y, chunkcoordinates.z, this);
             if (chunkcoordinates1 == null) {
                 chunkcoordinates1 = new ChunkCoordinates(chunkcoordinates.x, chunkcoordinates.y + 1, chunkcoordinates.z);
             }
@@ -998,7 +1096,9 @@ public abstract class EntityHuman extends EntityLiving implements ICommandListen
     }
 
     private boolean l() {
-        return this.world.getTypeId(this.bT.x, this.bT.y, this.bT.z) == Block.BED.id;
+    	ChunkCoordinates c = bT;
+        int blockID = world.getTypeId(c.x, c.y, c.z);
+        return Block.byId[blockID] != null && Block.byId[blockID].isBed(world, c.x, c.y, c.z, this);
     }
 
     public static ChunkCoordinates getBed(World world, ChunkCoordinates chunkcoordinates) {
@@ -1008,10 +1108,13 @@ public abstract class EntityHuman extends EntityLiving implements ICommandListen
         ichunkprovider.getChunkAt(chunkcoordinates.x + 3 >> 4, chunkcoordinates.z - 3 >> 4);
         ichunkprovider.getChunkAt(chunkcoordinates.x - 3 >> 4, chunkcoordinates.z + 3 >> 4);
         ichunkprovider.getChunkAt(chunkcoordinates.x + 3 >> 4, chunkcoordinates.z + 3 >> 4);
-        if (world.getTypeId(chunkcoordinates.x, chunkcoordinates.y, chunkcoordinates.z) != Block.BED.id) {
+//        if (world.getTypeId(chunkcoordinates.x, chunkcoordinates.y, chunkcoordinates.z) != Block.BED.id) 
+        ChunkCoordinates c = chunkcoordinates;
+        Block block = Block.byId[world.getTypeId(c.x, c.y, c.z)];
+        if (block == null || !block.isBed(world, c.x, c.y, c.z, null)) {
             return null;
         } else {
-            ChunkCoordinates chunkcoordinates1 = BlockBed.b(world, chunkcoordinates.x, chunkcoordinates.y, chunkcoordinates.z, 0);
+        	ChunkCoordinates chunkcoordinates1 = block.getBedSpawnPosition(world, c.x, c.y, c.z, null);
 
             return chunkcoordinates1;
         }

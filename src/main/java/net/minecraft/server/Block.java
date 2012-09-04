@@ -1072,7 +1072,7 @@ public class Block {
      * @param player The player or camera entity, null in some cases.
      * @return The spawn position
      */
-    public ChunkCoordinates getBedSpawnPosition(World world, int x, int y, int z, EntityPlayer player)
+    public ChunkCoordinates getBedSpawnPosition(World world, int x, int y, int z, EntityHuman player)
     {
         return BlockBed.b(world, x, y, z, 0);
     }
@@ -1087,7 +1087,7 @@ public class Block {
      * @param player The player or camera entity, null in some cases.
      * @param occupied True if we are occupying the bed, or false if they are stopping use of the bed
      */
-    public void setBedOccupied(World world, int x, int y, int z, EntityPlayer player, boolean occupied)
+    public void setBedOccupied(World world, int x, int y, int z, EntityHuman player, boolean occupied)
     {
         BlockBed.a(world,  x, y, z, occupied);        
     }
