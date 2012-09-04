@@ -265,7 +265,7 @@ public class BlockPiston extends Block {
                 return false;
             }
 
-            return !(Block.byId[i] instanceof BlockContainer);
+            return (Block.byId[i] == null) || (!Block.byId[i].hasTileEntity(world.getData(j, k, l)));
         }
     }
 
