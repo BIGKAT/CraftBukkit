@@ -35,7 +35,9 @@ public class BlockSnow extends Block {
     public boolean canPlace(World world, int i, int j, int k) {
         int l = world.getTypeId(i, j - 1, k);
 
-        return l != 0 && (l == Block.LEAVES.id || Block.byId[l].d()) ? world.getMaterial(i, j - 1, k).isSolid() : false;
+        Block block = Block.byId[l];
+        return block != null && (block.isLeaves(world, i, j - 1, k) || Block.byId[l].d()) ? world.getMaterial(i, j - 1, k).isSolid() : false;
+//        return l != 0 && (l == Block.LEAVES.id || Block.byId[l].d()) ? world.getMaterial(i, j - 1, k).isSolid() : false;
     }
 
     public void doPhysics(World world, int i, int j, int k, int l) {
@@ -44,7 +46,6 @@ public class BlockSnow extends Block {
 
     private boolean n(World world, int i, int j, int k) {
         if (!this.canPlace(world, i, j, k)) {
-            this.c(world, i, j, k, world.getData(i, j, k), 0);
             world.setRawTypeId(i, j, k, 0); // CraftBukkit
             world.notify(i, j, k); // CraftBukkit - Notify clients of the reversion
             return false;
@@ -54,16 +55,17 @@ public class BlockSnow extends Block {
     }
 
     public void a(World world, EntityHuman entityhuman, int i, int j, int k, int l) {
-        int i1 = Item.SNOW_BALL.id;
-        float f = 0.7F;
-        double d0 = (double) (world.random.nextFloat() * f) + (double) (1.0F - f) * 0.5D;
-        double d1 = (double) (world.random.nextFloat() * f) + (double) (1.0F - f) * 0.5D;
-        double d2 = (double) (world.random.nextFloat() * f) + (double) (1.0F - f) * 0.5D;
-        EntityItem entityitem = new EntityItem(world, (double) i + d0, (double) j + d1, (double) k + d2, new ItemStack(i1, 1, 0));
-
-        entityitem.pickupDelay = 10;
-        world.addEntity(entityitem);
-        world.setTypeId(i, j, k, 0);
+//        int i1 = Item.SNOW_BALL.id;
+//        float f = 0.7F;
+//        double d0 = (double) (world.random.nextFloat() * f) + (double) (1.0F - f) * 0.5D;
+//        double d1 = (double) (world.random.nextFloat() * f) + (double) (1.0F - f) * 0.5D;
+//        double d2 = (double) (world.random.nextFloat() * f) + (double) (1.0F - f) * 0.5D;
+//        EntityItem entityitem = new EntityItem(world, (double) i + d0, (double) j + d1, (double) k + d2, new ItemStack(i1, 1, 0));
+//
+//        entityitem.pickupDelay = 10;
+//        world.addEntity(entityitem);
+//        world.setTypeId(i, j, k, 0);
+    	c(world, i, j, k, l, 0);
         entityhuman.a(StatisticList.C[this.id], 1);
     }
 
@@ -72,7 +74,7 @@ public class BlockSnow extends Block {
     }
 
     public int a(Random random) {
-        return 0;
+        return 1;
     }
 
     public void b(World world, int i, int j, int k, Random random) {
@@ -83,7 +85,6 @@ public class BlockSnow extends Block {
             }
             // CraftBukkit end
 
-            this.c(world, i, j, k, world.getData(i, j, k), 0);
             world.setTypeId(i, j, k, 0);
         }
     }
