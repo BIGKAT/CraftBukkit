@@ -10,6 +10,7 @@ public class ItemBlock extends Item {
         super(i);
         this.id = i + 256;
         this.c(Block.byId[i + 256].a(2));
+        isDefaultTexture = Block.byId[i + 256].isDefaultTexture;
     }
 
     public int f() {
@@ -22,7 +23,9 @@ public class ItemBlock extends Item {
 
         if (i1 == Block.SNOW.id) {
             l = 1;
-        } else if (i1 != Block.VINE.id && i1 != Block.LONG_GRASS.id && i1 != Block.DEAD_BUSH.id) {
+//        } else if (i1 != Block.VINE.id && i1 != Block.LONG_GRASS.id && i1 != Block.DEAD_BUSH.id) {
+        } else if (i1 != Block.VINE.id && i1 != Block.LONG_GRASS.id && i1 != Block.DEAD_BUSH.id
+                && (Block.byId[i1] == null || !Block.byId[i1].isBlockReplaceable(world, i, j, k))) {
             if (l == 0) {
                 --j;
             }
@@ -82,13 +85,14 @@ public class ItemBlock extends Item {
             if (event.isCancelled() || !event.canBuild()) {
                 return true;
             }
-            if (world.setTypeIdAndData(i, j, k, id, data)) {
-                if (world.getTypeId(i, j, k) == id && Block.byId[id] != null) {
-                    Block.byId[id].postPlace(world, i, j, k, l, f, f1, f2);
-                    Block.byId[id].postPlace(world, i, j, k, entityhuman);
+//            if (world.setTypeIdAndData(i, j, k, id, data)) {
+//                if (world.getTypeId(i, j, k) == id && Block.byId[id] != null) {
+//                    Block.byId[id].postPlace(world, i, j, k, l, f, f1, f2);
+//                    Block.byId[id].postPlace(world, i, j, k, entityhuman);
                     // CraftBukkit end
-                }
-
+//                }
+            if (placeBlockAt(itemstack, entityhuman, world, i, j, k, l, f, f1, f2))
+            {
                 world.makeSound((double) ((float) i + 0.5F), (double) ((float) j + 0.5F), (double) ((float) k + 0.5F), block.stepSound.getName(), (block.stepSound.getVolume1() + 1.0F) / 2.0F, block.stepSound.getVolume2() * 0.8F);
                 --itemstack.count;
             }
@@ -105,5 +109,29 @@ public class ItemBlock extends Item {
 
     public String getName() {
         return Block.byId[this.id].a();
+    }
+    
+    /**
+     * Called to actually place the block, after the location is determined
+     * and all permission checks have been made.
+     * 
+     * @param stack The item stack that was used to place the block. This can be changed inside the method.
+     * @param player The player who is placing the block. Can be null if the block is not being placed by a player.
+     * @param side The side the player (or machine) right-clicked on.
+     */
+    public boolean placeBlockAt(ItemStack stack, EntityHuman player, World world, int x, int y, int z, int side, float hitX, float hitY, float hitZ)
+    {
+       if (!world.setTypeIdAndData(x, y, z, this.id, this.filterData(stack.i())))
+       {
+               return false;
+       }
+
+       if (world.getTypeId(x, y, z) == this.id)
+       {
+           Block.byId[this.id].postPlace(world, x, y, z, side, hitX, hitY, hitZ);
+           Block.byId[this.id].postPlace(world, x, y, z, player);
+       }
+
+       return true;
     }
 }
