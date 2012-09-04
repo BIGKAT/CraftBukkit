@@ -18,6 +18,10 @@ import org.bukkit.event.weather.LightningStrikeEvent;
 import org.bukkit.event.weather.ThunderChangeEvent;
 import org.bukkit.event.weather.WeatherChangeEvent;
 
+import net.minecraftforge.common.DimensionManager;
+import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.event.world.WorldEvent;
+
 public class WorldServer extends World implements org.bukkit.BlockChangeDelegate {
     // CraftBukkit end
 
@@ -58,6 +62,7 @@ public class WorldServer extends World implements org.bukkit.BlockChangeDelegate
         if (this.O == null) {
             this.O = new TreeSet();
         }
+        DimensionManager.setWorld(i, this);
     }
 
     // CraftBukkit start
@@ -538,15 +543,36 @@ public class WorldServer extends World implements org.bukkit.BlockChangeDelegate
         return this.chunkProviderServer;
     }
 
-    public List getTileEntities(int i, int j, int k, int l, int i1, int j1) {
+    public List getTileEntities(int par1, int par2, int par3, int par4, int par5, int par6) { //(int i, int j, int k, int l, int i1, int j1) {
         ArrayList arraylist = new ArrayList();
-        Iterator iterator = this.tileEntityList.iterator();
-
-        while (iterator.hasNext()) {
-            TileEntity tileentity = (TileEntity) iterator.next();
-
-            if (tileentity.x >= i && tileentity.y >= j && tileentity.z >= k && tileentity.x < l && tileentity.y < i1 && tileentity.z < j1) {
-                arraylist.add(tileentity);
+        
+        for(int x = (par1 >> 4); x <= (par4 >> 4); x++)
+        {
+            for(int z = (par3 >> 4); z <= (par6 >> 4); z++)
+            {
+                Chunk chunk = getChunkAt(x, z);
+                if (chunk != null)
+                {
+                    for(Object obj : chunk.tileEntities.values())
+                    {
+                        TileEntity entity = (TileEntity)obj;
+                        if (!entity.p())
+                        {
+                            if (entity.x >= par1 && entity.y >= par2 && entity.z >= par3 && 
+                                entity.x <= par4 && entity.y <= par5 && entity.z <= par6)
+                            {
+                            	arraylist.add(entity);
+                            }
+                        }
+                    }
+                }
+//        Iterator iterator = this.tileEntityList.iterator();
+//
+//        while (iterator.hasNext()) {
+//            TileEntity tileentity = (TileEntity) iterator.next();
+//
+//            if (tileentity.x >= i && tileentity.y >= j && tileentity.z >= k && tileentity.x < l && tileentity.y < i1 && tileentity.z < j1) {
+//                arraylist.add(tileentity);
             }
         }
 
@@ -563,6 +589,8 @@ public class WorldServer extends World implements org.bukkit.BlockChangeDelegate
 
         // CraftBukkit - Configurable spawn protection
         return i1 > this.getServer().getSpawnRadius() || this.server.getServerConfigurationManager().isOp(entityhuman.name) || this.server.H();
+        
+        //TODO forge version: return var6 > mcServer.spawnProtectionSize || this.mcServer.getConfigurationManager().areCommandsAllowed(par1EntityPlayer.username) || this.mcServer.isSinglePlayer();
     }
 
     protected void a(WorldSettings worldsettings) {
@@ -669,6 +697,7 @@ public class WorldServer extends World implements org.bukkit.BlockChangeDelegate
             }
 
             this.chunkProvider.saveChunks(flag, iprogressupdate);
+            MinecraftForge.EVENT_BUS.post(new WorldEvent.Save(this));
         }
     }
 
