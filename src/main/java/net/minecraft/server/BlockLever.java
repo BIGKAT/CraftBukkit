@@ -2,6 +2,9 @@ package net.minecraft.server;
 
 import org.bukkit.event.block.BlockRedstoneEvent; // CraftBukkit
 
+import net.minecraftforge.common.ForgeDirection;
+import static net.minecraftforge.common.ForgeDirection.*;
+
 public class BlockLever extends Block {
 
     protected BlockLever(int i, int j) {
@@ -25,49 +28,81 @@ public class BlockLever extends Block {
         return 12;
     }
 
-    public boolean canPlace(World world, int i, int j, int k, int l) {
-        return l == 0 && world.s(i, j + 1, k) ? true : (l == 1 && world.t(i, j - 1, k) ? true : (l == 2 && world.s(i, j, k + 1) ? true : (l == 3 && world.s(i, j, k - 1) ? true : (l == 4 && world.s(i + 1, j, k) ? true : l == 5 && world.s(i - 1, j, k)))));
+    /**
+     * checks to see if you can place this block can be placed on that side of a block: BlockLever overrides
+     */
+    public boolean canPlace(World par1World, int par2, int par3, int par4, int par5)
+    {
+        ForgeDirection dir = ForgeDirection.getOrientation(par5);
+        return (dir == DOWN  && par1World.isBlockSolidOnSide(par2, par3 + 1, par4, DOWN )) ||
+               (dir == UP    && par1World.isBlockSolidOnSide(par2, par3 - 1, par4, UP   )) ||
+               (dir == NORTH && par1World.isBlockSolidOnSide(par2, par3, par4 + 1, NORTH)) ||
+               (dir == SOUTH && par1World.isBlockSolidOnSide(par2, par3, par4 - 1, SOUTH)) ||
+               (dir == WEST  && par1World.isBlockSolidOnSide(par2 + 1, par3, par4, WEST )) ||
+               (dir == EAST  && par1World.isBlockSolidOnSide(par2 - 1, par3, par4, EAST ));
     }
 
-    public boolean canPlace(World world, int i, int j, int k) {
-        return world.s(i - 1, j, k) ? true : (world.s(i + 1, j, k) ? true : (world.s(i, j, k - 1) ? true : (world.s(i, j, k + 1) ? true : (world.t(i, j - 1, k) ? true : world.s(i, j + 1, k)))));
+    /**
+     * Checks to see if its valid to put this block at the specified coordinates. Args: world, x, y, z
+     */
+    public boolean canPlace(World par1World, int par2, int par3, int par4)
+    {
+        return par1World.isBlockSolidOnSide(par2 - 1, par3, par4, EAST ) ||
+               par1World.isBlockSolidOnSide(par2 + 1, par3, par4, WEST ) ||
+               par1World.isBlockSolidOnSide(par2, par3, par4 - 1, SOUTH) ||
+               par1World.isBlockSolidOnSide(par2, par3, par4 + 1, NORTH) ||
+               par1World.isBlockSolidOnSide(par2, par3 - 1, par4, UP   ) ||
+               par1World.isBlockSolidOnSide(par2, par3 + 1, par4, DOWN );
     }
+    
+    /**
+     * called before onBlockPlacedBy by ItemBlock and ItemReed
+     */
+    public void postPlace(World par1World, int par2, int par3, int par4, int par5, float par6, float par7, float par8)
+    {
+        int var9 = par1World.getData(par2, par3, par4);
+        int var10 = var9 & 8;
+        var9 &= 7;
+        var9 = -1;
 
-    public void postPlace(World world, int i, int j, int k, int l, float f, float f1, float f2) {
-        int i1 = world.getData(i, j, k);
-        int j1 = i1 & 8;
-
-        i1 &= 7;
-        i1 = -1;
-        if (l == 0 && world.s(i, j + 1, k)) {
-            i1 = world.random.nextBoolean() ? 0 : 7;
+        if (par5 == 0 && par1World.isBlockSolidOnSide(par2, par3 + 1, par4, DOWN))
+        {
+            var9 = par1World.random.nextBoolean() ? 0 : 7;
         }
 
-        if (l == 1 && world.t(i, j - 1, k)) {
-            i1 = 5 + world.random.nextInt(2);
+        if (par5 == 1 && par1World.isBlockSolidOnSide(par2, par3 - 1, par4, UP))
+        {
+            var9 = 5 + par1World.random.nextInt(2);
         }
 
-        if (l == 2 && world.s(i, j, k + 1)) {
-            i1 = 4;
+        if (par5 == 2 && par1World.isBlockSolidOnSide(par2, par3, par4 + 1, NORTH))
+        {
+            var9 = 4;
         }
 
-        if (l == 3 && world.s(i, j, k - 1)) {
-            i1 = 3;
+        if (par5 == 3 && par1World.isBlockSolidOnSide(par2, par3, par4 - 1, SOUTH))
+        {
+            var9 = 3;
         }
 
-        if (l == 4 && world.s(i + 1, j, k)) {
-            i1 = 2;
+        if (par5 == 4 && par1World.isBlockSolidOnSide(par2 + 1, par3, par4, WEST))
+        {
+            var9 = 2;
         }
 
-        if (l == 5 && world.s(i - 1, j, k)) {
-            i1 = 1;
+        if (par5 == 5 && par1World.isBlockSolidOnSide(par2 - 1, par3, par4, EAST))
+        {
+            var9 = 1;
         }
 
-        if (i1 == -1) {
-            this.c(world, i, j, k, world.getData(i, j, k), 0);
-            world.setTypeId(i, j, k, 0);
-        } else {
-            world.setData(i, j, k, i1 + j1);
+        if (var9 == -1)
+        {
+            this.c(par1World, par2, par3, par4, par1World.getData(par2, par3, par4), 0);
+            par1World.setTypeId(par2, par3, par4, 0);
+        }
+        else
+        {
+            par1World.setData(par2, par3, par4, var9 + var10);
         }
     }
 
@@ -96,46 +131,61 @@ public class BlockLever extends Block {
         }
     }
 
-    public void doPhysics(World world, int i, int j, int k, int l) {
-        if (this.l(world, i, j, k)) {
-            int i1 = world.getData(i, j, k) & 7;
-            boolean flag = false;
+    /**
+     * Lets the block know when one of its neighbor changes. Doesn't know which neighbor changed (coordinates passed are
+     * their own) Args: x, y, z, neighbor blockID
+     */
+    public void doPhysics(World par1World, int par2, int par3, int par4, int par5)
+    {
+        if (this.l(par1World, par2, par3, par4))
+        {
+            int var6 = par1World.getData(par2, par3, par4) & 7;
+            boolean var7 = false;
 
-            if (!world.s(i - 1, j, k) && i1 == 1) {
-                flag = true;
+            if (!par1World.isBlockSolidOnSide(par2 - 1, par3, par4, EAST) && var6 == 1)
+            {
+                var7 = true;
             }
 
-            if (!world.s(i + 1, j, k) && i1 == 2) {
-                flag = true;
+            if (!par1World.isBlockSolidOnSide(par2 + 1, par3, par4, WEST) && var6 == 2)
+            {
+                var7 = true;
             }
 
-            if (!world.s(i, j, k - 1) && i1 == 3) {
-                flag = true;
+            if (!par1World.isBlockSolidOnSide(par2, par3, par4 - 1, SOUTH) && var6 == 3)
+            {
+                var7 = true;
             }
 
-            if (!world.s(i, j, k + 1) && i1 == 4) {
-                flag = true;
+            if (!par1World.isBlockSolidOnSide(par2, par3, par4 + 1, NORTH) && var6 == 4)
+            {
+                var7 = true;
             }
 
-            if (!world.t(i, j - 1, k) && i1 == 5) {
-                flag = true;
+            if (!par1World.isBlockSolidOnSide(par2, par3 - 1, par4, UP) && var6 == 5)
+            {
+                var7 = true;
             }
 
-            if (!world.t(i, j - 1, k) && i1 == 6) {
-                flag = true;
+            if (!par1World.isBlockSolidOnSide(par2, par3 - 1, par4, UP) && var6 == 6)
+            {
+                var7 = true;
             }
 
-            if (!world.s(i, j + 1, k) && i1 == 0) {
-                flag = true;
+            if (!par1World.isBlockSolidOnSide(par2, par3 + 1, par4, DOWN) && var6 == 0)
+            {
+                var7 = true;
             }
 
-            if (!world.s(i, j + 1, k) && i1 == 7) {
-                flag = true;
+            if (!par1World.isBlockSolidOnSide(par2, par3 + 1, par4, DOWN) && var6 == 7)
+            {
+                var7 = true;
             }
 
-            if (flag) {
-                this.c(world, i, j, k, world.getData(i, j, k), 0);
-                world.setTypeId(i, j, k, 0);
+            if (var7)
+            {
+                this.c(par1World, par2, par3, par4, par1World.getData(par2, par3, par4), 0);
+                par1World.setTypeId(par2, par3, par4, 0);
             }
         }
     }
