@@ -71,7 +71,7 @@ public class ItemWorldMap extends ItemWorldMapBase {
                             byte b0 = 0;
                             byte b1 = 0;
                             byte b2 = 0;
-                            int[] aint = new int[256];
+                            int[] aint = new int[Block.byId.length]; //new int[256];
                             Chunk chunk = world.getChunkAtWorldCoords(i3, j3);
 
                             if (!chunk.isEmpty()) {
@@ -149,7 +149,7 @@ public class ItemWorldMap extends ItemWorldMapBase {
                                 l4 = 0;
                                 j4 = 0;
 
-                                for (k4 = 0; k4 < 256; ++k4) {
+                                for (k4 = 0; k4 < Block.byId.length; ++k4) {
                                     if (aint[k4] > l4) {
                                         j4 = k4;
                                         l4 = aint[k4];
