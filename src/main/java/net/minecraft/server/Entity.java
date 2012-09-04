@@ -1,5 +1,6 @@
 package net.minecraft.server;
 
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
@@ -93,6 +94,11 @@ public abstract class Entity {
     public UUID uniqueId = UUID.randomUUID(); // CraftBukkit
     public boolean valid = false; // CraftBukkit
 
+    /** Forge: Used to store custom data for each entity. */
+    private NBTTagCompound customEntityData;
+    protected boolean captureDrops = false;
+    protected ArrayList<EntityItem> capturedDrops = new ArrayList<EntityItem>();
+    
     public Entity(World world) {
         this.id = entityCount++;
         this.l = 1.0D;
@@ -1014,6 +1020,10 @@ public abstract class Entity {
         nbttagcompound.setLong("UUIDLeast", this.uniqueId.getLeastSignificantBits());
         nbttagcompound.setLong("UUIDMost", this.uniqueId.getMostSignificantBits());
         // CraftBukkit end
+        if (customEntityData != null)
+        {
+        	nbttagcompound.setCompound("ForgeData", customEntityData);
+        }
         this.b(nbttagcompound);
     }
 
@@ -1050,6 +1060,10 @@ public abstract class Entity {
         this.onGround = nbttagcompound.getBoolean("OnGround");
         this.setPosition(this.locX, this.locY, this.locZ);
 
+        if (nbttagcompound.hasKey("ForgeData")) {
+            this.customEntityData = nbttagcompound.getCompound("ForgeData");
+        }
+        
         // CraftBukkit start
         long least = nbttagcompound.getLong("UUIDLeast");
         long most = nbttagcompound.getLong("UUIDMost");
@@ -1152,6 +1166,14 @@ public abstract class Entity {
 
         entityitem.pickupDelay = 10;
         this.world.addEntity(entityitem);
+        if (this.captureDrops)
+        {
+          this.capturedDrops.add(entityitem);
+        }
+        else
+        {
+          this.world.addEntity(entityitem);
+        }
         return entityitem;
     }
 
@@ -1575,5 +1597,60 @@ public abstract class Entity {
 
     public String toString() {
         return String.format("%s[\'%s\'/%d, l=\'%s\', x=%.2f, y=%.2f, z=%.2f]", new Object[] { this.getClass().getSimpleName(), this.getLocalizedName(), Integer.valueOf(this.id), this.world == null ? "~NULL~" : this.world.getWorldData().getName(), Double.valueOf(this.locX), Double.valueOf(this.locY), Double.valueOf(this.locZ)});
+    }
+    
+    /* ================================== Forge Start =====================================*/
+    /**
+     * Returns a NBTTagCompound that can be used to store custom data for this entity.
+     * It will be written, and read from disc, so it persists over world saves.
+     * @return A NBTTagCompound
+     */
+    public NBTTagCompound getEntityData()
+    {
+      if (this.customEntityData == null)
+      {
+        this.customEntityData = new NBTTagCompound();
+      }
+      return this.customEntityData;
+    }
+
+    /**
+     * Used in model rendering to determine if the entity riding this entity should be in the 'sitting' position.
+     * @return false to prevent an entity that is mounted to this entity from displaying the 'sitting' animation.
+     */
+    public boolean shouldRiderSit()
+    {
+      return true;
+    }
+    
+    /**
+     * Called when a user uses the creative pick block button on this entity.
+     * 
+     * @param target The full target the player is looking at
+     * @return A ItemStack to add to the player's inventory, Null if nothing should be added.
+     */
+    public ItemStack getPickedResult(MovingObjectPosition target)
+    {
+        if (this instanceof EntityPainting)
+        {
+            return new ItemStack(Item.PAINTING);
+        }
+        else if (this instanceof EntityMinecart)
+        {
+            return ((EntityMinecart)this).getCartItem();
+        }
+        else if (this instanceof EntityBoat)
+        {
+            return new ItemStack(Item.BOAT);
+        }
+        else
+        {
+            int id = EntityTypes.a(this);
+            if (id > 0 || EntityTypes.a.containsKey(id))
+            {
+                return new ItemStack(Item.MONSTER_EGG, 1, id);
+            }
+        }
+        return null;
     }
 }
