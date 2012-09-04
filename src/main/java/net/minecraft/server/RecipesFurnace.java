@@ -1,5 +1,6 @@
 package net.minecraft.server;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -8,6 +9,7 @@ public class RecipesFurnace {
     private static final RecipesFurnace a = new RecipesFurnace();
     public Map recipes = new HashMap(); // CraftBukkit - private -> public
     private Map c = new HashMap();
+    private Map metaSmeltingList = new HashMap();
 
     public static final RecipesFurnace getInstance() {
         return a;
@@ -37,6 +39,11 @@ public class RecipesFurnace {
         this.c.put(Integer.valueOf(itemstack.id), Float.valueOf(f));
     }
 
+    /**
+     * Returns the smelting result of an item.
+     * Deprecated in favor of a metadata sensitive version
+     */
+    @Deprecated
     public ItemStack getResult(int i) {
         return (ItemStack) this.recipes.get(Integer.valueOf(i));
     }
@@ -47,5 +54,35 @@ public class RecipesFurnace {
 
     public float c(int i) {
         return this.c.containsKey(Integer.valueOf(i)) ? ((Float) this.c.get(Integer.valueOf(i))).floatValue() : 0.0F;
+    }
+    
+    /**
+     * Add a metadata-sensitive furnace recipe
+     * @param itemID The Item ID
+     * @param metadata The Item Metadata
+     * @param itemstack The ItemStack for the result
+     */
+    public void addSmelting(int itemID, int metadata, ItemStack itemstack)
+    {
+        metaSmeltingList.put(Arrays.asList(itemID, metadata), itemstack);
+    }
+    
+    /**
+     * Used to get the resulting ItemStack form a source ItemStack
+     * @param item The Source ItemStack
+     * @return The result ItemStack
+     */
+    public ItemStack getSmeltingResult(ItemStack item) 
+    {
+        if (item == null)
+        {
+            return null;
+        }
+        ItemStack ret = (ItemStack)metaSmeltingList.get(Arrays.asList(item.id, item.i()));
+        if (ret != null) 
+        {
+            return ret;
+        }
+        return (ItemStack)c.get(Integer.valueOf(item.id));
     }
 }
