@@ -231,7 +231,7 @@ public class CraftingManager {
             }
         }
 
-        if (i == 2 && itemstack.id == itemstack1.id && itemstack.count == 1 && itemstack1.count == 1 && Item.byId[itemstack.id].m()) {
+        if (i == 2 && itemstack.id == itemstack1.id && itemstack.count == 1 && itemstack1.count == 1 && Item.byId[itemstack.id].isRepairable()) {
             Item item = Item.byId[itemstack.id];
             int k = item.getMaxDurability() - itemstack.i();
             int l = item.getMaxDurability() - itemstack1.i();
