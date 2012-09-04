@@ -2,6 +2,9 @@ package net.minecraft.server;
 
 import org.bukkit.craftbukkit.block.CraftBlockState; // CraftBukkit
 
+import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.event.entity.UseHoeEvent;
+
 public class ItemHoe extends Item {
 
     protected EnumToolMaterial a;
@@ -18,6 +21,16 @@ public class ItemHoe extends Item {
         if (!entityhuman.e(i, j, k)) {
             return false;
         } else {
+        	UseHoeEvent fevent = new UseHoeEvent(entityhuman, itemstack, world, i, j, k);
+            if (MinecraftForge.EVENT_BUS.post(fevent))
+            {
+                return false;
+            }
+            if (fevent.isHandeled())
+            {
+                itemstack.damage(1, entityhuman);
+                return true;
+            }
             int i1 = world.getTypeId(i, j, k);
             int j1 = world.getTypeId(i, j + 1, k);
 
