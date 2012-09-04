@@ -8,7 +8,10 @@ import org.bukkit.entity.HumanEntity;
 import org.bukkit.event.inventory.BrewEvent;
 // CraftBukkit end
 
-public class TileEntityBrewingStand extends TileEntity implements IInventory {
+import net.minecraftforge.common.ISidedInventory;
+import net.minecraftforge.common.ForgeDirection;
+
+public class TileEntityBrewingStand extends TileEntity implements IInventory, ISidedInventory {
 
     public ItemStack[] items = new ItemStack[4]; // CraftBukkit private -> public
     public int brewTime; // CraftBukkit private -> public
@@ -150,7 +153,8 @@ public class TileEntityBrewingStand extends TileEntity implements IInventory {
             }
 
             if (Item.byId[itemstack.id].r()) {
-                this.items[3] = new ItemStack(Item.byId[itemstack.id].q());
+//                this.items[3] = new ItemStack(Item.byId[itemstack.id].q());
+            	  this.items[3] = Item.byId[itemstack.id].getContainerItemStack(items[3]);
             } else {
                 --this.items[3].count;
                 if (this.items[3].count <= 0) {
@@ -254,5 +258,17 @@ public class TileEntityBrewingStand extends TileEntity implements IInventory {
         }
 
         return i;
+    }
+    
+    @Override
+    public int getStartInventorySide(ForgeDirection side)
+    {
+        return (side == ForgeDirection.UP ? 3 : 0);
+    }
+
+    @Override
+    public int getSizeInventorySide(ForgeDirection side)
+    {
+        return (side == ForgeDirection.UP ? 1 : 3);
     }
 }
