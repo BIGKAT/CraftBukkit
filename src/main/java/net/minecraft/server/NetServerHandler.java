@@ -43,6 +43,8 @@ import org.bukkit.inventory.CraftingInventory;
 import org.bukkit.inventory.InventoryView;
 // CraftBukkit end
 
+import cpw.mods.fml.common.network.FMLNetworkHandler;
+
 public class NetServerHandler extends NetHandler {
 
     public static Logger logger = Logger.getLogger("Minecraft");
@@ -1366,6 +1368,11 @@ public class NetServerHandler extends NetHandler {
     }
 
     public void a(Packet250CustomPayload packet250custompayload) {
+    	FMLNetworkHandler.handlePacket250Packet(packet250custompayload, networkManager, this);
+    }
+
+	public void handleVanilla250Packet(Packet250CustomPayload packet250custompayload)
+	{
         DataInputStream datainputstream;
         ItemStack itemstack;
         ItemStack itemstack1;
@@ -1441,4 +1448,11 @@ public class NetServerHandler extends NetHandler {
         }
         // CraftBukkit end
     }
+	
+//	// modloader compat -- yuk!
+//    @Override
+//    public EntityPlayer getPlayer() //TODO duplicate method, sorry modloader!
+//    {
+//        return player;
+//    }
 }
