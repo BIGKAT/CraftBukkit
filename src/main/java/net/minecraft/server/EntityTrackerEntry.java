@@ -10,6 +10,8 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.player.PlayerVelocityEvent;
 // CraftBukkit end
 
+import cpw.mods.fml.common.network.FMLNetworkHandler;
+
 public class EntityTrackerEntry {
 
     public Entity tracker;
@@ -248,6 +250,15 @@ public class EntityTrackerEntry {
                     this.j = this.tracker.motX;
                     this.k = this.tracker.motY;
                     this.l = this.tracker.motZ;
+                    
+                    int posX = MathHelper.floor(this.j * 32.0D);
+                    int posY = MathHelper.floor(this.k * 32.0D);
+                    int posZ = MathHelper.floor(this.l * 32.0D);
+                    if (posX != this.xLoc || posY != this.yLoc || posZ != this.zLoc)
+                    {
+                        FMLNetworkHandler.makeEntitySpawnAdjustment(this.tracker.id, entityplayer, this.xLoc, this.yLoc, this.zLoc);
+                    }
+                    
                     if (this.isMoving && !(packet instanceof Packet24MobSpawn)) {
                         entityplayer.netServerHandler.sendPacket(new Packet28EntityVelocity(this.tracker.id, this.tracker.motX, this.tracker.motY, this.tracker.motZ));
                     }
@@ -315,6 +326,13 @@ public class EntityTrackerEntry {
             // System.out.println("Fetching addPacket for removed entity");
             return null;
             // CraftBukkit end
+        }
+        
+    	Packet pkt = FMLNetworkHandler.getEntitySpawningPacket(this.tracker);
+        
+        if (pkt != null)
+        {
+            return pkt;
         }
 
         if (this.tracker instanceof EntityItem) {
