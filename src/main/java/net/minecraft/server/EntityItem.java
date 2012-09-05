@@ -240,7 +240,7 @@ public class EntityItem extends Entity {
                     entityhuman.a((Statistic) AchievementList.z);
                 }
                 
-                GameRegistry.onPickupNotification(entityhuman, this);
+                GameRegistry.onPickupNotification(entityhuman, this); 
                 
                 this.world.makeSound(this, "random.pop", 0.2F, ((this.random.nextFloat() - this.random.nextFloat()) * 0.7F + 1.0F) * 2.0F);
                 entityhuman.receive(this, i);
