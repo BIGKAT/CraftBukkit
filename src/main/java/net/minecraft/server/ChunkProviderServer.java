@@ -16,6 +16,8 @@ import org.bukkit.craftbukkit.util.LongObjectHashMap;
 import org.bukkit.event.world.ChunkUnloadEvent;
 // CraftBukkit end
 
+import cpw.mods.fml.common.registry.GameRegistry;
+
 public class ChunkProviderServer implements IChunkProvider {
 
     // CraftBukkit start
@@ -202,6 +204,7 @@ public class ChunkProviderServer implements IChunkProvider {
                     for (org.bukkit.generator.BlockPopulator populator : world.getPopulators()) {
                         populator.populate(world, random, chunk.bukkitChunk);
                     }
+                    GameRegistry.generateWorld(i, j, world, world, ichunkprovider);
                 }
                 BlockSand.instaFall = false;
                 this.world.getServer().getPluginManager().callEvent(new org.bukkit.event.world.ChunkPopulateEvent(chunk.bukkitChunk));
