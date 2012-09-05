@@ -41,7 +41,7 @@ public class NetLoginHandler extends NetHandler {
             this.d();
         }
 
-        if (this.g++ == 600) {
+        if (this.g++ == 6000) {
             this.disconnect("Took too long to log in");
         } else {
             this.networkManager.b();
@@ -105,9 +105,13 @@ public class NetLoginHandler extends NetHandler {
         }
     }
 
-    public void a(Packet1Login packet1login) {}
+    public void a(Packet1Login packet1login) {
+    	FMLNetworkHandler.handleLoginPacketOnServer(this, packet1login);
+    }
 
     public void d() {
+    	FMLNetworkHandler.onConnectionReceivedFromClient(this, this.server, this.networkManager.getSocketAddress(), this.h);
+    	
         // CraftBukkit start
         EntityPlayer s = this.server.getServerConfigurationManager().attemptLogin(this, this.h, this.hostname);
 
@@ -187,4 +191,15 @@ public class NetLoginHandler extends NetHandler {
     static boolean a(NetLoginHandler netloginhandler, boolean flag) {
         return netloginhandler.i = flag;
     }
+    
+    @Override
+    public void handleVanilla250Packet(Packet250CustomPayload payload)
+    {
+        // NOOP for login
+    }
+
+    public EntityPlayer getPlayer()
+    {
+        return null;
+    };
 }
