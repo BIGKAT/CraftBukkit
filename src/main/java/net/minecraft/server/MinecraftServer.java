@@ -23,6 +23,9 @@ import org.bukkit.event.world.WorldSaveEvent;
 import org.bukkit.event.player.PlayerChatEvent;
 // CraftBukkit end
 
+import cpw.mods.fml.common.FMLCommonHandler;
+import cpw.mods.fml.relauncher.ArgsWrapper;
+import cpw.mods.fml.relauncher.FMLRelauncher;
 import net.minecraftforge.common.DimensionManager;
 
 public abstract class MinecraftServer implements Runnable, IMojangStatistics, ICommandListener {
@@ -382,8 +385,10 @@ public abstract class MinecraftServer implements Runnable, IMojangStatistics, IC
     public void run() {
         try {
             if (this.init()) {
+            	FMLCommonHandler.instance().handleServerStarted();
                 long i = System.currentTimeMillis();
-
+                FMLCommonHandler.instance().onWorldLoadTick(worlds.toArray());
+                
                 for (long j = 0L; this.isRunning; this.Q = true) {
                     long k = System.currentTimeMillis();
                     long l = k - i;
@@ -415,6 +420,7 @@ public abstract class MinecraftServer implements Runnable, IMojangStatistics, IC
 
                     Thread.sleep(1L);
                 }
+                FMLCommonHandler.instance().handleServerStopping();
             } else {
                 this.a((CrashReport) null);
             }
@@ -465,10 +471,12 @@ public abstract class MinecraftServer implements Runnable, IMojangStatistics, IC
     protected void o() {}
 
     protected void p() throws ExceptionWorldConflict { // CraftBukkit - added throws
+    	FMLCommonHandler.instance().rescheduleTicks(Side.SERVER);
         long i = System.nanoTime();
 
         AxisAlignedBB.a().a();
         Vec3D.a().a();
+        FMLCommonHandler.instance().onPreServerTick();
         ++this.ticks;
         if (this.T) {
             this.T = false;
@@ -507,6 +515,7 @@ public abstract class MinecraftServer implements Runnable, IMojangStatistics, IC
 
         // this.methodProfiler.b(); // CraftBukkit - not in production code
         // this.methodProfiler.b(); // CraftBukkit - not in production code
+        FMLCommonHandler.instance().onPostServerTick();
     }
 
     public void q() {
@@ -561,7 +570,9 @@ public abstract class MinecraftServer implements Runnable, IMojangStatistics, IC
                 // CraftBukkit end */
 
                 // this.methodProfiler.a("tick"); // CraftBukkit - not in production code
+                FMLCommonHandler.instance().onPreWorldTick(worldserver);
                 worldserver.doTick();
+                FMLCommonHandler.instance().onPostWorldTick(worldserver);
                 // this.methodProfiler.c("lights"); // CraftBukkit - not in production code
 
                 while (true) {
