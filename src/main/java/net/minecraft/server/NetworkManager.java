@@ -16,6 +16,8 @@ import javax.crypto.SecretKey;
 
 import java.io.IOException; // CraftBukkit
 
+import cpw.mods.fml.common.network.FMLNetworkHandler;
+
 public class NetworkManager implements INetworkManager {
 
     public static AtomicInteger a = new AtomicInteger();
@@ -279,6 +281,7 @@ public class NetworkManager implements INetworkManager {
         this.a();
         if (this.n && this.inboundQueue.isEmpty()) {
             this.packetListener.a(this.v, this.w);
+            FMLNetworkHandler.onConnectionClosed(this);
         }
     }
 
