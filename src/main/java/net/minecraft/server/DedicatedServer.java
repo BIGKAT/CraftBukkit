@@ -17,6 +17,10 @@ import org.bukkit.craftbukkit.LoggerOutputStream;
 import org.bukkit.event.server.ServerCommandEvent;
 // CraftBukkit end
 
+import cpw.mods.fml.common.FMLCommonHandler;
+import cpw.mods.fml.common.Side;
+import cpw.mods.fml.common.asm.SideOnly;
+
 public class DedicatedServer extends MinecraftServer implements IMinecraftServer {
 
     private final List l = Collections.synchronizedList(new ArrayList());
@@ -51,6 +55,8 @@ public class DedicatedServer extends MinecraftServer implements IMinecraftServer
         if (Runtime.getRuntime().maxMemory() / 1024L / 1024L < 512L) {
             log.warning("To start the server with more ram, launch it as \"java -Xmx1024M -Xms1024M -jar minecraft_server.jar\"");
         }
+        
+        FMLCommonHandler.instance().onServerStart(this);
 
         log.info("Loading properties");
         this.propertyManager = new PropertyManager(this.options); // CraftBukkit - CLI argument support
@@ -102,6 +108,8 @@ public class DedicatedServer extends MinecraftServer implements IMinecraftServer
             log.warning("While this makes the game possible to play without internet access, it also opens up the ability for hackers to connect with any username they choose.");
             log.warning("To change this, set \"online-mode\" to \"true\" in the server.properties file.");
         }
+        
+        FMLCommonHandler.instance().onServerStarted();
 
         this.a((ServerConfigurationManagerAbstract) (new ServerConfigurationManager(this)));
         this.convertable = new WorldLoaderServer(server.getWorldContainer()); // CraftBukkit - moved from MinecraftServer constructor
@@ -163,7 +171,7 @@ public class DedicatedServer extends MinecraftServer implements IMinecraftServer
             this.propertyManager.properties.remove("spawn-protection");
             this.propertyManager.savePropertiesFile();
         }
-
+        FMLCommonHandler.instance().handleServerStarting(this);
         return true;
     }
 

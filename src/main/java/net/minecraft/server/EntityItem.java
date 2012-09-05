@@ -6,6 +6,7 @@ import org.bukkit.event.player.PlayerPickupItemEvent; // CraftBukkit
 
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.entity.player.EntityItemPickupEvent;
+import cpw.mods.fml.common.registry.GameRegistry;
 
 public class EntityItem extends Entity {
 
@@ -238,7 +239,9 @@ public class EntityItem extends Entity {
                 if (this.itemStack.id == Item.BLAZE_ROD.id) {
                     entityhuman.a((Statistic) AchievementList.z);
                 }
-
+                
+                GameRegistry.onPickupNotification(entityhuman, this);
+                
                 this.world.makeSound(this, "random.pop", 0.2F, ((this.random.nextFloat() - this.random.nextFloat()) * 0.7F + 1.0F) * 2.0F);
                 entityhuman.receive(this, i);
                 if (this.itemStack.count <= 0) {
