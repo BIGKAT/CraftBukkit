@@ -7,6 +7,10 @@ import org.bukkit.craftbukkit.inventory.CraftItemStack;
 import org.bukkit.event.block.BlockDispenseEvent;
 // CraftBukkit end
 
+import cpw.mods.fml.common.Side;
+import cpw.mods.fml.common.asm.SideOnly;
+import cpw.mods.fml.common.registry.GameRegistry;
+
 public class BlockDispenser extends BlockContainer {
 
     private Random a = new Random();
@@ -275,6 +279,12 @@ public class BlockDispenser extends BlockContainer {
         float f = 1.1F;
         byte b0 = 6;
 
+        int modDispense = GameRegistry.tryDispense(world, d0, d1, d2, l, i1, itemstack, random, d0, d1, d2);
+        if (modDispense > -1)
+        {
+            return modDispense;
+        }
+        
         if (itemstack.id == Item.ARROW.id) {
             EntityArrow entityarrow = new EntityArrow(world, d0, d1, d2);
 
