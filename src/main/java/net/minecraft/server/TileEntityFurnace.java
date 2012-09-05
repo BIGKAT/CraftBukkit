@@ -12,6 +12,7 @@ import org.bukkit.craftbukkit.entity.CraftHumanEntity;
 
 import net.minecraftforge.common.ISidedInventory;
 import net.minecraftforge.common.ForgeDirection;
+import cpw.mods.fml.common.registry.GameRegistry;
 
 public class TileEntityFurnace extends TileEntity implements IInventory, ISidedInventory {
 
@@ -305,7 +306,16 @@ public class TileEntityFurnace extends TileEntity implements IInventory, ISidedI
                 }
             }
 
-            return item instanceof ItemTool && ((ItemTool) item).e().equals("WOOD") ? 200 : (item instanceof ItemSword && ((ItemSword) item).f().equals("WOOD") ? 200 : (item instanceof ItemHoe && ((ItemHoe) item).f().equals("WOOD") ? 200 : (i == Item.STICK.id ? 100 : (i == Item.COAL.id ? 1600 : (i == Item.LAVA_BUCKET.id ? 20000 : (i == Block.SAPLING.id ? 100 : (i == Item.BLAZE_ROD.id ? 2400 : 0)))))));
+            if (item instanceof ItemTool && ((ItemTool) item).e().equals("WOOD")) return 200;
+            if (item instanceof ItemSword && ((ItemSword) item).f().equals("WOOD")) return 200;
+            if (item instanceof ItemHoe && ((ItemHoe) item).f().equals("WOOD")) return 200;
+            if (i == Item.STICK.id) return 100;
+            if (i == Item.COAL.id) return 1600;
+            if (i == Item.LAVA_BUCKET.id) return 20000;
+            if (i == Block.SAPLING.id) return 100;
+            if (i == Item.BLAZE_ROD.id) return 2400;
+            return GameRegistry.getFuelValue(itemstack);
+//            return item instanceof ItemTool && ((ItemTool) item).e().equals("WOOD") ? 200 : (item instanceof ItemSword && ((ItemSword) item).f().equals("WOOD") ? 200 : (item instanceof ItemHoe && ((ItemHoe) item).f().equals("WOOD") ? 200 : (i == Item.STICK.id ? 100 : (i == Item.COAL.id ? 1600 : (i == Item.LAVA_BUCKET.id ? 20000 : (i == Block.SAPLING.id ? 100 : (i == Item.BLAZE_ROD.id ? 2400 : 0)))))));
         }
     }
 
