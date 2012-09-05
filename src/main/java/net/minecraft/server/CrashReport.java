@@ -15,6 +15,10 @@ import java.util.concurrent.Callable;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import cpw.mods.fml.common.FMLCommonHandler;
+import cpw.mods.fml.common.Side;
+import cpw.mods.fml.common.asm.SideOnly;
+
 public class CrashReport {
 
     private final String a;
@@ -36,6 +40,7 @@ public class CrashReport {
         this.a("Memory", (Callable) (new CrashReportMemory(this)));
         this.a("JVM Flags", (Callable) (new CrashReportJVMFlags(this)));
         this.a("CraftBukkit Information", (Callable) (new org.bukkit.craftbukkit.CraftCrashReport())); // CraftBukkit
+        FMLCommonHandler.instance().enhanceCrashReport(this);
     }
 
     public void a(String s, Callable callable) {
