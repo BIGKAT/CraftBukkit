@@ -1,6 +1,7 @@
 package net.minecraft.server;
 
 import net.minecraftforge.common.ForgeHooks;
+import cpw.mods.fml.common.registry.GameRegistry;
 
 public class SlotResult extends Slot {
 
@@ -58,7 +59,8 @@ public class SlotResult extends Slot {
     }
 
     public void b(ItemStack itemstack) {
-        this.c(itemstack);
+    	GameRegistry.onItemCrafted(b, itemstack, a);
+    	this.c(itemstack);
 
         for (int i = 0; i < this.a.getSize(); ++i) {
             ItemStack itemstack1 = this.a.getItem(i);
