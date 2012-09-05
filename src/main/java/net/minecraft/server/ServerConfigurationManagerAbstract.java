@@ -25,6 +25,10 @@ import org.bukkit.event.player.PlayerTeleportEvent.TeleportCause;
 import org.bukkit.Bukkit;
 // CraftBukkit end
 
+import cpw.mods.fml.common.network.FMLNetworkHandler;
+import cpw.mods.fml.common.network.NetworkRegistry;
+import cpw.mods.fml.common.registry.GameRegistry;
+
 import net.minecraftforge.common.DimensionManager;
 
 public abstract class ServerConfigurationManagerAbstract {
@@ -108,6 +112,7 @@ public abstract class ServerConfigurationManagerAbstract {
         }
 
         entityplayer.syncInventory();
+        FMLNetworkHandler.handlePlayerLogin(entityplayer, netserverhandler, inetworkmanager);
     }
 
     public void setPlayerFileData(WorldServer[] aworldserver) {
@@ -201,6 +206,7 @@ public abstract class ServerConfigurationManagerAbstract {
     }
 
     public String disconnect(EntityPlayer entityplayer) { // CraftBukkit - return string
+    	GameRegistry.onPlayerLogout(entityplayer);
         if (entityplayer.netServerHandler.disconnected) return null; // CraftBukkit - exploitsies fix
 
         // CraftBukkit start - quitting must be before we do final save of data, in case plugins need to modify it
@@ -414,7 +420,7 @@ public abstract class ServerConfigurationManagerAbstract {
             Bukkit.getServer().getPluginManager().callEvent(event);
         }
         // CraftBukkit end
-
+        GameRegistry.onPlayerRespawn(entityplayer1);
         return entityplayer1;
     }
 
@@ -485,6 +491,7 @@ public abstract class ServerConfigurationManagerAbstract {
         }
         toWorld = ((CraftWorld) finalLocation.getWorld()).getHandle();
         this.moveToWorld(entityplayer, toWorld.dimension, true, finalLocation);
+        GameRegistry.onPlayerChangedDimension(entityplayer);
         // CraftBukkit end
     }
 
