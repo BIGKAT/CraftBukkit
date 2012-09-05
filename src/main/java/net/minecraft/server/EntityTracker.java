@@ -5,6 +5,8 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 
+import cpw.mods.fml.common.registry.EntityRegistry;
+
 public class EntityTracker {
 
     private final WorldServer world;
@@ -19,6 +21,11 @@ public class EntityTracker {
 
     // CraftBukkit - synchronized
     public synchronized void track(Entity entity) {
+    	if (EntityRegistry.instance().tryTrackingEntity(this, entity))
+        {
+            return;
+        }
+    	
         if (entity instanceof EntityPlayer) {
             this.addEntity(entity, 512, 2);
             EntityPlayer entityplayer = (EntityPlayer) entity;
