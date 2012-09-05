@@ -124,6 +124,8 @@ public abstract class EntityHuman extends EntityLiving implements ICommandListen
     }
 
     public void h_() {
+    	
+    	FMLCommonHandler.instance().onPlayerPreTick(this);
         if (this.e != null) {
             ItemStack itemstack = this.inventory.getItemInHand();
 
@@ -218,6 +220,7 @@ public abstract class EntityHuman extends EntityLiving implements ICommandListen
         if (!this.world.isStatic) {
             this.foodData.a(this);
         }
+        FMLCommonHandler.instance().onPlayerPostTick(this);
     }
 
     protected void c(ItemStack itemstack, int i) {
@@ -1380,5 +1383,10 @@ public abstract class EntityHuman extends EntityLiving implements ICommandListen
 
     public InventoryEnderChest getEnderChest() {
         return this.enderChest;
+    }
+    
+    public void openGui(Object mod, int modGuiId, World world, int x, int y, int z)
+    {
+        FMLNetworkHandler.openGui(this, mod, modGuiId, world, x, y, z);
     }
 }
