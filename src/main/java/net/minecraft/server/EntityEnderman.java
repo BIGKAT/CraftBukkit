@@ -65,7 +65,7 @@ public class EntityEnderman extends EntityMonster {
     private boolean d(EntityHuman entityhuman) {
         ItemStack itemstack = entityhuman.inventory.armor[3];
 
-        if (itemstack != null && itemstack.id == Block.PUMPKIN.id) {
+        if (itemstack != null && itemstack.id == Block.PUMPKIN.blockID) {
             return false;
         } else {
             Vec3D vec3d = entityhuman.i(1.0F).b();
@@ -115,7 +115,7 @@ public class EntityEnderman extends EntityMonster {
                 l = this.world.getTypeId(i, j, k);
                 int i1 = this.world.getTypeId(i, j - 1, k);
 
-                if (l == 0 && i1 > 0 && Block.byId[i1].c()) {
+                if (l == 0 && i1 > 0 && Block.blocksList[i1].c()) {
                     // CraftBukkit start - place event
                     org.bukkit.block.Block bblock = this.world.getWorld().getBlockAt(i, j, k);
 
@@ -214,7 +214,7 @@ public class EntityEnderman extends EntityMonster {
 
             while (!flag1 && j > 0) {
                 l = this.world.getTypeId(i, j - 1, k);
-                if (l != 0 && Block.byId[l].material.isSolid()) {
+                if (l != 0 && Block.blocksList[l].blockMaterial.isSolid()) {
                     flag1 = true;
                 } else {
                     --this.locY;
@@ -336,19 +336,19 @@ public class EntityEnderman extends EntityMonster {
     }
 
     static {
-        d[Block.GRASS.id] = true;
-        d[Block.DIRT.id] = true;
-        d[Block.SAND.id] = true;
-        d[Block.GRAVEL.id] = true;
-        d[Block.YELLOW_FLOWER.id] = true;
-        d[Block.RED_ROSE.id] = true;
-        d[Block.BROWN_MUSHROOM.id] = true;
-        d[Block.RED_MUSHROOM.id] = true;
-        d[Block.TNT.id] = true;
-        d[Block.CACTUS.id] = true;
-        d[Block.CLAY.id] = true;
-        d[Block.PUMPKIN.id] = true;
-        d[Block.MELON.id] = true;
-        d[Block.MYCEL.id] = true;
+        d[Block.GRASS.blockID] = true;
+        d[Block.DIRT.blockID] = true;
+        d[Block.SAND.blockID] = true;
+        d[Block.GRAVEL.blockID] = true;
+        d[Block.YELLOW_FLOWER.blockID] = true;
+        d[Block.RED_ROSE.blockID] = true;
+        d[Block.BROWN_MUSHROOM.blockID] = true;
+        d[Block.RED_MUSHROOM.blockID] = true;
+        d[Block.TNT.blockID] = true;
+        d[Block.CACTUS.blockID] = true;
+        d[Block.CLAY.blockID] = true;
+        d[Block.PUMPKIN.blockID] = true;
+        d[Block.MELON.blockID] = true;
+        d[Block.MYCEL.blockID] = true;
     }
 }

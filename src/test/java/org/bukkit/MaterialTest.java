@@ -24,7 +24,7 @@ public class MaterialTest extends AbstractTestingBase {
         }
         materials.remove(0); // Purge air.
 
-        for (Item item : Item.byId) {
+        for (Item item : Item.itemsList) {
             if (item == null) continue;
 
             int id = item.id;
@@ -51,7 +51,7 @@ public class MaterialTest extends AbstractTestingBase {
             materials.put(material.getId(), material);
         }
 
-        for (Item item : Item.byId) {
+        for (Item item : Item.itemsList) {
             if (item == null) continue;
             if (!(item instanceof ItemFood)) continue;
 

@@ -302,7 +302,7 @@ public class EntityBoat extends Entity {
                         int k;
 
                         for (k = 0; k < 3; ++k) {
-                            this.a(Block.WOOD.id, 1, 0.0F);
+                            this.a(Block.WOOD.blockID, 1, 0.0F);
                         }
 
                         for (k = 0; k < 2; ++k) {
@@ -378,10 +378,10 @@ public class EntityBoat extends Entity {
                         int i2 = this.world.getTypeId(i1, l1, j1);
                         int j2 = this.world.getData(i1, l1, j1);
 
-                        if (i2 == Block.SNOW.id) {
+                        if (i2 == Block.SNOW.blockID) {
                             this.world.setTypeId(i1, l1, j1, 0);
-                        } else if (i2 == Block.WATER_LILY.id) {
-                            Block.WATER_LILY.dropNaturally(this.world, i1, l1, j1, j2, 0.3F, 0);
+                        } else if (i2 == Block.WATER_LILY.blockID) {
+                            Block.WATER_LILY.dropBlockAsItemWithChance(this.world, i1, l1, j1, j2, 0.3F, 0);
                             this.world.setTypeId(i1, l1, j1, 0);
                         }
                     }

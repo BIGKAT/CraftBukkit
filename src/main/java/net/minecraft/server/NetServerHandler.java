@@ -1178,7 +1178,7 @@ public class NetServerHandler extends NetHandler {
             ItemStack itemstack = packet107setcreativeslot.b;
             boolean flag1 = packet107setcreativeslot.slot >= 1 && packet107setcreativeslot.slot < 36 + PlayerInventory.getHotbarSize();
             // CraftBukkit
-            boolean flag2 = itemstack == null || itemstack.id < Item.byId.length && itemstack.id >= 0 && Item.byId[itemstack.id] != null && !invalidItems.contains(itemstack.id);
+            boolean flag2 = itemstack == null || itemstack.id < Item.itemsList.length && itemstack.id >= 0 && Item.itemsList[itemstack.id] != null && !invalidItems.contains(itemstack.id);
             boolean flag3 = itemstack == null || itemstack.getData() >= 0 && itemstack.getData() >= 0 && itemstack.count <= 64 && itemstack.count > 0;
 
             // CraftBukkit start - Fire INVENTORY_CLICK event

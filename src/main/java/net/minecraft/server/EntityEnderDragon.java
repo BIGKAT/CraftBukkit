@@ -422,7 +422,7 @@ public class EntityEnderDragon extends EntityComplex {
                     int j2 = this.world.getTypeId(k1, l1, i2);
 
                     if (j2 != 0) {
-                        if (j2 != Block.OBSIDIAN.id && j2 != Block.WHITESTONE.id && j2 != Block.BEDROCK.id) {
+                        if (j2 != Block.obsidian.blockID && j2 != Block.WHITESTONE.blockID && j2 != Block.BEDROCK.blockID) {
                             flag1 = true;
                             // CraftBukkit start - add blocks to list rather than destroying them
                             // this.world.setTypeId(k1, l1, i2, 0);
@@ -540,29 +540,29 @@ public class EntityEnderDragon extends EntityComplex {
                     if (d2 <= ((double) b1 - 0.5D) * ((double) b1 - 0.5D)) {
                         if (k < b0) {
                             if (d2 <= ((double) (b1 - 1) - 0.5D) * ((double) (b1 - 1) - 0.5D)) {
-                                world.setTypeId(l, k, i1, Block.BEDROCK.id);
+                                world.setTypeId(l, k, i1, Block.BEDROCK.blockID);
                             }
                         } else if (k > b0) {
                             world.setTypeId(l, k, i1, 0);
                         } else if (d2 > ((double) (b1 - 1) - 0.5D) * ((double) (b1 - 1) - 0.5D)) {
-                            world.setTypeId(l, k, i1, Block.BEDROCK.id);
+                            world.setTypeId(l, k, i1, Block.BEDROCK.blockID);
                         } else {
-                            world.setTypeId(l, k, i1, Block.ENDER_PORTAL.id);
+                            world.setTypeId(l, k, i1, Block.ENDER_PORTAL.blockID);
                         }
                     }
                 }
             }
         }
 
-        world.setTypeId(i, b0 + 0, j, Block.BEDROCK.id);
-        world.setTypeId(i, b0 + 1, j, Block.BEDROCK.id);
-        world.setTypeId(i, b0 + 2, j, Block.BEDROCK.id);
-        world.setTypeId(i - 1, b0 + 2, j, Block.TORCH.id);
-        world.setTypeId(i + 1, b0 + 2, j, Block.TORCH.id);
-        world.setTypeId(i, b0 + 2, j - 1, Block.TORCH.id);
-        world.setTypeId(i, b0 + 2, j + 1, Block.TORCH.id);
-        world.setTypeId(i, b0 + 3, j, Block.BEDROCK.id);
-        world.setTypeId(i, b0 + 4, j, Block.DRAGON_EGG.id);
+        world.setTypeId(i, b0 + 0, j, Block.BEDROCK.blockID);
+        world.setTypeId(i, b0 + 1, j, Block.BEDROCK.blockID);
+        world.setTypeId(i, b0 + 2, j, Block.BEDROCK.blockID);
+        world.setTypeId(i - 1, b0 + 2, j, Block.TORCH.blockID);
+        world.setTypeId(i + 1, b0 + 2, j, Block.TORCH.blockID);
+        world.setTypeId(i, b0 + 2, j - 1, Block.TORCH.blockID);
+        world.setTypeId(i, b0 + 2, j + 1, Block.TORCH.blockID);
+        world.setTypeId(i, b0 + 3, j, Block.BEDROCK.blockID);
+        world.setTypeId(i, b0 + 4, j, Block.DRAGON_EGG.blockID);
 
         EntityCreatePortalEvent event = new EntityCreatePortalEvent((org.bukkit.entity.LivingEntity) this.getBukkitEntity(), java.util.Collections.unmodifiableList(world.getList()), org.bukkit.PortalType.ENDER);
         this.world.getServer().getPluginManager().callEvent(event);

@@ -1,6 +1,6 @@
 package net.minecraft.server;
 
-public class ChunkSection {
+public class ExtendedBlockStorage {
 
     private int a;
     private int b;
@@ -11,7 +11,7 @@ public class ChunkSection {
     private NibbleArray g;
     private NibbleArray h;
 
-    public ChunkSection(int i) {
+    public ExtendedBlockStorage(int i) {
         this.a = i;
         this.d = new byte[4096];
         this.f = new NibbleArray(this.d.length, 4);
@@ -20,7 +20,7 @@ public class ChunkSection {
     }
 
     // CraftBukkit start
-    public ChunkSection(int y, byte[] blkData, byte[] extBlkData) {
+    public ExtendedBlockStorage(int y, byte[] blkData, byte[] extBlkData) {
         this.a = y;
         this.d = blkData;
         if (extBlkData != null) {
@@ -29,7 +29,7 @@ public class ChunkSection {
         this.f = new NibbleArray(this.d.length, 4);
         this.h = new NibbleArray(this.d.length, 4);
         this.g = new NibbleArray(this.d.length, 4);
-        this.e();
+        this.removeInvalidBlocks();
     }
     // CraftBukkit end
 
@@ -48,17 +48,17 @@ public class ChunkSection {
 
         if (i1 == 0 && l != 0) {
             ++this.b;
-            if (Block.byId[l] != null && Block.byId[l].r()) {
+            if (Block.blocksList[l] != null && Block.blocksList[l].r()) {
                 ++this.c;
             }
         } else if (i1 != 0 && l == 0) {
             --this.b;
-            if (Block.byId[i1] != null && Block.byId[i1].r()) {
+            if (Block.blocksList[i1] != null && Block.blocksList[i1].r()) {
                 --this.c;
             }
-        } else if (Block.byId[i1] != null && Block.byId[i1].r() && (Block.byId[l] == null || !Block.byId[l].r())) {
+        } else if (Block.blocksList[i1] != null && Block.blocksList[i1].r() && (Block.blocksList[l] == null || !Block.blocksList[l].r())) {
             --this.c;
-        } else if ((Block.byId[i1] == null || !Block.byId[i1].r()) && Block.byId[l] != null && Block.byId[l].r()) {
+        } else if ((Block.blocksList[i1] == null || !Block.blocksList[i1].r()) && Block.blocksList[l] != null && Block.blocksList[l].r()) {
             ++this.c;
         }
 
@@ -110,7 +110,7 @@ public class ChunkSection {
         return this.g.a(i, j, k);
     }
 
-    public void e() {
+    public void removeInvalidBlocks() {
         // CraftBukkit start - optimize for speed
         byte[] dd = this.d;
         int cntb = 0;
@@ -119,28 +119,28 @@ public class ChunkSection {
             for (int off = 0; off < dd.length; off++) {
                 int l = dd[off] & 0xFF;
                 if (l > 0) {
-                    if (Block.byId[l] == null) {
+                    if (Block.blocksList[l] == null) {
                         dd[off] = 0;
                     } else {
                         ++cntb;
-                        if (Block.byId[l].r()) {
+                        if (Block.blocksList[l].r()) {
                             ++cntc;
                         }
                     }
                 }
             }
         } else {
-            byte[] ext = this.e.a;
+            byte[] ext = this.e.data;
             for (int off = 0, off2 = 0; off < dd.length;) {
                 byte extid = ext[off2];
                 int l = (dd[off] & 0xFF) | ((extid & 0xF) << 8); // Even data
                 if (l > 0) {
-                    if (Block.byId[l] == null) {
+                    if (Block.blocksList[l] == null) {
                         dd[off] = 0;
                         ext[off2] &= 0xF0;
                     } else {
                         ++cntb;
-                        if (Block.byId[l].r()) {
+                        if (Block.blocksList[l].r()) {
                             ++cntc;
                         }
                     }
@@ -148,12 +148,12 @@ public class ChunkSection {
                 off++;
                 l = (dd[off] & 0xFF) | ((extid & 0xF0) << 4); // Odd data
                 if (l > 0) {
-                    if (Block.byId[l] == null) {
+                    if (Block.blocksList[l] == null) {
                         dd[off] = 0;
                         ext[off2] &= 0x0F;
                     } else {
                         ++cntb;
-                        if (Block.byId[l].r()) {
+                        if (Block.blocksList[l].r()) {
                             ++cntc;
                         }
                     }
@@ -177,14 +177,14 @@ public class ChunkSection {
                     int l = this.a(i, j, k);
 
                     if (l > 0) {
-                        if (Block.byId[l] == null) {
+                        if (Block.blocksList[l] == null) {
                             this.d[j << 8 | k << 4 | i] = 0;
                             if (this.e != null) {
                                 this.e.a(i, j, k, 0);
                             }
                         } else {
                             ++this.b;
-                            if (Block.byId[l].r()) {
+                            if (Block.blocksList[l].r()) {
                                 ++this.c;
                             }
                         }
@@ -194,23 +194,23 @@ public class ChunkSection {
         }
     }
 
-    public byte[] g() {
+    public byte[] getBlockLSBArray() {
         return this.d;
     }
 
-    public NibbleArray i() {
+    public NibbleArray getBlockMSBArray() {
         return this.e;
     }
 
-    public NibbleArray j() {
+    public NibbleArray getMetadataArray() {
         return this.f;
     }
 
-    public NibbleArray k() {
+    public NibbleArray getBlocklightArray() {
         return this.g;
     }
 
-    public NibbleArray l() {
+    public NibbleArray getSkylightArray() {
         return this.h;
     }
 

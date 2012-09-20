@@ -156,19 +156,19 @@ public class TileEntityChest extends TileEntity implements IInventory {
             this.c = null;
             this.d = null;
             this.e = null;
-            if (this.world.getTypeId(this.x - 1, this.y, this.z) == Block.CHEST.id) {
+            if (this.world.getTypeId(this.x - 1, this.y, this.z) == Block.CHEST.blockID) {
                 this.d = (TileEntityChest) this.world.getTileEntity(this.x - 1, this.y, this.z);
             }
 
-            if (this.world.getTypeId(this.x + 1, this.y, this.z) == Block.CHEST.id) {
+            if (this.world.getTypeId(this.x + 1, this.y, this.z) == Block.CHEST.blockID) {
                 this.c = (TileEntityChest) this.world.getTileEntity(this.x + 1, this.y, this.z);
             }
 
-            if (this.world.getTypeId(this.x, this.y, this.z - 1) == Block.CHEST.id) {
+            if (this.world.getTypeId(this.x, this.y, this.z - 1) == Block.CHEST.blockID) {
                 this.b = (TileEntityChest) this.world.getTileEntity(this.x, this.y, this.z - 1);
             }
 
-            if (this.world.getTypeId(this.x, this.y, this.z + 1) == Block.CHEST.id) {
+            if (this.world.getTypeId(this.x, this.y, this.z + 1) == Block.CHEST.blockID) {
                 this.e = (TileEntityChest) this.world.getTileEntity(this.x, this.y, this.z + 1);
             }
 
@@ -262,13 +262,13 @@ public class TileEntityChest extends TileEntity implements IInventory {
     public void startOpen() {
         ++this.h;
         if (this.world == null) return; // CraftBukkit
-        this.world.playNote(this.x, this.y, this.z, Block.CHEST.id, 1, this.h);
+        this.world.playNote(this.x, this.y, this.z, Block.CHEST.blockID, 1, this.h);
     }
 
     public void f() {
         --this.h;
         if (this.world == null) return; // CraftBukkit
-        this.world.playNote(this.x, this.y, this.z, Block.CHEST.id, 1, this.h);
+        this.world.playNote(this.x, this.y, this.z, Block.CHEST.blockID, 1, this.h);
     }
 
     public void j() {

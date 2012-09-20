@@ -273,19 +273,19 @@ public class TileEntityFurnace extends TileEntity implements IInventory {
             int i = itemstack.getItem().id;
             Item item = itemstack.getItem();
 
-            if (i < 256 && Block.byId[i] != null) {
-                Block block = Block.byId[i];
+            if (i < 256 && Block.blocksList[i] != null) {
+                Block block = Block.blocksList[i];
 
                 if (block == Block.WOOD_STEP) {
                     return 150;
                 }
 
-                if (block.material == Material.WOOD) {
+                if (block.blockMaterial == Material.WOOD) {
                     return 300;
                 }
             }
 
-            return item instanceof ItemTool && ((ItemTool) item).e().equals("WOOD") ? 200 : (item instanceof ItemSword && ((ItemSword) item).f().equals("WOOD") ? 200 : (item instanceof ItemHoe && ((ItemHoe) item).f().equals("WOOD") ? 200 : (i == Item.STICK.id ? 100 : (i == Item.COAL.id ? 1600 : (i == Item.LAVA_BUCKET.id ? 20000 : (i == Block.SAPLING.id ? 100 : (i == Item.BLAZE_ROD.id ? 2400 : 0)))))));
+            return item instanceof ItemTool && ((ItemTool) item).e().equals("WOOD") ? 200 : (item instanceof ItemSword && ((ItemSword) item).f().equals("WOOD") ? 200 : (item instanceof ItemHoe && ((ItemHoe) item).f().equals("WOOD") ? 200 : (i == Item.STICK.id ? 100 : (i == Item.COAL.id ? 1600 : (i == Item.LAVA_BUCKET.id ? 20000 : (i == Block.SAPLING.blockID ? 100 : (i == Item.BLAZE_ROD.id ? 2400 : 0)))))));
         }
     }
 

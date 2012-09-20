@@ -111,7 +111,7 @@ public abstract class EntityHuman extends EntityLiving implements ICommandListen
     }
 
     public boolean aY() {
-        return this.bw() && Item.byId[this.e.id].b(this.e) == EnumAnimation.d;
+        return this.bw() && Item.itemsList[this.e.id].b(this.e) == EnumAnimation.d;
     }
 
     public void h_() {
@@ -955,7 +955,7 @@ public abstract class EntityHuman extends EntityLiving implements ICommandListen
         ChunkCoordinates chunkcoordinates = this.bT;
         ChunkCoordinates chunkcoordinates1 = this.bT;
 
-        if (chunkcoordinates != null && this.world.getTypeId(chunkcoordinates.x, chunkcoordinates.y, chunkcoordinates.z) == Block.BED.id) {
+        if (chunkcoordinates != null && this.world.getTypeId(chunkcoordinates.x, chunkcoordinates.y, chunkcoordinates.z) == Block.BED.blockID) {
             BlockBed.a(this.world, chunkcoordinates.x, chunkcoordinates.y, chunkcoordinates.z, false);
             chunkcoordinates1 = BlockBed.b(this.world, chunkcoordinates.x, chunkcoordinates.y, chunkcoordinates.z, 0);
             if (chunkcoordinates1 == null) {
@@ -998,7 +998,7 @@ public abstract class EntityHuman extends EntityLiving implements ICommandListen
     }
 
     private boolean l() {
-        return this.world.getTypeId(this.bT.x, this.bT.y, this.bT.z) == Block.BED.id;
+        return this.world.getTypeId(this.bT.x, this.bT.y, this.bT.z) == Block.BED.blockID;
     }
 
     public static ChunkCoordinates getBed(World world, ChunkCoordinates chunkcoordinates) {
@@ -1008,7 +1008,7 @@ public abstract class EntityHuman extends EntityLiving implements ICommandListen
         ichunkprovider.getChunkAt(chunkcoordinates.x + 3 >> 4, chunkcoordinates.z - 3 >> 4);
         ichunkprovider.getChunkAt(chunkcoordinates.x - 3 >> 4, chunkcoordinates.z + 3 >> 4);
         ichunkprovider.getChunkAt(chunkcoordinates.x + 3 >> 4, chunkcoordinates.z + 3 >> 4);
-        if (world.getTypeId(chunkcoordinates.x, chunkcoordinates.y, chunkcoordinates.z) != Block.BED.id) {
+        if (world.getTypeId(chunkcoordinates.x, chunkcoordinates.y, chunkcoordinates.z) != Block.BED.blockID) {
             return null;
         } else {
             ChunkCoordinates chunkcoordinates1 = BlockBed.b(world, chunkcoordinates.x, chunkcoordinates.y, chunkcoordinates.z, 0);

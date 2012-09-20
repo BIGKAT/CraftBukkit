@@ -41,7 +41,7 @@ public class ItemBed extends Item {
                 if (world.isEmpty(i, j, k) && world.isEmpty(i + b0, j, k + b1) && world.t(i, j - 1, k) && world.t(i + b0, j - 1, k + b1)) {
                     CraftBlockState blockState = CraftBlockState.getBlockState(world, i, j, k); // CraftBukkit
 
-                    world.setTypeIdAndData(i, j, k, blockbed.id, i1);
+                    world.setTypeIdAndData(i, j, k, blockbed.blockID, i1);
 
                     // CraftBukkit start - bed
                     org.bukkit.event.block.BlockPlaceEvent event = org.bukkit.craftbukkit.event.CraftEventFactory.callBlockPlaceEvent(world, entityhuman, blockState, clickedX, clickedY, clickedZ);
@@ -52,8 +52,8 @@ public class ItemBed extends Item {
                     }
                     // CraftBukkit end
 
-                    if (world.getTypeId(i, j, k) == blockbed.id) {
-                        world.setTypeIdAndData(i + b0, j, k + b1, blockbed.id, i1 + 8);
+                    if (world.getTypeId(i, j, k) == blockbed.blockID) {
+                        world.setTypeIdAndData(i + b0, j, k + b1, blockbed.blockID, i1 + 8);
                     }
 
                     --itemstack.count;

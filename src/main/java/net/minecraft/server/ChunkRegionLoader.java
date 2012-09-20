@@ -159,40 +159,40 @@ public class ChunkRegionLoader implements IAsyncChunkSaver, IChunkLoader {
         nbttagcompound.setLong("LastUpdate", world.getTime());
         nbttagcompound.setIntArray("HeightMap", chunk.heightMap);
         nbttagcompound.setBoolean("TerrainPopulated", chunk.done);
-        ChunkSection[] achunksection = chunk.i();
+        ExtendedBlockStorage[] achunksection = chunk.getBlockStorageArray();
         NBTTagList nbttaglist = new NBTTagList("Sections");
-        ChunkSection[] achunksection1 = achunksection;
+        ExtendedBlockStorage[] achunksection1 = achunksection;
         int i = achunksection.length;
 
         NBTTagCompound nbttagcompound1;
 
         for (int j = 0; j < i; ++j) {
-            ChunkSection chunksection = achunksection1[j];
+            ExtendedBlockStorage chunksection = achunksection1[j];
 
             if (chunksection != null) {
                 nbttagcompound1 = new NBTTagCompound();
                 nbttagcompound1.setByte("Y", (byte) (chunksection.d() >> 4 & 255));
-                nbttagcompound1.setByteArray("Blocks", chunksection.g());
-                if (chunksection.i() != null) {
-                    nbttagcompound1.setByteArray("Add", chunksection.i().a);
+                nbttagcompound1.setByteArray("Blocks", chunksection.getBlockLSBArray());
+                if (chunksection.getBlockMSBArray() != null) {
+                    nbttagcompound1.setByteArray("Add", chunksection.getBlockMSBArray().data);
                 }
 
-                nbttagcompound1.setByteArray("Data", chunksection.j().a);
-                nbttagcompound1.setByteArray("SkyLight", chunksection.l().a);
-                nbttagcompound1.setByteArray("BlockLight", chunksection.k().a);
+                nbttagcompound1.setByteArray("Data", chunksection.getMetadataArray().data);
+                nbttagcompound1.setByteArray("SkyLight", chunksection.getSkylightArray().data);
+                nbttagcompound1.setByteArray("BlockLight", chunksection.getBlocklightArray().data);
                 nbttaglist.add(nbttagcompound1);
             }
         }
 
         nbttagcompound.set("Sections", nbttaglist);
-        nbttagcompound.setByteArray("Biomes", chunk.m());
+        nbttagcompound.setByteArray("Biomes", chunk.getBiomeArray());
         chunk.m = false;
         NBTTagList nbttaglist1 = new NBTTagList();
 
         Iterator iterator;
 
-        for (i = 0; i < chunk.entitySlices.length; ++i) {
-            iterator = chunk.entitySlices[i].iterator();
+        for (i = 0; i < chunk.entityLists.length; ++i) {
+            iterator = chunk.entityLists[i].iterator();
 
             while (iterator.hasNext()) {
                 Entity entity = (Entity) iterator.next();
@@ -208,7 +208,7 @@ public class ChunkRegionLoader implements IAsyncChunkSaver, IChunkLoader {
         nbttagcompound.set("Entities", nbttaglist1);
         NBTTagList nbttaglist2 = new NBTTagList();
 
-        iterator = chunk.tileEntities.values().iterator();
+        iterator = chunk.chunkTileEntityMap.values().iterator();
 
         while (iterator.hasNext()) {
             TileEntity tileentity = (TileEntity) iterator.next();
@@ -251,12 +251,12 @@ public class ChunkRegionLoader implements IAsyncChunkSaver, IChunkLoader {
         chunk.done = nbttagcompound.getBoolean("TerrainPopulated");
         NBTTagList nbttaglist = nbttagcompound.getList("Sections");
         byte b0 = 16;
-        ChunkSection[] achunksection = new ChunkSection[b0];
+        ExtendedBlockStorage[] achunksection = new ExtendedBlockStorage[b0];
 
         for (int k = 0; k < nbttaglist.size(); ++k) {
             NBTTagCompound nbttagcompound1 = (NBTTagCompound) nbttaglist.get(k);
             byte b1 = nbttagcompound1.getByte("Y");
-            ChunkSection chunksection = new ChunkSection(b1 << 4);
+            ExtendedBlockStorage chunksection = new ExtendedBlockStorage(b1 << 4);
 
             chunksection.a(nbttagcompound1.getByteArray("Blocks"));
             if (nbttagcompound1.hasKey("Add")) {
@@ -266,7 +266,7 @@ public class ChunkRegionLoader implements IAsyncChunkSaver, IChunkLoader {
             chunksection.b(new NibbleArray(nbttagcompound1.getByteArray("Data"), 4));
             chunksection.d(new NibbleArray(nbttagcompound1.getByteArray("SkyLight"), 4));
             chunksection.c(new NibbleArray(nbttagcompound1.getByteArray("BlockLight"), 4));
-            chunksection.e();
+            chunksection.removeInvalidBlocks();
             achunksection[b1] = chunksection;
         }
 

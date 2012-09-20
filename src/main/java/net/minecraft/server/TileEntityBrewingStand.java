@@ -86,7 +86,7 @@ public class TileEntityBrewingStand extends TileEntity implements IInventory {
         if (this.items[3] != null && this.items[3].count > 0) {
             ItemStack itemstack = this.items[3];
 
-            if (!Item.byId[itemstack.id].u()) {
+            if (!Item.itemsList[itemstack.id].u()) {
                 return false;
             } else {
                 boolean flag = false;
@@ -149,8 +149,8 @@ public class TileEntityBrewingStand extends TileEntity implements IInventory {
                 }
             }
 
-            if (Item.byId[itemstack.id].r()) {
-                this.items[3] = new ItemStack(Item.byId[itemstack.id].q());
+            if (Item.itemsList[itemstack.id].r()) {
+                this.items[3] = new ItemStack(Item.itemsList[itemstack.id].q());
             } else {
                 --this.items[3].count;
                 if (this.items[3].count <= 0) {
@@ -161,7 +161,7 @@ public class TileEntityBrewingStand extends TileEntity implements IInventory {
     }
 
     private int b(int i, ItemStack itemstack) {
-        return itemstack == null ? i : (Item.byId[itemstack.id].u() ? PotionBrewer.a(i, Item.byId[itemstack.id].t()) : i);
+        return itemstack == null ? i : (Item.itemsList[itemstack.id].u() ? PotionBrewer.a(i, Item.itemsList[itemstack.id].t()) : i);
     }
 
     public void a(NBTTagCompound nbttagcompound) {

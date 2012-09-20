@@ -170,7 +170,7 @@ public class ItemBucket extends Item {
         } else if (!world.isEmpty(i, j, k) && world.getMaterial(i, j, k).isBuildable()) {
             return false;
         } else {
-            if (world.worldProvider.d && this.a == Block.WATER.id) {
+            if (world.worldProvider.d && this.a == Block.WATER.blockID) {
                 world.makeSound(d0 + 0.5D, d1 + 0.5D, d2 + 0.5D, "random.fizz", 0.5F, 2.6F + (world.random.nextFloat() - world.random.nextFloat()) * 0.8F);
 
                 for (int l = 0; l < 8; ++l) {

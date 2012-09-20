@@ -166,7 +166,7 @@ public class CraftWorld implements World {
             save = true;
         }
 
-        chunk.removeEntities(); // Always remove entities - even if discarding, need to get them out of world table
+        chunk.onChunkUnload(); // Always remove entities - even if discarding, need to get them out of world table
 
         if (save && !(chunk instanceof EmptyChunk)) {
             world.chunkProviderServer.saveChunk(chunk);
@@ -245,7 +245,7 @@ public class CraftWorld implements World {
         if (chunk != null) {
             world.chunkProviderServer.chunks.put(x, z, chunk);
 
-            chunk.addEntities();
+            chunk.onChunkLoad();
 
             if (!chunk.done && world.chunkProviderServer.isChunkLoaded(x + 1, z + 1) && world.chunkProviderServer.isChunkLoaded(x, z + 1) && world.chunkProviderServer.isChunkLoaded(x + 1, z)) {
                 world.chunkProviderServer.getChunkAt(world.chunkProviderServer, x, z);
@@ -496,13 +496,13 @@ public class CraftWorld implements World {
     }
 
     public void setBiome(int x, int z, Biome bio) {
-        BiomeBase bb = CraftBlock.biomeToBiomeBase(bio);
+        BiomeGenBase bb = CraftBlock.biomeToBiomeBase(bio);
         if (this.world.isLoaded(x, 0, z)) {
             net.minecraft.server.Chunk chunk = this.world.getChunkAtWorldCoords(x, z);
 
             if (chunk != null) {
-                byte[] biomevals = chunk.m();
-                biomevals[((z & 0xF) << 4) | (x & 0xF)] = (byte)bb.id;
+                byte[] biomevals = chunk.getBiomeArray();
+                biomevals[((z & 0xF) << 4) | (x & 0xF)] = (byte)bb.biomeID;
             }
         }
     }
@@ -1062,11 +1062,11 @@ public class CraftWorld implements World {
         int blockY = block.getY();
         int blockZ = block.getZ();
         // following code is lifted from Explosion.a(boolean), and modified
-        net.minecraft.server.Block.byId[blockId].dropNaturally(this.world, blockX, blockY, blockZ, block.getData(), yield, 0);
+        net.minecraft.server.Block.blocksList[blockId].dropBlockAsItemWithChance(this.world, blockX, blockY, blockZ, block.getData(), yield, 0);
         block.setType(org.bukkit.Material.AIR);
         // not sure what this does, seems to have something to do with the 'base' material of a block.
         // For example, WOODEN_STAIRS does something with WOOD in this method
-        net.minecraft.server.Block.byId[blockId].wasExploded(this.world, blockX, blockY, blockZ);
+        net.minecraft.server.Block.blocksList[blockId].onBlockDestroyedByExplosion(this.world, blockX, blockY, blockZ);
     }
 
     public void sendPluginMessage(Plugin source, String channel, byte[] message) {

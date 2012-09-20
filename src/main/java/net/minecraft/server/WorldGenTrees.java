@@ -53,7 +53,7 @@ public class WorldGenTrees extends WorldGenerator implements BlockSapling.TreeGe
                     for (j1 = k - b0; j1 <= k + b0 && flag; ++j1) {
                         if (i1 >= 0 && i1 < 256) {
                             k1 = world.getTypeId(l1, i1, j1);
-                            if (k1 != 0 && k1 != Block.LEAVES.id && k1 != Block.GRASS.id && k1 != Block.DIRT.id && k1 != Block.LOG.id) {
+                            if (k1 != 0 && k1 != Block.LEAVES.blockID && k1 != Block.GRASS.blockID && k1 != Block.DIRT.blockID && k1 != Block.LOG.blockID) {
                                 flag = false;
                             }
                         } else {
@@ -67,8 +67,8 @@ public class WorldGenTrees extends WorldGenerator implements BlockSapling.TreeGe
                 return false;
             } else {
                 i1 = world.getTypeId(i, j - 1, k);
-                if ((i1 == Block.GRASS.id || i1 == Block.DIRT.id) && j < 256 - l - 1) {
-                    this.setType(world, i, j - 1, k, Block.DIRT.id);
+                if ((i1 == Block.GRASS.blockID || i1 == Block.DIRT.blockID) && j < 256 - l - 1) {
+                    this.setType(world, i, j - 1, k, Block.DIRT.blockID);
                     b0 = 3;
                     byte b1 = 0;
 
@@ -87,7 +87,7 @@ public class WorldGenTrees extends WorldGenerator implements BlockSapling.TreeGe
                                 int i3 = l2 - k;
 
                                 if ((Math.abs(k2) != i2 || Math.abs(i3) != i2 || random.nextInt(2) != 0 && k1 != 0) && !Block.n[world.getTypeId(j2, j1, l2)]) {
-                                    this.setTypeAndData(world, j2, j1, l2, Block.LEAVES.id, this.d);
+                                    this.setTypeAndData(world, j2, j1, l2, Block.LEAVES.blockID, this.d);
                                 }
                             }
                         }
@@ -95,23 +95,23 @@ public class WorldGenTrees extends WorldGenerator implements BlockSapling.TreeGe
 
                     for (j1 = 0; j1 < l; ++j1) {
                         k1 = world.getTypeId(i, j + j1, k);
-                        if (k1 == 0 || k1 == Block.LEAVES.id) {
-                            this.setTypeAndData(world, i, j + j1, k, Block.LOG.id, this.c);
+                        if (k1 == 0 || k1 == Block.LEAVES.blockID) {
+                            this.setTypeAndData(world, i, j + j1, k, Block.LOG.blockID, this.c);
                             if (this.b && j1 > 0) {
                                 if (random.nextInt(3) > 0 && world.isEmpty(i - 1, j + j1, k)) {
-                                    this.setTypeAndData(world, i - 1, j + j1, k, Block.VINE.id, 8);
+                                    this.setTypeAndData(world, i - 1, j + j1, k, Block.VINE.blockID, 8);
                                 }
 
                                 if (random.nextInt(3) > 0 && world.isEmpty(i + 1, j + j1, k)) {
-                                    this.setTypeAndData(world, i + 1, j + j1, k, Block.VINE.id, 2);
+                                    this.setTypeAndData(world, i + 1, j + j1, k, Block.VINE.blockID, 2);
                                 }
 
                                 if (random.nextInt(3) > 0 && world.isEmpty(i, j + j1, k - 1)) {
-                                    this.setTypeAndData(world, i, j + j1, k - 1, Block.VINE.id, 1);
+                                    this.setTypeAndData(world, i, j + j1, k - 1, Block.VINE.blockID, 1);
                                 }
 
                                 if (random.nextInt(3) > 0 && world.isEmpty(i, j + j1, k + 1)) {
-                                    this.setTypeAndData(world, i, j + j1, k + 1, Block.VINE.id, 4);
+                                    this.setTypeAndData(world, i, j + j1, k + 1, Block.VINE.blockID, 4);
                                 }
                             }
                         }
@@ -124,7 +124,7 @@ public class WorldGenTrees extends WorldGenerator implements BlockSapling.TreeGe
 
                             for (j2 = i - i2; j2 <= i + i2; ++j2) {
                                 for (k2 = k - i2; k2 <= k + i2; ++k2) {
-                                    if (world.getTypeId(j2, j1, k2) == Block.LEAVES.id) {
+                                    if (world.getTypeId(j2, j1, k2) == Block.LEAVES.blockID) {
                                         if (random.nextInt(4) == 0 && world.getTypeId(j2 - 1, j1, k2) == 0) {
                                             this.b(world, j2 - 1, j1, k2, 8);
                                         }
@@ -150,7 +150,7 @@ public class WorldGenTrees extends WorldGenerator implements BlockSapling.TreeGe
                                 for (k1 = 0; k1 < 4; ++k1) {
                                     if (random.nextInt(4 - j1) == 0) {
                                         i2 = random.nextInt(3);
-                                        this.setTypeAndData(world, i + Direction.a[Direction.e[k1]], j + l - 5 + j1, k + Direction.b[Direction.e[k1]], Block.COCOA.id, i2 << 2 | k1);
+                                        this.setTypeAndData(world, i + Direction.a[Direction.e[k1]], j + l - 5 + j1, k + Direction.b[Direction.e[k1]], Block.COCOA.blockID, i2 << 2 | k1);
                                     }
                                 }
                             }
@@ -169,7 +169,7 @@ public class WorldGenTrees extends WorldGenerator implements BlockSapling.TreeGe
 
     // CraftBukkit - Changed world to BlockChangeDelegate
     private void b(BlockChangeDelegate world, int i, int j, int k, int l) {
-        this.setTypeAndData(world, i, j, k, Block.VINE.id, l);
+        this.setTypeAndData(world, i, j, k, Block.VINE.blockID, l);
         int i1 = 4;
 
         while (true) {
@@ -178,7 +178,7 @@ public class WorldGenTrees extends WorldGenerator implements BlockSapling.TreeGe
                 return;
             }
 
-            this.setTypeAndData(world, i, j, k, Block.VINE.id, l);
+            this.setTypeAndData(world, i, j, k, Block.VINE.blockID, l);
             --i1;
         }
     }

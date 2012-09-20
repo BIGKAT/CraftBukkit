@@ -132,7 +132,7 @@ public class EntityIronGolem extends EntityGolem {
         int k;
 
         if (j > 0) {
-            loot.add(new CraftItemStack(Block.RED_ROSE.id, j));
+            loot.add(new CraftItemStack(Block.RED_ROSE.blockID, j));
         }
 
         k = 3 + this.random.nextInt(3);

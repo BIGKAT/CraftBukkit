@@ -33,7 +33,7 @@ public class WorldServer extends World implements org.bukkit.BlockChangeDelegate
     private int emptyTime = 0;
     private NoteDataList[] R = new NoteDataList[] { new NoteDataList((EmptyClass2) null), new NoteDataList((EmptyClass2) null)};
     private int S = 0;
-    private static final StructurePieceTreasure[] T = new StructurePieceTreasure[] { new StructurePieceTreasure(Item.STICK.id, 0, 1, 3, 10), new StructurePieceTreasure(Block.WOOD.id, 0, 1, 3, 10), new StructurePieceTreasure(Block.LOG.id, 0, 1, 3, 10), new StructurePieceTreasure(Item.STONE_AXE.id, 0, 1, 1, 3), new StructurePieceTreasure(Item.WOOD_AXE.id, 0, 1, 1, 5), new StructurePieceTreasure(Item.STONE_PICKAXE.id, 0, 1, 1, 3), new StructurePieceTreasure(Item.WOOD_PICKAXE.id, 0, 1, 1, 5), new StructurePieceTreasure(Item.APPLE.id, 0, 2, 3, 5), new StructurePieceTreasure(Item.BREAD.id, 0, 2, 3, 3)};
+    private static final StructurePieceTreasure[] T = new StructurePieceTreasure[] { new StructurePieceTreasure(Item.STICK.id, 0, 1, 3, 10), new StructurePieceTreasure(Block.WOOD.blockID, 0, 1, 3, 10), new StructurePieceTreasure(Block.LOG.blockID, 0, 1, 3, 10), new StructurePieceTreasure(Item.STONE_AXE.id, 0, 1, 1, 3), new StructurePieceTreasure(Item.WOOD_AXE.id, 0, 1, 1, 5), new StructurePieceTreasure(Item.STONE_PICKAXE.id, 0, 1, 1, 3), new StructurePieceTreasure(Item.WOOD_PICKAXE.id, 0, 1, 1, 5), new StructurePieceTreasure(Item.APPLE.id, 0, 2, 3, 5), new StructurePieceTreasure(Item.BREAD.id, 0, 2, 3, 3)};
     private IntHashMap entitiesById;
 
     // CraftBukkit start
@@ -66,35 +66,35 @@ public class WorldServer extends World implements org.bukkit.BlockChangeDelegate
         TileEntity result = super.getTileEntity(i, j, k);
         int type = getTypeId(i, j, k);
 
-        if (type == Block.CHEST.id) {
+        if (type == Block.CHEST.blockID) {
             if (!(result instanceof TileEntityChest)) {
                 result = fixTileEntity(i, j, k, type, result);
             }
-        } else if (type == Block.FURNACE.id) {
+        } else if (type == Block.FURNACE.blockID) {
             if (!(result instanceof TileEntityFurnace)) {
                 result = fixTileEntity(i, j, k, type, result);
             }
-        } else if (type == Block.DISPENSER.id) {
+        } else if (type == Block.dispenser.blockID) {
             if (!(result instanceof TileEntityDispenser)) {
                 result = fixTileEntity(i, j, k, type, result);
             }
-        } else if (type == Block.JUKEBOX.id) {
+        } else if (type == Block.jukebox.blockID) {
             if (!(result instanceof TileEntityRecordPlayer)) {
                 result = fixTileEntity(i, j, k, type, result);
             }
-        } else if (type == Block.NOTE_BLOCK.id) {
+        } else if (type == Block.NOTE_BLOCK.blockID) {
             if (!(result instanceof TileEntityNote)) {
                 result = fixTileEntity(i, j, k, type, result);
             }
-        } else if (type == Block.MOB_SPAWNER.id) {
+        } else if (type == Block.MOB_SPAWNER.blockID) {
             if (!(result instanceof TileEntityMobSpawner)) {
                 result = fixTileEntity(i, j, k, type, result);
             }
-        } else if ((type == Block.SIGN_POST.id) || (type == Block.WALL_SIGN.id)) {
+        } else if ((type == Block.SIGN_POST.blockID) || (type == Block.WALL_SIGN.blockID)) {
             if (!(result instanceof TileEntitySign)) {
                 result = fixTileEntity(i, j, k, type, result);
             }
-        } else if (type == Block.ENDER_CHEST.id) {
+        } else if (type == Block.ENDER_CHEST.blockID) {
             if (!(result instanceof TileEntityEnderChest)) {
                 result = fixTileEntity(i, j, k, type, result);
             }
@@ -107,8 +107,8 @@ public class WorldServer extends World implements org.bukkit.BlockChangeDelegate
         getServer().getLogger().severe("Block at " + x + "," + y + "," + z + " is " + org.bukkit.Material.getMaterial(type).toString() + " but has " + found + ". "
                 + "Bukkit will attempt to fix this, but there may be additional damage that we cannot recover.");
 
-        if (Block.byId[type] instanceof BlockContainer) {
-            TileEntity replacement = ((BlockContainer) Block.byId[type]).a(this);
+        if (Block.blocksList[type] instanceof BlockContainer) {
+            TileEntity replacement = ((BlockContainer) Block.blocksList[type]).a(this);
             setTileEntity(x, y, z, replacement);
             return replacement;
         } else {
@@ -310,7 +310,7 @@ public class WorldServer extends World implements org.bukkit.BlockChangeDelegate
                 if (this.v(j1 + k, l1 - 1, k1 + l)) {
                     // CraftBukkit start
                     BlockState blockState = this.getWorld().getBlockAt(j1 + k, l1 - 1, k1 + l).getState();
-                    blockState.setTypeId(Block.ICE.id);
+                    blockState.setTypeId(Block.ICE.blockID);
 
                     BlockFormEvent iceBlockForm = new BlockFormEvent(blockState.getBlock(), blockState);
                     this.getServer().getPluginManager().callEvent(iceBlockForm);
@@ -323,7 +323,7 @@ public class WorldServer extends World implements org.bukkit.BlockChangeDelegate
                 if (this.J() && this.w(j1 + k, l1, k1 + l)) {
                     // CraftBukkit start
                     BlockState blockState = this.getWorld().getBlockAt(j1 + k, l1, k1 + l).getState();
-                    blockState.setTypeId(Block.SNOW.id);
+                    blockState.setTypeId(Block.SNOW.blockID);
 
                     BlockFormEvent snow = new BlockFormEvent(blockState.getBlock(), blockState);
                     this.getServer().getPluginManager().callEvent(snow);
@@ -334,24 +334,24 @@ public class WorldServer extends World implements org.bukkit.BlockChangeDelegate
                 }
 
                 if (this.J()) {
-                    BiomeBase biomebase = this.getBiome(j1 + k, k1 + l);
+                    BiomeGenBase biomebase = this.getBiome(j1 + k, k1 + l);
 
                     if (biomebase.d()) {
                         i2 = this.getTypeId(j1 + k, l1 - 1, k1 + l);
                         if (i2 != 0) {
-                            Block.byId[i2].f(this, j1 + k, l1 - 1, k1 + l);
+                            Block.blocksList[i2].f(this, j1 + k, l1 - 1, k1 + l);
                         }
                     }
                 }
             }
 
             // this.methodProfiler.c("tickTiles"); // CraftBukkit - not in production code
-            ChunkSection[] achunksection = chunk.i();
+            ExtendedBlockStorage[] achunksection = chunk.getBlockStorageArray();
 
             j1 = achunksection.length;
 
             for (k1 = 0; k1 < j1; ++k1) {
-                ChunkSection chunksection = achunksection[k1];
+                ExtendedBlockStorage chunksection = achunksection[k1];
 
                 if (chunksection != null && chunksection.b()) {
                     for (int j2 = 0; j2 < 3; ++j2) {
@@ -363,7 +363,7 @@ public class WorldServer extends World implements org.bukkit.BlockChangeDelegate
                         int j3 = chunksection.a(k2, i3, l2);
 
                         ++j;
-                        Block block = Block.byId[j3];
+                        Block block = Block.blocksList[j3];
 
                         if (block != null && block.r()) {
                             ++i;
@@ -386,7 +386,7 @@ public class WorldServer extends World implements org.bukkit.BlockChangeDelegate
                 int j1 = this.getTypeId(nextticklistentry.a, nextticklistentry.b, nextticklistentry.c);
 
                 if (j1 == nextticklistentry.d && j1 > 0) {
-                    Block.byId[j1].b(this, nextticklistentry.a, nextticklistentry.b, nextticklistentry.c, this.random);
+                    Block.blocksList[j1].b(this, nextticklistentry.a, nextticklistentry.b, nextticklistentry.c, this.random);
                 }
             }
         } else {
@@ -459,7 +459,7 @@ public class WorldServer extends World implements org.bukkit.BlockChangeDelegate
                     int k = this.getTypeId(nextticklistentry.a, nextticklistentry.b, nextticklistentry.c);
 
                     if (k == nextticklistentry.d && k > 0) {
-                        Block.byId[k].b(this, nextticklistentry.a, nextticklistentry.b, nextticklistentry.c, this.random);
+                        Block.blocksList[k].b(this, nextticklistentry.a, nextticklistentry.b, nextticklistentry.c, this.random);
                     }
                 }
             }
@@ -808,7 +808,7 @@ public class WorldServer extends World implements org.bukkit.BlockChangeDelegate
         int i = this.getTypeId(noteblockdata.a(), noteblockdata.b(), noteblockdata.c());
 
         if (i == noteblockdata.f()) {
-            Block.byId[i].b(this, noteblockdata.a(), noteblockdata.b(), noteblockdata.c(), noteblockdata.d(), noteblockdata.e());
+            Block.blocksList[i].b(this, noteblockdata.a(), noteblockdata.b(), noteblockdata.c(), noteblockdata.d(), noteblockdata.e());
             return true;
         } else {
             return false;
@@ -851,7 +851,7 @@ public class WorldServer extends World implements org.bukkit.BlockChangeDelegate
             nextticklistentry = (NextTickListEntry) iterator.next();
         }
 
-        Block[] ablock = Block.byId;
+        Block[] ablock = Block.blocksList;
         int k = ablock.length;
 
         for (int l = 0; l < k; ++l) {

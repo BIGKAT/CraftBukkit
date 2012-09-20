@@ -52,7 +52,7 @@ public class CraftEnchantment extends Enchantment {
 
     @Override
     public boolean canEnchantItem(ItemStack item) {
-        return target.slot.canEnchant(Item.byId[item.getTypeId()]);
+        return target.slot.canEnchant(Item.itemsList[item.getTypeId()]);
     }
 
     @Override

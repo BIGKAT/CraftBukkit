@@ -48,7 +48,7 @@ public class WorldGenMegaTree extends WorldGenerator implements BlockSapling.Tre
                     for (k1 = k - b0; k1 <= k + b0 && flag; ++k1) {
                         if (i1 >= 0 && i1 < 256) {
                             l1 = world.getTypeId(j1, i1, k1);
-                            if (l1 != 0 && l1 != Block.LEAVES.id && l1 != Block.GRASS.id && l1 != Block.DIRT.id && l1 != Block.LOG.id && l1 != Block.SAPLING.id) {
+                            if (l1 != 0 && l1 != Block.LEAVES.blockID && l1 != Block.GRASS.blockID && l1 != Block.DIRT.blockID && l1 != Block.LOG.blockID && l1 != Block.SAPLING.blockID) {
                                 flag = false;
                             }
                         } else {
@@ -62,11 +62,11 @@ public class WorldGenMegaTree extends WorldGenerator implements BlockSapling.Tre
                 return false;
             } else {
                 i1 = world.getTypeId(i, j - 1, k);
-                if ((i1 == Block.GRASS.id || i1 == Block.DIRT.id) && j < 256 - l - 1) {
-                    world.setRawTypeId(i, j - 1, k, Block.DIRT.id);
-                    world.setRawTypeId(i + 1, j - 1, k, Block.DIRT.id);
-                    world.setRawTypeId(i, j - 1, k + 1, Block.DIRT.id);
-                    world.setRawTypeId(i + 1, j - 1, k + 1, Block.DIRT.id);
+                if ((i1 == Block.GRASS.blockID || i1 == Block.DIRT.blockID) && j < 256 - l - 1) {
+                    world.setRawTypeId(i, j - 1, k, Block.DIRT.blockID);
+                    world.setRawTypeId(i + 1, j - 1, k, Block.DIRT.blockID);
+                    world.setRawTypeId(i, j - 1, k + 1, Block.DIRT.blockID);
+                    world.setRawTypeId(i + 1, j - 1, k + 1, Block.DIRT.blockID);
                     this.a(world, i, k, j + l, 2, random);
 
                     for (int i2 = j + l - 2 - random.nextInt(4); i2 > j + l / 2; i2 -= 2 + random.nextInt(4)) {
@@ -79,64 +79,64 @@ public class WorldGenMegaTree extends WorldGenerator implements BlockSapling.Tre
                         for (int j2 = 0; j2 < 5; ++j2) {
                             k1 = i + (int) (1.5F + MathHelper.cos(f) * (float) j2);
                             l1 = k + (int) (1.5F + MathHelper.sin(f) * (float) j2);
-                            this.setTypeAndData(world, k1, i2 - 3 + j2 / 2, l1, Block.LOG.id, this.b);
+                            this.setTypeAndData(world, k1, i2 - 3 + j2 / 2, l1, Block.LOG.blockID, this.b);
                         }
                     }
 
                     for (j1 = 0; j1 < l; ++j1) {
                         k1 = world.getTypeId(i, j + j1, k);
-                        if (k1 == 0 || k1 == Block.LEAVES.id) {
-                            this.setTypeAndData(world, i, j + j1, k, Block.LOG.id, this.b);
+                        if (k1 == 0 || k1 == Block.LEAVES.blockID) {
+                            this.setTypeAndData(world, i, j + j1, k, Block.LOG.blockID, this.b);
                             if (j1 > 0) {
                                 if (random.nextInt(3) > 0 && world.isEmpty(i - 1, j + j1, k)) {
-                                    this.setTypeAndData(world, i - 1, j + j1, k, Block.VINE.id, 8);
+                                    this.setTypeAndData(world, i - 1, j + j1, k, Block.VINE.blockID, 8);
                                 }
 
                                 if (random.nextInt(3) > 0 && world.isEmpty(i, j + j1, k - 1)) {
-                                    this.setTypeAndData(world, i, j + j1, k - 1, Block.VINE.id, 1);
+                                    this.setTypeAndData(world, i, j + j1, k - 1, Block.VINE.blockID, 1);
                                 }
                             }
                         }
 
                         if (j1 < l - 1) {
                             k1 = world.getTypeId(i + 1, j + j1, k);
-                            if (k1 == 0 || k1 == Block.LEAVES.id) {
-                                this.setTypeAndData(world, i + 1, j + j1, k, Block.LOG.id, this.b);
+                            if (k1 == 0 || k1 == Block.LEAVES.blockID) {
+                                this.setTypeAndData(world, i + 1, j + j1, k, Block.LOG.blockID, this.b);
                                 if (j1 > 0) {
                                     if (random.nextInt(3) > 0 && world.isEmpty(i + 2, j + j1, k)) {
-                                        this.setTypeAndData(world, i + 2, j + j1, k, Block.VINE.id, 2);
+                                        this.setTypeAndData(world, i + 2, j + j1, k, Block.VINE.blockID, 2);
                                     }
 
                                     if (random.nextInt(3) > 0 && world.isEmpty(i + 1, j + j1, k - 1)) {
-                                        this.setTypeAndData(world, i + 1, j + j1, k - 1, Block.VINE.id, 1);
+                                        this.setTypeAndData(world, i + 1, j + j1, k - 1, Block.VINE.blockID, 1);
                                     }
                                 }
                             }
 
                             k1 = world.getTypeId(i + 1, j + j1, k + 1);
-                            if (k1 == 0 || k1 == Block.LEAVES.id) {
-                                this.setTypeAndData(world, i + 1, j + j1, k + 1, Block.LOG.id, this.b);
+                            if (k1 == 0 || k1 == Block.LEAVES.blockID) {
+                                this.setTypeAndData(world, i + 1, j + j1, k + 1, Block.LOG.blockID, this.b);
                                 if (j1 > 0) {
                                     if (random.nextInt(3) > 0 && world.isEmpty(i + 2, j + j1, k + 1)) {
-                                        this.setTypeAndData(world, i + 2, j + j1, k + 1, Block.VINE.id, 2);
+                                        this.setTypeAndData(world, i + 2, j + j1, k + 1, Block.VINE.blockID, 2);
                                     }
 
                                     if (random.nextInt(3) > 0 && world.isEmpty(i + 1, j + j1, k + 2)) {
-                                        this.setTypeAndData(world, i + 1, j + j1, k + 2, Block.VINE.id, 4);
+                                        this.setTypeAndData(world, i + 1, j + j1, k + 2, Block.VINE.blockID, 4);
                                     }
                                 }
                             }
 
                             k1 = world.getTypeId(i, j + j1, k + 1);
-                            if (k1 == 0 || k1 == Block.LEAVES.id) {
-                                this.setTypeAndData(world, i, j + j1, k + 1, Block.LOG.id, this.b);
+                            if (k1 == 0 || k1 == Block.LEAVES.blockID) {
+                                this.setTypeAndData(world, i, j + j1, k + 1, Block.LOG.blockID, this.b);
                                 if (j1 > 0) {
                                     if (random.nextInt(3) > 0 && world.isEmpty(i - 1, j + j1, k + 1)) {
-                                        this.setTypeAndData(world, i - 1, j + j1, k + 1, Block.VINE.id, 8);
+                                        this.setTypeAndData(world, i - 1, j + j1, k + 1, Block.VINE.blockID, 8);
                                     }
 
                                     if (random.nextInt(3) > 0 && world.isEmpty(i, j + j1, k + 2)) {
-                                        this.setTypeAndData(world, i, j + j1, k + 2, Block.VINE.id, 4);
+                                        this.setTypeAndData(world, i, j + j1, k + 2, Block.VINE.blockID, 4);
                                     }
                                 }
                             }
@@ -168,7 +168,7 @@ public class WorldGenMegaTree extends WorldGenerator implements BlockSapling.Tre
                     int k2 = j2 - j;
 
                     if ((i2 >= 0 || k2 >= 0 || i2 * i2 + k2 * k2 <= k1 * k1) && (i2 <= 0 && k2 <= 0 || i2 * i2 + k2 * k2 <= (k1 + 1) * (k1 + 1)) && (random.nextInt(4) != 0 || i2 * i2 + k2 * k2 <= (k1 - 1) * (k1 - 1)) && !Block.n[world.getTypeId(l1, i1, j2)]) {
-                        this.setTypeAndData(world, l1, i1, j2, Block.LEAVES.id, this.c);
+                        this.setTypeAndData(world, l1, i1, j2, Block.LEAVES.blockID, this.c);
                     }
                 }
             }

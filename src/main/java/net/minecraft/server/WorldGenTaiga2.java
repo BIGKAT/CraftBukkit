@@ -42,7 +42,7 @@ public class WorldGenTaiga2 extends WorldGenerator implements BlockSapling.TreeG
                     for (int l2 = k - k2; l2 <= k + k2 && flag; ++l2) {
                         if (l1 >= 0 && l1 < 256) {
                             j2 = world.getTypeId(i2, l1, l2);
-                            if (j2 != 0 && j2 != Block.LEAVES.id) {
+                            if (j2 != 0 && j2 != Block.LEAVES.blockID) {
                                 flag = false;
                             }
                         } else {
@@ -56,8 +56,8 @@ public class WorldGenTaiga2 extends WorldGenerator implements BlockSapling.TreeG
                 return false;
             } else {
                 l1 = world.getTypeId(i, j - 1, k);
-                if ((l1 == Block.GRASS.id || l1 == Block.DIRT.id) && j < 256 - l - 1) {
-                    this.setType(world, i, j - 1, k, Block.DIRT.id);
+                if ((l1 == Block.GRASS.blockID || l1 == Block.DIRT.blockID) && j < 256 - l - 1) {
+                    this.setType(world, i, j - 1, k, Block.DIRT.blockID);
                     k2 = random.nextInt(2);
                     i2 = 1;
                     byte b0 = 0;
@@ -75,7 +75,7 @@ public class WorldGenTaiga2 extends WorldGenerator implements BlockSapling.TreeG
                                 int i4 = l3 - k;
 
                                 if ((Math.abs(k3) != k2 || Math.abs(i4) != k2 || k2 <= 0) && !Block.n[world.getTypeId(i3, j3, l3)]) {
-                                    this.setTypeAndData(world, i3, j3, l3, Block.LEAVES.id, 1);
+                                    this.setTypeAndData(world, i3, j3, l3, Block.LEAVES.blockID, 1);
                                 }
                             }
                         }
@@ -96,8 +96,8 @@ public class WorldGenTaiga2 extends WorldGenerator implements BlockSapling.TreeG
 
                     for (j3 = 0; j3 < l - j2; ++j3) {
                         i3 = world.getTypeId(i, j + j3, k);
-                        if (i3 == 0 || i3 == Block.LEAVES.id) {
-                            this.setTypeAndData(world, i, j + j3, k, Block.LOG.id, 1);
+                        if (i3 == 0 || i3 == Block.LEAVES.blockID) {
+                            this.setTypeAndData(world, i, j + j3, k, Block.LOG.blockID, 1);
                         }
                     }
 

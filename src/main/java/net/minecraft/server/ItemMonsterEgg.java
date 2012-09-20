@@ -19,7 +19,7 @@ public class ItemMonsterEgg extends Item {
             k += Facing.d[l];
             double d0 = 0.0D;
 
-            if (l == 1 && i1 == Block.FENCE.id || i1 == Block.NETHER_FENCE.id) {
+            if (l == 1 && i1 == Block.FENCE.blockID || i1 == Block.NETHER_FENCE.blockID) {
                 d0 = 0.5D;
             }
 

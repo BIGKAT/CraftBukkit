@@ -68,7 +68,7 @@ public class ItemBoat extends Item {
                         }
                         // CraftBukkit end
 
-                        if (world.getTypeId(i, j, k) == Block.SNOW.id) {
+                        if (world.getTypeId(i, j, k) == Block.SNOW.blockID) {
                             --j;
                         }
 

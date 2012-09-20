@@ -275,7 +275,7 @@ public class Village {
     private boolean isDoor(int i, int j, int k) {
         int l = this.world.getTypeId(i, j, k);
 
-        return l <= 0 ? false : l == Block.WOODEN_DOOR.id;
+        return l <= 0 ? false : l == Block.WOODEN_DOOR.blockID;
     }
 
     private void l() {

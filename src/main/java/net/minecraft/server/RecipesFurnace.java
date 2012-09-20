@@ -14,22 +14,22 @@ public class RecipesFurnace {
     }
 
     public RecipesFurnace() { // CraftBukkit - private -> public
-        this.registerRecipe(Block.IRON_ORE.id, new ItemStack(Item.IRON_INGOT), 0.7F);
-        this.registerRecipe(Block.GOLD_ORE.id, new ItemStack(Item.GOLD_INGOT), 1.0F);
-        this.registerRecipe(Block.DIAMOND_ORE.id, new ItemStack(Item.DIAMOND), 1.0F);
-        this.registerRecipe(Block.SAND.id, new ItemStack(Block.GLASS), 0.1F);
+        this.registerRecipe(Block.IRON_ORE.blockID, new ItemStack(Item.IRON_INGOT), 0.7F);
+        this.registerRecipe(Block.GOLD_ORE.blockID, new ItemStack(Item.GOLD_INGOT), 1.0F);
+        this.registerRecipe(Block.DIAMOND_ORE.blockID, new ItemStack(Item.DIAMOND), 1.0F);
+        this.registerRecipe(Block.SAND.blockID, new ItemStack(Block.GLASS), 0.1F);
         this.registerRecipe(Item.PORK.id, new ItemStack(Item.GRILLED_PORK), 0.3F);
         this.registerRecipe(Item.RAW_BEEF.id, new ItemStack(Item.COOKED_BEEF), 0.3F);
         this.registerRecipe(Item.RAW_CHICKEN.id, new ItemStack(Item.COOKED_CHICKEN), 0.3F);
         this.registerRecipe(Item.RAW_FISH.id, new ItemStack(Item.COOKED_FISH), 0.3F);
-        this.registerRecipe(Block.COBBLESTONE.id, new ItemStack(Block.STONE), 0.1F);
+        this.registerRecipe(Block.COBBLESTONE.blockID, new ItemStack(Block.STONE), 0.1F);
         this.registerRecipe(Item.CLAY_BALL.id, new ItemStack(Item.CLAY_BRICK), 0.2F);
-        this.registerRecipe(Block.CACTUS.id, new ItemStack(Item.INK_SACK, 1, 2), 0.2F);
-        this.registerRecipe(Block.LOG.id, new ItemStack(Item.COAL, 1, 1), 0.1F);
-        this.registerRecipe(Block.EMERALD_ORE.id, new ItemStack(Item.EMERALD), 1.0F);
-        this.registerRecipe(Block.COAL_ORE.id, new ItemStack(Item.COAL), 0.1F);
-        this.registerRecipe(Block.REDSTONE_ORE.id, new ItemStack(Item.REDSTONE), 0.7F);
-        this.registerRecipe(Block.LAPIS_ORE.id, new ItemStack(Item.INK_SACK, 1, 4), 0.2F);
+        this.registerRecipe(Block.CACTUS.blockID, new ItemStack(Item.INK_SACK, 1, 2), 0.2F);
+        this.registerRecipe(Block.LOG.blockID, new ItemStack(Item.COAL, 1, 1), 0.1F);
+        this.registerRecipe(Block.EMERALD_ORE.blockID, new ItemStack(Item.EMERALD), 1.0F);
+        this.registerRecipe(Block.COAL_ORE.blockID, new ItemStack(Item.COAL), 0.1F);
+        this.registerRecipe(Block.REDSTONE_ORE.blockID, new ItemStack(Item.REDSTONE), 0.7F);
+        this.registerRecipe(Block.LAPIS_ORE.blockID, new ItemStack(Item.INK_SACK, 1, 4), 0.2F);
     }
 
     public void registerRecipe(int i, ItemStack itemstack, float f) {

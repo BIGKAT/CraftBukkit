@@ -21,7 +21,7 @@ public class ItemHoe extends Item {
             int i1 = world.getTypeId(i, j, k);
             int j1 = world.getTypeId(i, j + 1, k);
 
-            if ((l == 0 || j1 != 0 || i1 != Block.GRASS.id) && i1 != Block.DIRT.id) {
+            if ((l == 0 || j1 != 0 || i1 != Block.GRASS.blockID) && i1 != Block.DIRT.blockID) {
                 return false;
             } else {
                 Block block = Block.SOIL;
@@ -32,7 +32,7 @@ public class ItemHoe extends Item {
                 } else {
                     CraftBlockState blockState = CraftBlockState.getBlockState(world, i, j, k); // CraftBukkit
 
-                    world.setTypeId(i, j, k, block.id);
+                    world.setTypeId(i, j, k, block.blockID);
 
                     // CraftBukkit start - Hoes - blockface -1 for 'SELF'
                     org.bukkit.event.block.BlockPlaceEvent event = org.bukkit.craftbukkit.event.CraftEventFactory.callBlockPlaceEvent(world, entityhuman, blockState, i, j, k);

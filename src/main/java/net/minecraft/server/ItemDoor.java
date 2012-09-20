@@ -75,8 +75,8 @@ public class ItemDoor extends Item {
 
         int i1 = (world.s(i - b0, j, k - b1) ? 1 : 0) + (world.s(i - b0, j + 1, k - b1) ? 1 : 0);
         int j1 = (world.s(i + b0, j, k + b1) ? 1 : 0) + (world.s(i + b0, j + 1, k + b1) ? 1 : 0);
-        boolean flag = world.getTypeId(i - b0, j, k - b1) == block.id || world.getTypeId(i - b0, j + 1, k - b1) == block.id;
-        boolean flag1 = world.getTypeId(i + b0, j, k + b1) == block.id || world.getTypeId(i + b0, j + 1, k + b1) == block.id;
+        boolean flag = world.getTypeId(i - b0, j, k - b1) == block.blockID || world.getTypeId(i - b0, j + 1, k - b1) == block.blockID;
+        boolean flag1 = world.getTypeId(i + b0, j, k + b1) == block.blockID || world.getTypeId(i + b0, j + 1, k + b1) == block.blockID;
         boolean flag2 = false;
 
         if (flag && !flag1) {
@@ -87,7 +87,7 @@ public class ItemDoor extends Item {
 
         CraftBlockState blockState = CraftBlockState.getBlockState(world, i, j, k); // CraftBukkit
         world.suppressPhysics = true;
-        world.setTypeIdAndData(i, j, k, block.id, l);
+        world.setTypeIdAndData(i, j, k, block.blockID, l);
         // CraftBukkit start
         if (entityhuman != null) {
             org.bukkit.event.block.BlockPlaceEvent event = org.bukkit.craftbukkit.event.CraftEventFactory.callBlockPlaceEvent(world, entityhuman, blockState, i, j, k);
@@ -98,10 +98,10 @@ public class ItemDoor extends Item {
             }
         }
         // CraftBukkit end
-        world.setTypeIdAndData(i, j + 1, k, block.id, 8 | (flag2 ? 1 : 0));
+        world.setTypeIdAndData(i, j + 1, k, block.blockID, 8 | (flag2 ? 1 : 0));
         world.suppressPhysics = false;
-        world.applyPhysics(i, j, k, block.id);
-        world.applyPhysics(i, j + 1, k, block.id);
+        world.applyPhysics(i, j, k, block.blockID);
+        world.applyPhysics(i, j + 1, k, block.blockID);
         return true; // CraftBukkit
     }
 }

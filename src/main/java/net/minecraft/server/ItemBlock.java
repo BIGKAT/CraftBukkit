@@ -9,7 +9,7 @@ public class ItemBlock extends Item {
     public ItemBlock(int i) {
         super(i);
         this.id = i + 256;
-        this.c(Block.byId[i + 256].a(2));
+        this.c(Block.blocksList[i + 256].a(2));
     }
 
     public int f() {
@@ -20,9 +20,9 @@ public class ItemBlock extends Item {
         int clickedX = i, clickedY = j, clickedZ = k; // CraftBukkit
         int i1 = world.getTypeId(i, j, k);
 
-        if (i1 == Block.SNOW.id) {
+        if (i1 == Block.SNOW.blockID) {
             l = 1;
-        } else if (i1 != Block.VINE.id && i1 != Block.LONG_GRASS.id && i1 != Block.DEAD_BUSH.id) {
+        } else if (i1 != Block.VINE.blockID && i1 != Block.LONG_GRASS.blockID && i1 != Block.DEAD_BUSH.blockID) {
             if (l == 0) {
                 --j;
             }
@@ -52,22 +52,22 @@ public class ItemBlock extends Item {
             return false;
         } else if (!entityhuman.e(i, j, k)) {
             return false;
-        } else if (j == 255 && Block.byId[this.id].material.isBuildable()) {
+        } else if (j == 255 && Block.blocksList[this.id].blockMaterial.isBuildable()) {
             return false;
             // CraftBukkit start
         }
 
         int id = this.id;
         if (l == -1 && itemstack.getItem() instanceof ItemStep) {
-            if (this.id == Block.STEP.id) {
-                id = Block.DOUBLE_STEP.id;
-            } else if (this.id == Block.WOOD_STEP.id) {
-                id = Block.WOOD_DOUBLE_STEP.id;
+            if (this.id == Block.STEP.blockID) {
+                id = Block.DOUBLE_STEP.blockID;
+            } else if (this.id == Block.WOOD_STEP.blockID) {
+                id = Block.WOOD_DOUBLE_STEP.blockID;
             }
         }
 
         if (id != this.id || world.mayPlace(this.id, i, j, k, false, l, entityhuman)) {
-            Block block = Block.byId[id];
+            Block block = Block.blocksList[id];
 
             CraftBlockState replacedBlockState = CraftBlockState.getBlockState(world, i, j, k);
 
@@ -83,9 +83,9 @@ public class ItemBlock extends Item {
                 return true;
             }
             if (world.setTypeIdAndData(i, j, k, id, data)) {
-                if (world.getTypeId(i, j, k) == id && Block.byId[id] != null) {
-                    Block.byId[id].postPlace(world, i, j, k, l, f, f1, f2);
-                    Block.byId[id].postPlace(world, i, j, k, entityhuman);
+                if (world.getTypeId(i, j, k) == id && Block.blocksList[id] != null) {
+                    Block.blocksList[id].postPlace(world, i, j, k, l, f, f1, f2);
+                    Block.blocksList[id].postPlace(world, i, j, k, entityhuman);
                     // CraftBukkit end
                 }
 
@@ -100,10 +100,10 @@ public class ItemBlock extends Item {
     }
 
     public String c(ItemStack itemstack) {
-        return Block.byId[this.id].a();
+        return Block.blocksList[this.id].a();
     }
 
     public String getName() {
-        return Block.byId[this.id].a();
+        return Block.blocksList[this.id].a();
     }
 }

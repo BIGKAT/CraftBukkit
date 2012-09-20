@@ -83,7 +83,7 @@ public class Explosion {
                             int k1 = this.world.getTypeId(l, i1, j1);
 
                             if (k1 > 0) {
-                                f1 -= (Block.byId[k1].a(this.source) + 0.3F) * f2;
+                                f1 -= (Block.blocksList[k1].a(this.source) + 0.3F) * f2;
                             }
 
                             if (f1 > 0.0F && i1 < 256 && i1 >= 0) { // CraftBukkit - don't wrap explosions
@@ -252,14 +252,14 @@ public class Explosion {
             }
 
             // CraftBukkit - stop explosions from putting out fire
-            if (l > 0 && l != Block.FIRE.id) {
+            if (l > 0 && l != Block.FIRE.blockID) {
                 // CraftBukkit
-                Block.byId[l].dropNaturally(this.world, i, j, k, this.world.getData(i, j, k), event.getYield(), 0);
+                Block.blocksList[l].dropBlockAsItemWithChance(this.world, i, j, k, this.world.getData(i, j, k), event.getYield(), 0);
                 if (this.world.setRawTypeIdAndData(i, j, k, 0, 0, this.world.isStatic)) {
                     this.world.applyPhysics(i, j, k, 0);
                 }
 
-                Block.byId[l].wasExploded(this.world, i, j, k);
+                Block.blocksList[l].onBlockDestroyedByExplosion(this.world, i, j, k);
             }
         }
 
@@ -275,7 +275,7 @@ public class Explosion {
                 int i1 = this.world.getTypeId(i, j - 1, k);
 
                 if (l == 0 && Block.n[i1] && this.i.nextInt(3) == 0) {
-                    this.world.setTypeId(i, j, k, Block.FIRE.id);
+                    this.world.setTypeId(i, j, k, Block.FIRE.blockID);
                 }
             }
         }

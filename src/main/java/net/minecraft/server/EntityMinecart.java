@@ -192,9 +192,9 @@ public class EntityMinecart extends Entity implements IInventory {
                         }
                     }
 
-                    this.a(Block.CHEST.id, 1, 0.0F);
+                    this.a(Block.CHEST.blockID, 1, 0.0F);
                 } else if (this.type == 2) {
-                    this.a(Block.FURNACE.id, 1, 0.0F);
+                    this.a(Block.FURNACE.blockID, 1, 0.0F);
                 }
             }
 
@@ -311,12 +311,12 @@ public class EntityMinecart extends Entity implements IInventory {
                 boolean flag = false;
                 boolean flag1 = false;
 
-                if (l == Block.GOLDEN_RAIL.id) {
+                if (l == Block.GOLDEN_RAIL.blockID) {
                     flag = (i1 & 8) != 0;
                     flag1 = !flag;
                 }
 
-                if (((BlockMinecartTrack) Block.byId[l]).n()) {
+                if (((BlockMinecartTrack) Block.blocksList[l]).n()) {
                     i1 &= 7;
                 }
 
@@ -648,7 +648,7 @@ public class EntityMinecart extends Entity implements IInventory {
             int i1 = this.world.getData(i, j, k);
 
             d1 = (double) j;
-            if (((BlockMinecartTrack) Block.byId[l]).n()) {
+            if (((BlockMinecartTrack) Block.blocksList[l]).n()) {
                 i1 &= 7;
             }
 

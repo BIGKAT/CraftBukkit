@@ -191,7 +191,7 @@ public final class SpawnerCreature {
         } else {
             int l = world.getTypeId(i, j - 1, k);
 
-            return l != Block.BEDROCK.id && !world.s(i, j, k) && !world.getMaterial(i, j, k).isLiquid() && !world.s(i, j + 1, k);
+            return l != Block.BEDROCK.blockID && !world.s(i, j, k) && !world.getMaterial(i, j, k).isLiquid() && !world.s(i, j + 1, k);
         }
     }
 
@@ -217,7 +217,7 @@ public final class SpawnerCreature {
         }
     }
 
-    public static void a(World world, BiomeBase biomebase, int i, int j, int k, int l, Random random) {
+    public static void a(World world, BiomeGenBase biomebase, int i, int j, int k, int l, Random random) {
         List list = biomebase.getMobs(EnumCreatureType.CREATURE);
 
         if (!list.isEmpty()) {

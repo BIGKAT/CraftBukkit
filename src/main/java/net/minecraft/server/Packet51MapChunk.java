@@ -110,7 +110,7 @@ public class Packet51MapChunk extends Packet {
 
     public static ChunkMap a(Chunk chunk, boolean flag, int i) {
         int j = 0;
-        ChunkSection[] achunksection = chunk.i();
+        ExtendedBlockStorage[] achunksection = chunk.getBlockStorageArray();
         int k = 0;
         ChunkMap chunkmap = new ChunkMap();
         byte[] abyte = buildBuffer;
@@ -124,7 +124,7 @@ public class Packet51MapChunk extends Packet {
         for (l = 0; l < achunksection.length; ++l) {
             if (achunksection[l] != null && (!flag || !achunksection[l].a()) && (i & 1 << l) != 0) {
                 chunkmap.b |= 1 << l;
-                if (achunksection[l].i() != null) {
+                if (achunksection[l].getBlockMSBArray() != null) {
                     chunkmap.c |= 1 << l;
                     ++k;
                 }
@@ -133,7 +133,7 @@ public class Packet51MapChunk extends Packet {
 
         for (l = 0; l < achunksection.length; ++l) {
             if (achunksection[l] != null && (!flag || !achunksection[l].a()) && (i & 1 << l) != 0) {
-                byte[] abyte1 = achunksection[l].g();
+                byte[] abyte1 = achunksection[l].getBlockLSBArray();
 
                 System.arraycopy(abyte1, 0, abyte, j, abyte1.length);
                 j += abyte1.length;
@@ -144,34 +144,34 @@ public class Packet51MapChunk extends Packet {
 
         for (l = 0; l < achunksection.length; ++l) {
             if (achunksection[l] != null && (!flag || !achunksection[l].a()) && (i & 1 << l) != 0) {
-                nibblearray = achunksection[l].j();
-                System.arraycopy(nibblearray.a, 0, abyte, j, nibblearray.a.length);
-                j += nibblearray.a.length;
+                nibblearray = achunksection[l].getMetadataArray();
+                System.arraycopy(nibblearray.data, 0, abyte, j, nibblearray.data.length);
+                j += nibblearray.data.length;
             }
         }
 
         for (l = 0; l < achunksection.length; ++l) {
             if (achunksection[l] != null && (!flag || !achunksection[l].a()) && (i & 1 << l) != 0) {
-                nibblearray = achunksection[l].k();
-                System.arraycopy(nibblearray.a, 0, abyte, j, nibblearray.a.length);
-                j += nibblearray.a.length;
+                nibblearray = achunksection[l].getBlocklightArray();
+                System.arraycopy(nibblearray.data, 0, abyte, j, nibblearray.data.length);
+                j += nibblearray.data.length;
             }
         }
 
         for (l = 0; l < achunksection.length; ++l) {
             if (achunksection[l] != null && (!flag || !achunksection[l].a()) && (i & 1 << l) != 0) {
-                nibblearray = achunksection[l].l();
-                System.arraycopy(nibblearray.a, 0, abyte, j, nibblearray.a.length);
-                j += nibblearray.a.length;
+                nibblearray = achunksection[l].getSkylightArray();
+                System.arraycopy(nibblearray.data, 0, abyte, j, nibblearray.data.length);
+                j += nibblearray.data.length;
             }
         }
 
         if (k > 0) {
             for (l = 0; l < achunksection.length; ++l) {
-                if (achunksection[l] != null && (!flag || !achunksection[l].a()) && achunksection[l].i() != null && (i & 1 << l) != 0) {
-                    nibblearray = achunksection[l].i();
-                    System.arraycopy(nibblearray.a, 0, abyte, j, nibblearray.a.length);
-                    j += nibblearray.a.length;
+                if (achunksection[l] != null && (!flag || !achunksection[l].a()) && achunksection[l].getBlockMSBArray() != null && (i & 1 << l) != 0) {
+                    nibblearray = achunksection[l].getBlockMSBArray();
+                    System.arraycopy(nibblearray.data, 0, abyte, j, nibblearray.data.length);
+                    j += nibblearray.data.length;
                 }
             }
         }
@@ -187,7 +187,7 @@ public class Packet51MapChunk extends Packet {
         // CraftBukkit end
 
         if (flag) {
-            byte[] abyte2 = chunk.m();
+            byte[] abyte2 = chunk.getBiomeArray();
 
             System.arraycopy(abyte2, 0, abyte, j, abyte2.length);
             j += abyte2.length;

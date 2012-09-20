@@ -58,7 +58,7 @@ public class WorldGenHugeMushroom extends WorldGenerator implements BlockSapling
                     for (l1 = k - b0; l1 <= k + b0 && flag; ++l1) {
                         if (j1 >= 0 && j1 < 256) {
                             i2 = world.getTypeId(k1, j1, l1);
-                            if (i2 != 0 && i2 != Block.LEAVES.id) {
+                            if (i2 != 0 && i2 != Block.LEAVES.blockID) {
                                 flag = false;
                             }
                         } else {
@@ -72,15 +72,15 @@ public class WorldGenHugeMushroom extends WorldGenerator implements BlockSapling
                 return false;
             } else {
                 j1 = world.getTypeId(i, j - 1, k);
-                if (j1 != Block.DIRT.id && j1 != Block.GRASS.id && j1 != Block.MYCEL.id) {
+                if (j1 != Block.DIRT.blockID && j1 != Block.GRASS.blockID && j1 != Block.MYCEL.blockID) {
                     return false;
                 } else {
                     // CraftBukkit start
                     if (event == null) {
-                        this.setTypeAndData(world, i, j - 1, k, Block.DIRT.id, 0);
+                        this.setTypeAndData(world, i, j - 1, k, Block.DIRT.blockID, 0);
                     } else {
                         BlockState dirtState = bukkitWorld.getBlockAt(i, j - 1, k).getState();
-                        dirtState.setTypeId(Block.DIRT.id);
+                        dirtState.setTypeId(Block.DIRT.blockID);
                         event.getBlocks().add(dirtState);
                     }
                     // CraftBukkit end
@@ -165,11 +165,11 @@ public class WorldGenHugeMushroom extends WorldGenerator implements BlockSapling
                                 if ((l2 != 0 || j >= j + i1 - 1) && !Block.n[world.getTypeId(i2, k1, k2)]) {
                                     // CraftBukkit start
                                     if (event == null) {
-                                       this.setTypeAndData(world, i2, k1, k2, Block.BIG_MUSHROOM_1.id + l, l2);
+                                       this.setTypeAndData(world, i2, k1, k2, Block.BIG_MUSHROOM_1.blockID + l, l2);
                                     } else {
                                         BlockState state = bukkitWorld.getBlockAt(i2, k1, k2).getState();
-                                        state.setTypeId(Block.BIG_MUSHROOM_1.id + l);
-                                        state.setData(new MaterialData(Block.BIG_MUSHROOM_1.id + l, (byte) l2));
+                                        state.setTypeId(Block.BIG_MUSHROOM_1.blockID + l);
+                                        state.setData(new MaterialData(Block.BIG_MUSHROOM_1.blockID + l, (byte) l2));
                                         event.getBlocks().add(state);
                                     }
                                     // CraftBukkit end
@@ -183,11 +183,11 @@ public class WorldGenHugeMushroom extends WorldGenerator implements BlockSapling
                         if (!Block.n[l1]) {
                             // CraftBukkit start
                             if (event == null) {
-                                this.setTypeAndData(world, i, j + k1, k, Block.BIG_MUSHROOM_1.id + l, 10);
+                                this.setTypeAndData(world, i, j + k1, k, Block.BIG_MUSHROOM_1.blockID + l, 10);
                             } else {
                                 BlockState state = bukkitWorld.getBlockAt(i, j + k1, k).getState();
-                                state.setTypeId(Block.BIG_MUSHROOM_1.id + l);
-                                state.setData(new MaterialData(Block.BIG_MUSHROOM_1.id + l, (byte) 10));
+                                state.setTypeId(Block.BIG_MUSHROOM_1.blockID + l);
+                                state.setData(new MaterialData(Block.BIG_MUSHROOM_1.blockID + l, (byte) 10));
                                 event.getBlocks().add(state);
                             }
                             // CraftBukkit end

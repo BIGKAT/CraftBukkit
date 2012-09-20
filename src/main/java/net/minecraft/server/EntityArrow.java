@@ -123,8 +123,8 @@ public class EntityArrow extends Entity {
         int i = this.world.getTypeId(this.d, this.e, this.f);
 
         if (i > 0) {
-            Block.byId[i].updateShape(this.world, this.d, this.e, this.f);
-            AxisAlignedBB axisalignedbb = Block.byId[i].e(this.world, this.d, this.e, this.f);
+            Block.blocksList[i].updateShape(this.world, this.d, this.e, this.f);
+            AxisAlignedBB axisalignedbb = Block.blocksList[i].e(this.world, this.d, this.e, this.f);
 
             if (axisalignedbb != null && axisalignedbb.a(Vec3D.a().create(this.locX, this.locY, this.locZ))) {
                 this.inGround = true;

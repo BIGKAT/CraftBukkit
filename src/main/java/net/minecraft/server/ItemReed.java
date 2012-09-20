@@ -8,16 +8,16 @@ public class ItemReed extends Item {
 
     public ItemReed(int i, Block block) {
         super(i);
-        this.id = block.id;
+        this.id = block.blockID;
     }
 
     public boolean interactWith(ItemStack itemstack, EntityHuman entityhuman, World world, int i, int j, int k, int l, float f, float f1, float f2) {
         int clickedX = i, clickedY = j, clickedZ = k; // CraftBukkit
         int i1 = world.getTypeId(i, j, k);
 
-        if (i1 == Block.SNOW.id) {
+        if (i1 == Block.SNOW.blockID) {
             l = 1;
-        } else if (i1 != Block.VINE.id && i1 != Block.LONG_GRASS.id && i1 != Block.DEAD_BUSH.id) {
+        } else if (i1 != Block.VINE.blockID && i1 != Block.LONG_GRASS.blockID && i1 != Block.DEAD_BUSH.blockID) {
             if (l == 0) {
                 --j;
             }
@@ -49,7 +49,7 @@ public class ItemReed extends Item {
             return false;
         } else {
             if (world.mayPlace(this.id, i, j, k, false, l, (Entity) null)) {
-                Block block = Block.byId[this.id];
+                Block block = Block.blocksList[this.id];
 
                 // CraftBukkit start - This executes the placement of the block
                 CraftBlockState replacedBlockState = CraftBlockState.getBlockState(world, i, j, k); // CraftBukkit
@@ -77,8 +77,8 @@ public class ItemReed extends Item {
                     // CraftBukkit end
 
                     if (world.getTypeId(i, j, k) == this.id) {
-                        Block.byId[this.id].postPlace(world, i, j, k, l, f, f1, f2);
-                        Block.byId[this.id].postPlace(world, i, j, k, entityhuman);
+                        Block.blocksList[this.id].postPlace(world, i, j, k, l, f, f1, f2);
+                        Block.blocksList[this.id].postPlace(world, i, j, k, entityhuman);
                     }
 
                     world.makeSound((double) ((float) i + 0.5F), (double) ((float) j + 0.5F), (double) ((float) k + 0.5F), block.stepSound.getName(), (block.stepSound.getVolume1() + 1.0F) / 2.0F, block.stepSound.getVolume2() * 0.8F);

@@ -62,7 +62,7 @@ public class ItemFireball extends Item {
                     // CraftBukkit end
 
                     world.makeSound((double) i + 0.5D, (double) j + 0.5D, (double) k + 0.5D, "fire.ignite", 1.0F, d.nextFloat() * 0.4F + 0.8F);
-                    world.setTypeId(i, j, k, Block.FIRE.id);
+                    world.setTypeId(i, j, k, Block.FIRE.blockID);
                 }
 
                 if (!entityhuman.abilities.canInstantlyBuild) {

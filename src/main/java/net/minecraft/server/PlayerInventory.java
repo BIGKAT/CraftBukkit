@@ -363,7 +363,7 @@ public class PlayerInventory implements IInventory {
     }
 
     public boolean b(Block block) {
-        if (block.material.isAlwaysDestroyable()) {
+        if (block.blockMaterial.isHarvestable()) {
             return true;
         } else {
             ItemStack itemstack = this.getItem(this.itemInHandIndex);

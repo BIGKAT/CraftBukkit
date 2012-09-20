@@ -69,12 +69,12 @@ public abstract class World implements IBlockAccess {
     private List N;
     public boolean isStatic;
 
-    public BiomeBase getBiome(int i, int j) {
+    public BiomeGenBase getBiome(int i, int j) {
         if (this.isLoaded(i, 0, j)) {
             Chunk chunk = this.getChunkAtWorldCoords(i, j);
 
             if (chunk != null) {
-                return chunk.a(i & 15, j & 15, this.worldProvider.c);
+                return chunk.getBiomeGenForWorldCoords(i & 15, j & 15, this.worldProvider.c);
             }
         }
 
@@ -177,7 +177,7 @@ public abstract class World implements IBlockAccess {
     public boolean isTileEntity(int i, int j, int k) {
         int l = this.getTypeId(i, j, k);
 
-        return Block.byId[l] != null && Block.byId[l].s();
+        return Block.blocksList[l] != null && Block.blocksList[l].s();
     }
 
     public boolean isLoaded(int i, int j, int k) {
@@ -288,7 +288,7 @@ public abstract class World implements IBlockAccess {
     public Material getMaterial(int i, int j, int k) {
         int l = this.getTypeId(i, j, k);
 
-        return l == 0 ? Material.AIR : Block.byId[l].material;
+        return l == 0 ? Material.AIR : Block.blocksList[l].blockMaterial;
     }
 
     public int getData(int i, int j, int k) {
@@ -422,7 +422,7 @@ public abstract class World implements IBlockAccess {
 
     private void m(int i, int j, int k, int l) {
         if (!this.suppressPhysics && !this.isStatic) {
-            Block block = Block.byId[this.getTypeId(i, j, k)];
+            Block block = Block.blocksList[this.getTypeId(i, j, k)];
 
             if (block != null) {
                 // CraftBukkit start
@@ -467,7 +467,7 @@ public abstract class World implements IBlockAccess {
             if (flag) {
                 int l = this.getTypeId(i, j, k);
 
-                if (l == Block.STEP.id || l == Block.WOOD_STEP.id || l == Block.SOIL.id || l == Block.COBBLESTONE_STAIRS.id || l == Block.WOOD_STAIRS.id) {
+                if (l == Block.STEP.blockID || l == Block.WOOD_STEP.blockID || l == Block.SOIL.blockID || l == Block.COBBLESTONE_STAIRS.blockID || l == Block.WOOD_STAIRS.blockID) {
                     int i1 = this.a(i, j + 1, k, false);
                     int j1 = this.a(i + 1, j, k, false);
                     int k1 = this.a(i - 1, j, k, false);
@@ -609,7 +609,7 @@ public abstract class World implements IBlockAccess {
                 int j1 = MathHelper.floor(vec3d.c);
                 int k1 = this.getTypeId(l, i1, j1);
                 int l1 = this.getData(l, i1, j1);
-                Block block = Block.byId[k1];
+                Block block = Block.blocksList[k1];
 
                 if ((!flag1 || block == null || block.e(this, l, i1, j1) != null) && k1 > 0 && block.a(l1, flag)) {
                     MovingObjectPosition movingobjectposition = block.a(this, l, i1, j1, vec3d, vec3d1);
@@ -737,7 +737,7 @@ public abstract class World implements IBlockAccess {
 
                     int i2 = this.getTypeId(l, i1, j1);
                     int j2 = this.getData(l, i1, j1);
-                    Block block1 = Block.byId[i2];
+                    Block block1 = Block.blocksList[i2];
 
                     if ((!flag1 || block1 == null || block1.e(this, l, i1, j1) != null) && i2 > 0 && block1.a(j2, flag)) {
                         MovingObjectPosition movingobjectposition1 = block1.a(this, l, i1, j1, vec3d, vec3d1);
@@ -945,7 +945,7 @@ public abstract class World implements IBlockAccess {
             for (int l1 = i1; l1 < j1; ++l1) {
                 if (this.isLoaded(k1, 64, l1)) {
                     for (int i2 = k - 1; i2 < l; ++i2) {
-                        Block block = Block.byId[this.getTypeId(k1, i2, l1)];
+                        Block block = Block.blocksList[this.getTypeId(k1, i2, l1)];
 
                         if (block != null) {
                             block.a(this, k1, i2, l1, axisalignedbb, this.d, entity);
@@ -989,7 +989,7 @@ public abstract class World implements IBlockAccess {
             for (int l1 = i1; l1 < j1; ++l1) {
                 if (this.isLoaded(k1, 64, l1)) {
                     for (int i2 = k - 1; i2 < l; ++i2) {
-                        Block block = Block.byId[this.getTypeId(k1, i2, l1)];
+                        Block block = Block.blocksList[this.getTypeId(k1, i2, l1)];
 
                         if (block != null) {
                             block.a(this, k1, i2, l1, axisalignedbb, this.d, (Entity) null);
@@ -1038,7 +1038,7 @@ public abstract class World implements IBlockAccess {
         for (j &= 15; k > 0; --k) {
             int l = chunk.getTypeId(i, k, j);
 
-            if (l != 0 && Block.byId[l].material.isSolid() && Block.byId[l].material != Material.LEAVES) {
+            if (l != 0 && Block.blocksList[l].blockMaterial.isSolid() && Block.blocksList[l].blockMaterial != Material.LEAVES) {
                 return k + 1;
             }
         }
@@ -1340,7 +1340,7 @@ public abstract class World implements IBlockAccess {
         for (int k1 = i; k1 < j; ++k1) {
             for (int l1 = k; l1 < l; ++l1) {
                 for (int i2 = i1; i2 < j1; ++i2) {
-                    Block block = Block.byId[this.getTypeId(k1, l1, i2)];
+                    Block block = Block.blocksList[this.getTypeId(k1, l1, i2)];
 
                     if (block != null) {
                         return true;
@@ -1375,9 +1375,9 @@ public abstract class World implements IBlockAccess {
         for (int k1 = i; k1 < j; ++k1) {
             for (int l1 = k; l1 < l; ++l1) {
                 for (int i2 = i1; i2 < j1; ++i2) {
-                    Block block = Block.byId[this.getTypeId(k1, l1, i2)];
+                    Block block = Block.blocksList[this.getTypeId(k1, l1, i2)];
 
-                    if (block != null && block.material.isLiquid()) {
+                    if (block != null && block.blockMaterial.isLiquid()) {
                         return true;
                     }
                 }
@@ -1401,7 +1401,7 @@ public abstract class World implements IBlockAccess {
                     for (int i2 = i1; i2 < j1; ++i2) {
                         int j2 = this.getTypeId(k1, l1, i2);
 
-                        if (j2 == Block.FIRE.id || j2 == Block.LAVA.id || j2 == Block.STATIONARY_LAVA.id) {
+                        if (j2 == Block.FIRE.blockID || j2 == Block.LAVA.blockID || j2 == Block.STATIONARY_LAVA.blockID) {
                             return true;
                         }
                     }
@@ -1429,9 +1429,9 @@ public abstract class World implements IBlockAccess {
             for (int k1 = i; k1 < j; ++k1) {
                 for (int l1 = k; l1 < l; ++l1) {
                     for (int i2 = i1; i2 < j1; ++i2) {
-                        Block block = Block.byId[this.getTypeId(k1, l1, i2)];
+                        Block block = Block.blocksList[this.getTypeId(k1, l1, i2)];
 
-                        if (block != null && block.material == material) {
+                        if (block != null && block.blockMaterial == material) {
                             double d0 = (double) ((float) (l1 + 1) - BlockFluids.d(this.getData(k1, l1, i2)));
 
                             if ((double) l >= d0) {
@@ -1468,9 +1468,9 @@ public abstract class World implements IBlockAccess {
         for (int k1 = i; k1 < j; ++k1) {
             for (int l1 = k; l1 < l; ++l1) {
                 for (int i2 = i1; i2 < j1; ++i2) {
-                    Block block = Block.byId[this.getTypeId(k1, l1, i2)];
+                    Block block = Block.blocksList[this.getTypeId(k1, l1, i2)];
 
-                    if (block != null && block.material == material) {
+                    if (block != null && block.blockMaterial == material) {
                         return true;
                     }
                 }
@@ -1491,9 +1491,9 @@ public abstract class World implements IBlockAccess {
         for (int k1 = i; k1 < j; ++k1) {
             for (int l1 = k; l1 < l; ++l1) {
                 for (int i2 = i1; i2 < j1; ++i2) {
-                    Block block = Block.byId[this.getTypeId(k1, l1, i2)];
+                    Block block = Block.blocksList[this.getTypeId(k1, l1, i2)];
 
-                    if (block != null && block.material == material) {
+                    if (block != null && block.blockMaterial == material) {
                         int j2 = this.getData(k1, l1, i2);
                         double d0 = (double) (l1 + 1);
 
@@ -1578,7 +1578,7 @@ public abstract class World implements IBlockAccess {
             ++i;
         }
 
-        if (this.getTypeId(i, j, k) == Block.FIRE.id) {
+        if (this.getTypeId(i, j, k) == Block.FIRE.blockID) {
             this.a(entityhuman, 1004, i, j, k, 0);
             this.setTypeId(i, j, k, 0);
             return true;
@@ -1659,7 +1659,7 @@ public abstract class World implements IBlockAccess {
     }
 
     public boolean r(int i, int j, int k) {
-        Block block = Block.byId[this.getTypeId(i, j, k)];
+        Block block = Block.blocksList[this.getTypeId(i, j, k)];
 
         return block == null ? false : block.d();
     }
@@ -1669,9 +1669,9 @@ public abstract class World implements IBlockAccess {
     }
 
     public boolean t(int i, int j, int k) {
-        Block block = Block.byId[this.getTypeId(i, j, k)];
+        Block block = Block.blocksList[this.getTypeId(i, j, k)];
 
-        return block == null ? false : (block.material.k() && block.c() ? true : (block instanceof BlockStairs ? (this.getData(i, j, k) & 4) == 4 : (block instanceof BlockStepAbstract ? (this.getData(i, j, k) & 8) == 8 : false)));
+        return block == null ? false : (block.blockMaterial.k() && block.c() ? true : (block instanceof BlockStairs ? (this.getData(i, j, k) & 4) == 4 : (block instanceof BlockStepAbstract ? (this.getData(i, j, k) & 8) == 8 : false)));
     }
 
     public boolean b(int i, int j, int k, boolean flag) {
@@ -1679,9 +1679,9 @@ public abstract class World implements IBlockAccess {
             Chunk chunk = this.chunkProvider.getOrCreateChunk(i >> 4, k >> 4);
 
             if (chunk != null && !chunk.isEmpty()) {
-                Block block = Block.byId[this.getTypeId(i, j, k)];
+                Block block = Block.blocksList[this.getTypeId(i, j, k)];
 
-                return block == null ? false : block.material.k() && block.c();
+                return block == null ? false : block.blockMaterial.k() && block.c();
             } else {
                 return flag;
             }
@@ -1890,7 +1890,7 @@ public abstract class World implements IBlockAccess {
     }
 
     public boolean c(int i, int j, int k, boolean flag) {
-        BiomeBase biomebase = this.getBiome(i, k);
+        BiomeGenBase biomebase = this.getBiome(i, k);
         float f = biomebase.j();
 
         if (f > 0.15F) {
@@ -1899,7 +1899,7 @@ public abstract class World implements IBlockAccess {
             if (j >= 0 && j < 256 && this.b(EnumSkyBlock.BLOCK, i, j, k) < 10) {
                 int l = this.getTypeId(i, j, k);
 
-                if ((l == Block.STATIONARY_WATER.id || l == Block.WATER.id) && this.getData(i, j, k) == 0) {
+                if ((l == Block.STATIONARY_WATER.blockID || l == Block.WATER.blockID) && this.getData(i, j, k) == 0) {
                     if (!flag) {
                         return true;
                     }
@@ -1933,7 +1933,7 @@ public abstract class World implements IBlockAccess {
     }
 
     public boolean w(int i, int j, int k) {
-        BiomeBase biomebase = this.getBiome(i, k);
+        BiomeGenBase biomebase = this.getBiome(i, k);
         float f = biomebase.j();
 
         if (f > 0.15F) {
@@ -1943,7 +1943,7 @@ public abstract class World implements IBlockAccess {
                 int l = this.getTypeId(i, j - 1, k);
                 int i1 = this.getTypeId(i, j, k);
 
-                if (i1 == 0 && Block.SNOW.canPlace(this, i, j, k) && l != 0 && l != Block.ICE.id && Block.byId[l].material.isSolid()) {
+                if (i1 == 0 && Block.SNOW.canPlace(this, i, j, k) && l != 0 && l != Block.ICE.blockID && Block.blocksList[l].blockMaterial.isSolid()) {
                     return true;
                 }
             }
@@ -2314,8 +2314,8 @@ public abstract class World implements IBlockAccess {
 
     public boolean mayPlace(int i, int j, int k, int l, boolean flag, int i1, Entity entity) {
         int j1 = this.getTypeId(j, k, l);
-        Block block = Block.byId[j1];
-        Block block1 = Block.byId[i];
+        Block block = Block.blocksList[j1];
+        Block block1 = Block.blocksList[i];
         AxisAlignedBB axisalignedbb = block1.e(this, j, k, l);
 
         if (flag) {
@@ -2327,7 +2327,7 @@ public abstract class World implements IBlockAccess {
         if (axisalignedbb != null && !this.a(axisalignedbb, entity)) {
             defaultReturn = false; // CraftBukkit
         } else {
-            if (block != null && (block == Block.WATER || block == Block.STATIONARY_WATER || block == Block.LAVA || block == Block.STATIONARY_LAVA || block == Block.FIRE || block.material.isReplaceable())) {
+            if (block != null && (block == Block.WATER || block == Block.STATIONARY_WATER || block == Block.LAVA || block == Block.STATIONARY_LAVA || block == Block.FIRE || block.blockMaterial.isReplaceable())) {
                 block = null;
             }
 
@@ -2383,7 +2383,7 @@ public abstract class World implements IBlockAccess {
     public boolean isBlockFacePowered(int i, int j, int k, int l) {
         int i1 = this.getTypeId(i, j, k);
 
-        return i1 == 0 ? false : Block.byId[i1].c(this, i, j, k, l);
+        return i1 == 0 ? false : Block.blocksList[i1].c(this, i, j, k, l);
     }
 
     public boolean isBlockPowered(int i, int j, int k) {
@@ -2396,7 +2396,7 @@ public abstract class World implements IBlockAccess {
         } else {
             int i1 = this.getTypeId(i, j, k);
 
-            return i1 == 0 ? false : Block.byId[i1].a(this, i, j, k, l);
+            return i1 == 0 ? false : Block.blocksList[i1].a(this, i, j, k, l);
         }
     }
 
@@ -2501,7 +2501,7 @@ public abstract class World implements IBlockAccess {
 
     public void playNote(int i, int j, int k, int l, int i1, int j1) {
         if (l > 0) {
-            Block.byId[l].b(this, i, j, k, i1, j1);
+            Block.blocksList[l].b(this, i, j, k, i1, j1);
         }
     }
 
@@ -2549,14 +2549,14 @@ public abstract class World implements IBlockAccess {
         } else if (this.g(i, k) > j) {
             return false;
         } else {
-            BiomeBase biomebase = this.getBiome(i, k);
+            BiomeGenBase biomebase = this.getBiome(i, k);
 
             return biomebase.c() ? false : biomebase.d();
         }
     }
 
     public boolean C(int i, int j, int k) {
-        BiomeBase biomebase = this.getBiome(i, k);
+        BiomeGenBase biomebase = this.getBiome(i, k);
 
         return biomebase.e();
     }

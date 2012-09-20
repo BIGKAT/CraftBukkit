@@ -64,7 +64,7 @@ public class EntitySnowman extends EntityGolem {
             if (this.world.getTypeId(j, k, l) == 0 && this.world.getBiome(j, l).j() < 0.8F && Block.SNOW.canPlace(this.world, j, k, l)) {
                 // CraftBukkit start
                 org.bukkit.block.BlockState blockState = this.world.getWorld().getBlockAt(j, k, l).getState();
-                blockState.setTypeId(Block.SNOW.id);
+                blockState.setTypeId(Block.SNOW.blockID);
 
                 EntityBlockFormEvent event = new EntityBlockFormEvent(this.getBukkitEntity(), blockState.getBlock(), blockState);
                 this.world.getServer().getPluginManager().callEvent(event);

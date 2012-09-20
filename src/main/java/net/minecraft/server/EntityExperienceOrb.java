@@ -96,7 +96,7 @@ public class EntityExperienceOrb extends Entity {
             int i = this.world.getTypeId(MathHelper.floor(this.locX), MathHelper.floor(this.boundingBox.b) - 1, MathHelper.floor(this.locZ));
 
             if (i > 0) {
-                f = Block.byId[i].frictionFactor * 0.98F;
+                f = Block.blocksList[i].frictionFactor * 0.98F;
             }
         }
 

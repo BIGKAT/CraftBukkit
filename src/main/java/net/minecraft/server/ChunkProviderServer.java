@@ -98,7 +98,7 @@ public class ChunkProviderServer implements IChunkProvider {
 
             this.chunks.put(i, j, chunk); // CraftBukkit
             if (chunk != null) {
-                chunk.addEntities();
+                chunk.onChunkLoad();
             }
 
             // CraftBukkit start
@@ -256,7 +256,7 @@ public class ChunkProviderServer implements IChunkProvider {
                 ChunkUnloadEvent event = new ChunkUnloadEvent(chunk.bukkitChunk);
                 server.getPluginManager().callEvent(event);
                 if (!event.isCancelled()) {
-                    chunk.removeEntities();
+                    chunk.onChunkUnload();
                     this.saveChunk(chunk);
                     this.saveChunkNOP(chunk);
                     // this.unloadQueue.remove(integer);

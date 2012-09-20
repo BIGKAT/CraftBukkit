@@ -118,7 +118,7 @@ public class WorldGenBigTree extends WorldGenerator implements BlockSapling.Tree
                     aint1[b2] = aint[b2] + k1;
                     int l1 = this.world.getTypeId(aint1[0], aint1[1], aint1[2]);
 
-                    if (l1 != 0 && l1 != Block.LEAVES.id) {
+                    if (l1 != 0 && l1 != Block.LEAVES.blockID) {
                         ++k1;
                     } else {
                         this.setTypeAndData(this.world, aint1[0], aint1[1], aint1[2], l, 0);
@@ -160,7 +160,7 @@ public class WorldGenBigTree extends WorldGenerator implements BlockSapling.Tree
         for (int i1 = j + this.n; l < i1; ++l) {
             float f = this.b(l - j);
 
-            this.a(i, l, k, f, (byte) 1, Block.LEAVES.id);
+            this.a(i, l, k, f, (byte) 1, Block.LEAVES.blockID);
         }
     }
 
@@ -239,17 +239,17 @@ public class WorldGenBigTree extends WorldGenerator implements BlockSapling.Tree
         int[] aint = new int[] { i, j, l};
         int[] aint1 = new int[] { i, k, l};
 
-        this.a(aint, aint1, Block.LOG.id);
+        this.a(aint, aint1, Block.LOG.blockID);
         if (this.l == 2) {
             ++aint[0];
             ++aint1[0];
-            this.a(aint, aint1, Block.LOG.id);
+            this.a(aint, aint1, Block.LOG.blockID);
             ++aint[2];
             ++aint1[2];
-            this.a(aint, aint1, Block.LOG.id);
+            this.a(aint, aint1, Block.LOG.blockID);
             aint[0] += -1;
             aint1[0] += -1;
-            this.a(aint, aint1, Block.LOG.id);
+            this.a(aint, aint1, Block.LOG.blockID);
         }
     }
 
@@ -265,7 +265,7 @@ public class WorldGenBigTree extends WorldGenerator implements BlockSapling.Tree
             int k = aint[1] - this.d[1];
 
             if (this.c(k)) {
-                this.a(aint, aint2, (byte) Block.LOG.id);
+                this.a(aint, aint2, (byte) Block.LOG.blockID);
             }
         }
     }
@@ -309,7 +309,7 @@ public class WorldGenBigTree extends WorldGenerator implements BlockSapling.Tree
                 aint3[b3] = MathHelper.floor((double) aint[b3] + (double) i * d1);
                 int k = this.world.getTypeId(aint3[0], aint3[1], aint3[2]);
 
-                if ((k != 0 && k != Block.LEAVES.id) || aint3[1] >= 256) { // CraftBukkit - fix trees wrapping around
+                if ((k != 0 && k != Block.LEAVES.blockID) || aint3[1] >= 256) { // CraftBukkit - fix trees wrapping around
                     break;
                 }
             }

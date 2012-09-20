@@ -32,7 +32,7 @@ public class ItemDye extends Item {
 
             if (itemstack.getData() == 15) {
                 i1 = world.getTypeId(i, j, k);
-                if (i1 == Block.SAPLING.id) {
+                if (i1 == Block.SAPLING.blockID) {
                     if (!world.isStatic) {
                         // CraftBukkit start
                         Player player = (entityhuman instanceof EntityPlayer) ? (Player) entityhuman.getBukkitEntity() : null;
@@ -44,11 +44,11 @@ public class ItemDye extends Item {
                     return true;
                 }
 
-                if (i1 == Block.BROWN_MUSHROOM.id || i1 == Block.RED_MUSHROOM.id) {
+                if (i1 == Block.BROWN_MUSHROOM.blockID || i1 == Block.RED_MUSHROOM.blockID) {
                     // CraftBukkit start
                     if (!world.isStatic) {
                         Player player = (entityhuman instanceof EntityPlayer) ? (Player) entityhuman.getBukkitEntity() : null;
-                        ((BlockMushroom) Block.byId[i1]).grow(world, i, j, k, world.random, true, player, itemstack);
+                        ((BlockMushroom) Block.blocksList[i1]).grow(world, i, j, k, world.random, true, player, itemstack);
                         //--itemstack.count; - called later if the bonemeal attempt was succesful
                         // CraftBukkit end
                     }
@@ -56,20 +56,20 @@ public class ItemDye extends Item {
                     return true;
                 }
 
-                if (i1 == Block.MELON_STEM.id || i1 == Block.PUMPKIN_STEM.id) {
+                if (i1 == Block.MELON_STEM.blockID || i1 == Block.PUMPKIN_STEM.blockID) {
                     if (world.getData(i, j, k) == 7) {
                         return false;
                     }
 
                     if (!world.isStatic) {
-                        ((BlockStem) Block.byId[i1]).l(world, i, j, k);
+                        ((BlockStem) Block.blocksList[i1]).l(world, i, j, k);
                         --itemstack.count;
                     }
 
                     return true;
                 }
 
-                if (i1 == Block.CROPS.id) {
+                if (i1 == Block.CROPS.blockID) {
                     if (world.getData(i, j, k) == 7) {
                         return false;
                     }
@@ -82,7 +82,7 @@ public class ItemDye extends Item {
                     return true;
                 }
 
-                if (i1 == Block.COCOA.id) {
+                if (i1 == Block.COCOA.blockID) {
                     if (!world.isStatic) {
                         world.setData(i, j, k, 8 | BlockDirectional.d(world.getData(i, j, k)));
                         --itemstack.count;
@@ -91,7 +91,7 @@ public class ItemDye extends Item {
                     return true;
                 }
 
-                if (i1 == Block.GRASS.id) {
+                if (i1 == Block.GRASS.blockID) {
                     if (!world.isStatic) {
                         --itemstack.count;
 
@@ -105,7 +105,7 @@ public class ItemDye extends Item {
                                 k1 += d.nextInt(3) - 1;
                                 l1 += (d.nextInt(3) - 1) * d.nextInt(3) / 2;
                                 i2 += d.nextInt(3) - 1;
-                                if (world.getTypeId(k1, l1 - 1, i2) != Block.GRASS.id || world.s(k1, l1, i2)) {
+                                if (world.getTypeId(k1, l1 - 1, i2) != Block.GRASS.blockID || world.s(k1, l1, i2)) {
                                     continue label135;
                                 }
                             }
@@ -113,14 +113,14 @@ public class ItemDye extends Item {
                             if (world.getTypeId(k1, l1, i2) == 0) {
                                 if (d.nextInt(10) != 0) {
                                     if (Block.LONG_GRASS.d(world, k1, l1, i2)) {
-                                        world.setTypeIdAndData(k1, l1, i2, Block.LONG_GRASS.id, 1);
+                                        world.setTypeIdAndData(k1, l1, i2, Block.LONG_GRASS.blockID, 1);
                                     }
                                 } else if (d.nextInt(3) != 0) {
                                     if (Block.YELLOW_FLOWER.d(world, k1, l1, i2)) {
-                                        world.setTypeId(k1, l1, i2, Block.YELLOW_FLOWER.id);
+                                        world.setTypeId(k1, l1, i2, Block.YELLOW_FLOWER.blockID);
                                     }
                                 } else if (Block.RED_ROSE.d(world, k1, l1, i2)) {
-                                    world.setTypeId(k1, l1, i2, Block.RED_ROSE.id);
+                                    world.setTypeId(k1, l1, i2, Block.RED_ROSE.blockID);
                                 }
                             }
                         }
@@ -131,7 +131,7 @@ public class ItemDye extends Item {
             } else if (itemstack.getData() == 3) {
                 i1 = world.getTypeId(i, j, k);
                 j1 = world.getData(i, j, k);
-                if (i1 == Block.LOG.id && BlockLog.e(j1) == 3) {
+                if (i1 == Block.LOG.blockID && BlockLog.e(j1) == 3) {
                     if (l == 0) {
                         return false;
                     }
@@ -157,9 +157,9 @@ public class ItemDye extends Item {
                     }
 
                     if (world.isEmpty(i, j, k)) {
-                        world.setTypeId(i, j, k, Block.COCOA.id);
-                        if (world.getTypeId(i, j, k) == Block.COCOA.id) {
-                            Block.byId[Block.COCOA.id].postPlace(world, i, j, k, l, f, f1, f2);
+                        world.setTypeId(i, j, k, Block.COCOA.blockID);
+                        if (world.getTypeId(i, j, k) == Block.COCOA.blockID) {
+                            Block.blocksList[Block.COCOA.blockID].postPlace(world, i, j, k, l, f, f1, f2);
                         }
 
                         if (!entityhuman.abilities.canInstantlyBuild) {

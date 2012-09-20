@@ -179,8 +179,8 @@ public class EntityWolf extends EntityTameableAnimal {
         ItemStack itemstack = entityhuman.inventory.getItemInHand();
 
         if (this.isTamed()) {
-            if (itemstack != null && Item.byId[itemstack.id] instanceof ItemFood) {
-                ItemFood itemfood = (ItemFood) Item.byId[itemstack.id];
+            if (itemstack != null && Item.itemsList[itemstack.id] instanceof ItemFood) {
+                ItemFood itemfood = (ItemFood) Item.itemsList[itemstack.id];
 
                 if (itemfood.h() && this.datawatcher.getInt(18) < 20) {
                     if (!entityhuman.abilities.canInstantlyBuild) {
@@ -234,7 +234,7 @@ public class EntityWolf extends EntityTameableAnimal {
     }
 
     public boolean b(ItemStack itemstack) {
-        return itemstack == null ? false : (!(Item.byId[itemstack.id] instanceof ItemFood) ? false : ((ItemFood) Item.byId[itemstack.id]).h());
+        return itemstack == null ? false : (!(Item.itemsList[itemstack.id] instanceof ItemFood) ? false : ((ItemFood) Item.itemsList[itemstack.id]).h());
     }
 
     public int bl() {

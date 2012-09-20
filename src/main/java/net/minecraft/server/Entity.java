@@ -633,14 +633,14 @@ public abstract class Entity {
                 int k = MathHelper.floor(this.locZ);
                 int l = this.world.getTypeId(i, j, k);
 
-                if (l == 0 && this.world.getTypeId(i, j - 1, k) == Block.FENCE.id) {
+                if (l == 0 && this.world.getTypeId(i, j - 1, k) == Block.FENCE.blockID) {
                     l = this.world.getTypeId(i, j - 1, k);
                 }
 
                 if (this.Q > (float) this.b && l > 0) {
                     this.b = (int) this.Q + 1;
                     this.a(i, j, k, l);
-                    Block.byId[l].b(this.world, i, j, k, this);
+                    Block.blocksList[l].b(this.world, i, j, k, this);
                 }
             }
 
@@ -692,7 +692,7 @@ public abstract class Entity {
                         int j2 = this.world.getTypeId(k1, l1, i2);
 
                         if (j2 > 0) {
-                            Block.byId[j2].a(this.world, k1, l1, i2, this);
+                            Block.blocksList[j2].a(this.world, k1, l1, i2, this);
                         }
                     }
                 }
@@ -701,12 +701,12 @@ public abstract class Entity {
     }
 
     protected void a(int i, int j, int k, int l) {
-        StepSound stepsound = Block.byId[l].stepSound;
+        StepSound stepsound = Block.blocksList[l].stepSound;
 
-        if (this.world.getTypeId(i, j + 1, k) == Block.SNOW.id) {
+        if (this.world.getTypeId(i, j + 1, k) == Block.SNOW.blockID) {
             stepsound = Block.SNOW.stepSound;
             this.world.makeSound(this, stepsound.getName(), stepsound.getVolume1() * 0.15F, stepsound.getVolume2());
-        } else if (!Block.byId[l].material.isLiquid()) {
+        } else if (!Block.blocksList[l].blockMaterial.isLiquid()) {
             this.world.makeSound(this, stepsound.getName(), stepsound.getVolume1() * 0.15F, stepsound.getVolume2());
         }
     }
@@ -724,12 +724,12 @@ public abstract class Entity {
                     int k = MathHelper.floor(this.locZ);
                     int l = this.world.getTypeId(i, j, k);
 
-                    if (l == 0 && this.world.getTypeId(i, j - 1, k) == Block.FENCE.id) {
+                    if (l == 0 && this.world.getTypeId(i, j - 1, k) == Block.FENCE.blockID) {
                         l = this.world.getTypeId(i, j - 1, k);
                     }
 
                     if (l > 0) {
-                        Block.byId[l].a(this.world, i, j, k, this, this.fallDistance);
+                        Block.blocksList[l].a(this.world, i, j, k, this, this.fallDistance);
                     }
                 }
 
@@ -794,7 +794,7 @@ public abstract class Entity {
         int k = MathHelper.floor(this.locZ);
         int l = this.world.getTypeId(i, j, k);
 
-        if (l != 0 && Block.byId[l].material == material) {
+        if (l != 0 && Block.blocksList[l].blockMaterial == material) {
             float f = BlockFluids.d(this.world.getData(i, j, k)) - 0.11111111F;
             float f1 = (float) (j + 1) - f;
 

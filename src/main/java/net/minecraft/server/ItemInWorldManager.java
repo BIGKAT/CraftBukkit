@@ -73,7 +73,7 @@ public class ItemInWorldManager {
             if (k == 0) {
                 this.j = false;
             } else {
-                Block block = Block.byId[k];
+                Block block = Block.blocksList[k];
 
                 f = block.getDamage(this.player, this.player.world, this.k, this.l, this.m) * (float) (i + 1);
                 j = (int) (f * 10.0F);
@@ -89,7 +89,7 @@ public class ItemInWorldManager {
             }
         } else if (this.d) {
             i = this.world.getTypeId(this.f, this.g, this.h);
-            Block block1 = Block.byId[i];
+            Block block1 = Block.blocksList[i];
 
             if (block1 == null) {
                 this.world.f(this.player.id, this.f, this.g, this.h, -1);
@@ -137,22 +137,22 @@ public class ItemInWorldManager {
 
                 if (event.useInteractedBlock() == Event.Result.DENY) {
                     // If we denied a door from opening, we need to send a correcting update to the client, as it already opened the door.
-                    if (i1 == Block.WOODEN_DOOR.id) {
+                    if (i1 == Block.WOODEN_DOOR.blockID) {
                         // For some reason *BOTH* the bottom/top part have to be marked updated.
                         boolean bottom = (this.world.getData(i, j, k) & 8) == 0;
                         ((EntityPlayer) this.player).netServerHandler.sendPacket(new Packet53BlockChange(i, j, k, this.world));
                         ((EntityPlayer) this.player).netServerHandler.sendPacket(new Packet53BlockChange(i, j + (bottom ? 1 : -1), k, this.world));
-                    } else if (i1 == Block.TRAP_DOOR.id) {
+                    } else if (i1 == Block.TRAP_DOOR.blockID) {
                         ((EntityPlayer) this.player).netServerHandler.sendPacket(new Packet53BlockChange(i, j, k, this.world));
                     }
                 } else {
-                    Block.byId[i1].attack(this.world, i, j, k, this.player);
+                    Block.blocksList[i1].attack(this.world, i, j, k, this.player);
                     // Allow fire punching to be blocked
                     this.world.douseFire((EntityHuman) null, i, j, k, l);
                 }
 
                 // Handle hitting a block
-                float toolDamage = Block.byId[i1].getDamage(this.player, this.world, i, j, k);
+                float toolDamage = Block.blocksList[i1].getDamage(this.player, this.world, i, j, k);
                 if (event.useItemInHand() == Event.Result.DENY) {
                     // If we 'insta destroyed' then the client needs to be informed.
                     if (toolDamage > 1.0f) {
@@ -196,7 +196,7 @@ public class ItemInWorldManager {
             int i1 = this.world.getTypeId(i, j, k);
 
             if (i1 != 0) {
-                Block block = Block.byId[i1];
+                Block block = Block.blocksList[i1];
                 float f = block.getDamage(this.player, this.player.world, i, j, k) * (float) (l + 1);
 
                 if (f >= 0.7F) {
@@ -225,7 +225,7 @@ public class ItemInWorldManager {
     }
 
     private boolean d(int i, int j, int k) {
-        Block block = Block.byId[this.world.getTypeId(i, j, k)];
+        Block block = Block.blocksList[this.world.getTypeId(i, j, k)];
         int l = this.world.getData(i, j, k);
 
         if (block != null) {
@@ -263,7 +263,7 @@ public class ItemInWorldManager {
             event.setCancelled(this.gamemode.isAdventure());
 
             // Calculate default block experience
-            Block nmsBlock = Block.byId[block.getTypeId()];
+            Block nmsBlock = Block.blocksList[block.getTypeId()];
 
             if (nmsBlock != null && !event.isCancelled() && !this.isCreative() && this.player.b(nmsBlock)) {
                 // Copied from Block.a(world, entityhuman, int, int, int, int)
@@ -289,7 +289,7 @@ public class ItemInWorldManager {
             return false;
         } else {
             int l = this.world.getTypeId(i, j, k);
-            if (Block.byId[l] == null) return false; // CraftBukkit - a plugin set block to air without cancelling
+            if (Block.blocksList[l] == null) return false; // CraftBukkit - a plugin set block to air without cancelling
             int i1 = this.world.getData(i, j, k);
 
             this.world.a(this.player, 2001, i, j, k, l + (this.world.getData(i, j, k) << 12));
@@ -299,7 +299,7 @@ public class ItemInWorldManager {
                 this.player.netServerHandler.sendPacket(new Packet53BlockChange(i, j, k, this.world));
             } else {
                 ItemStack itemstack = this.player.bC();
-                boolean flag1 = this.player.b(Block.byId[l]);
+                boolean flag1 = this.player.b(Block.blocksList[l]);
 
                 if (itemstack != null) {
                     itemstack.a(this.world, l, i, j, k, this.player);
@@ -309,13 +309,13 @@ public class ItemInWorldManager {
                 }
 
                 if (flag && flag1) {
-                    Block.byId[l].a(this.world, this.player, i, j, k, i1);
+                    Block.blocksList[l].a(this.world, this.player, i, j, k, i1);
                 }
             }
 
             // CraftBukkit start - drop event experience
             if (flag && event != null) {
-                Block.byId[l].g(this.world, i, j, k, event.getExpToDrop());
+                Block.blocksList[l].g(this.world, i, j, k, event.getExpToDrop());
             }
             // CraftBukkit end
 
@@ -355,13 +355,13 @@ public class ItemInWorldManager {
             PlayerInteractEvent event = CraftEventFactory.callPlayerInteractEvent(entityhuman, Action.RIGHT_CLICK_BLOCK, i, j, k, l, itemstack);
             if (event.useInteractedBlock() == Event.Result.DENY) {
                 // If we denied a door from opening, we need to send a correcting update to the client, as it already opened the door.
-                if (i1 == Block.WOODEN_DOOR.id) {
+                if (i1 == Block.WOODEN_DOOR.blockID) {
                     boolean bottom = (world.getData(i, j, k) & 8) == 0;
                     ((EntityPlayer) entityhuman).netServerHandler.sendPacket(new Packet53BlockChange(i, j + (bottom ? 1 : -1), k, world));
                 }
                 result = (event.useItemInHand() != Event.Result.ALLOW);
             } else {
-                result = Block.byId[i1].interact(world, i, j, k, entityhuman, l, f, f1, f2);
+                result = Block.blocksList[i1].interact(world, i, j, k, entityhuman, l, f, f1, f2);
             }
 
             if (itemstack != null && !result) {

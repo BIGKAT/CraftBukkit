@@ -53,7 +53,7 @@ public class PathfinderGoalBreakDoor extends PathfinderGoalDoorInteract {
 
             this.a.world.setTypeId(this.b, this.c, this.d, 0);
             this.a.world.triggerEffect(1012, this.b, this.c, this.d, 0);
-            this.a.world.triggerEffect(2001, this.b, this.c, this.d, this.e.id);
+            this.a.world.triggerEffect(2001, this.b, this.c, this.d, this.e.blockID);
         }
     }
 }

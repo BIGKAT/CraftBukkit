@@ -87,7 +87,7 @@ public class EntityItem extends Entity {
             int i = this.world.getTypeId(MathHelper.floor(this.locX), MathHelper.floor(this.boundingBox.b) - 1, MathHelper.floor(this.locZ));
 
             if (i > 0) {
-                f = Block.byId[i].frictionFactor * 0.98F;
+                f = Block.blocksList[i].frictionFactor * 0.98F;
             }
         }
 
@@ -203,7 +203,7 @@ public class EntityItem extends Entity {
             // CraftBukkit end
 
             if (this.pickupDelay == 0 && entityhuman.inventory.pickup(this.itemStack)) {
-                if (this.itemStack.id == Block.LOG.id) {
+                if (this.itemStack.id == Block.LOG.blockID) {
                     entityhuman.a((Statistic) AchievementList.g);
                 }
 

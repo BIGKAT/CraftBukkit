@@ -89,14 +89,14 @@ public class EntitySilverfish extends EntityMonster {
                             for (int j1 = 0; !flag && j1 <= 10 && j1 >= -10; j1 = j1 <= 0 ? 1 - j1 : 0 - j1) {
                                 int k1 = this.world.getTypeId(i + i1, j + l, k + j1);
 
-                                if (k1 == Block.MONSTER_EGGS.id) {
+                                if (k1 == Block.MONSTER_EGGS.blockID) {
                                     // CraftBukkit start
                                     if (CraftEventFactory.callEntityChangeBlockEvent(this, i + i1, j + l, k + j1, 0).isCancelled()) {
                                         continue;
                                     }
                                     // CraftBukkit end
 
-                                    this.world.triggerEffect(2001, i + i1, j + l, k + j1, Block.MONSTER_EGGS.id + (this.world.getData(i + i1, j + l, k + j1) << 12));
+                                    this.world.triggerEffect(2001, i + i1, j + l, k + j1, Block.MONSTER_EGGS.blockID + (this.world.getData(i + i1, j + l, k + j1) << 12));
                                     this.world.setTypeId(i + i1, j + l, k + j1, 0);
                                     Block.MONSTER_EGGS.postBreak(this.world, i + i1, j + l, k + j1, 0);
                                     if (this.random.nextBoolean()) {
@@ -119,12 +119,12 @@ public class EntitySilverfish extends EntityMonster {
                 l = this.world.getTypeId(i + Facing.b[l1], j + Facing.c[l1], k + Facing.d[l1]);
                 if (BlockMonsterEggs.e(l)) {
                     // CraftBukkit start
-                    if (CraftEventFactory.callEntityChangeBlockEvent(this, i + Facing.b[l1], j + Facing.c[l1], k + Facing.d[l1], Block.MONSTER_EGGS.id).isCancelled()) {
+                    if (CraftEventFactory.callEntityChangeBlockEvent(this, i + Facing.b[l1], j + Facing.c[l1], k + Facing.d[l1], Block.MONSTER_EGGS.blockID).isCancelled()) {
                         return;
                     }
                     // CraftBukkit end
 
-                    this.world.setTypeIdAndData(i + Facing.b[l1], j + Facing.c[l1], k + Facing.d[l1], Block.MONSTER_EGGS.id, BlockMonsterEggs.f(l));
+                    this.world.setTypeIdAndData(i + Facing.b[l1], j + Facing.c[l1], k + Facing.d[l1], Block.MONSTER_EGGS.blockID, BlockMonsterEggs.f(l));
                     this.aK();
                     this.die();
                 } else {
@@ -137,7 +137,7 @@ public class EntitySilverfish extends EntityMonster {
     }
 
     public float a(int i, int j, int k) {
-        return this.world.getTypeId(i, j - 1, k) == Block.STONE.id ? 10.0F : super.a(i, j, k);
+        return this.world.getTypeId(i, j - 1, k) == Block.STONE.blockID ? 10.0F : super.a(i, j, k);
     }
 
     protected boolean o() {

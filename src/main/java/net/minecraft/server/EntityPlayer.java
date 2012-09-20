@@ -205,8 +205,8 @@ public class EntityPlayer extends EntityHuman implements ICrafting {
         for (int i = 0; i < this.inventory.getSize(); ++i) {
             ItemStack itemstack = this.inventory.getItem(i);
 
-            if (itemstack != null && Item.byId[itemstack.id].m_() && this.netServerHandler.lowPriorityCount() <= 2) {
-                Packet packet = ((ItemWorldMapBase) Item.byId[itemstack.id]).c(itemstack, this.world, this);
+            if (itemstack != null && Item.itemsList[itemstack.id].m_() && this.netServerHandler.lowPriorityCount() <= 2) {
+                Packet packet = ((ItemWorldMapBase) Item.itemsList[itemstack.id]).c(itemstack, this.world, this);
 
                 if (packet != null) {
                     this.netServerHandler.sendPacket(packet);

@@ -32,8 +32,8 @@ public class EntityEnderCrystal extends Entity {
         int j = MathHelper.floor(this.locY);
         int k = MathHelper.floor(this.locZ);
 
-        if (this.world.getTypeId(i, j, k) != Block.FIRE.id) {
-            this.world.setTypeId(i, j, k, Block.FIRE.id);
+        if (this.world.getTypeId(i, j, k) != Block.FIRE.blockID) {
+            this.world.setTypeId(i, j, k, Block.FIRE.blockID);
         }
     }
 

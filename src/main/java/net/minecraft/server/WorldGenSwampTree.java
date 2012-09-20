@@ -17,7 +17,7 @@ public class WorldGenSwampTree extends WorldGenerator implements BlockSapling.Tr
         // CraftBukkit end
         int l;
 
-        for (l = random.nextInt(4) + 5; world.getTypeId(i, j - 1, k) != 0 && Block.byId[world.getTypeId(i, j - 1, k)].material == Material.WATER; --j) { // CraftBukkit - bypass world.getMaterial
+        for (l = random.nextInt(4) + 5; world.getTypeId(i, j - 1, k) != 0 && Block.blocksList[world.getTypeId(i, j - 1, k)].blockMaterial == Material.WATER; --j) { // CraftBukkit - bypass world.getMaterial
             ;
         }
 
@@ -44,8 +44,8 @@ public class WorldGenSwampTree extends WorldGenerator implements BlockSapling.Tr
                     for (k1 = k - b0; k1 <= k + b0 && flag; ++k1) {
                         if (i1 >= 0 && i1 < 128) {
                             l1 = world.getTypeId(j1, i1, k1);
-                            if (l1 != 0 && l1 != Block.LEAVES.id) {
-                                if (l1 != Block.STATIONARY_WATER.id && l1 != Block.WATER.id) {
+                            if (l1 != 0 && l1 != Block.LEAVES.blockID) {
+                                if (l1 != Block.STATIONARY_WATER.blockID && l1 != Block.WATER.blockID) {
                                     flag = false;
                                 } else if (i1 > j) {
                                     flag = false;
@@ -62,8 +62,8 @@ public class WorldGenSwampTree extends WorldGenerator implements BlockSapling.Tr
                 return false;
             } else {
                 i1 = world.getTypeId(i, j - 1, k);
-                if ((i1 == Block.GRASS.id || i1 == Block.DIRT.id) && j < 128 - l - 1) {
-                    this.setType(world, i, j - 1, k, Block.DIRT.id);
+                if ((i1 == Block.GRASS.blockID || i1 == Block.DIRT.blockID) && j < 128 - l - 1) {
+                    this.setType(world, i, j - 1, k, Block.DIRT.blockID);
 
                     int i2;
                     int j2;
@@ -79,7 +79,7 @@ public class WorldGenSwampTree extends WorldGenerator implements BlockSapling.Tr
                                 int l2 = k2 - k;
 
                                 if ((Math.abs(i2) != k1 || Math.abs(l2) != k1 || random.nextInt(2) != 0 && j1 != 0) && !Block.n[world.getTypeId(l1, j2, k2)]) {
-                                    this.setType(world, l1, j2, k2, Block.LEAVES.id);
+                                    this.setType(world, l1, j2, k2, Block.LEAVES.blockID);
                                 }
                             }
                         }
@@ -87,8 +87,8 @@ public class WorldGenSwampTree extends WorldGenerator implements BlockSapling.Tr
 
                     for (j2 = 0; j2 < l; ++j2) {
                         j1 = world.getTypeId(i, j + j2, k);
-                        if (j1 == 0 || j1 == Block.LEAVES.id || j1 == Block.WATER.id || j1 == Block.STATIONARY_WATER.id) {
-                            this.setType(world, i, j + j2, k, Block.LOG.id);
+                        if (j1 == 0 || j1 == Block.LEAVES.blockID || j1 == Block.WATER.blockID || j1 == Block.STATIONARY_WATER.blockID) {
+                            this.setType(world, i, j + j2, k, Block.LOG.blockID);
                         }
                     }
 
@@ -98,7 +98,7 @@ public class WorldGenSwampTree extends WorldGenerator implements BlockSapling.Tr
 
                         for (l1 = i - k1; l1 <= i + k1; ++l1) {
                             for (i2 = k - k1; i2 <= k + k1; ++i2) {
-                                if (world.getTypeId(l1, j2, i2) == Block.LEAVES.id) {
+                                if (world.getTypeId(l1, j2, i2) == Block.LEAVES.blockID) {
                                     if (random.nextInt(4) == 0 && world.getTypeId(l1 - 1, j2, i2) == 0) {
                                         this.b(world, l1 - 1, j2, i2, 8);
                                     }
@@ -131,7 +131,7 @@ public class WorldGenSwampTree extends WorldGenerator implements BlockSapling.Tr
 
     // CraftBukkit - change signature
     private void b(BlockChangeDelegate world, int i, int j, int k, int l) {
-        this.setTypeAndData(world, i, j, k, Block.VINE.id, l);
+        this.setTypeAndData(world, i, j, k, Block.VINE.blockID, l);
         int i1 = 4;
 
         while (true) {
@@ -140,7 +140,7 @@ public class WorldGenSwampTree extends WorldGenerator implements BlockSapling.Tr
                 return;
             }
 
-            this.setTypeAndData(world, i, j, k, Block.VINE.id, l);
+            this.setTypeAndData(world, i, j, k, Block.VINE.blockID, l);
             --i1;
         }
     }

@@ -13,11 +13,11 @@ public final class ItemStack {
     }
 
     public ItemStack(Block block, int i) {
-        this(block.id, i, 0);
+        this(block.blockID, i, 0);
     }
 
     public ItemStack(Block block, int i, int j) {
-        this(block.id, i, j);
+        this(block.blockID, i, j);
     }
 
     public ItemStack(Item item) {
@@ -43,7 +43,7 @@ public final class ItemStack {
     public ItemStack(int id, int count, int data, NBTTagList enchantments) {
         this(id, count, data);
         // taken from .addEnchantment
-        if (enchantments != null && Item.byId[this.id].getMaxStackSize() == 1) {
+        if (enchantments != null && Item.itemsList[this.id].getMaxStackSize() == 1) {
             if (this.tag == null) {
                 this.setTag(new NBTTagCompound());
             }
@@ -77,7 +77,7 @@ public final class ItemStack {
     }
 
     public Item getItem() {
-        return Item.byId[this.id];
+        return Item.itemsList[this.id];
     }
 
     public boolean placeItem(EntityHuman entityhuman, World world, int i, int j, int k, int l, float f, float f1, float f2) {
@@ -131,11 +131,11 @@ public final class ItemStack {
     }
 
     public boolean f() {
-        return Item.byId[this.id].getMaxDurability() > 0;
+        return Item.itemsList[this.id].getMaxDurability() > 0;
     }
 
     public boolean usesData() {
-        return Item.byId[this.id].k();
+        return Item.itemsList[this.id].k();
     }
 
     public boolean h() {
@@ -151,11 +151,11 @@ public final class ItemStack {
     }
 
     public void setData(int i) {
-        this.damage = (this.id > 0) && (this.id < 256) ? Item.byId[this.id].filterData(i) : i; // CraftBukkit
+        this.damage = (this.id > 0) && (this.id < 256) ? Item.itemsList[this.id].filterData(i) : i; // CraftBukkit
     }
 
     public int k() {
-        return Item.byId[this.id].getMaxDurability();
+        return Item.itemsList[this.id].getMaxDurability();
     }
 
     public void damage(int i, EntityLiving entityliving) {
@@ -195,7 +195,7 @@ public final class ItemStack {
     }
 
     public void a(EntityLiving entityliving, EntityHuman entityhuman) {
-        boolean flag = Item.byId[this.id].a(this, entityliving, (EntityLiving) entityhuman);
+        boolean flag = Item.itemsList[this.id].a(this, entityliving, (EntityLiving) entityhuman);
 
         if (flag) {
             entityhuman.a(StatisticList.E[this.id], 1);
@@ -203,7 +203,7 @@ public final class ItemStack {
     }
 
     public void a(World world, int i, int j, int k, int l, EntityHuman entityhuman) {
-        boolean flag = Item.byId[this.id].a(this, world, i, j, k, l, entityhuman);
+        boolean flag = Item.itemsList[this.id].a(this, world, i, j, k, l, entityhuman);
 
         if (flag) {
             entityhuman.a(StatisticList.E[this.id], 1);
@@ -211,15 +211,15 @@ public final class ItemStack {
     }
 
     public int a(Entity entity) {
-        return Item.byId[this.id].a(entity);
+        return Item.itemsList[this.id].a(entity);
     }
 
     public boolean b(Block block) {
-        return Item.byId[this.id].canDestroySpecialBlock(block);
+        return Item.itemsList[this.id].canHarvestBlock(block);
     }
 
     public boolean a(EntityLiving entityliving) {
-        return Item.byId[this.id].a(this, entityliving);
+        return Item.itemsList[this.id].a(this, entityliving);
     }
 
     public ItemStack cloneItemStack() {
@@ -249,7 +249,7 @@ public final class ItemStack {
     }
 
     public String a() {
-        return Item.byId[this.id].c(this);
+        return Item.itemsList[this.id].c(this);
     }
 
     public static ItemStack b(ItemStack itemstack) {
@@ -257,7 +257,7 @@ public final class ItemStack {
     }
 
     public String toString() {
-        return this.count + "x" + Item.byId[this.id].getName() + "@" + this.damage;
+        return this.count + "x" + Item.itemsList[this.id].getName() + "@" + this.damage;
     }
 
     public void a(World world, Entity entity, int i, boolean flag) {
@@ -265,12 +265,12 @@ public final class ItemStack {
             --this.b;
         }
 
-        Item.byId[this.id].a(this, world, entity, i, flag);
+        Item.itemsList[this.id].a(this, world, entity, i, flag);
     }
 
     public void a(World world, EntityHuman entityhuman, int i) {
         entityhuman.a(StatisticList.D[this.id], i);
-        Item.byId[this.id].d(this, world, entityhuman);
+        Item.itemsList[this.id].d(this, world, entityhuman);
     }
 
     public boolean c(ItemStack itemstack) {

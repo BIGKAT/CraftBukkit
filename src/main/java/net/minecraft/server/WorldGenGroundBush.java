@@ -23,15 +23,15 @@ public class WorldGenGroundBush extends WorldGenerator implements BlockSapling.T
         // CraftBukkit end
         int l;
 
-        for (boolean flag = false; ((l = world.getTypeId(i, j, k)) == 0 || l == Block.LEAVES.id) && j > 0; --j) {
+        for (boolean flag = false; ((l = world.getTypeId(i, j, k)) == 0 || l == Block.LEAVES.blockID) && j > 0; --j) {
             ;
         }
 
         int i1 = world.getTypeId(i, j, k);
 
-        if (i1 == Block.DIRT.id || i1 == Block.GRASS.id) {
+        if (i1 == Block.DIRT.blockID || i1 == Block.GRASS.blockID) {
             ++j;
-            this.setTypeAndData(world, i, j, k, Block.LOG.id, this.b);
+            this.setTypeAndData(world, i, j, k, Block.LOG.blockID, this.b);
 
             for (int j1 = j; j1 <= j + 2; ++j1) {
                 int k1 = j1 - j;
@@ -44,7 +44,7 @@ public class WorldGenGroundBush extends WorldGenerator implements BlockSapling.T
                         int l2 = k2 - k;
 
                         if ((Math.abs(j2) != l1 || Math.abs(l2) != l1 || random.nextInt(2) != 0) && !Block.n[world.getTypeId(i2, j1, k2)]) {
-                            this.setTypeAndData(world, i2, j1, k2, Block.LEAVES.id, this.a);
+                            this.setTypeAndData(world, i2, j1, k2, Block.LEAVES.blockID, this.a);
                         }
                     }
                 }

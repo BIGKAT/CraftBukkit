@@ -117,19 +117,19 @@ public class BlockSapling extends BlockFlower {
         }
         if (!grownTree) {
             if (flag) {
-                world.setRawTypeIdAndData(i + i1, j, k + j1, this.id, l);
-                world.setRawTypeIdAndData(i + i1 + 1, j, k + j1, this.id, l);
-                world.setRawTypeIdAndData(i + i1, j, k + j1 + 1, this.id, l);
-                world.setRawTypeIdAndData(i + i1 + 1, j, k + j1 + 1, this.id, l);
+                world.setRawTypeIdAndData(i + i1, j, k + j1, this.blockID, l);
+                world.setRawTypeIdAndData(i + i1 + 1, j, k + j1, this.blockID, l);
+                world.setRawTypeIdAndData(i + i1, j, k + j1 + 1, this.blockID, l);
+                world.setRawTypeIdAndData(i + i1 + 1, j, k + j1 + 1, this.blockID, l);
             } else {
-                world.setRawTypeIdAndData(i, j, k, this.id, l);
+                world.setRawTypeIdAndData(i, j, k, this.blockID, l);
             }
         }
         // CraftBukkit end
     }
 
     public boolean e(World world, int i, int j, int k, int l) {
-        return world.getTypeId(i, j, k) == this.id && (world.getData(i, j, k) & 3) == l;
+        return world.getTypeId(i, j, k) == this.blockID && (world.getData(i, j, k) & 3) == l;
     }
 
     protected int getDropData(int i) {
