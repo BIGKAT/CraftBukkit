@@ -1,6 +1,6 @@
 package org.bukkit.craftbukkit.entity;
 
-import net.minecraft.server.EntityPig;
+import net.minecraft.src.EntityPig;
 
 import org.bukkit.craftbukkit.CraftServer;
 import org.bukkit.entity.EntityType;

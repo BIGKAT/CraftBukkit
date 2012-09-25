@@ -4,15 +4,15 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.ListIterator;
 
-import net.minecraft.server.ContainerEnchantTableInventory;
-import net.minecraft.server.IInventory;
-import net.minecraft.server.InventoryCrafting;
-import net.minecraft.server.InventoryEnderChest;
-import net.minecraft.server.InventoryMerchant;
-import net.minecraft.server.PlayerInventory;
-import net.minecraft.server.TileEntityBrewingStand;
-import net.minecraft.server.TileEntityDispenser;
-import net.minecraft.server.TileEntityFurnace;
+import net.minecraft.src.SlotEnchantmentTable;
+import net.minecraft.src.InventoryPlayer;
+import net.minecraft.src.IInventory;
+import net.minecraft.src.InventoryCrafting;
+import net.minecraft.src.InventoryEnderChest;
+import net.minecraft.src.InventoryMerchant;
+import net.minecraft.src.TileEntityBrewingStand;
+import net.minecraft.src.TileEntityDispenser;
+import net.minecraft.src.TileEntityFurnace;
 
 import org.bukkit.entity.HumanEntity;
 import org.bukkit.event.inventory.InventoryType;
@@ -41,13 +41,13 @@ public class CraftInventory implements Inventory {
     }
 
     public ItemStack getItem(int index) {
-        net.minecraft.server.ItemStack item = getInventory().getItem(index);
+        net.minecraft.src.ItemStack item = getInventory().getItem(index);
         return item == null ? null : new CraftItemStack(item);
     }
 
     public ItemStack[] getContents() {
         ItemStack[] items = new ItemStack[getSize()];
-        net.minecraft.server.ItemStack[] mcItems = getInventory().getContents();
+        net.minecraft.src.ItemStack[] mcItems = getInventory().getContents();
 
         for (int i = 0; i < mcItems.length; i++) {
             items[i] = mcItems[i] == null ? null : new CraftItemStack(mcItems[i]);
@@ -61,7 +61,7 @@ public class CraftInventory implements Inventory {
             throw new IllegalArgumentException("Invalid inventory size; expected " + getInventory().getContents().length + " or less");
         }
 
-        net.minecraft.server.ItemStack[] mcItems = getInventory().getContents();
+        net.minecraft.src.ItemStack[] mcItems = getInventory().getContents();
 
         for (int i = 0; i < mcItems.length; i++) {
             if (i >= items.length) {
@@ -400,13 +400,13 @@ public class CraftInventory implements Inventory {
     public InventoryType getType() {
         if (inventory instanceof InventoryCrafting) {
             return inventory.getSize() >= 9 ? InventoryType.WORKBENCH : InventoryType.CRAFTING;
-        } else if (inventory instanceof PlayerInventory) {
+        } else if (inventory instanceof InventoryPlayer) {
             return InventoryType.PLAYER;
         } else if (inventory instanceof TileEntityDispenser) {
             return InventoryType.DISPENSER;
         } else if (inventory instanceof TileEntityFurnace) {
             return InventoryType.FURNACE;
-        } else if (inventory instanceof ContainerEnchantTableInventory) {
+        } else if (inventory instanceof SlotEnchantmentTable) {
             return InventoryType.ENCHANTING;
         } else if (inventory instanceof TileEntityBrewingStand) {
             return InventoryType.BREWING;

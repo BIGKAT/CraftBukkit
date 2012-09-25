@@ -21,30 +21,29 @@ import net.minecraft.server.BanEntry;
 import net.minecraft.server.ChunkCoordinates;
 import net.minecraft.server.Convertable;
 import net.minecraft.server.ConvertProgressUpdater;
-import net.minecraft.server.CraftingManager;
-import net.minecraft.server.DedicatedServer;
-import net.minecraft.server.Enchantment;
-import net.minecraft.server.EntityPlayer;
-import net.minecraft.server.EntityTracker;
+import net.minecraft.src.CraftingManager;
+import net.minecraft.src.DedicatedServer;
+import net.minecraft.src.Enchantment;
+import net.minecraft.src.EntityPlayerMP;
+import net.minecraft.src.EntityTracker;
 import net.minecraft.server.EnumGamemode;
 import net.minecraft.server.ExceptionWorldConflict;
-import net.minecraft.server.RecipesFurnace;
+import net.minecraft.src.MapData;
+import net.minecraft.src.Potion;
+import net.minecraft.src.FurnaceRecipes;
 import net.minecraft.server.IProgressUpdate;
 import net.minecraft.server.IWorldAccess;
 import net.minecraft.server.Item;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.MobEffectList;
-import net.minecraft.server.PropertyManager;
+import net.minecraft.src.PropertyManager;
+import net.minecraft.src.SaveHandler;
 import net.minecraft.server.ServerCommand;
-import net.minecraft.server.ServerConfigurationManager;
-import net.minecraft.server.ServerConfigurationManagerAbstract;
+import net.minecraft.src.ServerConfigurationManager;
 import net.minecraft.server.ServerNBTManager;
 import net.minecraft.server.WorldLoaderServer;
-import net.minecraft.server.WorldManager;
-import net.minecraft.server.WorldMap;
+import net.minecraft.src.WorldManager;
 import net.minecraft.server.WorldMapCollection;
-import net.minecraft.server.WorldNBTStorage;
-import net.minecraft.server.WorldServer;
+import net.minecraft.src.WorldServer;
 import net.minecraft.server.WorldSettings;
 import net.minecraft.server.WorldType;
 
@@ -108,7 +107,6 @@ import org.bukkit.plugin.SimplePluginManager;
 import org.bukkit.plugin.SimpleServicesManager;
 import org.bukkit.plugin.java.JavaPluginLoader;
 import org.bukkit.plugin.messaging.Messenger;
-import org.bukkit.potion.Potion;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.plugin.messaging.StandardMessenger;
 import org.bukkit.scheduler.BukkitWorker;
@@ -158,7 +156,7 @@ public final class CraftServer implements Server {
         ConfigurationSerialization.registerClass(CraftOfflinePlayer.class);
     }
 
-    public CraftServer(MinecraftServer console, ServerConfigurationManagerAbstract server) {
+    public CraftServer(MinecraftServer console, ServerConfigurationManager server) {
         this.console = console;
         this.server = (ServerConfigurationManager) server;
         this.serverVersion = CraftServer.class.getPackage().getImplementationVersion();
@@ -169,8 +167,8 @@ public final class CraftServer implements Server {
         Enchantment.DAMAGE_ALL.getClass();
         org.bukkit.enchantments.Enchantment.stopAcceptingRegistrations();
 
-        Potion.setPotionBrewer(new CraftPotionBrewer());
-        MobEffectList.BLINDNESS.getClass();
+        org.bukkit.potion.Potion.setPotionBrewer(new CraftPotionBrewer());
+        Potion.BLINDNESS.getClass();
         PotionEffectType.stopAcceptingRegistrations();
         // Ugly hack :(
 
@@ -292,7 +290,7 @@ public final class CraftServer implements Server {
 
     @SuppressWarnings("unchecked")
     public Player[] getOnlinePlayers() {
-        List<EntityPlayer> online = server.playerEntityList;
+        List<EntityPlayerMP> online = server.playerEntityList;
         Player[] players = new Player[online.size()];
 
         for (int i = 0; i < players.length; i++) {
@@ -337,7 +335,7 @@ public final class CraftServer implements Server {
         return broadcast(message, BROADCAST_CHANNEL_USERS);
     }
 
-    public Player getPlayer(final EntityPlayer entity) {
+    public Player getPlayer(final EntityPlayerMP entity) {
         return entity.serverForThisPlayer.getPlayer();
     }
 
@@ -884,12 +882,12 @@ public final class CraftServer implements Server {
 
     public void clearRecipes() {
         CraftingManager.getInstance().recipes.clear();
-        RecipesFurnace.getInstance().recipes.clear();
+        FurnaceRecipes.getInstance().recipes.clear();
     }
 
     public void resetRecipes() {
         CraftingManager.getInstance().recipes = new CraftingManager().recipes;
-        RecipesFurnace.getInstance().recipes = new RecipesFurnace().recipes;
+        FurnaceRecipes.getInstance().recipes = new FurnaceRecipes().recipes;
     }
 
     public Map<String, String[]> getCommandAliases() {
@@ -965,7 +963,7 @@ public final class CraftServer implements Server {
 
     public CraftMapView getMap(short id) {
         WorldMapCollection collection = console.worlds.get(0).worldMaps;
-        WorldMap worldmap = (WorldMap) collection.get(WorldMap.class, "map_" + id);
+        MapData worldmap = (MapData) collection.get(MapData.class, "map_" + id);
         if (worldmap == null) {
             return null;
         }
@@ -973,8 +971,8 @@ public final class CraftServer implements Server {
     }
 
     public CraftMapView createMap(World world) {
-        net.minecraft.server.ItemStack stack = new net.minecraft.server.ItemStack(Item.MAP, 1, -1);
-        WorldMap worldmap = Item.MAP.getSavedMap(stack, ((CraftWorld) world).getHandle());
+        net.minecraft.src.ItemStack stack = new net.minecraft.src.ItemStack(Item.MAP, 1, -1);
+        MapData worldmap = Item.MAP.getSavedMap(stack, ((CraftWorld) world).getHandle());
         return worldmap.mapView;
     }
 
@@ -1103,10 +1101,10 @@ public final class CraftServer implements Server {
         return worldMetadata;
     }
 
-    public void detectListNameConflict(EntityPlayer entityPlayer) {
+    public void detectListNameConflict(EntityPlayerMP entityPlayer) {
         // Collisions will make for invisible people
         for (int i = 0; i < getHandle().playerEntityList.size(); ++i) {
-            EntityPlayer testEntityPlayer = (EntityPlayer) getHandle().playerEntityList.get(i);
+            EntityPlayerMP testEntityPlayer = (EntityPlayerMP) getHandle().playerEntityList.get(i);
 
             // We have a problem!
             if (testEntityPlayer != entityPlayer && testEntityPlayer.listName.equals(entityPlayer.listName)) {
@@ -1137,7 +1135,7 @@ public final class CraftServer implements Server {
     }
 
     public OfflinePlayer[] getOfflinePlayers() {
-        WorldNBTStorage storage = (WorldNBTStorage) console.worlds.get(0).getDataManager();
+        SaveHandler storage = (SaveHandler) console.worlds.get(0).getDataManager();
         String[] files = storage.getPlayerDir().list(new DatFileFilter());
         Set<OfflinePlayer> players = new HashSet<OfflinePlayer>();
 

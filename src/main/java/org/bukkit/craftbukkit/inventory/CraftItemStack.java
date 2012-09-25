@@ -3,7 +3,7 @@ package org.bukkit.craftbukkit.inventory;
 import java.util.HashMap;
 import java.util.Map;
 import net.minecraft.server.EnchantmentManager;
-import net.minecraft.server.NBTTagCompound;
+import net.minecraft.src.NBTTagCompound;
 import net.minecraft.server.NBTTagList;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.inventory.ItemStack;
@@ -12,9 +12,9 @@ import org.bukkit.configuration.serialization.DelegateDeserialization;
 
 @DelegateDeserialization(ItemStack.class)
 public class CraftItemStack extends ItemStack {
-    protected net.minecraft.server.ItemStack item;
+    protected net.minecraft.src.ItemStack item;
 
-    public CraftItemStack(net.minecraft.server.ItemStack item) {
+    public CraftItemStack(net.minecraft.src.ItemStack item) {
         super(
             item != null ? item.id: 0,
             item != null ? item.count : 0,
@@ -58,7 +58,7 @@ public class CraftItemStack extends ItemStack {
     }
 
     public CraftItemStack(int type, int amount, short damage, Byte data) {
-        this(new net.minecraft.server.ItemStack(type, amount, data != null ? data : damage));
+        this(new net.minecraft.src.ItemStack(type, amount, data != null ? data : damage));
     }
 
     /*
@@ -86,7 +86,7 @@ public class CraftItemStack extends ItemStack {
             item = null;
         } else {
             if (item == null) {
-                item = new net.minecraft.server.ItemStack(type, 1, 0);
+                item = new net.minecraft.src.ItemStack(type, 1, 0);
                 super.setTypeId(type);
                 super.setAmount(1);
                 super.setDurability((short) 0);
@@ -212,7 +212,7 @@ public class CraftItemStack extends ItemStack {
         }
     }
 
-    public net.minecraft.server.ItemStack getHandle() {
+    public net.minecraft.src.ItemStack getHandle() {
         return item;
     }
 
@@ -225,7 +225,7 @@ public class CraftItemStack extends ItemStack {
         return itemStack;
     }
 
-    public static net.minecraft.server.ItemStack createNMSItemStack(ItemStack original) {
+    public static net.minecraft.src.ItemStack createNMSItemStack(ItemStack original) {
         if (original == null || original.getTypeId() <= 0) {
             return null;
         } else if (original instanceof CraftItemStack) {

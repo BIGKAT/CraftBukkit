@@ -6,20 +6,18 @@ import org.bukkit.craftbukkit.potion.CraftPotionBrewer;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import net.minecraft.server.MobEffectList;
-
 public class PotionTest {
     @BeforeClass
     public static void setUp() {
-        Potion.setPotionBrewer(new CraftPotionBrewer());
-        MobEffectList.BLINDNESS.getClass();
+        org.bukkit.potion.Potion.setPotionBrewer(new CraftPotionBrewer());
+        net.minecraft.src.Potion.BLINDNESS.getClass();
         PotionEffectType.stopAcceptingRegistrations();
     }
 
     @Test
     public void getEffects() {
         for (PotionType type : PotionType.values()) {
-            for (PotionEffect effect : new Potion(type).getEffects()) {
+            for (PotionEffect effect : new org.bukkit.potion.Potion(type).getEffects()) {
                 assertTrue(effect.getType() == PotionEffectType.getById(effect.getType().getId()));
             }
         }

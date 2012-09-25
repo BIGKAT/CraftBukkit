@@ -8,9 +8,9 @@ import org.bukkit.entity.HumanEntity;
 import org.bukkit.event.inventory.InventoryType;
 import org.bukkit.inventory.InventoryHolder;
 
-import net.minecraft.server.EntityHuman;
-import net.minecraft.server.IInventory;
-import net.minecraft.server.ItemStack;
+import net.minecraft.src.EntityPlayer;
+import net.minecraft.src.IInventory;
+import net.minecraft.src.ItemStack;
 
 public class CraftInventoryCustom extends CraftInventory {
     public CraftInventoryCustom(InventoryHolder owner, InventoryType type) {
@@ -108,7 +108,7 @@ public class CraftInventoryCustom extends CraftInventory {
 
         public void update() {}
 
-        public boolean a(EntityHuman entityhuman) {
+        public boolean a(EntityPlayer entityhuman) {
             return true;
         }
 

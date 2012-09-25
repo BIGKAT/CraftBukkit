@@ -7,9 +7,9 @@ import org.bukkit.enchantments.EnchantmentWrapper;
 import org.bukkit.inventory.ItemStack;
 
 public class CraftEnchantment extends Enchantment {
-    private final net.minecraft.server.Enchantment target;
+    private final net.minecraft.src.Enchantment target;
 
-    public CraftEnchantment(net.minecraft.server.Enchantment target) {
+    public CraftEnchantment(net.minecraft.src.Enchantment target) {
         super(target.effectId);
         this.target = target;
     }
@@ -105,7 +105,7 @@ public class CraftEnchantment extends Enchantment {
         }
     }
 
-    public static net.minecraft.server.Enchantment getRaw(Enchantment enchantment) {
+    public static net.minecraft.src.Enchantment getRaw(Enchantment enchantment) {
         if (enchantment instanceof EnchantmentWrapper) {
             enchantment = ((EnchantmentWrapper) enchantment).getEnchantment();
         }

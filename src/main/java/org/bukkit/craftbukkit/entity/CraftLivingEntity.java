@@ -7,17 +7,17 @@ import java.util.Iterator;
 import java.util.List;
 
 import net.minecraft.server.DamageSource;
-import net.minecraft.server.EntityArrow;
-import net.minecraft.server.EntityComplex;
-import net.minecraft.server.EntityEgg;
-import net.minecraft.server.EntityEnderPearl;
-import net.minecraft.server.EntityFireball;
-import net.minecraft.server.EntityLiving;
-import net.minecraft.server.EntitySmallFireball;
+import net.minecraft.src.EntityDragonBase;
+import net.minecraft.src.EntityArrow;
+import net.minecraft.src.EntityEgg;
+import net.minecraft.src.EntityEnderPearl;
+import net.minecraft.src.EntityFireball;
+import net.minecraft.src.EntityLiving;
+import net.minecraft.src.EntityPlayerMP;
+import net.minecraft.src.EntitySmallFireball;
 import net.minecraft.server.EntitySnowball;
-import net.minecraft.server.EntityPlayer;
 import net.minecraft.server.MobEffect;
-import net.minecraft.server.MobEffectList;
+import net.minecraft.src.Potion;
 import net.minecraft.server.Packet42RemoveMobEffect;
 
 import org.bukkit.Location;
@@ -41,6 +41,7 @@ import org.bukkit.potion.PotionEffectType;
 import org.bukkit.util.BlockIterator;
 import org.bukkit.util.Vector;
 
+import net.minecraft.src.World;
 import org.apache.commons.lang.Validate;
 
 public class CraftLivingEntity extends CraftEntity implements LivingEntity {
@@ -57,8 +58,8 @@ public class CraftLivingEntity extends CraftEntity implements LivingEntity {
             throw new IllegalArgumentException("Health must be between 0 and " + getMaxHealth());
         }
 
-        if (entity instanceof EntityPlayer && health == 0) {
-            ((EntityPlayer) entity).die(DamageSource.GENERIC);
+        if (entity instanceof EntityPlayerMP && health == 0) {
+            ((EntityPlayerMP) entity).die(DamageSource.GENERIC);
         }
 
         getHandle().setHealth(health);
@@ -159,8 +160,8 @@ public class CraftLivingEntity extends CraftEntity implements LivingEntity {
             reason = DamageSource.mobAttack(((CraftLivingEntity) source).getHandle());
         }
 
-        if (entity instanceof EntityComplex) {
-            ((EntityComplex) entity).dealDamage(reason, amount);
+        if (entity instanceof EntityDragonBase) {
+            ((EntityDragonBase) entity).dealDamage(reason, amount);
         } else {
             entity.damageEntity(reason, amount);
         }
@@ -238,15 +239,15 @@ public class CraftLivingEntity extends CraftEntity implements LivingEntity {
     }
 
     public boolean hasPotionEffect(PotionEffectType type) {
-        return getHandle().hasEffect(MobEffectList.byId[type.getId()]);
+        return getHandle().hasEffect(Potion.byId[type.getId()]);
     }
 
     public void removePotionEffect(PotionEffectType type) {
         getHandle().activePotionsMap.remove(type.getId());
         getHandle().potionsNeedUpdate = true;
-        if (getHandle() instanceof EntityPlayer) {
-            if (((EntityPlayer) getHandle()).serverForThisPlayer == null) return;
-            ((EntityPlayer) getHandle()).serverForThisPlayer.sendPacketToPlayer(new Packet42RemoveMobEffect(getHandle().entityId, new MobEffect(type.getId(), 0, 0)));
+        if (getHandle() instanceof EntityPlayerMP) {
+            if (((EntityPlayerMP) getHandle()).serverForThisPlayer == null) return;
+            ((EntityPlayerMP) getHandle()).serverForThisPlayer.sendPacketToPlayer(new Packet42RemoveMobEffect(getHandle().entityId, new MobEffect(type.getId(), 0, 0)));
         }
     }
 
@@ -263,8 +264,8 @@ public class CraftLivingEntity extends CraftEntity implements LivingEntity {
 
     @SuppressWarnings("unchecked")
     public <T extends Projectile> T launchProjectile(Class<? extends T> projectile) {
-        net.minecraft.server.World world = ((CraftWorld) getWorld()).getHandle();
-        net.minecraft.server.Entity launch = null;
+        World world = ((CraftWorld) getWorld()).getHandle();
+        net.minecraft.src.Entity launch = null;
 
         if (Snowball.class.isAssignableFrom(projectile)) {
             launch = new EntitySnowball(world, getHandle());

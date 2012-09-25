@@ -1,12 +1,13 @@
 package org.bukkit.craftbukkit.entity;
 
-import net.minecraft.server.EntityExperienceOrb;
+import net.minecraft.src.EntityXPOrb;
+
 import org.bukkit.craftbukkit.CraftServer;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.ExperienceOrb;
 
 public class CraftExperienceOrb extends CraftEntity implements ExperienceOrb {
-    public CraftExperienceOrb(CraftServer server, EntityExperienceOrb entity) {
+    public CraftExperienceOrb(CraftServer server, EntityXPOrb entity) {
         super(server, entity);
     }
 
@@ -19,8 +20,8 @@ public class CraftExperienceOrb extends CraftEntity implements ExperienceOrb {
     }
 
     @Override
-    public EntityExperienceOrb getHandle() {
-        return (EntityExperienceOrb) entity;
+    public EntityXPOrb getHandle() {
+        return (EntityXPOrb) entity;
     }
 
     @Override

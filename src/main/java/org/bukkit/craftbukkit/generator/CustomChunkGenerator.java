@@ -6,13 +6,13 @@ import java.util.Random;
 import net.minecraft.server.BiomeGenBase;
 import net.minecraft.server.Chunk;
 import net.minecraft.server.ChunkPosition;
-import net.minecraft.server.ExtendedBlockStorage;
+import net.minecraft.src.ExtendedBlockStorage;
 import net.minecraft.server.EnumCreatureType;
 import net.minecraft.server.IChunkProvider;
 import net.minecraft.server.IProgressUpdate;
-import net.minecraft.server.World;
+import net.minecraft.src.World;
 import net.minecraft.server.WorldGenStronghold;
-import net.minecraft.server.WorldServer;
+import net.minecraft.src.WorldServer;
 
 import org.bukkit.block.Biome;
 import org.bukkit.generator.BlockPopulator;

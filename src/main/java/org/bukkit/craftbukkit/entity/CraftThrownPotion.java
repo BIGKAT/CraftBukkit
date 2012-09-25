@@ -2,7 +2,7 @@ package org.bukkit.craftbukkit.entity;
 
 import java.util.Collection;
 
-import net.minecraft.server.EntityPotion;
+import net.minecraft.src.EntityPotion;
 
 import org.bukkit.craftbukkit.CraftServer;
 import org.bukkit.entity.EntityType;

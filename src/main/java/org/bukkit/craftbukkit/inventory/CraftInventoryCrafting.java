@@ -1,8 +1,8 @@
 package org.bukkit.craftbukkit.inventory;
 
-import net.minecraft.server.IRecipe;
-import net.minecraft.server.IInventory;
-import net.minecraft.server.InventoryCrafting;
+import net.minecraft.src.IRecipe;
+import net.minecraft.src.IInventory;
+import net.minecraft.src.InventoryCrafting;
 
 import org.bukkit.inventory.CraftingInventory;
 import org.bukkit.inventory.ItemStack;
@@ -43,14 +43,14 @@ public class CraftInventoryCrafting extends CraftInventory implements CraftingIn
     @Override
     public ItemStack[] getContents() {
         ItemStack[] items = new ItemStack[getSize()];
-        net.minecraft.server.ItemStack[] mcResultItems = getResultInventory().getContents();
+        net.minecraft.src.ItemStack[] mcResultItems = getResultInventory().getContents();
 
         int i = 0;
         for (i = 0; i < mcResultItems.length; i++ ) {
             items[i] = new CraftItemStack(mcResultItems[i]);
         }
 
-        net.minecraft.server.ItemStack[] mcItems = getMatrixInventory().getContents();
+        net.minecraft.src.ItemStack[] mcItems = getMatrixInventory().getContents();
 
         for (int j = 0; j < mcItems.length; j++) {
             items[i + j] = new CraftItemStack(mcItems[j]);
@@ -67,10 +67,10 @@ public class CraftInventoryCrafting extends CraftInventory implements CraftingIn
     @Override
     public CraftItemStack getItem(int index) {
         if (index < getResultInventory().getSize()) {
-            net.minecraft.server.ItemStack item = getResultInventory().getItem(index);
+            net.minecraft.src.ItemStack item = getResultInventory().getItem(index);
             return item == null ? null : new CraftItemStack(item);
         } else {
-            net.minecraft.server.ItemStack item = getMatrixInventory().getItem(index - getResultInventory().getSize());
+            net.minecraft.src.ItemStack item = getMatrixInventory().getItem(index - getResultInventory().getSize());
             return item == null ? null : new CraftItemStack(item);
         }
     }
@@ -86,7 +86,7 @@ public class CraftInventoryCrafting extends CraftInventory implements CraftingIn
 
     public ItemStack[] getMatrix() {
         ItemStack[] items = new ItemStack[getSize()];
-        net.minecraft.server.ItemStack[] matrix = getMatrixInventory().getContents();
+        net.minecraft.src.ItemStack[] matrix = getMatrixInventory().getContents();
 
         for (int i = 0; i < matrix.length; i++ ) {
             items[i] = new CraftItemStack(matrix[i]);
@@ -96,7 +96,7 @@ public class CraftInventoryCrafting extends CraftInventory implements CraftingIn
     }
 
     public ItemStack getResult() {
-        net.minecraft.server.ItemStack item = getResultInventory().getItem(0);
+        net.minecraft.src.ItemStack item = getResultInventory().getItem(0);
         if(item != null) return new CraftItemStack(item);
         return null;
     }
@@ -106,7 +106,7 @@ public class CraftInventoryCrafting extends CraftInventory implements CraftingIn
             throw new IllegalArgumentException("Invalid inventory size; expected " + getMatrixInventory().getContents().length + " or less");
         }
 
-        net.minecraft.server.ItemStack[] mcItems = getMatrixInventory().getContents();
+        net.minecraft.src.ItemStack[] mcItems = getMatrixInventory().getContents();
 
         for (int i = 0; i < mcItems.length; i++ ) {
             if (i < contents.length) {
@@ -123,7 +123,7 @@ public class CraftInventoryCrafting extends CraftInventory implements CraftingIn
     }
 
     public void setResult(ItemStack item) {
-        net.minecraft.server.ItemStack[] contents = getResultInventory().getContents();
+        net.minecraft.src.ItemStack[] contents = getResultInventory().getContents();
         if (item == null || item.getTypeId() <= 0) {
             contents[0] = null;
         } else {

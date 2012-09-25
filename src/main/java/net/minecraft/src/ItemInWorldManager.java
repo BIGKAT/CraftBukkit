@@ -1,0 +1,398 @@
+package net.minecraft.src;
+
+// CraftBukkit start
+
+import net.minecraft.server.Block;
+import net.minecraft.server.EnchantmentManager;
+import net.minecraft.server.EnumGamemode;
+import net.minecraft.server.Packet53BlockChange;
+
+import org.bukkit.event.block.BlockBreakEvent;
+import org.bukkit.craftbukkit.event.CraftEventFactory;
+import org.bukkit.event.Event;
+import org.bukkit.event.block.Action;
+import org.bukkit.event.player.PlayerInteractEvent;
+// CraftBukkit end
+
+public class ItemInWorldManager {
+
+    public net.minecraft.src.World world;
+    public EntityPlayerMP player;
+    private EnumGamemode gamemode;
+    private boolean d;
+    private int lastDigTick;
+    private int f;
+    private int g;
+    private int h;
+    private int currentTick;
+    private boolean j;
+    private int k;
+    private int l;
+    private int m;
+    private int n;
+    private int o;
+
+    public ItemInWorldManager(net.minecraft.src.World world) {
+        this.gamemode = EnumGamemode.NONE;
+        this.o = -1;
+        this.world = world;
+    }
+
+    // CraftBukkit start - keep this for backwards compatibility
+    public ItemInWorldManager(net.minecraft.src.WorldServer world) {
+        this((net.minecraft.src.World) world);
+    }
+    // CraftBukkit end
+
+    public void setGameMode(EnumGamemode enumgamemode) {
+        this.gamemode = enumgamemode;
+        enumgamemode.a(this.player.capabilities);
+        this.player.sendPlayerAbilities();
+    }
+
+    public EnumGamemode getGameMode() {
+        return this.gamemode;
+    }
+
+    public boolean isCreative() {
+        return this.gamemode.d();
+    }
+
+    public void b(EnumGamemode enumgamemode) {
+        if (this.gamemode == EnumGamemode.NONE) {
+            this.gamemode = enumgamemode;
+        }
+
+        this.setGameMode(this.gamemode);
+    }
+
+    public void a() {
+        this.currentTick = (int) (System.currentTimeMillis() / 50); // CraftBukkit
+        int i;
+        float f;
+        int j;
+
+        if (this.j) {
+            i = this.currentTick - this.n;
+            int k = this.world.getBlockId(this.k, this.l, this.m);
+
+            if (k == 0) {
+                this.j = false;
+            } else {
+                Block block = Block.blocksList[k];
+
+                f = block.getDamage(this.player, this.player.worldObj, this.k, this.l, this.m) * (float) (i + 1);
+                j = (int) (f * 10.0F);
+                if (j != this.o) {
+                    this.world.f(this.player.entityId, this.k, this.l, this.m, j);
+                    this.o = j;
+                }
+
+                if (f >= 1.0F) {
+                    this.j = false;
+                    this.breakBlock(this.k, this.l, this.m);
+                }
+            }
+        } else if (this.d) {
+            i = this.world.getBlockId(this.f, this.g, this.h);
+            Block block1 = Block.blocksList[i];
+
+            if (block1 == null) {
+                this.world.f(this.player.entityId, this.f, this.g, this.h, -1);
+                this.o = -1;
+                this.d = false;
+            } else {
+                int l = this.currentTick - this.lastDigTick;
+
+                f = block1.getDamage(this.player, this.player.worldObj, this.f, this.g, this.h) * (float) (l + 1);
+                j = (int) (f * 10.0F);
+                if (j != this.o) {
+                    this.world.f(this.player.entityId, this.f, this.g, this.h, j);
+                    this.o = j;
+                }
+            }
+        }
+    }
+
+    public void dig(int i, int j, int k, int l) {
+        // this.world.douseFire((EntityHuman) null, i, j, k, l); // CraftBukkit - moved down
+        // CraftBukkit
+        PlayerInteractEvent event = CraftEventFactory.callPlayerInteractEvent(this.player, Action.LEFT_CLICK_BLOCK, i, j, k, l, this.player.inventory.getItemInHand());
+
+        if (!this.gamemode.isAdventure()) {
+            // CraftBukkit start
+            if (event.isCancelled()) {
+                // Let the client know the block still exists
+                ((EntityPlayerMP) this.player).serverForThisPlayer.sendPacketToPlayer(new Packet53BlockChange(i, j, k, this.world));
+                return;
+            }
+            // CraftBukkit end
+            if (this.isCreative()) {
+                if (!this.world.douseFire((EntityPlayer) null, i, j, k, l)) {
+                    this.breakBlock(i, j, k);
+                }
+            } else {
+                this.world.douseFire(this.player, i, j, k, l);
+                this.lastDigTick = this.currentTick;
+                float f = 1.0F;
+                int i1 = this.world.getBlockId(i, j, k);
+                // CraftBukkit start - Swings at air do *NOT* exist.
+                if (i1 <= 0) {
+                    return;
+                }
+
+                if (event.useInteractedBlock() == Event.Result.DENY) {
+                    // If we denied a door from opening, we need to send a correcting update to the client, as it already opened the door.
+                    if (i1 == Block.WOODEN_DOOR.blockID) {
+                        // For some reason *BOTH* the bottom/top part have to be marked updated.
+                        boolean bottom = (this.world.getData(i, j, k) & 8) == 0;
+                        ((EntityPlayerMP) this.player).serverForThisPlayer.sendPacketToPlayer(new Packet53BlockChange(i, j, k, this.world));
+                        ((EntityPlayerMP) this.player).serverForThisPlayer.sendPacketToPlayer(new Packet53BlockChange(i, j + (bottom ? 1 : -1), k, this.world));
+                    } else if (i1 == Block.TRAP_DOOR.blockID) {
+                        ((EntityPlayerMP) this.player).serverForThisPlayer.sendPacketToPlayer(new Packet53BlockChange(i, j, k, this.world));
+                    }
+                } else {
+                    Block.blocksList[i1].attack(this.world, i, j, k, this.player);
+                    // Allow fire punching to be blocked
+                    this.world.douseFire((EntityPlayer) null, i, j, k, l);
+                }
+
+                // Handle hitting a block
+                float toolDamage = Block.blocksList[i1].getDamage(this.player, this.world, i, j, k);
+                if (event.useItemInHand() == Event.Result.DENY) {
+                    // If we 'insta destroyed' then the client needs to be informed.
+                    if (toolDamage > 1.0f) {
+                        ((EntityPlayerMP) this.player).serverForThisPlayer.sendPacketToPlayer(new Packet53BlockChange(i, j, k, this.world));
+                    }
+                    return;
+                }
+                org.bukkit.event.block.BlockDamageEvent blockEvent = CraftEventFactory.callBlockDamageEvent(this.player, i, j, k, this.player.inventory.getItemInHand(), toolDamage >= 1.0f);
+
+                if (blockEvent.isCancelled()) {
+                    // Let the client know the block still exists
+                    ((EntityPlayerMP) this.player).serverForThisPlayer.sendPacketToPlayer(new Packet53BlockChange(i, j, k, this.world));
+                    return;
+                }
+
+                if (blockEvent.getInstaBreak()) {
+                    toolDamage = 2.0f;
+                }
+
+                if (toolDamage >= 1.0F) {
+                    // CraftBukkit end
+                    this.breakBlock(i, j, k);
+                } else {
+                    this.d = true;
+                    this.f = i;
+                    this.g = j;
+                    this.h = k;
+                    int j1 = (int) (f * 10.0F);
+
+                    this.world.f(this.player.entityId, i, j, k, j1);
+                    this.o = j1;
+                }
+            }
+        }
+    }
+
+    public void a(int i, int j, int k) {
+        if (i == this.f && j == this.g && k == this.h) {
+            this.currentTick = (int) (System.currentTimeMillis() / 50); // CraftBukkit
+            int l = this.currentTick - this.lastDigTick;
+            int i1 = this.world.getBlockId(i, j, k);
+
+            if (i1 != 0) {
+                Block block = Block.blocksList[i1];
+                float f = block.getDamage(this.player, this.player.worldObj, i, j, k) * (float) (l + 1);
+
+                if (f >= 0.7F) {
+                    this.d = false;
+                    this.world.f(this.player.entityId, i, j, k, -1);
+                    this.breakBlock(i, j, k);
+                } else if (!this.j) {
+                    this.d = false;
+                    this.j = true;
+                    this.k = i;
+                    this.l = j;
+                    this.m = k;
+                    this.n = this.lastDigTick;
+                }
+            }
+        // CraftBukkit start - force blockreset to client
+        } else {
+            ((EntityPlayerMP) this.player).serverForThisPlayer.sendPacketToPlayer(new Packet53BlockChange(i, j, k, this.world));
+            // CraftBukkit end
+        }
+    }
+
+    public void c(int i, int j, int k) {
+        this.d = false;
+        this.world.f(this.player.entityId, this.f, this.g, this.h, -1);
+    }
+
+    private boolean d(int i, int j, int k) {
+        Block block = Block.blocksList[this.world.getBlockId(i, j, k)];
+        int l = this.world.getData(i, j, k);
+
+        if (block != null) {
+            block.a(this.world, i, j, k, l, this.player);
+        }
+
+        boolean flag = this.world.setBlockWithNotify(i, j, k, 0);
+
+        if (block != null && flag) {
+            block.postBreak(this.world, i, j, k, l);
+        }
+
+        return flag;
+    }
+
+    public boolean breakBlock(int i, int j, int k) {
+        // CraftBukkit start
+        BlockBreakEvent event = null;
+
+        if (this.player instanceof EntityPlayerMP) {
+            org.bukkit.block.Block block = this.world.getWorld().getBlockAt(i, j, k);
+
+            // Tell client the block is gone immediately then process events
+            if (world.getTileEntity(i, j, k) == null) {
+                Packet53BlockChange packet = new Packet53BlockChange(i, j, k, this.world);
+
+                packet.material = 0;
+                packet.data = 0;
+                ((EntityPlayerMP) this.player).serverForThisPlayer.sendPacketToPlayer(packet);
+            }
+
+            event = new BlockBreakEvent(block, this.player.getBukkitEntity());
+
+            // Adventure mode pre-cancel
+            event.setCancelled(this.gamemode.isAdventure());
+
+            // Calculate default block experience
+            Block nmsBlock = Block.blocksList[block.getTypeId()];
+
+            if (nmsBlock != null && !event.isCancelled() && !this.isCreative() && this.player.b(nmsBlock)) {
+                // Copied from Block.a(world, entityhuman, int, int, int, int)
+                if (!(nmsBlock.q_() && EnchantmentManager.hasSilkTouchEnchantment(this.player.inventory))) {
+                    int data = block.getData();
+                    int bonusLevel = EnchantmentManager.getBonusBlockLootEnchantmentLevel(this.player.inventory);
+
+                    event.setExpToDrop(nmsBlock.getExpDrop(this.world, data, bonusLevel));
+                }
+            }
+
+            this.world.getServer().getPluginManager().callEvent(event);
+
+            if (event.isCancelled()) {
+                // Let the client know the block still exists
+                ((EntityPlayerMP) this.player).serverForThisPlayer.sendPacketToPlayer(new Packet53BlockChange(i, j, k, this.world));
+                return false;
+            }
+        }
+
+        if (false) { // Never trigger
+            // CraftBukkit end
+            return false;
+        } else {
+            int l = this.world.getBlockId(i, j, k);
+            if (Block.blocksList[l] == null) return false; // CraftBukkit - a plugin set block to air without cancelling
+            int i1 = this.world.getData(i, j, k);
+
+            this.world.a(this.player, 2001, i, j, k, l + (this.world.getData(i, j, k) << 12));
+            boolean flag = this.d(i, j, k);
+
+            if (this.isCreative()) {
+                this.player.serverForThisPlayer.sendPacketToPlayer(new Packet53BlockChange(i, j, k, this.world));
+            } else {
+                net.minecraft.src.ItemStack itemstack = this.player.bC();
+                boolean flag1 = this.player.b(Block.blocksList[l]);
+
+                if (itemstack != null) {
+                    itemstack.a(this.world, l, i, j, k, this.player);
+                    if (itemstack.count == 0) {
+                        this.player.bD();
+                    }
+                }
+
+                if (flag && flag1) {
+                    Block.blocksList[l].a(this.world, this.player, i, j, k, i1);
+                }
+            }
+
+            // CraftBukkit start - drop event experience
+            if (flag && event != null) {
+                Block.blocksList[l].g(this.world, i, j, k, event.getExpToDrop());
+            }
+            // CraftBukkit end
+
+            return flag;
+        }
+    }
+
+    public boolean useItem(EntityPlayer entityhuman, net.minecraft.src.World world, net.minecraft.src.ItemStack itemstack) {
+        int i = itemstack.count;
+        int j = itemstack.getData();
+        net.minecraft.src.ItemStack itemstack1 = itemstack.a(world, entityhuman);
+
+        if (itemstack1 == itemstack && (itemstack1 == null || itemstack1.count == i) && (itemstack1 == null || itemstack1.m() <= 0)) {
+            return false;
+        } else {
+            entityhuman.inventory.items[entityhuman.inventory.itemInHandIndex] = itemstack1;
+            if (this.isCreative()) {
+                itemstack1.count = i;
+                itemstack1.setData(j);
+            }
+
+            if (itemstack1.count == 0) {
+                entityhuman.inventory.items[entityhuman.inventory.itemInHandIndex] = null;
+            }
+
+            return true;
+        }
+    }
+
+    // CraftBukkit - TODO: Review this code, it changed in 1.8 but I'm not sure if we need to update or not
+    public boolean interact(EntityPlayer entityhuman, net.minecraft.src.World world, net.minecraft.src.ItemStack itemstack, int i, int j, int k, int l, float f, float f1, float f2) {
+        int i1 = world.getBlockId(i, j, k);
+
+        // CraftBukkit start - Interact
+        boolean result = false;
+        if (i1 > 0) {
+            PlayerInteractEvent event = CraftEventFactory.callPlayerInteractEvent(entityhuman, Action.RIGHT_CLICK_BLOCK, i, j, k, l, itemstack);
+            if (event.useInteractedBlock() == Event.Result.DENY) {
+                // If we denied a door from opening, we need to send a correcting update to the client, as it already opened the door.
+                if (i1 == Block.WOODEN_DOOR.blockID) {
+                    boolean bottom = (world.getData(i, j, k) & 8) == 0;
+                    ((EntityPlayerMP) entityhuman).serverForThisPlayer.sendPacketToPlayer(new Packet53BlockChange(i, j + (bottom ? 1 : -1), k, world));
+                }
+                result = (event.useItemInHand() != Event.Result.ALLOW);
+            } else {
+                result = Block.blocksList[i1].interact(world, i, j, k, entityhuman, l, f, f1, f2);
+            }
+
+            if (itemstack != null && !result) {
+                int j1 = itemstack.getData();
+                int k1 = itemstack.count;
+
+                result = itemstack.placeItem(entityhuman, world, i, j, k, l, f, f1, f2);
+
+                // The item count should not decrement in Creative mode.
+                if (this.isCreative()) {
+                    itemstack.setData(j1);
+                    itemstack.count = k1;
+                }
+            }
+
+            // If we have 'true' and no explicit deny *or* an explicit allow -- run the item part of the hook
+            if (itemstack != null && ((!result && event.useItemInHand() != Event.Result.DENY) || event.useItemInHand() == Event.Result.ALLOW)) {
+                this.useItem(entityhuman, world, itemstack);
+            }
+        }
+        return result;
+        // CraftBukkit end
+    }
+
+    public void a(net.minecraft.src.WorldServer worldserver) {
+        this.world = worldserver;
+    }
+}

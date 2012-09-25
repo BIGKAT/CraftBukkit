@@ -1,6 +1,6 @@
 package org.bukkit.craftbukkit.inventory;
 
-import net.minecraft.server.Enchantment;
+import net.minecraft.src.Enchantment;
 import net.minecraft.server.StatisticList;
 import org.bukkit.inventory.ItemStack;
 import org.junit.Before;
@@ -14,7 +14,7 @@ public class CraftItemStackTest {
 
     @Test
     public void testCloneEnchantedItem() throws Exception {
-        net.minecraft.server.ItemStack nmsItemStack = new net.minecraft.server.ItemStack(net.minecraft.server.Item.POTION);
+        net.minecraft.src.ItemStack nmsItemStack = new net.minecraft.src.ItemStack(net.minecraft.server.Item.POTION);
         nmsItemStack.addEnchantment(Enchantment.DAMAGE_ALL, 1);
         ItemStack itemStack = new CraftItemStack(nmsItemStack);
         ItemStack clone = itemStack.clone();
@@ -28,7 +28,7 @@ public class CraftItemStackTest {
 
     @Test
     public void testCloneNullItem() throws Exception {
-        net.minecraft.server.ItemStack nmsItemStack = null;
+        net.minecraft.src.ItemStack nmsItemStack = null;
         ItemStack itemStack = new CraftItemStack(nmsItemStack);
         ItemStack clone = itemStack.clone();
         assert (clone.equals(itemStack));

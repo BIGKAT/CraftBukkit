@@ -1,6 +1,6 @@
 package org.bukkit.craftbukkit.entity;
 
-import net.minecraft.server.EntityCreeper;
+import net.minecraft.src.EntityCreeper;
 
 import org.bukkit.craftbukkit.CraftServer;
 import org.bukkit.entity.Creeper;

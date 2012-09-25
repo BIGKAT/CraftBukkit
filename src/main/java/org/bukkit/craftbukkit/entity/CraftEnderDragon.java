@@ -6,7 +6,7 @@ import com.google.common.collect.ImmutableSet.Builder;
 import java.util.Set;
 
 import net.minecraft.server.EntityComplexPart;
-import net.minecraft.server.EntityEnderDragon;
+import net.minecraft.src.EntityDragon;
 
 import org.bukkit.craftbukkit.CraftServer;
 import org.bukkit.entity.ComplexEntityPart;
@@ -14,7 +14,7 @@ import org.bukkit.entity.EnderDragon;
 import org.bukkit.entity.EntityType;
 
 public class CraftEnderDragon extends CraftComplexLivingEntity implements EnderDragon {
-    public CraftEnderDragon(CraftServer server, EntityEnderDragon entity) {
+    public CraftEnderDragon(CraftServer server, EntityDragon entity) {
         super(server, entity);
     }
 
@@ -29,8 +29,8 @@ public class CraftEnderDragon extends CraftComplexLivingEntity implements EnderD
     }
 
     @Override
-    public EntityEnderDragon getHandle() {
-        return (EntityEnderDragon) entity;
+    public EntityDragon getHandle() {
+        return (EntityDragon) entity;
     }
 
     @Override

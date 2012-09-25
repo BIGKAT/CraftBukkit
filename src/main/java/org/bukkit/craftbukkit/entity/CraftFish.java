@@ -1,7 +1,7 @@
 package org.bukkit.craftbukkit.entity;
 
-import net.minecraft.server.EntityFishingHook;
-import net.minecraft.server.EntityHuman;
+import net.minecraft.src.EntityFishingHook;
+import net.minecraft.src.EntityPlayer;
 
 import org.bukkit.craftbukkit.CraftServer;
 import org.bukkit.entity.EntityType;
@@ -23,7 +23,7 @@ public class CraftFish extends AbstractProjectile implements Fish {
 
     public void setShooter(LivingEntity shooter) {
         if (shooter instanceof CraftHumanEntity) {
-            getHandle().angler = (EntityHuman) ((CraftHumanEntity) shooter).entity;
+            getHandle().angler = (EntityPlayer) ((CraftHumanEntity) shooter).entity;
         }
     }
 

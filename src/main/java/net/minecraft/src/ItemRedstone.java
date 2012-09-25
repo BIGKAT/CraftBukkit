@@ -1,0 +1,73 @@
+package net.minecraft.src;
+
+import net.minecraft.server.*;
+
+import org.bukkit.craftbukkit.block.CraftBlockState; // CraftBukkit
+
+public class ItemRedstone extends Item {
+
+    public ItemRedstone(int i) {
+        super(i);
+        this.a(CreativeModeTab.d);
+    }
+
+    public boolean interactWith(ItemStack itemstack, EntityPlayer entityhuman, net.minecraft.src.World world, int i, int j, int k, int l, float f, float f1, float f2) {
+        int clickedX = i, clickedY = j, clickedZ = k; // CraftBukkit
+
+        if (world.getBlockId(i, j, k) != Block.SNOW.blockID) {
+            if (l == 0) {
+                --j;
+            }
+
+            if (l == 1) {
+                ++j;
+            }
+
+            if (l == 2) {
+                --k;
+            }
+
+            if (l == 3) {
+                ++k;
+            }
+
+            if (l == 4) {
+                --i;
+            }
+
+            if (l == 5) {
+                ++i;
+            }
+
+            if (!world.isEmpty(i, j, k)) {
+                return false;
+            }
+        }
+
+        if (!entityhuman.e(i, j, k)) {
+            return false;
+        } else {
+            if (Block.redstoneWire.canPlace(world, i, j, k)) {
+                // CraftBukkit start
+                CraftBlockState blockState = CraftBlockState.getBlockState(world, i, j, k);
+
+                world.suppressPhysics = true;
+                world.setBlock(i, j, k, Block.redstoneWire.blockID); // We update after the event
+
+                org.bukkit.event.block.BlockPlaceEvent event = org.bukkit.craftbukkit.event.CraftEventFactory.callBlockPlaceEvent(world, entityhuman, blockState, clickedX, clickedY, clickedZ);
+                blockState.update(true);
+
+                world.suppressPhysics = false;
+                if (event.isCancelled() || !event.canBuild()) {
+                    return false;
+                }
+                // CraftBukkit end
+
+                --itemstack.count;
+                world.setBlockWithNotify(i, j, k, Block.redstoneWire.blockID);
+            }
+
+            return true;
+        }
+    }
+}

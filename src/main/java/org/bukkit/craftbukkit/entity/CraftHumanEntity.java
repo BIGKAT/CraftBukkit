@@ -3,13 +3,13 @@ package org.bukkit.craftbukkit.entity;
 import java.util.Set;
 
 import net.minecraft.server.Container;
-import net.minecraft.server.EntityHuman;
-import net.minecraft.server.EntityPlayer;
+import net.minecraft.src.EntityPlayer;
+import net.minecraft.src.EntityPlayerMP;
 import net.minecraft.server.Packet100OpenWindow;
 import net.minecraft.server.Packet101CloseWindow;
-import net.minecraft.server.TileEntityBrewingStand;
-import net.minecraft.server.TileEntityDispenser;
-import net.minecraft.server.TileEntityFurnace;
+import net.minecraft.src.TileEntityBrewingStand;
+import net.minecraft.src.TileEntityDispenser;
+import net.minecraft.src.TileEntityFurnace;
 
 import org.bukkit.GameMode;
 import org.bukkit.Location;
@@ -41,7 +41,7 @@ public class CraftHumanEntity extends CraftLivingEntity implements HumanEntity {
     private boolean op;
     private GameMode mode;
 
-    public CraftHumanEntity(final CraftServer server, final EntityHuman entity) {
+    public CraftHumanEntity(final CraftServer server, final EntityPlayer entity) {
         super(server, entity);
         mode = server.getDefaultGameMode();
         this.inventory = new CraftInventoryPlayer(entity.inventory);
@@ -73,10 +73,10 @@ public class CraftHumanEntity extends CraftLivingEntity implements HumanEntity {
     }
 
     public void setItemOnCursor(ItemStack item) {
-        net.minecraft.server.ItemStack stack = CraftItemStack.createNMSItemStack(item);
+        net.minecraft.src.ItemStack stack = CraftItemStack.createNMSItemStack(item);
         getHandle().inventory.setItemStack(stack);
         if (this instanceof CraftPlayer) {
-            ((EntityPlayer) getHandle()).updateCraftingInventorySlot(); // Send set slot for cursor
+            ((EntityPlayerMP) getHandle()).updateCraftingInventorySlot(); // Send set slot for cursor
         }
     }
 
@@ -154,11 +154,11 @@ public class CraftHumanEntity extends CraftLivingEntity implements HumanEntity {
     }
 
     @Override
-    public EntityHuman getHandle() {
-        return (EntityHuman) entity;
+    public EntityPlayer getHandle() {
+        return (EntityPlayer) entity;
     }
 
-    public void setHandle(final EntityHuman entity) {
+    public void setHandle(final EntityPlayer entity) {
         super.setHandle(entity);
         this.inventory = new CraftInventoryPlayer(entity.inventory);
     }
@@ -173,8 +173,8 @@ public class CraftHumanEntity extends CraftLivingEntity implements HumanEntity {
     }
 
     public InventoryView openInventory(Inventory inventory) {
-        if(!(getHandle() instanceof EntityPlayer)) return null;
-        EntityPlayer player = (EntityPlayer) getHandle();
+        if(!(getHandle() instanceof EntityPlayerMP)) return null;
+        EntityPlayerMP player = (EntityPlayerMP) getHandle();
         InventoryType type = inventory.getType();
         Container formerContainer = getHandle().craftingInventory;
         // TODO: Should we check that it really IS a CraftInventory first?
@@ -223,7 +223,7 @@ public class CraftHumanEntity extends CraftLivingEntity implements HumanEntity {
         return getHandle().craftingInventory.getBukkitView();
     }
 
-    private void openCustomInventory(Inventory inventory, EntityPlayer player, int windowType) {
+    private void openCustomInventory(Inventory inventory, EntityPlayerMP player, int windowType) {
         if (player.serverForThisPlayer == null) return;
         Container container = new CraftContainer(inventory, this, player.incrementWindowID());
 
@@ -273,13 +273,13 @@ public class CraftHumanEntity extends CraftLivingEntity implements HumanEntity {
     }
 
     public void openInventory(InventoryView inventory) {
-        if (!(getHandle() instanceof EntityPlayer)) return; // TODO: NPC support?
-        if (((EntityPlayer) getHandle()).serverForThisPlayer == null) return;
+        if (!(getHandle() instanceof EntityPlayerMP)) return; // TODO: NPC support?
+        if (((EntityPlayerMP) getHandle()).serverForThisPlayer == null) return;
         if (getHandle().craftingInventory != getHandle().defaultContainer) {
             // fire INVENTORY_CLOSE if one already open
-            ((EntityPlayer)getHandle()).serverForThisPlayer.handleContainerClose(new Packet101CloseWindow(getHandle().craftingInventory.windowId));
+            ((EntityPlayerMP)getHandle()).serverForThisPlayer.handleContainerClose(new Packet101CloseWindow(getHandle().craftingInventory.windowId));
         }
-        EntityPlayer player = (EntityPlayer) getHandle();
+        EntityPlayerMP player = (EntityPlayerMP) getHandle();
         Container container;
         if (inventory instanceof CraftInventoryView) {
             container = ((CraftInventoryView) inventory).getHandle();

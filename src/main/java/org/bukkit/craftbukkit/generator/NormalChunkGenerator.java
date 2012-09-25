@@ -9,7 +9,7 @@ import net.minecraft.server.ChunkPosition;
 import net.minecraft.server.EnumCreatureType;
 import net.minecraft.server.IChunkProvider;
 import net.minecraft.server.IProgressUpdate;
-import net.minecraft.server.World;
+import net.minecraft.src.World;
 
 import org.bukkit.craftbukkit.CraftWorld;
 import org.bukkit.generator.BlockPopulator;

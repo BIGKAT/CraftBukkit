@@ -16,7 +16,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import net.minecraft.server.*;
-
+import net.minecraft.src.*;
 import org.apache.commons.lang.Validate;
 import org.apache.commons.lang.NotImplementedException;
 
@@ -58,7 +58,7 @@ public class CraftPlayer extends CraftHumanEntity implements Player {
     private Map<String, Player> hiddenPlayers = new MapMaker().softValues().makeMap();
     private int hash = 0;
 
-    public CraftPlayer(CraftServer server, EntityPlayer entity) {
+    public CraftPlayer(CraftServer server, EntityPlayerMP entity) {
         super(server, entity);
 
         firstPlayed = System.currentTimeMillis();
@@ -84,7 +84,7 @@ public class CraftPlayer extends CraftHumanEntity implements Player {
 
     public boolean isOnline() {
         for (Object obj : server.getHandle().playerEntityList) {
-            EntityPlayer player = (EntityPlayer) obj;
+            EntityPlayerMP player = (EntityPlayerMP) obj;
             if (player.username.equalsIgnoreCase(getName())) {
                 return true;
             }
@@ -124,7 +124,7 @@ public class CraftPlayer extends CraftHumanEntity implements Player {
     public void sendRawMessage(String message) {
         if (getHandle().serverForThisPlayer == null) return;
 
-        getHandle().serverForThisPlayer.sendPacketToPlayer(new Packet3Chat(message));
+        getHandle().serverForThisPlayer.sendPacketToPlayer(new net.minecraft.src.Packet3Chat(message));
     }
 
     public void sendMessage(String message) {
@@ -168,7 +168,7 @@ public class CraftPlayer extends CraftHumanEntity implements Player {
 
         // Collisions will make for invisible people
         for (int i = 0; i < server.getHandle().playerEntityList.size(); ++i) {
-            if (((EntityPlayer) server.getHandle().playerEntityList.get(i)).listName.equals(name)) {
+            if (((EntityPlayerMP) server.getHandle().playerEntityList.get(i)).listName.equals(name)) {
                 throw new IllegalArgumentException(name + " is already assigned as a player list name for someone");
             }
         }
@@ -179,7 +179,7 @@ public class CraftPlayer extends CraftHumanEntity implements Player {
         Packet201PlayerInfo oldpacket = new Packet201PlayerInfo(oldName, false, 9999);
         Packet201PlayerInfo packet = new Packet201PlayerInfo(name, true, getHandle().ping);
         for (int i = 0; i < server.getHandle().playerEntityList.size(); ++i) {
-            EntityPlayer entityplayer = (EntityPlayer) server.getHandle().playerEntityList.get(i);
+            EntityPlayerMP entityplayer = (EntityPlayerMP) server.getHandle().playerEntityList.get(i);
             if (entityplayer.serverForThisPlayer == null) continue;
 
             if (entityplayer.getBukkitEntity().canSee(this)) {
@@ -362,10 +362,10 @@ public class CraftPlayer extends CraftHumanEntity implements Player {
         // Grab the new To Location dependent on whether the event was cancelled.
         to = event.getTo();
         // Grab the To and From World Handles.
-        WorldServer fromWorld = ((CraftWorld) from.getWorld()).getHandle();
-        WorldServer toWorld = ((CraftWorld) to.getWorld()).getHandle();
-        // Grab the EntityPlayer
-        EntityPlayer entity = getHandle();
+        net.minecraft.src.WorldServer fromWorld = ((CraftWorld) from.getWorld()).getHandle();
+        net.minecraft.src.WorldServer toWorld = ((CraftWorld) to.getWorld()).getHandle();
+        // Grab the EntityPlayerMP
+        EntityPlayerMP entity = getHandle();
 
         // Check if the fromWorld and toWorld are the same.
         if (fromWorld == toWorld) {
@@ -609,9 +609,9 @@ public class CraftPlayer extends CraftHumanEntity implements Player {
         hiddenPlayers.put(player.getName(), player);
 
         //remove this player from the hidden player's EntityTrackerEntry
-        EntityTracker tracker = ((WorldServer) entity.worldObj).tracker;
-        EntityPlayer other = ((CraftPlayer) player).getHandle();
-        EntityTrackerEntry entry = (EntityTrackerEntry) tracker.trackedEntities.get(other.entityId);
+        net.minecraft.src.EntityTracker tracker = ((net.minecraft.src.WorldServer) entity.worldObj).tracker;
+        EntityPlayerMP other = ((CraftPlayer) player).getHandle();
+        net.minecraft.src.EntityTrackerEntry entry = (net.minecraft.src.EntityTrackerEntry) tracker.trackedEntities.get(other.entityId);
         if (entry != null) {
             entry.clear(getHandle());
         }
@@ -627,9 +627,9 @@ public class CraftPlayer extends CraftHumanEntity implements Player {
         if (!hiddenPlayers.containsKey(player.getName())) return;
         hiddenPlayers.remove(player.getName());
 
-        EntityTracker tracker = ((WorldServer) entity.worldObj).tracker;
-        EntityPlayer other = ((CraftPlayer) player).getHandle();
-        EntityTrackerEntry entry = (EntityTrackerEntry) tracker.trackedEntities.get(other.entityId);
+        net.minecraft.src.EntityTracker tracker = ((net.minecraft.src.WorldServer) entity.worldObj).tracker;
+        EntityPlayerMP other = ((CraftPlayer) player).getHandle();
+        net.minecraft.src.EntityTrackerEntry entry = (net.minecraft.src.EntityTrackerEntry) tracker.trackedEntities.get(other.entityId);
         if (entry != null && !entry.trackedPlayers.contains(getHandle())) {
             entry.updatePlayer(getHandle());
         }
@@ -654,11 +654,11 @@ public class CraftPlayer extends CraftHumanEntity implements Player {
     }
 
     @Override
-    public EntityPlayer getHandle() {
-        return (EntityPlayer) entity;
+    public EntityPlayerMP getHandle() {
+        return (EntityPlayerMP) entity;
     }
 
-    public void setHandle(final EntityPlayer entity) {
+    public void setHandle(final EntityPlayerMP entity) {
         super.setHandle(entity);
     }
 
@@ -691,10 +691,10 @@ public class CraftPlayer extends CraftHumanEntity implements Player {
         this.firstPlayed = firstPlayed;
     }
 
-    public void readExtraData(NBTTagCompound nbttagcompound) {
+    public void readExtraData(net.minecraft.src.NBTTagCompound nbttagcompound) {
         hasPlayedBefore = true;
         if (nbttagcompound.hasKey("bukkit")) {
-            NBTTagCompound data = nbttagcompound.getCompoundTag("bukkit");
+            net.minecraft.src.NBTTagCompound data = nbttagcompound.getCompoundTag("bukkit");
 
             if (data.hasKey("firstPlayed")) {
                 firstPlayed = data.getLong("firstPlayed");
@@ -702,7 +702,7 @@ public class CraftPlayer extends CraftHumanEntity implements Player {
             }
 
             if (data.hasKey("newExp")) {
-                EntityPlayer handle = getHandle();
+                EntityPlayerMP handle = getHandle();
                 handle.newExp = data.getInteger("newExp");
                 handle.newTotalExp = data.getInteger("newTotalExp");
                 handle.newLevel = data.getInteger("newLevel");
@@ -712,13 +712,13 @@ public class CraftPlayer extends CraftHumanEntity implements Player {
         }
     }
 
-    public void setExtraData(NBTTagCompound nbttagcompound) {
+    public void setExtraData(net.minecraft.src.NBTTagCompound nbttagcompound) {
         if (!nbttagcompound.hasKey("bukkit")) {
-            nbttagcompound.setCompoundTag("bukkit", new NBTTagCompound());
+            nbttagcompound.setCompoundTag("bukkit", new net.minecraft.src.NBTTagCompound());
         }
 
-        NBTTagCompound data = nbttagcompound.getCompoundTag("bukkit");
-        EntityPlayer handle = getHandle();
+        net.minecraft.src.NBTTagCompound data = nbttagcompound.getCompoundTag("bukkit");
+        EntityPlayerMP handle = getHandle();
         data.setInteger("newExp", handle.newExp);
         data.setInteger("newTotalExp", handle.newTotalExp);
         data.setInteger("newLevel", handle.newLevel);
@@ -878,7 +878,7 @@ public class CraftPlayer extends CraftHumanEntity implements Player {
 
     public void setFlySpeed(float value) {
         validateSpeed(value);
-        EntityPlayer player = getHandle();
+        EntityPlayerMP player = getHandle();
         player.capabilities.flySpeed = value / 2f;
         player.sendPlayerAbilities();
 
@@ -886,7 +886,7 @@ public class CraftPlayer extends CraftHumanEntity implements Player {
 
     public void setWalkSpeed(float value) {
         validateSpeed(value);
-        EntityPlayer player = getHandle();
+        EntityPlayerMP player = getHandle();
         player.capabilities.walkSpeed = value / 2f;
         player.sendPlayerAbilities();
     }

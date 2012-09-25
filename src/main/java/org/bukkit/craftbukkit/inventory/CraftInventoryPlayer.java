@@ -1,18 +1,18 @@
 package org.bukkit.craftbukkit.inventory;
 
-import net.minecraft.server.PlayerInventory;
+import net.minecraft.src.InventoryPlayer;
 
 import org.bukkit.entity.HumanEntity;
 import org.bukkit.inventory.ItemStack;
 
 public class CraftInventoryPlayer extends CraftInventory implements org.bukkit.inventory.PlayerInventory {
-    public CraftInventoryPlayer(net.minecraft.server.PlayerInventory inventory) {
+    public CraftInventoryPlayer(InventoryPlayer inventory) {
         super(inventory);
     }
 
     @Override
-    public PlayerInventory getInventory() {
-        return (PlayerInventory) inventory;
+    public InventoryPlayer getInventory() {
+        return (InventoryPlayer) inventory;
     }
 
     @Override
@@ -65,7 +65,7 @@ public class CraftInventoryPlayer extends CraftInventory implements org.bukkit.i
     }
 
     public ItemStack[] getArmorContents() {
-        net.minecraft.server.ItemStack[] mcItems = getInventory().getArmorContents();
+        net.minecraft.src.ItemStack[] mcItems = getInventory().getArmorContents();
         ItemStack[] ret = new ItemStack[mcItems.length];
 
         for (int i = 0; i < mcItems.length; i++) {

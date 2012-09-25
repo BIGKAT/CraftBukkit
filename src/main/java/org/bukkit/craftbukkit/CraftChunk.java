@@ -5,10 +5,10 @@ import java.util.Arrays;
 
 import net.minecraft.server.BiomeGenBase;
 import net.minecraft.server.ChunkPosition;
-import net.minecraft.server.ExtendedBlockStorage;
+import net.minecraft.src.ExtendedBlockStorage;
 import net.minecraft.server.EmptyChunk;
 import net.minecraft.server.WorldChunkManager;
-import net.minecraft.server.WorldServer;
+import net.minecraft.src.WorldServer;
 
 import org.bukkit.Chunk;
 import org.bukkit.World;
@@ -92,11 +92,11 @@ public class CraftChunk implements Chunk {
 
         for (int i = 0; i < 16; i++) {
             for (Object obj : chunk.entityLists[i].toArray()) {
-                if (!(obj instanceof net.minecraft.server.Entity)) {
+                if (!(obj instanceof net.minecraft.src.Entity)) {
                     continue;
                 }
 
-                entities[index++] = ((net.minecraft.server.Entity) obj).getBukkitEntity();
+                entities[index++] = ((net.minecraft.src.Entity) obj).getBukkitEntity();
             }
         }
 

@@ -1,7 +1,7 @@
 package org.bukkit.craftbukkit.entity;
 
-import net.minecraft.server.Entity;
-import net.minecraft.server.EntityItem;
+import net.minecraft.src.Entity;
+import net.minecraft.src.EntityItem;
 
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Item;

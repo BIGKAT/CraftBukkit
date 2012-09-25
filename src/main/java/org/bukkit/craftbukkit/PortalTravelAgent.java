@@ -4,7 +4,8 @@ import java.util.Random;
 
 import net.minecraft.server.Block;
 import net.minecraft.server.MathHelper;
-import net.minecraft.server.WorldServer;
+import net.minecraft.src.World;
+import net.minecraft.src.WorldServer;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -50,7 +51,7 @@ public class PortalTravelAgent implements TravelAgent {
     }
 
     public Location findPortal(Location location) {
-        net.minecraft.server.World world = ((CraftWorld) location.getWorld()).getHandle();
+        World world = ((CraftWorld) location.getWorld()).getHandle();
 
         if (location.getWorld().getEnvironment() == Environment.THE_END) {
             int i = MathHelper.floor(location.getBlockX());
@@ -141,7 +142,7 @@ public class PortalTravelAgent implements TravelAgent {
     }
 
     public boolean createPortal(Location location) {
-        net.minecraft.server.World world = ((CraftWorld) location.getWorld()).getHandle();
+        World world = ((CraftWorld) location.getWorld()).getHandle();
 
         if (location.getWorld().getEnvironment() == Environment.THE_END) {
             int i = MathHelper.floor(location.getBlockX());

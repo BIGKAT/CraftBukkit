@@ -5,10 +5,10 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.zip.Deflater;
 
-import net.minecraft.server.EntityPlayer;
-import net.minecraft.server.Packet;
-import net.minecraft.server.Packet51MapChunk;
-import net.minecraft.server.Packet56MapChunkBulk;
+import net.minecraft.src.EntityPlayerMP;
+import net.minecraft.src.Packet;
+import net.minecraft.src.Packet51MapChunk;
+import net.minecraft.src.Packet56MapChunks;
 
 public final class ChunkCompressionThread implements Runnable {
 
@@ -16,7 +16,7 @@ public final class ChunkCompressionThread implements Runnable {
     private static boolean isRunning = false;
 
     private final int QUEUE_CAPACITY = 1024 * 10;
-    private final HashMap<EntityPlayer, Integer> queueSizePerPlayer = new HashMap<EntityPlayer, Integer>();
+    private final HashMap<EntityPlayerMP, Integer> queueSizePerPlayer = new HashMap<EntityPlayerMP, Integer>();
     private final BlockingQueue<QueuedPacket> packetQueue = new LinkedBlockingQueue<QueuedPacket>(QUEUE_CAPACITY);
 
     private final int CHUNK_SIZE = 16 * 256 * 16 * 5 / 2;
@@ -52,13 +52,13 @@ public final class ChunkCompressionThread implements Runnable {
         if (queuedPacket.compress == 1) {
             handleMapChunk((Packet51MapChunk) queuedPacket.packet);
         } else if (queuedPacket.compress == 2) {
-            handleMapChunkBulk((Packet56MapChunkBulk) queuedPacket.packet);
+            handleMapChunkBulk((Packet56MapChunks) queuedPacket.packet);
         }
 
         sendToNetworkQueue(queuedPacket);
     }
 
-    private void handleMapChunkBulk(Packet56MapChunkBulk packet) {
+    private void handleMapChunkBulk(Packet56MapChunks packet) {
         if (packet.buffer != null) {
             return;
         }
@@ -113,19 +113,19 @@ public final class ChunkCompressionThread implements Runnable {
         queuedPacket.player.serverForThisPlayer.theNetworkManager.queue(queuedPacket.packet);
     }
 
-    public static void sendPacket(EntityPlayer player, Packet packet) {
+    public static void sendPacket(EntityPlayerMP player, Packet packet) {
         int compressType = 0;
 
         if (packet instanceof Packet51MapChunk) {
             compressType = 1;
-        } else if (packet instanceof Packet56MapChunkBulk) {
+        } else if (packet instanceof Packet56MapChunks) {
             compressType = 2;
         }
 
         instance.addQueuedPacket(new QueuedPacket(player, packet, compressType));
     }
 
-    private void addToPlayerQueueSize(EntityPlayer player, int amount) {
+    private void addToPlayerQueueSize(EntityPlayerMP player, int amount) {
         synchronized (queueSizePerPlayer) {
             Integer count = queueSizePerPlayer.get(player);
             amount += (count == null) ? 0 : count;
@@ -137,7 +137,7 @@ public final class ChunkCompressionThread implements Runnable {
         }
     }
 
-    public static int getPlayerQueueSize(EntityPlayer player) {
+    public static int getPlayerQueueSize(EntityPlayerMP player) {
         synchronized (instance.queueSizePerPlayer) {
             Integer count = instance.queueSizePerPlayer.get(player);
             return count == null ? 0 : count;
@@ -157,11 +157,11 @@ public final class ChunkCompressionThread implements Runnable {
     }
 
     private static class QueuedPacket {
-        final EntityPlayer player;
+        final EntityPlayerMP player;
         final Packet packet;
         final int compress;
 
-        QueuedPacket(EntityPlayer player, Packet packet, int compress) {
+        QueuedPacket(EntityPlayerMP player, Packet packet, int compress) {
             this.player = player;
             this.packet = packet;
             this.compress = compress;

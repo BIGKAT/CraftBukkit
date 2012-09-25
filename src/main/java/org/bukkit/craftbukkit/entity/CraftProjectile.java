@@ -1,13 +1,14 @@
 package org.bukkit.craftbukkit.entity;
 
-import net.minecraft.server.EntityLiving;
-import net.minecraft.server.EntityProjectile;
+import net.minecraft.src.Entity;
+import net.minecraft.src.EntityLiving;
+import net.minecraft.src.EntityProjectile;
 import org.bukkit.craftbukkit.CraftServer;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Projectile;
 
 public abstract class CraftProjectile extends AbstractProjectile implements Projectile {
-    public CraftProjectile(CraftServer server, net.minecraft.server.Entity entity) {
+    public CraftProjectile(CraftServer server, Entity entity) {
         super(server, entity);
     }
 

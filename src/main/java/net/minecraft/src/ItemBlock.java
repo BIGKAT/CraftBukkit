@@ -1,0 +1,112 @@
+package net.minecraft.src;
+
+import net.minecraft.server.Block;
+import net.minecraft.server.Item;
+
+import org.bukkit.craftbukkit.block.CraftBlockState; // CraftBukkit
+
+public class ItemBlock extends Item {
+
+    private int id;
+
+    public ItemBlock(int i) {
+        super(i);
+        this.id = i + 256;
+        this.c(Block.blocksList[i + 256].a(2));
+    }
+
+    public int f() {
+        return this.id;
+    }
+
+    public boolean interactWith(net.minecraft.src.ItemStack itemstack, EntityPlayer entityhuman, net.minecraft.src.World world, int i, int j, int k, int l, float f, float f1, float f2) {
+        int clickedX = i, clickedY = j, clickedZ = k; // CraftBukkit
+        int i1 = world.getBlockId(i, j, k);
+
+        if (i1 == Block.SNOW.blockID) {
+            l = 1;
+        } else if (i1 != Block.VINE.blockID && i1 != Block.LONG_GRASS.blockID && i1 != Block.DEAD_BUSH.blockID) {
+            if (l == 0) {
+                --j;
+            }
+
+            if (l == 1) {
+                ++j;
+            }
+
+            if (l == 2) {
+                --k;
+            }
+
+            if (l == 3) {
+                ++k;
+            }
+
+            if (l == 4) {
+                --i;
+            }
+
+            if (l == 5) {
+                ++i;
+            }
+        }
+
+        if (itemstack.count == 0) {
+            return false;
+        } else if (!entityhuman.e(i, j, k)) {
+            return false;
+        } else if (j == 255 && Block.blocksList[this.id].blockMaterial.isBuildable()) {
+            return false;
+            // CraftBukkit start
+        }
+
+        int id = this.id;
+        if (l == -1 && itemstack.getItem() instanceof ItemSlab) {
+            if (this.id == Block.STEP.blockID) {
+                id = Block.DOUBLE_STEP.blockID;
+            } else if (this.id == Block.WOOD_STEP.blockID) {
+                id = Block.WOOD_DOUBLE_STEP.blockID;
+            }
+        }
+
+        if (id != this.id || world.mayPlace(this.id, i, j, k, false, l, entityhuman)) {
+            Block block = Block.blocksList[id];
+
+            CraftBlockState replacedBlockState = CraftBlockState.getBlockState(world, i, j, k);
+
+            world.suppressPhysics = true;
+            world.setBlockAndMetadataWithNotify(i, j, k, id, this.filterData(itemstack.getData()));
+            org.bukkit.event.block.BlockPlaceEvent event = org.bukkit.craftbukkit.event.CraftEventFactory.callBlockPlaceEvent(world, entityhuman, replacedBlockState, clickedX, clickedY, clickedZ);
+            id = world.getBlockId(i, j, k);
+            int data = world.getData(i, j, k);
+            replacedBlockState.update(true);
+            world.suppressPhysics = false;
+
+            if (event.isCancelled() || !event.canBuild()) {
+                return true;
+            }
+            if (world.setBlockAndMetadataWithNotify(i, j, k, id, data)) {
+                if (world.getBlockId(i, j, k) == id && Block.blocksList[id] != null) {
+                    Block.blocksList[id].postPlace(world, i, j, k, l, f, f1, f2);
+                    Block.blocksList[id].postPlace(world, i, j, k, entityhuman);
+                    // CraftBukkit end
+                }
+
+                world.makeSound((double) ((float) i + 0.5F), (double) ((float) j + 0.5F), (double) ((float) k + 0.5F), block.stepSound.getName(), (block.stepSound.getVolume1() + 1.0F) / 2.0F, block.stepSound.getVolume2() * 0.8F);
+                --itemstack.count;
+            }
+
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    public String c(net.minecraft.src.ItemStack itemstack) {
+        return Block.blocksList[this.id].a();
+    }
+
+    public String getName() {
+        return Block.blocksList[this.id].a();
+    }
+}

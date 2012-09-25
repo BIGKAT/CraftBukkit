@@ -1,6 +1,6 @@
 package org.bukkit.craftbukkit.block;
 
-import net.minecraft.server.TileEntityChest;
+import net.minecraft.src.TileEntityChest;
 
 import org.bukkit.Material;
 import org.bukkit.block.Block;

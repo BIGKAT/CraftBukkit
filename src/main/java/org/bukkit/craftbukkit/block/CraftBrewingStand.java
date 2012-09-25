@@ -1,6 +1,6 @@
 package org.bukkit.craftbukkit.block;
 
-import net.minecraft.server.TileEntityBrewingStand;
+import net.minecraft.src.TileEntityBrewingStand;
 import org.bukkit.block.Block;
 import org.bukkit.block.BrewingStand;
 import org.bukkit.craftbukkit.CraftWorld;

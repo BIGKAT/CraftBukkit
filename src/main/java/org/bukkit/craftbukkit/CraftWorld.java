@@ -8,6 +8,40 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
 import java.util.UUID;
+
+import net.minecraft.src.*;
+import net.minecraft.src.EntityArrow;
+import net.minecraft.src.EntityBlaze;
+import net.minecraft.src.EntityBoat;
+import net.minecraft.src.EntityChicken;
+import net.minecraft.src.EntityCow;
+import net.minecraft.src.EntityCreeper;
+import net.minecraft.src.EntityEgg;
+import net.minecraft.src.EntityEnderCrystal;
+import net.minecraft.src.EntityEnderman;
+import net.minecraft.src.EntityFireball;
+import net.minecraft.src.EntityFishingHook;
+import net.minecraft.src.EntityGhast;
+import net.minecraft.src.EntityIronGolem;
+import net.minecraft.src.EntityItem;
+import net.minecraft.src.EntityMagmaCube;
+import net.minecraft.src.EntityMinecart;
+import net.minecraft.src.EntityOcelot;
+import net.minecraft.src.EntityPainting;
+import net.minecraft.src.EntityPig;
+import net.minecraft.src.EntityPigZombie;
+import net.minecraft.src.EntitySheep;
+import net.minecraft.src.EntitySilverfish;
+import net.minecraft.src.EntitySkeleton;
+import net.minecraft.src.EntitySlime;
+import net.minecraft.src.EntitySmallFireball;
+import net.minecraft.src.EntitySnowman;
+import net.minecraft.src.EntitySpider;
+import net.minecraft.src.EntitySquid;
+import net.minecraft.src.EntityTNTPrimed;
+import net.minecraft.src.EntityWolf;
+import net.minecraft.src.EntityZombie;
+import net.minecraft.src.TileEntity;
 import org.apache.commons.lang.Validate;
 
 import org.bukkit.craftbukkit.entity.*;
@@ -47,7 +81,7 @@ import org.bukkit.craftbukkit.inventory.CraftItemStack;
 import org.bukkit.plugin.messaging.StandardMessenger;
 
 public class CraftWorld implements World {
-    private final WorldServer world;
+    private final net.minecraft.src.WorldServer world;
     private Environment environment;
     private final CraftServer server = (CraftServer) Bukkit.getServer();
     private final ChunkGenerator generator;
@@ -59,7 +93,7 @@ public class CraftWorld implements World {
 
     private static final Random rand = new Random();
 
-    public CraftWorld(WorldServer world, ChunkGenerator gen, Environment env) {
+    public CraftWorld(net.minecraft.src.WorldServer world, ChunkGenerator gen, Environment env) {
         this.world = world;
         this.generator = gen;
 
@@ -274,7 +308,7 @@ public class CraftWorld implements World {
         ((CraftChunk) getChunkAt(chunk.getX(), chunk.getZ())).getHandle().bukkitChunk = chunk;
     }
 
-    public WorldServer getHandle() {
+    public net.minecraft.src.WorldServer getHandle() {
         return world;
     }
 
@@ -325,13 +359,13 @@ public class CraftWorld implements World {
     }
 
     public LightningStrike strikeLightning(Location loc) {
-        EntityLightning lightning = new EntityLightning(world, loc.getX(), loc.getY(), loc.getZ());
+        EntityLightningBolt lightning = new EntityLightningBolt(world, loc.getX(), loc.getY(), loc.getZ());
         world.strikeLightning(lightning);
         return new CraftLightningStrike(server, lightning);
     }
 
     public LightningStrike strikeLightningEffect(Location loc) {
-        EntityLightning lightning = new EntityLightning(world, loc.getX(), loc.getY(), loc.getZ(), true);
+        EntityLightningBolt lightning = new EntityLightningBolt(world, loc.getX(), loc.getY(), loc.getZ(), true);
         world.strikeLightning(lightning);
         return new CraftLightningStrike(server, lightning);
     }
@@ -344,38 +378,38 @@ public class CraftWorld implements World {
         BlockSapling.TreeGenerator gen;
         switch (type) {
         case BIG_TREE:
-            gen = new WorldGenBigTree(true);
+            gen = new net.minecraft.src.WorldGenBigTree(true);
             break;
         case BIRCH:
-            gen = new WorldGenForest(true);
+            gen = new net.minecraft.src.WorldGenForest(true);
             break;
         case REDWOOD:
-            gen = new WorldGenTaiga2(true);
+            gen = new net.minecraft.src.WorldGenTaiga2(true);
             break;
         case TALL_REDWOOD:
-            gen = new WorldGenTaiga1();
+            gen = new net.minecraft.src.WorldGenTaiga1();
             break;
         case JUNGLE:
-            gen = new WorldGenMegaTree(true, 10 + rand.nextInt(20), 3, 3);
+            gen = new WorldGenHugeTree(true, 10 + rand.nextInt(20), 3, 3);
             break;
         case SMALL_JUNGLE:
-            gen = new WorldGenTrees(true, 4 + rand.nextInt(7), 3, 3, false);
+            gen = new net.minecraft.src.WorldGenTrees(true, 4 + rand.nextInt(7), 3, 3, false);
             break;
         case JUNGLE_BUSH:
-            gen = new WorldGenGroundBush(3, 0);
+            gen = new WorldGenShrub(3, 0);
             break;
         case RED_MUSHROOM:
-            gen = new WorldGenHugeMushroom(1);
+            gen = new WorldGenBigMushroom(1);
             break;
         case BROWN_MUSHROOM:
-            gen = new WorldGenHugeMushroom(0);
+            gen = new WorldGenBigMushroom(0);
             break;
         case SWAMP:
-            gen = new WorldGenSwampTree();
+            gen = new net.minecraft.src.WorldGenSwampTree();
             break;
         case TREE:
         default:
-            gen = new WorldGenTrees(true);
+            gen = new net.minecraft.src.WorldGenTrees(true);
             break;
         }
 
@@ -519,8 +553,8 @@ public class CraftWorld implements World {
         List<Entity> list = new ArrayList<Entity>();
 
         for (Object o : world.entityList) {
-            if (o instanceof net.minecraft.server.Entity) {
-                net.minecraft.server.Entity mcEnt = (net.minecraft.server.Entity) o;
+            if (o instanceof net.minecraft.src.Entity) {
+                net.minecraft.src.Entity mcEnt = (net.minecraft.src.Entity) o;
                 Entity bukkitEntity = mcEnt.getBukkitEntity();
 
                 // Assuming that bukkitEntity isn't null
@@ -537,8 +571,8 @@ public class CraftWorld implements World {
         List<LivingEntity> list = new ArrayList<LivingEntity>();
 
         for (Object o : world.entityList) {
-            if (o instanceof net.minecraft.server.Entity) {
-                net.minecraft.server.Entity mcEnt = (net.minecraft.server.Entity) o;
+            if (o instanceof net.minecraft.src.Entity) {
+                net.minecraft.src.Entity mcEnt = (net.minecraft.src.Entity) o;
                 Entity bukkitEntity = mcEnt.getBukkitEntity();
 
                 // Assuming that bukkitEntity isn't null
@@ -562,8 +596,8 @@ public class CraftWorld implements World {
         Collection<T> list = new ArrayList<T>();
 
         for (Object entity: world.entityList) {
-            if (entity instanceof net.minecraft.server.Entity) {
-                Entity bukkitEntity = ((net.minecraft.server.Entity) entity).getBukkitEntity();
+            if (entity instanceof net.minecraft.src.Entity) {
+                Entity bukkitEntity = ((net.minecraft.src.Entity) entity).getBukkitEntity();
 
                 if (bukkitEntity == null) {
                     continue;
@@ -584,8 +618,8 @@ public class CraftWorld implements World {
         Collection<Entity> list = new ArrayList<Entity>();
 
         for (Object entity: world.entityList) {
-            if (entity instanceof net.minecraft.server.Entity) {
-                Entity bukkitEntity = ((net.minecraft.server.Entity) entity).getBukkitEntity();
+            if (entity instanceof net.minecraft.src.Entity) {
+                Entity bukkitEntity = ((net.minecraft.src.Entity) entity).getBukkitEntity();
 
                 if (bukkitEntity == null) {
                     continue;
@@ -609,8 +643,8 @@ public class CraftWorld implements World {
         List<Player> list = new ArrayList<Player>();
 
         for (Object o : world.entityList) {
-            if (o instanceof net.minecraft.server.Entity) {
-                net.minecraft.server.Entity mcEnt = (net.minecraft.server.Entity) o;
+            if (o instanceof net.minecraft.src.Entity) {
+                net.minecraft.src.Entity mcEnt = (net.minecraft.src.Entity) o;
                 Entity bukkitEntity = mcEnt.getBukkitEntity();
 
                 if ((bukkitEntity != null) && (bukkitEntity instanceof Player)) {
@@ -799,7 +833,7 @@ public class CraftWorld implements World {
             throw new IllegalArgumentException("Location or entity class cannot be null");
         }
 
-        net.minecraft.server.Entity entity = null;
+        net.minecraft.src.Entity entity = null;
 
         double x = location.getX();
         double y = location.getY();
@@ -827,7 +861,7 @@ public class CraftWorld implements World {
                 entity = new EntityArrow(world);
                 entity.setPositionRotation(x, y, z, 0, 0);
             } else if (ThrownExpBottle.class.isAssignableFrom(clazz)) {
-                entity = new EntityThrownExpBottle(world);
+                entity = new EntityExpBottle(world);
                 entity.setPositionRotation(x, y, z, 0, 0);
             } else if (Fireball.class.isAssignableFrom(clazz)) {
                 if (SmallFireball.class.isAssignableFrom(clazz)) {
@@ -857,7 +891,7 @@ public class CraftWorld implements World {
                 entity = new EntityChicken(world);
             } else if (Cow.class.isAssignableFrom(clazz)) {
                 if (MushroomCow.class.isAssignableFrom(clazz)) {
-                    entity = new EntityMushroomCow(world);
+                    entity = new EntityMooshroom(world);
                 } else {
                     entity = new EntityCow(world);
                 }
@@ -915,7 +949,7 @@ public class CraftWorld implements World {
                 entity = new EntityVillager(world);
             } else if (ComplexLivingEntity.class.isAssignableFrom(clazz)) {
                 if (EnderDragon.class.isAssignableFrom(clazz)) {
-                    entity = new EntityEnderDragon(world);
+                    entity = new EntityDragon(world);
                 }
             }
 
@@ -957,10 +991,10 @@ public class CraftWorld implements World {
         } else if (TNTPrimed.class.isAssignableFrom(clazz)) {
             entity = new EntityTNTPrimed(world, x, y, z);
         } else if (ExperienceOrb.class.isAssignableFrom(clazz)) {
-            entity = new EntityExperienceOrb(world, x, y, z, 0);
+            entity = new EntityXPOrb(world, x, y, z, 0);
         } else if (Weather.class.isAssignableFrom(clazz)) {
             // not sure what this can do
-            entity = new EntityLightning(world, x, y, z);
+            entity = new EntityLightningBolt(world, x, y, z);
         } else if (LightningStrike.class.isAssignableFrom(clazz)) {
             // what is this, I don't even
         } else if (Fish.class.isAssignableFrom(clazz)) {
@@ -1049,7 +1083,7 @@ public class CraftWorld implements World {
     }
 
     public File getWorldFolder() {
-        return ((WorldNBTStorage) world.getDataManager()).getDirectory();
+        return ((SaveHandler) world.getDataManager()).getDirectory();
     }
 
     public void explodeBlock(Block block, float yield) {

@@ -1,7 +1,7 @@
 package org.bukkit.craftbukkit.entity;
 
-import net.minecraft.server.EntityCreature;
-import net.minecraft.server.EntityLiving;
+import net.minecraft.src.EntityCreature;
+import net.minecraft.src.EntityLiving;
 import org.bukkit.craftbukkit.CraftServer;
 import org.bukkit.entity.Creature;
 import org.bukkit.entity.LivingEntity;

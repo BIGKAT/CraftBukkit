@@ -1,0 +1,89 @@
+package net.minecraft.src;
+
+import net.minecraft.server.BlockStepAbstract;
+
+public class ItemSlab extends net.minecraft.src.ItemBlock {
+
+    private final boolean a;
+    private final BlockStepAbstract b;
+    private final BlockStepAbstract c;
+
+    public ItemSlab(int i, BlockStepAbstract blockstepabstract, BlockStepAbstract blockstepabstract1, boolean flag) {
+        super(i);
+        this.b = blockstepabstract;
+        this.c = blockstepabstract1;
+        this.a = flag;
+        this.setMaxDurability(0);
+        this.a(true);
+    }
+
+    public int filterData(int i) {
+        return i;
+    }
+
+    public String c(net.minecraft.src.ItemStack itemstack) {
+        return this.b.d(itemstack.getData());
+    }
+
+    public boolean interactWith(net.minecraft.src.ItemStack itemstack, EntityPlayer entityhuman, net.minecraft.src.World world, int i, int j, int k, int l, float f, float f1, float f2) {
+        if (this.a) {
+            return super.interactWith(itemstack, entityhuman, world, i, j, k, l, f, f1, f2);
+        } else if (itemstack.count == 0) {
+            return false;
+        } else if (!entityhuman.e(i, j, k)) {
+            return false;
+        } else {
+            int i1 = world.getBlockId(i, j, k);
+            int j1 = world.getData(i, j, k);
+            int k1 = j1 & 7;
+            boolean flag = (j1 & 8) != 0;
+
+            if ((l == 1 && !flag || l == 0 && flag) && i1 == this.b.blockID && k1 == itemstack.getData()) {
+                return super.interactWith(itemstack, entityhuman, world, i, j, k, -1, f, f1, f2); // CraftBukkit - handle this in super
+            } else {
+                return this.a(itemstack, entityhuman, world, i, j, k, l) ? true : super.interactWith(itemstack, entityhuman, world, i, j, k, l, f, f1, f2);
+            }
+        }
+    }
+
+    private boolean a(net.minecraft.src.ItemStack itemstack, EntityPlayer entityhuman, net.minecraft.src.World world, int i, int j, int k, int l) {
+        if (l == 0) {
+            --j;
+        }
+
+        if (l == 1) {
+            ++j;
+        }
+
+        if (l == 2) {
+            --k;
+        }
+
+        if (l == 3) {
+            ++k;
+        }
+
+        if (l == 4) {
+            --i;
+        }
+
+        if (l == 5) {
+            ++i;
+        }
+
+        int i1 = world.getBlockId(i, j, k);
+        int j1 = world.getData(i, j, k);
+        int k1 = j1 & 7;
+
+        if (i1 == this.b.blockID && k1 == itemstack.getData()) {
+            if (world.b(this.c.e(world, i, j, k)) && world.setBlockAndMetadataWithNotify(i, j, k, this.c.blockID, k1)) {
+                world.makeSound((double) ((float) i + 0.5F), (double) ((float) j + 0.5F), (double) ((float) k + 0.5F), this.c.stepSound.getName(), (this.c.stepSound.getVolume1() + 1.0F) / 2.0F, this.c.stepSound.getVolume2() * 0.8F);
+                --itemstack.count;
+            }
+
+            return true;
+        } else {
+            return false;
+        }
+    }
+}

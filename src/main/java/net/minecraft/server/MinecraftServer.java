@@ -15,6 +15,11 @@ import java.util.logging.Logger;
 // CraftBukkit start
 import jline.console.ConsoleReader;
 import joptsimple.OptionSet;
+import net.minecraft.src.*;
+import net.minecraft.src.CrashReport;
+import net.minecraft.src.DedicatedServer;
+import net.minecraft.src.Packet;
+import net.minecraft.src.PropertyManager;
 
 import org.bukkit.World.Environment;
 import org.bukkit.event.server.RemoteServerCommandEvent;
@@ -31,11 +36,11 @@ public abstract class MinecraftServer implements Runnable, IMojangStatistics, IC
     public File universe; // CraftBukkit - private final -> public
     private final List p = new ArrayList();
     private final ICommandHandler q;
-    public final MethodProfiler methodProfiler = new MethodProfiler();
+    public final Profiler methodProfiler = new Profiler();
     private String serverIp;
     private int s = -1;
     // public WorldServer[] worldServer; // CraftBukkit - removed!
-    private ServerConfigurationManagerAbstract t;
+    private net.minecraft.src.ServerConfigurationManager t;
     private boolean isRunning = true;
     private boolean isStopped = false;
     private int ticks = 0;
@@ -71,7 +76,7 @@ public abstract class MinecraftServer implements Runnable, IMojangStatistics, IC
     private boolean T;
 
     // CraftBukkit start
-    public List<WorldServer> worlds = new ArrayList<WorldServer>();
+    public List<net.minecraft.src.WorldServer> worlds = new ArrayList<net.minecraft.src.WorldServer>();
     public org.bukkit.craftbukkit.CraftServer server;
     public OptionSet options;
     public org.bukkit.command.ConsoleCommandSender console;
@@ -131,13 +136,13 @@ public abstract class MinecraftServer implements Runnable, IMojangStatistics, IC
         this.c(s);
         this.d("menu.loadingLevel");
         // CraftBukkit - removed world and ticktime arrays
-        IDataManager idatamanager = this.convertable.a(s, true);
+        ISaveHandler idatamanager = this.convertable.a(s, true);
         WorldData worlddata = idatamanager.getWorldData();
         // CraftBukkit start - removed worldsettings
         int worldCount = 3;
 
         for (int j = 0; j < worldCount; ++j) {
-            WorldServer world;
+            net.minecraft.src.WorldServer world;
             int dimension = 0;
 
             if (j == 1) {
@@ -169,7 +174,7 @@ public abstract class MinecraftServer implements Runnable, IMojangStatistics, IC
                     world = new DemoWorldServer(this, new ServerNBTManager(server.getWorldContainer(), s1, true), s1, dimension, this.methodProfiler);
                 } else {
                     // CraftBukkit
-                    world = new WorldServer(this, new ServerNBTManager(server.getWorldContainer(), s1, true), s1, dimension, worldsettings, this.methodProfiler, org.bukkit.World.Environment.getEnvironment(dimension), gen);
+                    world = new net.minecraft.src.WorldServer(this, new ServerNBTManager(server.getWorldContainer(), s1, true), s1, dimension, worldsettings, this.methodProfiler, org.bukkit.World.Environment.getEnvironment(dimension), gen);
                 }
             } else {
                 String dim = "DIM" + dimension;
@@ -203,7 +208,7 @@ public abstract class MinecraftServer implements Runnable, IMojangStatistics, IC
                 this.c(name);
 
                 // CraftBukkit
-                world = new SecondaryWorldServer(this, new ServerNBTManager(server.getWorldContainer(), name, true), name, dimension, worldsettings, this.worlds.get(0), this.methodProfiler, org.bukkit.World.Environment.getEnvironment(dimension), gen);
+                world = new WorldServerMulti(this, new ServerNBTManager(server.getWorldContainer(), name, true), name, dimension, worldsettings, this.worlds.get(0), this.methodProfiler, org.bukkit.World.Environment.getEnvironment(dimension), gen);
             }
 
             if (gen != null) {
@@ -212,12 +217,12 @@ public abstract class MinecraftServer implements Runnable, IMojangStatistics, IC
 
             this.server.getPluginManager().callEvent(new org.bukkit.event.world.WorldInitEvent(world.getWorld()));
 
-            world.addIWorldAccess(new WorldManager(this, world));
+            world.addIWorldAccess(new net.minecraft.src.WorldManager(this, world));
             if (!this.H()) {
                 world.getWorldData().setGameType(this.getGamemode());
             }
             this.worlds.add(world);
-            this.t.setPlayerFileData(this.worlds.toArray(new WorldServer[this.worlds.size()]));
+            this.t.setPlayerFileData(this.worlds.toArray(new net.minecraft.src.WorldServer[this.worlds.size()]));
             // CraftBukkit end
         }
 
@@ -233,7 +238,7 @@ public abstract class MinecraftServer implements Runnable, IMojangStatistics, IC
 
         // CraftBukkit start
         for (int j = 0; j < this.worlds.size(); ++j) {
-            WorldServer worldserver = this.worlds.get(j);
+            net.minecraft.src.WorldServer worldserver = this.worlds.get(j);
             log.info("Preparing start region for level " + j + " (Seed: " + worldserver.getSeed() + ")");
             if (!worldserver.getWorld().getKeepSpawnInMemory()) {
                 continue;
@@ -267,7 +272,7 @@ public abstract class MinecraftServer implements Runnable, IMojangStatistics, IC
         }
 
         // CraftBukkit start
-        for (World world : this.worlds) {
+        for (net.minecraft.src.World world : this.worlds) {
             this.server.getPluginManager().callEvent(new org.bukkit.event.world.WorldLoadEvent(world.getWorld()));
         }
         // CraftBukkit end
@@ -300,7 +305,7 @@ public abstract class MinecraftServer implements Runnable, IMojangStatistics, IC
         if (!this.O) {
             // CraftBukkit start
             for (int j = 0; j < this.worlds.size(); ++j) {
-                WorldServer worldserver = this.worlds.get(j);
+                net.minecraft.src.WorldServer worldserver = this.worlds.get(j);
 
                 if (worldserver != null) {
                     if (!flag) {
@@ -410,17 +415,17 @@ public abstract class MinecraftServer implements Runnable, IMojangStatistics, IC
                     Thread.sleep(1L);
                 }
             } else {
-                this.a((CrashReport) null);
+                this.a((net.minecraft.src.CrashReport) null);
             }
         } catch (Throwable throwable) {
             throwable.printStackTrace();
             log.log(Level.SEVERE, "Encountered an unexpected exception " + throwable.getClass().getSimpleName(), throwable);
-            CrashReport crashreport = null;
+            net.minecraft.src.CrashReport crashreport = null;
 
             if (throwable instanceof ReportedException) {
                 crashreport = this.b(((ReportedException) throwable).a());
             } else {
-                crashreport = this.b(new CrashReport("Exception in server tick loop", throwable));
+                crashreport = this.b(new net.minecraft.src.CrashReport("Exception in server tick loop", throwable));
             }
 
             File file1 = new File(new File(this.n(), "crash-reports"), "crash-" + (new SimpleDateFormat("yyyy-MM-dd_HH.mm.ss")).format(new Date()) + "-server.txt");
@@ -454,7 +459,7 @@ public abstract class MinecraftServer implements Runnable, IMojangStatistics, IC
         return new File(".");
     }
 
-    protected void a(CrashReport crashreport) {}
+    protected void a(net.minecraft.src.CrashReport crashreport) {}
 
     protected void o() {}
 
@@ -462,7 +467,7 @@ public abstract class MinecraftServer implements Runnable, IMojangStatistics, IC
         long i = System.nanoTime();
 
         AxisAlignedBB.a().a();
-        Vec3D.a().a();
+        Vec3.a().a();
         ++this.ticks;
         if (this.T) {
             this.T = false;
@@ -481,13 +486,13 @@ public abstract class MinecraftServer implements Runnable, IMojangStatistics, IC
 
         // this.methodProfiler.a("tallying"); // CraftBukkit - not in production code
         this.j[this.ticks % 100] = System.nanoTime() - i;
-        this.f[this.ticks % 100] = Packet.p - this.E;
-        this.E = Packet.p;
-        this.g[this.ticks % 100] = Packet.q - this.F;
-        this.F = Packet.q;
-        this.h[this.ticks % 100] = Packet.n - this.G;
-        this.G = Packet.n;
-        this.i[this.ticks % 100] = Packet.o - this.H;
+        this.f[this.ticks % 100] = net.minecraft.src.Packet.p - this.E;
+        this.E = net.minecraft.src.Packet.p;
+        this.g[this.ticks % 100] = net.minecraft.src.Packet.q - this.F;
+        this.F = net.minecraft.src.Packet.q;
+        this.h[this.ticks % 100] = net.minecraft.src.Packet.n - this.G;
+        this.G = net.minecraft.src.Packet.n;
+        this.i[this.ticks % 100] = net.minecraft.src.Packet.o - this.H;
         this.H = Packet.o;
         // this.methodProfiler.b(); // CraftBukkit - not in production code
         // this.methodProfiler.a("snooper"); // CraftBukkit - not in production code
@@ -522,7 +527,7 @@ public abstract class MinecraftServer implements Runnable, IMojangStatistics, IC
             console.sendMessage(message);
             if (((org.bukkit.craftbukkit.util.LazyPlayerSet) event.getRecipients()).isLazy()) {
                 for (Object player : getServerConfigurationManager().playerEntityList) {
-                    ((EntityPlayer) player).sendMessage(message);
+                    ((EntityPlayerMP) player).sendMessage(message);
                 }
             } else {
                 for (org.bukkit.entity.Player player : event.getRecipients()) {
@@ -534,7 +539,7 @@ public abstract class MinecraftServer implements Runnable, IMojangStatistics, IC
         // Send timeupdates to everyone, it will get the right time from the world the player is in.
         if (this.ticks % 20 == 0) {
             for (int i = 0; i < this.getServerConfigurationManager().playerEntityList.size(); ++i) {
-                EntityPlayer entityplayer = (EntityPlayer) this.getServerConfigurationManager().playerEntityList.get(i);
+                EntityPlayerMP entityplayer = (EntityPlayerMP) this.getServerConfigurationManager().playerEntityList.get(i);
                 entityplayer.serverForThisPlayer.sendPacketToPlayer(new Packet4UpdateTime(entityplayer.getPlayerTime())); // Add support for per player time
             }
         }
@@ -543,7 +548,7 @@ public abstract class MinecraftServer implements Runnable, IMojangStatistics, IC
             long j = System.nanoTime();
 
             // if (i == 0 || this.getAllowNether()) {
-                WorldServer worldserver = this.worlds.get(i);
+                net.minecraft.src.WorldServer worldserver = this.worlds.get(i);
 
                 /* Drop global timeupdates
                 this.b.a(worldserver.getWorldData().j());
@@ -649,7 +654,7 @@ public abstract class MinecraftServer implements Runnable, IMojangStatistics, IC
             }
             // */
 
-            DedicatedServer dedicatedserver = new DedicatedServer(options);
+            net.minecraft.src.DedicatedServer dedicatedserver = new DedicatedServer(options);
 
             if (options.has("port")) {
                 int port = (Integer) options.valueOf("port");
@@ -716,9 +721,9 @@ public abstract class MinecraftServer implements Runnable, IMojangStatistics, IC
         log.warning(s);
     }
 
-    public WorldServer getWorldServer(int i) {
+    public net.minecraft.src.WorldServer getWorldServer(int i) {
         // CraftBukkit start
-        for (WorldServer world : this.worlds) {
+        for (net.minecraft.src.WorldServer world : this.worlds) {
             if (world.dimension == i) {
                 return world;
             }
@@ -813,7 +818,7 @@ public abstract class MinecraftServer implements Runnable, IMojangStatistics, IC
         return "craftbukkit"; // CraftBukkit - cb > vanilla!
     }
 
-    public CrashReport b(CrashReport crashreport) {
+    public net.minecraft.src.CrashReport b(CrashReport crashreport) {
         crashreport.a("Is Modded", (Callable) (new CrashReportModded(this)));
         crashreport.a("Profiler Position", (Callable) (new CrashReportProfilerPosition(this)));
         if (this.t != null) {
@@ -823,7 +828,7 @@ public abstract class MinecraftServer implements Runnable, IMojangStatistics, IC
         // CraftBukkit start
         if (this.worlds != null) {
             for (int j = 0; j < this.worlds.size(); ++j) {
-                WorldServer worldserver = this.worlds.get(j);
+                net.minecraft.src.WorldServer worldserver = this.worlds.get(j);
                 // CraftBukkit end
 
                 if (worldserver != null) {
@@ -939,7 +944,7 @@ public abstract class MinecraftServer implements Runnable, IMojangStatistics, IC
     public void c(int i) {
         // CraftBukkit start
         for (int j = 0; j < this.worlds.size(); ++j) {
-            WorldServer worldserver = this.worlds.get(j);
+            net.minecraft.src.WorldServer worldserver = this.worlds.get(j);
             // CraftBukkit end
 
             if (worldserver != null) {
@@ -983,7 +988,7 @@ public abstract class MinecraftServer implements Runnable, IMojangStatistics, IC
 
         // CraftBukkit start - This needs review, what does it do? (it's new)
         for (int i = 0; i < this.worlds.size(); ++i) {
-            WorldServer worldserver = this.worlds.get(i);
+            net.minecraft.src.WorldServer worldserver = this.worlds.get(i);
             // CraftBukkit end
 
             if (worldserver != null) {
@@ -1021,7 +1026,7 @@ public abstract class MinecraftServer implements Runnable, IMojangStatistics, IC
         // CraftBukkit start
         for (int j = 0; j < this.worlds.size(); ++j) {
             // if (this.worldServer[j] != null) {
-                WorldServer worldserver = this.worlds.get(j);
+                net.minecraft.src.WorldServer worldserver = this.worlds.get(j);
                 // CraftBukkit end
                 WorldData worlddata = worldserver.getWorldData();
 
@@ -1117,11 +1122,11 @@ public abstract class MinecraftServer implements Runnable, IMojangStatistics, IC
         return this.isStopped;
     }
 
-    public ServerConfigurationManagerAbstract getServerConfigurationManager() {
+    public net.minecraft.src.ServerConfigurationManager getServerConfigurationManager() {
         return this.t;
     }
 
-    public void a(ServerConfigurationManagerAbstract serverconfigurationmanagerabstract) {
+    public void a(net.minecraft.src.ServerConfigurationManager serverconfigurationmanagerabstract) {
         this.t = serverconfigurationmanagerabstract;
     }
 
@@ -1149,7 +1154,7 @@ public abstract class MinecraftServer implements Runnable, IMojangStatistics, IC
         this.T = true;
     }
 
-    public static ServerConfigurationManagerAbstract a(MinecraftServer minecraftserver) {
+    public static net.minecraft.src.ServerConfigurationManager a(MinecraftServer minecraftserver) {
         return minecraftserver.t;
     }
 }

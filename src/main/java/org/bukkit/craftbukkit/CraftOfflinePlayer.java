@@ -6,9 +6,9 @@ import java.util.List;
 import java.util.Map;
 
 import net.minecraft.server.BanEntry;
-import net.minecraft.server.EntityPlayer;
-import net.minecraft.server.NBTTagCompound;
-import net.minecraft.server.WorldNBTStorage;
+import net.minecraft.src.EntityPlayerMP;
+import net.minecraft.src.NBTTagCompound;
+import net.minecraft.src.SaveHandler;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -24,12 +24,12 @@ import org.bukkit.plugin.Plugin;
 public class CraftOfflinePlayer implements OfflinePlayer, ConfigurationSerializable {
     private final String name;
     private final CraftServer server;
-    private final WorldNBTStorage storage;
+    private final SaveHandler storage;
 
     protected CraftOfflinePlayer(CraftServer server, String name) {
         this.server = server;
         this.name = name;
-        this.storage = (WorldNBTStorage) (server.console.worlds.get(0).getDataManager());
+        this.storage = (SaveHandler) (server.console.worlds.get(0).getDataManager());
     }
 
     public boolean isOnline() {
@@ -104,7 +104,7 @@ public class CraftOfflinePlayer implements OfflinePlayer, ConfigurationSerializa
 
     public Player getPlayer() {
         for (Object obj : server.getHandle().playerEntityList) {
-            EntityPlayer player = (EntityPlayer) obj;
+            EntityPlayerMP player = (EntityPlayerMP) obj;
             if (player.username.equalsIgnoreCase(getName())) {
                 return (player.serverForThisPlayer != null) ? player.serverForThisPlayer.getPlayer() : null;
             }

@@ -1,6 +1,6 @@
 package org.bukkit.craftbukkit.entity;
 
-import net.minecraft.server.EntityBoat;
+import net.minecraft.src.EntityBoat;
 import org.bukkit.craftbukkit.CraftServer;
 import org.bukkit.entity.Boat;
 import org.bukkit.entity.EntityType;

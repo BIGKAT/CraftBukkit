@@ -7,10 +7,10 @@ import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryView;
 
 import net.minecraft.server.Container;
-import net.minecraft.server.EntityHuman;
-import net.minecraft.server.IInventory;
+import net.minecraft.src.EntityPlayer;
+import net.minecraft.src.IInventory;
 import net.minecraft.server.Packet100OpenWindow;
-import net.minecraft.server.Slot;
+import net.minecraft.src.Slot;
 
 public class CraftContainer extends Container {
     private InventoryView view;
@@ -64,7 +64,7 @@ public class CraftContainer extends Container {
     }
 
     @Override
-    public boolean b(EntityHuman entityhuman) {
+    public boolean b(EntityPlayer entityhuman) {
         if (cachedType == view.getType() && cachedSize == getSize() && cachedTitle.equals(view.getTitle())) {
             return true;
         }
@@ -275,7 +275,7 @@ public class CraftContainer extends Container {
         // End copy from ContainerBrewingStand
     }
 
-    public boolean c(EntityHuman entity) {
+    public boolean c(EntityPlayer entity) {
         return true;
     }
 }

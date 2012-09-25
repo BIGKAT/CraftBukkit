@@ -1,6 +1,6 @@
 package org.bukkit.craftbukkit.entity;
 
-import net.minecraft.server.EntityEnderman;
+import net.minecraft.src.EntityEnderman;
 
 import org.bukkit.Material;
 import org.bukkit.craftbukkit.CraftServer;

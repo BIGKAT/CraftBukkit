@@ -5,9 +5,9 @@ import java.util.Iterator;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.Recipe;
 
-import net.minecraft.server.CraftingManager;
-import net.minecraft.server.IRecipe;
-import net.minecraft.server.RecipesFurnace;
+import net.minecraft.src.CraftingManager;
+import net.minecraft.src.FurnaceRecipes;
+import net.minecraft.src.IRecipe;
 
 public class RecipeIterator implements Iterator<Recipe> {
     private Iterator<IRecipe> recipes;
@@ -16,7 +16,7 @@ public class RecipeIterator implements Iterator<Recipe> {
 
     public RecipeIterator() {
         this.recipes = CraftingManager.getInstance().getRecipes().iterator();
-        this.smelting = RecipesFurnace.getInstance().getRecipes().keySet().iterator();
+        this.smelting = FurnaceRecipes.getInstance().getRecipes().keySet().iterator();
     }
 
     public boolean hasNext() {
@@ -34,7 +34,7 @@ public class RecipeIterator implements Iterator<Recipe> {
         } else {
             removeFrom = smelting;
             int id = smelting.next();
-            CraftItemStack stack = new CraftItemStack(RecipesFurnace.getInstance().getResult(id));
+            CraftItemStack stack = new CraftItemStack(FurnaceRecipes.getInstance().getResult(id));
             CraftFurnaceRecipe recipe = new CraftFurnaceRecipe(stack, new ItemStack(id, 1, (short) -1));
             return recipe;
         }

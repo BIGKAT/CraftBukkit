@@ -1,6 +1,6 @@
 package org.bukkit.craftbukkit.entity;
 
-import net.minecraft.server.EntityCow;
+import net.minecraft.src.EntityCow;
 
 import org.bukkit.craftbukkit.CraftServer;
 import org.bukkit.entity.Cow;

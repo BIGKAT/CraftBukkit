@@ -1,6 +1,6 @@
 package org.bukkit.craftbukkit.map;
 
-import net.minecraft.server.WorldMap;
+import net.minecraft.src.MapData;
 import net.minecraft.server.WorldMapDecoration;
 
 import org.bukkit.entity.Player;
@@ -11,9 +11,9 @@ import org.bukkit.map.MapView;
 
 public class CraftMapRenderer extends MapRenderer {
 
-    private final WorldMap worldMap;
+    private final MapData worldMap;
 
-    public CraftMapRenderer(CraftMapView mapView, WorldMap worldMap) {
+    public CraftMapRenderer(CraftMapView mapView, MapData worldMap) {
         super(false);
         this.worldMap = worldMap;
     }

@@ -5,7 +5,7 @@ import org.bukkit.inventory.DoubleChestInventory;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 
-import net.minecraft.server.InventoryLargeChest;
+import net.minecraft.src.InventoryLargeChest;
 
 public class CraftInventoryDoubleChest extends CraftInventory implements DoubleChestInventory {
     private CraftInventory left, right;
