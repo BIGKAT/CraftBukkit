@@ -2,14 +2,11 @@ package net.minecraft.src;
 
 // CraftBukkit start
 
-import net.minecraft.server.*;
-import net.minecraft.src.*;
-
 import org.bukkit.craftbukkit.entity.CraftEntity;
 import org.bukkit.event.entity.EntityTargetEvent;
 // CraftBukkit end
 
-public abstract class EntityCreature extends net.minecraft.src.EntityLiving {
+public abstract class EntityCreature extends EntityLiving {
 
     public PathEntity pathToEntity; // CraftBukkit - public
     public Entity entityToAttack; // CraftBukkit - public
@@ -81,23 +78,23 @@ public abstract class EntityCreature extends net.minecraft.src.EntityLiving {
             this.j();
         }
 
-        int i = MathHelper.floor(this.boundingBox.b + 0.5D);
+        int i = MathHelper.floor_double(this.boundingBox.minY + 0.5D);
         boolean flag = this.H();
         boolean flag1 = this.J();
 
         this.rotationPitch = 0.0F;
         if (this.pathToEntity != null && this.random.nextInt(100) != 0) {
             // this.world.methodProfiler.a("followpath"); // CraftBukkit - not in production code
-            Vec3 vec3d = this.pathToEntity.a((Entity) this);
+            Vec3 vec3d = this.pathToEntity.getPosition((Entity) this);
             double d0 = (double) (this.width * 2.0F);
 
             while (vec3d != null && vec3d.d(this.posX, vec3d.b, this.posZ) < d0 * d0) {
-                this.pathToEntity.a();
-                if (this.pathToEntity.b()) {
+                this.pathToEntity.incrementPathIndex();
+                if (this.pathToEntity.isFinished()) {
                     vec3d = null;
                     this.pathToEntity = null;
                 } else {
-                    vec3d = this.pathToEntity.a((Entity) this);
+                    vec3d = this.pathToEntity.getPosition((Entity) this);
                 }
             }
 
@@ -108,9 +105,9 @@ public abstract class EntityCreature extends net.minecraft.src.EntityLiving {
                 double d3 = vec3d.b - (double) i;
                 // CraftBukkit - Math -> TrigMath
                 float f2 = (float) (org.bukkit.craftbukkit.TrigMath.atan2(d2, d1) * 180.0D / 3.1415927410125732D) - 90.0F;
-                float f3 = MathHelper.g(f2 - this.rotationYaw);
+                float f3 = MathHelper.wrapAngleTo180_float(f2 - this.rotationYaw);
 
-                this.bs = this.bw;
+                this.bs = this.moveSpeed;
                 if (f3 > 30.0F) {
                     f3 = 30.0F;
                 }
@@ -164,9 +161,9 @@ public abstract class EntityCreature extends net.minecraft.src.EntityLiving {
         float f = -99999.0F;
 
         for (int l = 0; l < 10; ++l) {
-            int i1 = MathHelper.floor(this.posX + (double) this.random.nextInt(13) - 6.0D);
-            int j1 = MathHelper.floor(this.posY + (double) this.random.nextInt(7) - 3.0D);
-            int k1 = MathHelper.floor(this.posZ + (double) this.random.nextInt(13) - 6.0D);
+            int i1 = MathHelper.floor_double(this.posX + (double) this.random.nextInt(13) - 6.0D);
+            int j1 = MathHelper.floor_double(this.posY + (double) this.random.nextInt(7) - 3.0D);
+            int k1 = MathHelper.floor_double(this.posZ + (double) this.random.nextInt(13) - 6.0D);
             float f1 = this.a(i1, j1, k1);
 
             if (f1 > f) {
@@ -196,9 +193,9 @@ public abstract class EntityCreature extends net.minecraft.src.EntityLiving {
     }
 
     public boolean canSpawn() {
-        int i = MathHelper.floor(this.posX);
-        int j = MathHelper.floor(this.boundingBox.b);
-        int k = MathHelper.floor(this.posZ);
+        int i = MathHelper.floor_double(this.posX);
+        int j = MathHelper.floor_double(this.boundingBox.minY);
+        int k = MathHelper.floor_double(this.posZ);
 
         return super.canSpawn() && this.a(i, j, k) >= 0.0F;
     }
@@ -207,7 +204,7 @@ public abstract class EntityCreature extends net.minecraft.src.EntityLiving {
         return this.pathToEntity != null;
     }
 
-    public void setPathEntity(PathEntity pathentity) {
+    public void setPathToEntity(PathEntity pathentity) {
         this.pathToEntity = pathentity;
     }
 

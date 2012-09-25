@@ -17,7 +17,6 @@ import net.minecraft.server.AxisAlignedBB;
 import net.minecraft.server.BanEntry;
 import net.minecraft.server.ChunkCoordinates;
 import net.minecraft.server.Container;
-import net.minecraft.src.EntityXPOrb;
 import net.minecraft.server.EnumMovingObjectType;
 import net.minecraft.server.ICommandListener;
 import net.minecraft.server.INetworkManager;
@@ -89,7 +88,7 @@ import org.bukkit.inventory.InventoryView;
 public class NetServerHandler extends NetHandler {
 
     public static Logger logger = Logger.getLogger("Minecraft");
-    public INetworkManager theNetworkManager;
+    public NetworkManager theNetworkManager;
     public boolean disconnected = false;
     private MinecraftServer minecraftServer;
     public EntityPlayerMP player; // CraftBukkit - private -> public
@@ -944,7 +943,7 @@ public class NetServerHandler extends NetHandler {
             float f1 = this.player.lastPitch + (this.player.rotationPitch - this.player.lastPitch) * f;
             float f2 = this.player.lastYaw + (this.player.rotationYaw - this.player.lastYaw) * f;
             double d0 = this.player.lastX + (this.player.posX - this.player.lastX) * (double) f;
-            double d1 = this.player.lastY + (this.player.posY - this.player.lastY) * (double) f + 1.62D - (double) this.player.height;
+            double d1 = this.player.lastY + (this.player.posY - this.player.lastY) * (double) f + 1.62D - (double) this.player.yOffset;
             double d2 = this.player.lastZ + (this.player.posZ - this.player.lastZ) * (double) f;
             Vec3 vec3d = Vec3.a().create(d0, d1, d2);
 

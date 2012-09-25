@@ -2,11 +2,11 @@ package org.bukkit.craftbukkit.entity;
 
 import java.util.Set;
 
-import net.minecraft.server.Container;
+import net.minecraft.src.Container;
 import net.minecraft.src.EntityPlayer;
 import net.minecraft.src.EntityPlayerMP;
-import net.minecraft.server.Packet100OpenWindow;
-import net.minecraft.server.Packet101CloseWindow;
+import net.minecraft.src.Packet100OpenWindow;
+import net.minecraft.src.Packet101CloseWindow;
 import net.minecraft.src.TileEntityBrewingStand;
 import net.minecraft.src.TileEntityDispenser;
 import net.minecraft.src.TileEntityFurnace;

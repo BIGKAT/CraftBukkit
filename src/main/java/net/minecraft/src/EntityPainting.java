@@ -6,8 +6,6 @@ import java.util.List;
 
 // CraftBukkit start
 
-import net.minecraft.server.*;
-
 import org.bukkit.entity.Painting;
 import org.bukkit.event.painting.PaintingBreakEvent.RemoveCause;
 import org.bukkit.event.painting.PaintingBreakEvent;
@@ -26,8 +24,8 @@ public class EntityPainting extends Entity {
         super(world);
         this.f = 0;
         this.direction = 0;
-        this.height = 0.0F;
-        this.a(0.5F, 0.5F);
+        this.yOffset = 0.0F;
+        this.setSize(0.5F, 0.5F);
         this.art = EnumArt.values()[this.random.nextInt(EnumArt.values().length)]; // CraftBukkit - generate a non-null painting
     }
 
@@ -57,7 +55,7 @@ public class EntityPainting extends Entity {
         this.setDirection(l);
     }
 
-    protected void a() {}
+    protected void entityInit() {}
 
     public void setDirection(int i) {
         this.direction = i;
@@ -263,7 +261,7 @@ public class EntityPainting extends Entity {
         return true;
     }
 
-    public void b(net.minecraft.src.NBTTagCompound nbttagcompound) {
+    public void readEntityFromNBT(net.minecraft.src.NBTTagCompound nbttagcompound) {
         nbttagcompound.setByte("Dir", (byte) this.direction);
         nbttagcompound.setString("Motive", this.art.A);
         nbttagcompound.setInteger("TileX", this.xPosition);
@@ -271,7 +269,7 @@ public class EntityPainting extends Entity {
         nbttagcompound.setInteger("TileZ", this.zPosition);
     }
 
-    public void a(net.minecraft.src.NBTTagCompound nbttagcompound) {
+    public void writeEntityToNBT(net.minecraft.src.NBTTagCompound nbttagcompound) {
         this.direction = nbttagcompound.getByte("Dir");
         this.xPosition = nbttagcompound.getInteger("TileX");
         this.yPosition = nbttagcompound.getInteger("TileY");

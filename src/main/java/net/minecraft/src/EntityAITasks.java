@@ -3,11 +3,7 @@ package net.minecraft.src;
 import java.util.Iterator;
 import java.util.List;
 
-import net.minecraft.server.PathfinderGoal;
-import net.minecraft.server.PathfinderGoalSelectorItem;
-import net.minecraft.src.Profiler;
-
-import org.bukkit.craftbukkit.util.UnsafeList; // CraftBukkit
+import org.bukkit.craftbukkit.util.UnsafeList;
 
 public class EntityAITasks {
 
@@ -23,20 +19,20 @@ public class EntityAITasks {
         this.c = methodprofiler;
     }
 
-    public void a(int i, PathfinderGoal pathfindergoal) {
-        this.a.add(new PathfinderGoalSelectorItem(this, i, pathfindergoal));
+    public void a(int i, EntityAIBase pathfindergoal) {
+        this.a.add(new EntityAITaskEntry(this, i, pathfindergoal));
     }
 
     public void a() {
         // ArrayList arraylist = new ArrayList(); // CraftBukkit - remove usage
         Iterator iterator;
-        PathfinderGoalSelectorItem pathfindergoalselectoritem;
+		EntityAITaskEntry pathfindergoalselectoritem;
 
         if (this.d++ % this.e == 0) {
             iterator = this.a.iterator();
 
             while (iterator.hasNext()) {
-                pathfindergoalselectoritem = (PathfinderGoalSelectorItem) iterator.next();
+                pathfindergoalselectoritem = (EntityAITaskEntry) iterator.next();
                 boolean flag = this.b.contains(pathfindergoalselectoritem);
 
                 if (flag) {
@@ -60,7 +56,7 @@ public class EntityAITasks {
             iterator = this.b.iterator();
 
             while (iterator.hasNext()) {
-                pathfindergoalselectoritem = (PathfinderGoalSelectorItem) iterator.next();
+                pathfindergoalselectoritem = (EntityAITaskEntry) iterator.next();
                 if (!pathfindergoalselectoritem.a.b()) {
                     pathfindergoalselectoritem.a.c();
                     iterator.remove();
@@ -85,7 +81,7 @@ public class EntityAITasks {
         iterator = this.b.iterator();
 
         while (iterator.hasNext()) {
-            pathfindergoalselectoritem = (PathfinderGoalSelectorItem) iterator.next();
+            pathfindergoalselectoritem = (EntityAITaskEntry) iterator.next();
             // this.c.a(pathfindergoalselectoritem.a.getClass().getSimpleName()); // CraftBukkit - not in production code
             pathfindergoalselectoritem.a.d();
             // this.c.b(); // CraftBukkit - not in production code
@@ -94,7 +90,7 @@ public class EntityAITasks {
         // this.c.b(); // CraftBukkit - not in production code
     }
 
-    private boolean a(PathfinderGoalSelectorItem pathfindergoalselectoritem) {
+    private boolean a(EntityAITaskEntry pathfindergoalselectoritem) {
         // this.c.a("canContinue"); // CraftBukkit - not in production code
         boolean flag = pathfindergoalselectoritem.a.b();
 
@@ -102,12 +98,12 @@ public class EntityAITasks {
         return flag;
     }
 
-    private boolean b(PathfinderGoalSelectorItem pathfindergoalselectoritem) {
+    private boolean b(EntityAITaskEntry pathfindergoalselectoritem) {
         // this.c.a("canUse"); // CraftBukkit - not in production code
         Iterator iterator = this.a.iterator();
 
         while (iterator.hasNext()) {
-            PathfinderGoalSelectorItem pathfindergoalselectoritem1 = (PathfinderGoalSelectorItem) iterator.next();
+			EntityAITaskEntry pathfindergoalselectoritem1 = (EntityAITaskEntry) iterator.next();
 
             if (pathfindergoalselectoritem1 != pathfindergoalselectoritem) {
                 if (pathfindergoalselectoritem.b >= pathfindergoalselectoritem1.b) {
@@ -130,7 +126,7 @@ public class EntityAITasks {
         return true;
     }
 
-    private boolean a(PathfinderGoalSelectorItem pathfindergoalselectoritem, PathfinderGoalSelectorItem pathfindergoalselectoritem1) {
+    private boolean a(EntityAITaskEntry pathfindergoalselectoritem, EntityAITaskEntry pathfindergoalselectoritem1) {
         return (pathfindergoalselectoritem.a.h() & pathfindergoalselectoritem1.a.h()) == 0;
     }
 }

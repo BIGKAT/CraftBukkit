@@ -3,11 +3,6 @@ package net.minecraft.src;
 // CraftBukkit start
 import java.util.List;
 
-import net.minecraft.server.Block;
-import net.minecraft.src.Entity;
-import net.minecraft.server.ItemArmor;
-import net.minecraft.server.NBTTagList;
-
 import org.bukkit.craftbukkit.entity.CraftHumanEntity;
 import org.bukkit.entity.HumanEntity;
 // CraftBukkit end
@@ -301,7 +296,7 @@ public class InventoryPlayer implements net.minecraft.src.IInventory {
                 nbttagcompound = new net.minecraft.src.NBTTagCompound();
                 nbttagcompound.setByte("Slot", (byte) i);
                 this.items[i].save(nbttagcompound);
-                nbttaglist.add(nbttagcompound);
+                nbttaglist.appendTag(nbttagcompound);
             }
         }
 
@@ -310,7 +305,7 @@ public class InventoryPlayer implements net.minecraft.src.IInventory {
                 nbttagcompound = new net.minecraft.src.NBTTagCompound();
                 nbttagcompound.setByte("Slot", (byte) (i + 100));
                 this.armor[i].save(nbttagcompound);
-                nbttaglist.add(nbttagcompound);
+                nbttaglist.appendTag(nbttagcompound);
             }
         }
 
@@ -321,8 +316,8 @@ public class InventoryPlayer implements net.minecraft.src.IInventory {
         this.items = new net.minecraft.src.ItemStack[36];
         this.armor = new net.minecraft.src.ItemStack[4];
 
-        for (int i = 0; i < nbttaglist.size(); ++i) {
-            net.minecraft.src.NBTTagCompound nbttagcompound = (net.minecraft.src.NBTTagCompound) nbttaglist.get(i);
+        for (int i = 0; i < nbttaglist.tagCount(); ++i) {
+            net.minecraft.src.NBTTagCompound nbttagcompound = (net.minecraft.src.NBTTagCompound) nbttaglist.tagAt(i);
             int j = nbttagcompound.getByte("Slot") & 255;
             net.minecraft.src.ItemStack itemstack = net.minecraft.src.ItemStack.a(nbttagcompound);
 

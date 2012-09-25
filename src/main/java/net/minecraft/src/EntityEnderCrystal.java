@@ -1,7 +1,5 @@
 package net.minecraft.src;
 
-import net.minecraft.server.*;
-
 public class EntityEnderCrystal extends Entity {
 
     public int a = 0;
@@ -10,8 +8,8 @@ public class EntityEnderCrystal extends Entity {
     public EntityEnderCrystal(net.minecraft.src.World world) {
         super(world);
         this.m = true;
-        this.a(2.0F, 2.0F);
-        this.height = this.length / 2.0F;
+        this.setSize(2.0F, 2.0F);
+        this.yOffset = this.length / 2.0F;
         this.b = 5;
         this.a = this.random.nextInt(100000);
     }
@@ -20,7 +18,7 @@ public class EntityEnderCrystal extends Entity {
         return false;
     }
 
-    protected void a() {
+    protected void entityInit() {
         this.datawatcher.a(8, Integer.valueOf(this.b));
     }
 
@@ -39,9 +37,9 @@ public class EntityEnderCrystal extends Entity {
         }
     }
 
-    protected void b(net.minecraft.src.NBTTagCompound nbttagcompound) {}
+    protected void readEntityFromNBT(net.minecraft.src.NBTTagCompound nbttagcompound) {}
 
-    protected void a(net.minecraft.src.NBTTagCompound nbttagcompound) {}
+    protected void writeEntityToNBT(net.minecraft.src.NBTTagCompound nbttagcompound) {}
 
     public boolean L() {
         return true;

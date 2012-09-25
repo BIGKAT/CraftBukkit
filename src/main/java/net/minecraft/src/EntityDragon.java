@@ -12,10 +12,6 @@ import net.minecraft.server.DamageSource;
 import net.minecraft.server.EntityComplexPart;
 import net.minecraft.server.MathHelper;
 import net.minecraft.server.Packet53BlockChange;
-import net.minecraft.src.*;
-import net.minecraft.src.Entity;
-import net.minecraft.src.EntityEnderCrystal;
-import net.minecraft.src.EntityLiving;
 
 import org.bukkit.block.BlockState;
 import org.bukkit.craftbukkit.util.BlockStateListPopulator;
@@ -33,14 +29,14 @@ public class EntityDragon extends EntityDragonBase {
     public double d;
     public double[][] e = new double[64][3];
     public int f = -1;
-    public EntityComplexPart[] children;
-    public EntityComplexPart h;
-    public EntityComplexPart i;
-    public EntityComplexPart j;
-    public EntityComplexPart by;
-    public EntityComplexPart bz;
-    public EntityComplexPart bA;
-    public EntityComplexPart bB;
+    public EntityDragonPart[] children;
+    public EntityDragonPart h;
+    public EntityDragonPart i;
+    public EntityDragonPart j;
+    public EntityDragonPart by;
+    public EntityDragonPart bz;
+    public EntityDragonPart bA;
+    public EntityDragonPart bB;
     public float bC = 0.0F;
     public float bD = 0.0F;
     public boolean bE = false;
@@ -51,19 +47,19 @@ public class EntityDragon extends EntityDragonBase {
 
     public EntityDragon(net.minecraft.src.World world) {
         super(world);
-        this.children = new EntityComplexPart[] { this.h = new EntityComplexPart(this, "head", 6.0F, 6.0F), this.i = new EntityComplexPart(this, "body", 8.0F, 8.0F), this.j = new EntityComplexPart(this, "tail", 4.0F, 4.0F), this.by = new EntityComplexPart(this, "tail", 4.0F, 4.0F), this.bz = new EntityComplexPart(this, "tail", 4.0F, 4.0F), this.bA = new EntityComplexPart(this, "wing", 4.0F, 4.0F), this.bB = new EntityComplexPart(this, "wing", 4.0F, 4.0F)};
+        this.children = new EntityDragonPart[] { this.h = new EntityDragonPart(this, "head", 6.0F, 6.0F), this.i = new EntityDragonPart(this, "body", 8.0F, 8.0F), this.j = new EntityDragonPart(this, "tail", 4.0F, 4.0F), this.by = new EntityDragonPart(this, "tail", 4.0F, 4.0F), this.bz = new EntityDragonPart(this, "tail", 4.0F, 4.0F), this.bA = new EntityDragonPart(this, "wing", 4.0F, 4.0F), this.bB = new EntityDragonPart(this, "wing", 4.0F, 4.0F)};
         this.a = 200;
         this.setHealth(this.a);
         this.texture = "/mob/enderdragon/ender.png";
-        this.a(16.0F, 8.0F);
+        this.setSize(16.0F, 8.0F);
         this.X = true;
         this.fireProof = true;
         this.c = 100.0D;
         this.ak = true;
     }
 
-    protected void a() {
-        super.a();
+    protected void entityInit() {
+        super.entityInit();
         this.datawatcher.a(16, new Integer(this.a));
     }
 

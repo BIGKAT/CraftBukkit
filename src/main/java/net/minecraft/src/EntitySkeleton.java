@@ -3,7 +3,6 @@ package net.minecraft.src;
 import net.minecraft.server.AchievementList;
 import net.minecraft.server.DamageSource;
 import net.minecraft.server.EnchantmentManager;
-import net.minecraft.src.EntityMob;
 import net.minecraft.server.EnumMonsterType;
 import net.minecraft.server.Item;
 import net.minecraft.server.MathHelper;
@@ -26,12 +25,12 @@ public class EntitySkeleton extends EntityMob {
     public EntitySkeleton(net.minecraft.src.World world) {
         super(world);
         this.texture = "/mob/skeleton.png";
-        this.bw = 0.25F;
+        this.moveSpeed = 0.25F;
         this.goalSelector.a(1, new PathfinderGoalFloat(this));
         this.goalSelector.a(2, new PathfinderGoalRestrictSun(this));
-        this.goalSelector.a(3, new PathfinderGoalFleeSun(this, this.bw));
-        this.goalSelector.a(4, new EntityAIArrowAttack(this, this.bw, 1, 60));
-        this.goalSelector.a(5, new PathfinderGoalRandomStroll(this, this.bw));
+        this.goalSelector.a(3, new PathfinderGoalFleeSun(this, this.moveSpeed));
+        this.goalSelector.a(4, new EntityAIArrowAttack(this, this.moveSpeed, 1, 60));
+        this.goalSelector.a(5, new PathfinderGoalRandomStroll(this, this.moveSpeed));
         this.goalSelector.a(6, new PathfinderGoalLookAtPlayer(this, EntityPlayer.class, 8.0F));
         this.goalSelector.a(6, new PathfinderGoalRandomLookaround(this));
         this.targetSelector.a(1, new PathfinderGoalHurtByTarget(this, false));

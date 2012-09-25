@@ -7,7 +7,7 @@ import static org.junit.Assert.assertThat;
 
 import java.util.List;
 
-import net.minecraft.server.EnumArt;
+import net.minecraft.src.EnumArt;
 
 import org.junit.Test;
 

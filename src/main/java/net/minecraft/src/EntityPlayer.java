@@ -5,8 +5,6 @@ import java.util.List;
 
 // CraftBukkit start
 
-import net.minecraft.server.*;
-
 import org.bukkit.craftbukkit.entity.CraftItem;
 import org.bukkit.entity.HumanEntity;
 import org.bukkit.entity.Player;
@@ -16,10 +14,10 @@ import org.bukkit.event.player.PlayerBedLeaveEvent;
 import org.bukkit.event.player.PlayerDropItemEvent;
 // CraftBukkit end
 
-public abstract class EntityPlayer extends EntityLiving implements ICommandListener {
+public abstract class EntityPlayer extends EntityLiving implements ICommandSender {
 
     public InventoryPlayer inventory = new InventoryPlayer(this);
-    private net.minecraft.src.InventoryEnderChest enderChest = new net.minecraft.src.InventoryEnderChest();
+    private InventoryEnderChest enderChest = new InventoryEnderChest();
     public Container defaultContainer;
     public Container craftingInventory;
     protected FoodStats foodData = new FoodStats();
@@ -63,17 +61,17 @@ public abstract class EntityPlayer extends EntityLiving implements ICommandListe
     public int expLevel;
     public int expTotal;
     public float exp;
-    private net.minecraft.src.ItemStack e;
+    private ItemStack e;
     private int f;
     protected float cd = 0.1F;
     protected float ce = 0.02F;
     public EntityFishingHook hookedFish = null;
 
-    public EntityPlayer(net.minecraft.src.World world) {
+    public EntityPlayer(World world) {
         super(world);
         this.defaultContainer = new ContainerPlayer(this.inventory, !world.isStatic);
         this.craftingInventory = this.defaultContainer;
-        this.height = 1.62F;
+        this.yOffset = 1.62F;
         ChunkCoordinates chunkcoordinates = world.getSpawn();
 
         this.setPositionRotation((double) chunkcoordinates.x + 0.5D, (double) (chunkcoordinates.y + 1), (double) chunkcoordinates.z + 0.5D, 0.0F, 0.0F);
@@ -87,8 +85,8 @@ public abstract class EntityPlayer extends EntityLiving implements ICommandListe
         return 20;
     }
 
-    protected void a() {
-        super.a();
+    protected void entityInit() {
+        super.entityInit();
         this.datawatcher.a(16, Byte.valueOf((byte) 0));
         this.datawatcher.a(17, Byte.valueOf((byte) 0));
     }
@@ -119,7 +117,7 @@ public abstract class EntityPlayer extends EntityLiving implements ICommandListe
 
     public void h_() {
         if (this.e != null) {
-            net.minecraft.src.ItemStack itemstack = this.inventory.getItemInHand();
+            ItemStack itemstack = this.inventory.getItemInHand();
 
             if (itemstack == this.e) {
                 if (this.f <= 25 && this.f % 4 == 0) {
@@ -213,7 +211,7 @@ public abstract class EntityPlayer extends EntityLiving implements ICommandListe
         }
     }
 
-    protected void c(net.minecraft.src.ItemStack itemstack, int i) {
+    protected void c(ItemStack itemstack, int i) {
         if (itemstack.n() == EnumAnimation.c) {
             this.worldObj.makeSound(this, "random.drink", 0.5F, this.worldObj.rand.nextFloat() * 0.1F + 0.9F);
         }
@@ -240,7 +238,7 @@ public abstract class EntityPlayer extends EntityLiving implements ICommandListe
         if (this.e != null) {
             this.c(this.e, 16);
             int i = this.e.count;
-            net.minecraft.src.ItemStack itemstack = this.e.b(this.worldObj, this);
+            ItemStack itemstack = this.e.b(this.worldObj, this);
 
             if (itemstack != this.e || itemstack != null && itemstack.count != i) {
                 this.inventory.items[this.inventory.itemInHandIndex] = itemstack;
@@ -354,11 +352,11 @@ public abstract class EntityPlayer extends EntityLiving implements ICommandListe
 
     public void die(DamageSource damagesource) {
         super.die(damagesource);
-        this.a(0.2F, 0.2F);
+        this.setSize(0.2F, 0.2F);
         this.setPosition(this.posX, this.posY, this.posZ);
         this.motionY = 0.10000000149011612D;
         if (this.username.equals("Notch")) {
-            this.a(new net.minecraft.src.ItemStack(Item.APPLE, 1), true);
+            this.a(new ItemStack(Item.APPLE, 1), true);
         }
 
         this.inventory.m();
@@ -369,7 +367,7 @@ public abstract class EntityPlayer extends EntityLiving implements ICommandListe
             this.motionX = this.motionZ = 0.0D;
         }
 
-        this.height = 0.1F;
+        this.yOffset = 0.1F;
         this.a(StatisticList.y, 1);
     }
 
@@ -392,11 +390,11 @@ public abstract class EntityPlayer extends EntityLiving implements ICommandListe
         return this.a(this.inventory.splitStack(this.inventory.itemInHandIndex, 1), false);
     }
 
-    public EntityItem drop(net.minecraft.src.ItemStack itemstack) {
+    public EntityItem drop(ItemStack itemstack) {
         return this.a(itemstack, false);
     }
 
-    public EntityItem a(net.minecraft.src.ItemStack itemstack, boolean flag) {
+    public EntityItem a(ItemStack itemstack, boolean flag) {
         if (itemstack == null) {
             return null;
         } else {
@@ -480,8 +478,8 @@ public abstract class EntityPlayer extends EntityLiving implements ICommandListe
         return this.inventory.b(block);
     }
 
-    public void a(net.minecraft.src.NBTTagCompound nbttagcompound) {
-        super.a(nbttagcompound);
+    public void writeEntityToNBT(NBTTagCompound nbttagcompound) {
+        super.writeEntityToNBT(nbttagcompound);
         NBTTagList nbttaglist = nbttagcompound.getList("Inventory");
 
         this.inventory.b(nbttaglist);
@@ -516,8 +514,8 @@ public abstract class EntityPlayer extends EntityLiving implements ICommandListe
         }
     }
 
-    public void b(NBTTagCompound nbttagcompound) {
-        super.b(nbttagcompound);
+    public void readEntityFromNBT(NBTTagCompound nbttagcompound) {
+        super.readEntityFromNBT(nbttagcompound);
         nbttagcompound.set("Inventory", this.inventory.a(new NBTTagList()));
         nbttagcompound.setInteger("Dimension", this.dimension);
         nbttagcompound.setBoolean("Sleeping", this.sleeping);
@@ -550,7 +548,7 @@ public abstract class EntityPlayer extends EntityLiving implements ICommandListe
     }
 
     protected void d_() {
-        this.height = 1.62F;
+        this.yOffset = 1.62F;
     }
 
     public boolean damageEntity(DamageSource damagesource, int i) {
@@ -680,17 +678,17 @@ public abstract class EntityPlayer extends EntityLiving implements ICommandListe
 
     public void a(TileEntitySign tileentitysign) {}
 
-    public void displayGUIBrewingStand(net.minecraft.src.TileEntityBrewingStand tileentitybrewingstand) {}
+    public void displayGUIBrewingStand(TileEntityBrewingStand tileentitybrewingstand) {}
 
     public void openTrade(IMerchant imerchant) {}
 
-    public void c(net.minecraft.src.ItemStack itemstack) {}
+    public void c(ItemStack itemstack) {}
 
     public boolean m(Entity entity) {
         if (entity.c(this)) {
             return true;
         } else {
-            net.minecraft.src.ItemStack itemstack = this.bC();
+            ItemStack itemstack = this.bC();
 
             if (itemstack != null && entity instanceof EntityLiving) {
                 if (this.capabilities.canInstantlyBuild) {
@@ -711,16 +709,16 @@ public abstract class EntityPlayer extends EntityLiving implements ICommandListe
         }
     }
 
-    public net.minecraft.src.ItemStack bC() {
+    public ItemStack bC() {
         return this.inventory.getItemInHand();
     }
 
     public void bD() {
-        this.inventory.setItem(this.inventory.itemInHandIndex, (net.minecraft.src.ItemStack) null);
+        this.inventory.setItem(this.inventory.itemInHandIndex, (ItemStack) null);
     }
 
     public double W() {
-        return (double) (this.height - 0.5F);
+        return (double) (this.yOffset - 0.5F);
     }
 
     public void i() {
@@ -793,7 +791,7 @@ public abstract class EntityPlayer extends EntityLiving implements ICommandListe
                     this.j(entity);
                 }
 
-                net.minecraft.src.ItemStack itemstack = this.bC();
+                ItemStack itemstack = this.bC();
 
                 if (itemstack != null && entity instanceof EntityLiving) {
                     itemstack.a((EntityLiving) entity, this);
@@ -889,8 +887,8 @@ public abstract class EntityPlayer extends EntityLiving implements ICommandListe
         }
         // CraftBukkit end
 
-        this.a(0.2F, 0.2F);
-        this.height = 0.2F;
+        this.setSize(0.2F, 0.2F);
+        this.yOffset = 0.2F;
         if (this.worldObj.isLoaded(i, j, k)) {
             int l = this.worldObj.getData(i, j, k);
             int i1 = BlockBed.d(l);
@@ -953,7 +951,7 @@ public abstract class EntityPlayer extends EntityLiving implements ICommandListe
     }
 
     public void a(boolean flag, boolean flag1, boolean flag2) {
-        this.a(0.6F, 1.8F);
+        this.setSize(0.6F, 1.8F);
         this.d_();
         ChunkCoordinates chunkcoordinates = this.bT;
         ChunkCoordinates chunkcoordinates1 = this.bT;
@@ -965,7 +963,7 @@ public abstract class EntityPlayer extends EntityLiving implements ICommandListe
                 chunkcoordinates1 = new ChunkCoordinates(chunkcoordinates.x, chunkcoordinates.y + 1, chunkcoordinates.z);
             }
 
-            this.setPosition((double) ((float) chunkcoordinates1.x + 0.5F), (double) ((float) chunkcoordinates1.y + this.height + 0.1F), (double) ((float) chunkcoordinates1.z + 0.5F));
+            this.setPosition((double) ((float) chunkcoordinates1.x + 0.5F), (double) ((float) chunkcoordinates1.y + this.yOffset + 0.1F), (double) ((float) chunkcoordinates1.z + 0.5F));
         }
 
         this.sleeping = false;
@@ -1004,7 +1002,7 @@ public abstract class EntityPlayer extends EntityLiving implements ICommandListe
         return this.worldObj.getBlockId(this.bT.x, this.bT.y, this.bT.z) == Block.BED.blockID;
     }
 
-    public static ChunkCoordinates getBed(net.minecraft.src.World world, ChunkCoordinates chunkcoordinates) {
+    public static ChunkCoordinates getBed(World world, ChunkCoordinates chunkcoordinates) {
         IChunkProvider ichunkprovider = world.F();
 
         ichunkprovider.getChunkAt(chunkcoordinates.x - 3 >> 4, chunkcoordinates.z - 3 >> 4);

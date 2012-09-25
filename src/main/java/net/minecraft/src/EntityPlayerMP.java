@@ -9,11 +9,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 // CraftBukkit start
-
-import net.minecraft.server.*;
-import net.minecraft.server.TileEntityBrewingStand;
-import net.minecraft.server.TileEntityDispenser;
-import net.minecraft.server.TileEntityFurnace;
+import net.minecraft.server.MinecraftServer;
 
 import org.bukkit.Bukkit;
 import org.bukkit.craftbukkit.CraftWorld;
@@ -25,10 +21,10 @@ import org.bukkit.event.inventory.InventoryType;
 
 public class EntityPlayerMP extends EntityPlayer implements ICrafting {
 
-    private LocaleLanguage locale = new LocaleLanguage("en_US");
-    public net.minecraft.server.NetServerHandler serverForThisPlayer;
+    private StringTranslate locale = new StringTranslate("en_US");
+    public NetServerHandler serverForThisPlayer;
     public MinecraftServer server;
-    public net.minecraft.src.ItemInWorldManager itemInWorldManager;
+    public ItemInWorldManager itemInWorldManager;
     public double d;
     public double e;
     public final List chunkCoordIntPairQueue = new LinkedList();
@@ -41,7 +37,7 @@ public class EntityPlayerMP extends EntityPlayer implements ICrafting {
     private int cm = 0;
     private int cn = 0;
     private boolean co = true;
-    private net.minecraft.src.ItemStack[] cp = new net.minecraft.src.ItemStack[] { null, null, null, null, null};
+    private ItemStack[] cp = new ItemStack[] { null, null, null, null, null};
     private int containerCounter = 0;
     public boolean h;
     public int ping;
@@ -56,7 +52,7 @@ public class EntityPlayerMP extends EntityPlayer implements ICrafting {
     public boolean keepLevel = false;
     // CraftBukkit end
 
-    public EntityPlayerMP(MinecraftServer minecraftserver, net.minecraft.src.World world, String s, net.minecraft.src.ItemInWorldManager iteminworldmanager) {
+    public EntityPlayerMP(MinecraftServer minecraftserver, World world, String s, ItemInWorldManager iteminworldmanager) {
         super(world);
         iteminworldmanager.player = this;
         this.itemInWorldManager = iteminworldmanager;
@@ -76,27 +72,27 @@ public class EntityPlayerMP extends EntityPlayer implements ICrafting {
         this.server = minecraftserver;
         this.W = 0.0F;
         this.username = s;
-        this.height = 0.0F;
+        this.yOffset = 0.0F;
         this.displayName = this.username; // CraftBukkit
         this.listName = this.username; // CraftBukkit
     }
 
-    public void a(net.minecraft.src.NBTTagCompound nbttagcompound) {
-        super.a(nbttagcompound);
+    public void writeEntityToNBT(NBTTagCompound nbttagcompound) {
+        super.writeEntityToNBT(nbttagcompound);
         if (nbttagcompound.hasKey("playerGameType")) {
             this.itemInWorldManager.setGameMode(EnumGamemode.a(nbttagcompound.getInteger("playerGameType")));
         }
         this.getBukkitEntity().readExtraData(nbttagcompound); // CraftBukkit
     }
 
-    public void b(net.minecraft.src.NBTTagCompound nbttagcompound) {
-        super.b(nbttagcompound);
+    public void readEntityFromNBT(NBTTagCompound nbttagcompound) {
+        super.readEntityFromNBT(nbttagcompound);
         nbttagcompound.setInteger("playerGameType", this.itemInWorldManager.getGameMode().a());
         this.getBukkitEntity().setExtraData(nbttagcompound); // CraftBukkit
     }
 
     // CraftBukkit start - world fallback code, either respawn location or global spawn
-    public void spawnIn(net.minecraft.src.World world) {
+    public void spawnIn(World world) {
         super.spawnIn(world);
         if (world == null) {
             this.isDead = false;
@@ -115,8 +111,8 @@ public class EntityPlayerMP extends EntityPlayer implements ICrafting {
             this.worldObj = world;
             this.setPosition(position.x + 0.5, position.y, position.z + 0.5);
         }
-        this.dimension = ((net.minecraft.src.WorldServer) this.worldObj).dimension;
-        this.itemInWorldManager.a((net.minecraft.src.WorldServer) world);
+        this.dimension = ((WorldServer) this.worldObj).dimension;
+        this.itemInWorldManager.a((WorldServer) world);
     }
     // CraftBukkit end
 
@@ -129,12 +125,12 @@ public class EntityPlayerMP extends EntityPlayer implements ICrafting {
         this.craftingInventory.addCraftingToCrafters(this);
     }
 
-    public net.minecraft.src.ItemStack[] getEquipment() {
+    public ItemStack[] getEquipment() {
         return this.cp;
     }
 
     protected void d_() {
-        this.height = 0.0F;
+        this.yOffset = 0.0F;
     }
 
     public float getHeadHeight() {
@@ -149,7 +145,7 @@ public class EntityPlayerMP extends EntityPlayer implements ICrafting {
         int i;
 
         for (i = 0; i < 5; ++i) {
-            net.minecraft.src.ItemStack itemstack = this.b(i);
+            ItemStack itemstack = this.b(i);
 
             if (itemstack != this.cp[i]) {
                 this.q().getTracker().a(this, new Packet5EntityEquipment(this.entityId, i, itemstack));
@@ -168,14 +164,14 @@ public class EntityPlayerMP extends EntityPlayer implements ICrafting {
                 iterator.remove();
                 if (chunkcoordintpair != null && this.worldObj.isLoaded(chunkcoordintpair.x << 4, 0, chunkcoordintpair.z << 4)) {
                     arraylist.add(this.worldObj.getChunkAt(chunkcoordintpair.x, chunkcoordintpair.z));
-                    arraylist1.addAll(((net.minecraft.src.WorldServer) this.worldObj).getTileEntities(chunkcoordintpair.x * 16, 0, chunkcoordintpair.z * 16, chunkcoordintpair.x * 16 + 16, 256, chunkcoordintpair.z * 16 + 16));
+                    arraylist1.addAll(((WorldServer) this.worldObj).getTileEntities(chunkcoordintpair.x * 16, 0, chunkcoordintpair.z * 16, chunkcoordintpair.x * 16 + 16, 256, chunkcoordintpair.z * 16 + 16));
                 }
             }
 
             if (!arraylist.isEmpty()) {
                 // CraftBukkit start - don't use map chunk bulk for now TODO: fix this
                 for (Object object : arraylist) {
-                    this.serverForThisPlayer.sendPacketToPlayer(new net.minecraft.src.Packet51MapChunk((Chunk) object, true, 0xffff));
+                    this.serverForThisPlayer.sendPacketToPlayer(new Packet51MapChunk((Chunk) object, true, 0xffff));
                 }
                 // this.netServerHandler.sendPacket(new Packet56MapChunkBulk(arraylist));
                 // CraftBukkit end
@@ -183,7 +179,7 @@ public class EntityPlayerMP extends EntityPlayer implements ICrafting {
                 Iterator iterator1 = arraylist1.iterator();
 
                 while (iterator1.hasNext()) {
-                    net.minecraft.src.TileEntity tileentity = (net.minecraft.src.TileEntity) iterator1.next();
+                    TileEntity tileentity = (TileEntity) iterator1.next();
 
                     this.a(tileentity);
                 }
@@ -209,10 +205,10 @@ public class EntityPlayerMP extends EntityPlayer implements ICrafting {
         super.h_();
 
         for (int i = 0; i < this.inventory.getSize(); ++i) {
-            net.minecraft.src.ItemStack itemstack = this.inventory.getItem(i);
+            ItemStack itemstack = this.inventory.getItem(i);
 
             if (itemstack != null && Item.itemsList[itemstack.id].m_() && this.serverForThisPlayer.lowPriorityCount() <= 2) {
-                net.minecraft.src.Packet packet = ((ItemWorldMapBase) Item.itemsList[itemstack.id]).c(itemstack, this.worldObj, this);
+                Packet packet = ((ItemWorldMapBase) Item.itemsList[itemstack.id]).c(itemstack, this.worldObj, this);
 
                 if (packet != null) {
                     this.serverForThisPlayer.sendPacketToPlayer(packet);
@@ -290,7 +286,7 @@ public class EntityPlayerMP extends EntityPlayer implements ICrafting {
         // CraftBukkit end
     }
 
-    public net.minecraft.src.ItemStack b(int i) {
+    public ItemStack b(int i) {
         return i == 0 ? this.inventory.getItemInHand() : this.inventory.armor[i - 1];
     }
 
@@ -315,7 +311,7 @@ public class EntityPlayerMP extends EntityPlayer implements ICrafting {
         String deathMessage = event.getDeathMessage();
 
         if (deathMessage != null && deathMessage.length() > 0) {
-            this.server.getServerConfigurationManager().sendAll(new net.minecraft.src.Packet3Chat(event.getDeathMessage()));
+            this.server.getServerConfigurationManager().sendAll(new Packet3Chat(event.getDeathMessage()));
         }
 
         // CraftBukkit - we clean the player's inventory after the EntityDeathEvent is called so plugins can get the exact state of the inventory.
@@ -383,9 +379,9 @@ public class EntityPlayerMP extends EntityPlayer implements ICrafting {
         }
     }
 
-    private void a(net.minecraft.src.TileEntity tileentity) {
+    private void a(TileEntity tileentity) {
         if (tileentity != null) {
-            net.minecraft.src.Packet packet = tileentity.e();
+            Packet packet = tileentity.e();
 
             if (packet != null) {
                 this.serverForThisPlayer.sendPacketToPlayer(packet);
@@ -395,7 +391,7 @@ public class EntityPlayerMP extends EntityPlayer implements ICrafting {
 
     public void receive(Entity entity, int i) {
         if (!entity.isDead) {
-            net.minecraft.src.EntityTracker entitytracker = this.q().getTracker();
+            EntityTracker entitytracker = this.q().getTracker();
 
             if (entity instanceof EntityItem) {
                 entitytracker.a(entity, new Packet22Collect(entity.entityId, this.entityId));
@@ -502,7 +498,7 @@ public class EntityPlayerMP extends EntityPlayer implements ICrafting {
         this.craftingInventory.addCraftingToCrafters(this);
     }
 
-    public void displayGUIChest(net.minecraft.src.IInventory iinventory) {
+    public void displayGUIChest(IInventory iinventory) {
         if (this.craftingInventory != this.defaultContainer) {
             this.closeScreen();
         }
@@ -587,7 +583,7 @@ public class EntityPlayerMP extends EntityPlayer implements ICrafting {
         }
     }
 
-    public void a(Container container, int i, net.minecraft.src.ItemStack itemstack) {
+    public void updateCraftingInventorySlot(Container container, int i, ItemStack itemstack) {
         if (!(container.getSlot(i) instanceof SlotResult)) {
             if (!this.h) {
                 this.serverForThisPlayer.sendPacketToPlayer(new Packet103SetSlot(container.windowId, i, itemstack));
@@ -599,7 +595,7 @@ public class EntityPlayerMP extends EntityPlayer implements ICrafting {
         this.a(container, container.a());
     }
 
-    public void a(Container container, List list) {
+    public void sendContainerAndContentsToPlayer(Container container, List list) {
         this.serverForThisPlayer.sendPacketToPlayer(new Packet104WindowItems(container.windowId, list));
         this.serverForThisPlayer.sendPacketToPlayer(new Packet103SetSlot(-1, -1, this.inventory.getItemStack()));
         // CraftBukkit start - send a Set Slot to update the crafting result slot
@@ -665,7 +661,7 @@ public class EntityPlayerMP extends EntityPlayer implements ICrafting {
         LocaleLanguage localelanguage = LocaleLanguage.a();
         String s1 = localelanguage.b(s);
 
-        this.serverForThisPlayer.sendPacketToPlayer(new net.minecraft.src.Packet3Chat(s1));
+        this.serverForThisPlayer.sendPacketToPlayer(new Packet3Chat(s1));
     }
 
     protected void o() {
@@ -713,8 +709,8 @@ public class EntityPlayerMP extends EntityPlayer implements ICrafting {
         }
     }
 
-    public net.minecraft.src.WorldServer q() {
-        return (net.minecraft.src.WorldServer) this.worldObj;
+    public WorldServer q() {
+        return (WorldServer) this.worldObj;
     }
 
     public void a(EnumGamemode enumgamemode) {

@@ -17,7 +17,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.event.server.MapInitializeEvent;
 // CraftBukkit end
 
-public class ItemMap extends ItemWorldMapBase {
+public class ItemMap extends ItemMapBase {
 
     protected ItemMap(int i) {
         super(i);

@@ -5,7 +5,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import net.minecraft.server.BanEntry;
+import net.minecraft.src.BanEntry;
 import net.minecraft.src.EntityPlayerMP;
 import net.minecraft.src.NBTTagCompound;
 import net.minecraft.src.SaveHandler;
@@ -65,12 +65,12 @@ public class CraftOfflinePlayer implements OfflinePlayer, ConfigurationSerializa
     public void setBanned(boolean value) {
         if (value) {
             BanEntry entry = new BanEntry(name.toLowerCase());
-            server.getHandle().getNameBans().add(entry);
+            server.getHandle().getNameBans().put(entry);
         } else {
             server.getHandle().getNameBans().remove(name.toLowerCase());
         }
 
-        server.getHandle().getNameBans().save();
+        server.getHandle().getNameBans().saveToFileWithHeader();
     }
 
     public boolean isWhitelisted() {
@@ -103,7 +103,7 @@ public class CraftOfflinePlayer implements OfflinePlayer, ConfigurationSerializa
     }
 
     public Player getPlayer() {
-        for (Object obj : server.getHandle().playerEntityList) {
+        for (Object obj : server.getHandle().players) {
             EntityPlayerMP player = (EntityPlayerMP) obj;
             if (player.username.equalsIgnoreCase(getName())) {
                 return (player.serverForThisPlayer != null) ? player.serverForThisPlayer.getPlayer() : null;

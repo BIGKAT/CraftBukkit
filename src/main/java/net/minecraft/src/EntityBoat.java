@@ -5,8 +5,6 @@ import java.util.List;
 
 // CraftBukkit start
 
-import net.minecraft.server.*;
-
 import org.bukkit.Location;
 import org.bukkit.entity.Vehicle;
 import org.bukkit.event.vehicle.VehicleDamageEvent;
@@ -52,15 +50,15 @@ public class EntityBoat extends Entity {
         this.a = true;
         this.b = 0.07D;
         this.m = true;
-        this.a(1.5F, 0.6F);
-        this.height = this.length / 2.0F;
+        this.setSize(1.5F, 0.6F);
+        this.yOffset = this.length / 2.0F;
     }
 
     protected boolean e_() {
         return false;
     }
 
-    protected void a() {
+    protected void entityInit() {
         this.datawatcher.a(17, new Integer(0));
         this.datawatcher.a(18, new Integer(1));
         this.datawatcher.a(19, new Integer(0));
@@ -80,7 +78,7 @@ public class EntityBoat extends Entity {
 
     public EntityBoat(net.minecraft.src.World world, double d0, double d1, double d2) {
         this(world);
-        this.setPosition(d0, d1 + (double) this.height, d2);
+        this.setPosition(d0, d1 + (double) this.yOffset, d2);
         this.motionX = 0.0D;
         this.motionY = 0.0D;
         this.motionZ = 0.0D;
@@ -407,9 +405,9 @@ public class EntityBoat extends Entity {
         }
     }
 
-    protected void b(net.minecraft.src.NBTTagCompound nbttagcompound) {}
+    protected void readEntityFromNBT(net.minecraft.src.NBTTagCompound nbttagcompound) {}
 
-    protected void a(net.minecraft.src.NBTTagCompound nbttagcompound) {}
+    protected void writeEntityToNBT(net.minecraft.src.NBTTagCompound nbttagcompound) {}
 
     public boolean c(net.minecraft.src.EntityPlayer entityhuman) {
         if (this.riddenByEntity != null && this.riddenByEntity instanceof net.minecraft.src.EntityPlayer && this.riddenByEntity != entityhuman) {

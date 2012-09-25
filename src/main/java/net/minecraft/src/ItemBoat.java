@@ -6,8 +6,6 @@ import java.util.List;
 import net.minecraft.server.AxisAlignedBB;
 import net.minecraft.server.Block;
 import net.minecraft.server.CreativeModeTab;
-import net.minecraft.src.Entity;
-import net.minecraft.src.EntityBoat;
 import net.minecraft.server.EnumMovingObjectType;
 import net.minecraft.server.Item;
 import net.minecraft.server.MathHelper;
@@ -26,7 +24,7 @@ public class ItemBoat extends Item {
         float f1 = entityhuman.lastPitch + (entityhuman.rotationPitch - entityhuman.lastPitch) * f;
         float f2 = entityhuman.lastYaw + (entityhuman.rotationYaw - entityhuman.lastYaw) * f;
         double d0 = entityhuman.lastX + (entityhuman.posX - entityhuman.lastX) * (double) f;
-        double d1 = entityhuman.lastY + (entityhuman.posY - entityhuman.lastY) * (double) f + 1.62D - (double) entityhuman.height;
+        double d1 = entityhuman.lastY + (entityhuman.posY - entityhuman.lastY) * (double) f + 1.62D - (double) entityhuman.yOffset;
         double d2 = entityhuman.lastZ + (entityhuman.posZ - entityhuman.lastZ) * (double) f;
         Vec3 vec3d = Vec3.a().create(d0, d1, d2);
         float f3 = MathHelper.cos(-f2 * 0.017453292F - 3.1415927F);

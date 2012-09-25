@@ -6,10 +6,10 @@ import org.bukkit.event.inventory.InventoryType;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryView;
 
-import net.minecraft.server.Container;
+import net.minecraft.src.Container;
 import net.minecraft.src.EntityPlayer;
 import net.minecraft.src.IInventory;
-import net.minecraft.server.Packet100OpenWindow;
+import net.minecraft.src.Packet100OpenWindow;
 import net.minecraft.src.Slot;
 
 public class CraftContainer extends Container {

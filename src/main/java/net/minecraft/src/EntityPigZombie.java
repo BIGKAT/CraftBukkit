@@ -5,8 +5,6 @@ import java.util.List;
 
 // CraftBukkit start
 
-import net.minecraft.server.*;
-
 import org.bukkit.craftbukkit.inventory.CraftItemStack;
 import org.bukkit.event.entity.EntityTargetEvent;
 // CraftBukkit end
@@ -20,7 +18,7 @@ public class EntityPigZombie extends EntityZombie {
     public EntityPigZombie(net.minecraft.src.World world) {
         super(world);
         this.texture = "/mob/pigzombie.png";
-        this.bw = 0.5F;
+        this.moveSpeed = 0.5F;
         this.damage = 5;
         this.fireProof = true;
     }
@@ -30,7 +28,7 @@ public class EntityPigZombie extends EntityZombie {
     }
 
     public void h_() {
-        this.bw = this.entityToAttack != null ? 0.95F : 0.5F;
+        this.moveSpeed = this.entityToAttack != null ? 0.95F : 0.5F;
         if (this.soundDelay > 0 && --this.soundDelay == 0) {
             this.worldObj.makeSound(this, "mob.zombiepig.zpigangry", this.aP() * 2.0F, ((this.random.nextFloat() - this.random.nextFloat()) * 0.2F + 1.0F) * 1.8F);
         }
@@ -42,13 +40,13 @@ public class EntityPigZombie extends EntityZombie {
         return this.worldObj.difficulty > 0 && this.worldObj.b(this.boundingBox) && this.worldObj.getCubes(this, this.boundingBox).isEmpty() && !this.worldObj.containsLiquid(this.boundingBox);
     }
 
-    public void b(net.minecraft.src.NBTTagCompound nbttagcompound) {
-        super.b(nbttagcompound);
+    public void readEntityFromNBT(net.minecraft.src.NBTTagCompound nbttagcompound) {
+        super.readEntityFromNBT(nbttagcompound);
         nbttagcompound.setShort("Anger", (short) this.angerLevel);
     }
 
-    public void a(net.minecraft.src.NBTTagCompound nbttagcompound) {
-        super.a(nbttagcompound);
+    public void writeEntityToNBT(net.minecraft.src.NBTTagCompound nbttagcompound) {
+        super.writeEntityToNBT(nbttagcompound);
         this.angerLevel = nbttagcompound.getShort("Anger");
     }
 

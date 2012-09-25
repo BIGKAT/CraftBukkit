@@ -8,15 +8,15 @@ import java.util.Map;
 // CraftBukkit start
 import java.util.UUID;
 
-import net.minecraft.server.WorldMapBase;
-import net.minecraft.server.WorldMapDecoration;
+import net.minecraft.src.WorldSavedData;
+import net.minecraft.src.WorldMapDecoration;
 
 import org.bukkit.craftbukkit.CraftServer;
 import org.bukkit.craftbukkit.CraftWorld;
 import org.bukkit.craftbukkit.map.CraftMapView;
 // CraftBukkit end
 
-public class MapData extends WorldMapBase {
+public class MapData extends WorldSavedData {
 
     public int centerX;
     public int centerZ;
@@ -167,7 +167,7 @@ public class MapData extends WorldMapBase {
                     }
 
                     if (worldmaphumantracker1.trackee.dimension == this.map) {
-                        this.decorations.add(new WorldMapDecoration(this, b2, b3, b4, b5));
+                        this.decorations.add(new MapCoord(this, b2, b3, b4, b5));
                     }
                 }
             } else {

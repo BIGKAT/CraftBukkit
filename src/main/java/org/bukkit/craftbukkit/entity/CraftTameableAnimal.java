@@ -1,19 +1,20 @@
 package org.bukkit.craftbukkit.entity;
 
-import net.minecraft.server.EntityTameableAnimal;
+import net.minecraft.src.EntityTameable;
+
 import org.bukkit.craftbukkit.CraftServer;
 import org.bukkit.entity.AnimalTamer;
 import org.bukkit.entity.Creature;
 import org.bukkit.entity.Tameable;
 
 public class CraftTameableAnimal extends CraftAnimals implements Tameable, Creature {
-    public CraftTameableAnimal(CraftServer server, EntityTameableAnimal entity) {
+    public CraftTameableAnimal(CraftServer server, EntityTameable entity) {
         super(server, entity);
     }
 
     @Override
-    public EntityTameableAnimal getHandle() {
-        return (EntityTameableAnimal)super.getHandle();
+    public EntityTameable getHandle() {
+        return (EntityTameable)super.getHandle();
     }
 
     public AnimalTamer getOwner() {
@@ -47,7 +48,7 @@ public class CraftTameableAnimal extends CraftAnimals implements Tameable, Creat
     }
 
     public void setOwnerName(String ownerName) {
-        getHandle().setOwnerName(ownerName == null ? "" : ownerName);
+        getHandle().setOwner(ownerName == null ? "" : ownerName);
     }
 
     public void setTamed(boolean tame) {

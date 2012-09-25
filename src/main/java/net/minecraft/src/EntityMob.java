@@ -1,23 +1,10 @@
 package net.minecraft.src;
 
-import net.minecraft.server.DamageSource;
-import net.minecraft.server.EntityGiantZombie;
-import net.minecraft.server.EnumSkyBlock;
-import net.minecraft.server.IMonster;
-import net.minecraft.server.MathHelper;
-import net.minecraft.src.*;
-import net.minecraft.src.Entity;
-import net.minecraft.src.EntityBlaze;
-import net.minecraft.src.EntityCreature;
-import net.minecraft.src.EntityEnderman;
-import net.minecraft.src.EntityPlayer;
-import net.minecraft.src.EntitySilverfish;
-
 import org.bukkit.event.entity.EntityTargetEvent; // CraftBukkit
 
-public abstract class EntityMob extends EntityCreature implements IMonster {
+public abstract class EntityMob extends EntityCreature implements IMob {
 
-    protected int damage = 2;
+    protected int attackStrength = 2;
 
     public EntityMob(net.minecraft.src.World world) {
         super(world);
@@ -90,11 +77,11 @@ public abstract class EntityMob extends EntityCreature implements IMonster {
             i -= 2 << this.getEffect(Potion.WEAKNESS).getAmplifier();
         }
 
-        return entity.damageEntity(DamageSource.mobAttack(this), i);
+        return entity.damageEntity(DamageSource.causeMobDamage(this), i);
     }
 
     protected void a(Entity entity, float f) {
-        if (this.attackTicks <= 0 && f < 2.0F && entity.boundingBox.e > this.boundingBox.b && entity.boundingBox.b < this.boundingBox.e) {
+        if (this.attackTicks <= 0 && f < 2.0F && entity.boundingBox.maxY > this.boundingBox.minY && entity.boundingBox.minY < this.boundingBox.maxY) {
             this.attackTicks = 20;
             this.k(entity);
         }
@@ -105,9 +92,9 @@ public abstract class EntityMob extends EntityCreature implements IMonster {
     }
 
     protected boolean o() {
-        int i = MathHelper.floor(this.posX);
-        int j = MathHelper.floor(this.boundingBox.b);
-        int k = MathHelper.floor(this.posZ);
+        int i = MathHelper.floor_double(this.posX);
+        int j = MathHelper.floor_double(this.boundingBox.minY);
+        int k = MathHelper.floor_double(this.posZ);
 
         if (this.worldObj.b(EnumSkyBlock.Sky, i, j, k) > this.random.nextInt(32)) {
             return false;

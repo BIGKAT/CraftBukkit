@@ -1,6 +1,6 @@
 package org.bukkit.craftbukkit.entity;
 
-import net.minecraft.server.EntityFallingBlock;
+import net.minecraft.src.EntityFallingSand;
 
 import org.bukkit.Material;
 import org.bukkit.craftbukkit.CraftServer;
@@ -9,13 +9,13 @@ import org.bukkit.entity.FallingSand;
 
 public class CraftFallingSand extends CraftEntity implements FallingSand {
 
-    public CraftFallingSand(CraftServer server, EntityFallingBlock entity) {
+    public CraftFallingSand(CraftServer server, EntityFallingSand entity) {
         super(server, entity);
     }
 
     @Override
-    public EntityFallingBlock getHandle() {
-        return (EntityFallingBlock) entity;
+    public EntityFallingSand getHandle() {
+        return (EntityFallingSand) entity;
     }
 
     @Override

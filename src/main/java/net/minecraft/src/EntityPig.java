@@ -1,13 +1,11 @@
 package net.minecraft.src;
 
-import net.minecraft.server.*;
-
 public class EntityPig extends EntityAnimal {
 
     public EntityPig(net.minecraft.src.World world) {
         super(world);
         this.texture = "/mob/pig.png";
-        this.a(0.9F, 0.9F);
+        this.setSize(0.9F, 0.9F);
         this.getNavigation().a(true);
         float f = 0.25F;
 
@@ -29,18 +27,18 @@ public class EntityPig extends EntityAnimal {
         return 10;
     }
 
-    protected void a() {
-        super.a();
+    protected void entityInit() {
+        super.entityInit();
         this.datawatcher.a(16, Byte.valueOf((byte) 0));
     }
 
-    public void b(net.minecraft.src.NBTTagCompound nbttagcompound) {
-        super.b(nbttagcompound);
+    public void readEntityFromNBT(net.minecraft.src.NBTTagCompound nbttagcompound) {
+        super.readEntityFromNBT(nbttagcompound);
         nbttagcompound.setBoolean("Saddle", this.getSaddled());
     }
 
-    public void a(net.minecraft.src.NBTTagCompound nbttagcompound) {
-        super.a(nbttagcompound);
+    public void writeEntityToNBT(net.minecraft.src.NBTTagCompound nbttagcompound) {
+        super.writeEntityToNBT(nbttagcompound);
         this.setSaddled(nbttagcompound.getBoolean("Saddle"));
     }
 

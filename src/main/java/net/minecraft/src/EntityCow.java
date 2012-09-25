@@ -21,7 +21,7 @@ public class EntityCow extends EntityAnimal {
     public EntityCow(net.minecraft.src.World world) {
         super(world);
         this.texture = "/mob/cow.png";
-        this.a(0.9F, 1.3F);
+        this.setSize(0.9F, 1.3F);
         this.getNavigation().a(true);
         this.goalSelector.a(0, new PathfinderGoalFloat(this));
         this.goalSelector.a(1, new PathfinderGoalPanic(this, 0.38F));

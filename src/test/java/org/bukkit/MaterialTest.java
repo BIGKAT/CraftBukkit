@@ -7,7 +7,7 @@ import static org.junit.Assert.assertThat;
 
 import java.util.Map;
 
-import net.minecraft.server.Item;
+import net.minecraft.src.Item;
 import net.minecraft.src.ItemFood;
 
 import org.bukkit.support.AbstractTestingBase;

@@ -15,7 +15,6 @@ import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import net.minecraft.server.*;
 import net.minecraft.src.*;
 import org.apache.commons.lang.Validate;
 import org.apache.commons.lang.NotImplementedException;

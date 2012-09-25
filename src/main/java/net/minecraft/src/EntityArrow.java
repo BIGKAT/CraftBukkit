@@ -5,13 +5,6 @@ import java.util.List;
 
 // CraftBukkit start
 
-import net.minecraft.server.*;
-import net.minecraft.src.*;
-import net.minecraft.src.EntityItem;
-import net.minecraft.src.EntityLiving;
-import net.minecraft.src.EntityPlayer;
-import net.minecraft.src.ItemStack;
-
 import org.bukkit.entity.Projectile;
 import org.bukkit.event.entity.EntityCombustByEntityEvent;
 import org.bukkit.event.entity.ProjectileHitEvent;
@@ -36,14 +29,14 @@ public class EntityArrow extends Entity {
 
     public EntityArrow(net.minecraft.src.World world) {
         super(world);
-        this.a(0.5F, 0.5F);
+        this.setSize(0.5F, 0.5F);
     }
 
     public EntityArrow(net.minecraft.src.World world, double d0, double d1, double d2) {
         super(world);
-        this.a(0.5F, 0.5F);
+        this.setSize(0.5F, 0.5F);
         this.setPosition(d0, d1, d2);
-        this.height = 0.0F;
+        this.yOffset = 0.0F;
     }
 
     public EntityArrow(net.minecraft.src.World world, net.minecraft.src.EntityLiving entityliving, net.minecraft.src.EntityLiving entityliving1, float f, float f1) {
@@ -66,7 +59,7 @@ public class EntityArrow extends Entity {
             double d5 = d2 / d3;
 
             this.setPositionRotation(entityliving.posX + d4, this.posY, entityliving.posZ + d5, f2, f3);
-            this.height = 0.0F;
+            this.yOffset = 0.0F;
             float f4 = (float) d3 * 0.2F;
 
             this.shoot(d0, d1 + (double) f4, d2, f, f1);
@@ -80,20 +73,20 @@ public class EntityArrow extends Entity {
             this.fromPlayer = 1;
         }
 
-        this.a(0.5F, 0.5F);
+        this.setSize(0.5F, 0.5F);
         this.setPositionRotation(entityliving.posX, entityliving.posY + (double) entityliving.getHeadHeight(), entityliving.posZ, entityliving.rotationYaw, entityliving.rotationPitch);
         this.posX -= (double) (MathHelper.cos(this.rotationYaw / 180.0F * 3.1415927F) * 0.16F);
         this.posY -= 0.10000000149011612D;
         this.posZ -= (double) (MathHelper.sin(this.rotationYaw / 180.0F * 3.1415927F) * 0.16F);
         this.setPosition(this.posX, this.posY, this.posZ);
-        this.height = 0.0F;
+        this.yOffset = 0.0F;
         this.motionX = (double) (-MathHelper.sin(this.rotationYaw / 180.0F * 3.1415927F) * MathHelper.cos(this.rotationPitch / 180.0F * 3.1415927F));
         this.motionZ = (double) (MathHelper.cos(this.rotationYaw / 180.0F * 3.1415927F) * MathHelper.cos(this.rotationPitch / 180.0F * 3.1415927F));
         this.motionY = (double) (-MathHelper.sin(this.rotationPitch / 180.0F * 3.1415927F));
         this.shoot(this.motionX, this.motionY, this.motionZ, f * 1.5F, 1.0F);
     }
 
-    protected void a() {
+    protected void entityInit() {
         this.datawatcher.a(16, Byte.valueOf((byte) 0));
     }
 
@@ -332,7 +325,7 @@ public class EntityArrow extends Entity {
         }
     }
 
-    public void b(net.minecraft.src.NBTTagCompound nbttagcompound) {
+    public void readEntityFromNBT(net.minecraft.src.NBTTagCompound nbttagcompound) {
         nbttagcompound.setShort("xTile", (short) this.d);
         nbttagcompound.setShort("yTile", (short) this.e);
         nbttagcompound.setShort("zTile", (short) this.f);
@@ -344,7 +337,7 @@ public class EntityArrow extends Entity {
         nbttagcompound.setDouble("damage", this.damage);
     }
 
-    public void a(net.minecraft.src.NBTTagCompound nbttagcompound) {
+    public void writeEntityToNBT(net.minecraft.src.NBTTagCompound nbttagcompound) {
         this.d = nbttagcompound.getShort("xTile");
         this.e = nbttagcompound.getShort("yTile");
         this.f = nbttagcompound.getShort("zTile");

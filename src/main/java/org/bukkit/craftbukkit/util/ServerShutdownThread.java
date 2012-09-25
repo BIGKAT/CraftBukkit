@@ -1,6 +1,6 @@
 package org.bukkit.craftbukkit.util;
 
-import net.minecraft.server.ExceptionWorldConflict;
+import net.minecraft.src.ExceptionWorldConflict;
 import net.minecraft.server.MinecraftServer;
 
 public class ServerShutdownThread extends Thread {

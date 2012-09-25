@@ -6,9 +6,6 @@ import java.util.List;
 import net.minecraft.server.AxisAlignedBB;
 import net.minecraft.server.MathHelper;
 import net.minecraft.server.MovingObjectPosition;
-import net.minecraft.src.*;
-import net.minecraft.src.Entity;
-import net.minecraft.src.EntityLiving;
 
 import org.bukkit.event.entity.ProjectileHitEvent; // CraftBukkit
 
@@ -26,21 +23,21 @@ public abstract class EntityProjectile extends net.minecraft.src.Entity {
 
     public EntityProjectile(net.minecraft.src.World world) {
         super(world);
-        this.a(0.25F, 0.25F);
+        this.setSize(0.25F, 0.25F);
     }
 
-    protected void a() {}
+    protected void entityInit() {}
 
     public EntityProjectile(net.minecraft.src.World world, EntityLiving entityliving) {
         super(world);
         this.shootingEntity = entityliving;
-        this.a(0.25F, 0.25F);
+        this.setSize(0.25F, 0.25F);
         this.setPositionRotation(entityliving.posX, entityliving.posY + (double) entityliving.getHeadHeight(), entityliving.posZ, entityliving.rotationYaw, entityliving.rotationPitch);
         this.posX -= (double) (MathHelper.cos(this.rotationYaw / 180.0F * 3.1415927F) * 0.16F);
         this.posY -= 0.10000000149011612D;
         this.posZ -= (double) (MathHelper.sin(this.rotationYaw / 180.0F * 3.1415927F) * 0.16F);
         this.setPosition(this.posX, this.posY, this.posZ);
-        this.height = 0.0F;
+        this.yOffset = 0.0F;
         float f = 0.4F;
 
         this.motionX = (double) (-MathHelper.sin(this.rotationYaw / 180.0F * 3.1415927F) * MathHelper.cos(this.rotationPitch / 180.0F * 3.1415927F) * f);
@@ -52,9 +49,9 @@ public abstract class EntityProjectile extends net.minecraft.src.Entity {
     public EntityProjectile(net.minecraft.src.World world, double d0, double d1, double d2) {
         super(world);
         this.h = 0;
-        this.a(0.25F, 0.25F);
+        this.setSize(0.25F, 0.25F);
         this.setPosition(d0, d1, d2);
-        this.height = 0.0F;
+        this.yOffset = 0.0F;
     }
 
     protected float d() {
@@ -219,7 +216,7 @@ public abstract class EntityProjectile extends net.minecraft.src.Entity {
 
     protected abstract void a(MovingObjectPosition movingobjectposition);
 
-    public void b(net.minecraft.src.NBTTagCompound nbttagcompound) {
+    public void readEntityFromNBT(net.minecraft.src.NBTTagCompound nbttagcompound) {
         nbttagcompound.setShort("xTile", (short) this.blockX);
         nbttagcompound.setShort("yTile", (short) this.blockY);
         nbttagcompound.setShort("zTile", (short) this.blockZ);
@@ -228,7 +225,7 @@ public abstract class EntityProjectile extends net.minecraft.src.Entity {
         nbttagcompound.setByte("inGround", (byte) (this.inGround ? 1 : 0));
     }
 
-    public void a(net.minecraft.src.NBTTagCompound nbttagcompound) {
+    public void writeEntityToNBT(net.minecraft.src.NBTTagCompound nbttagcompound) {
         this.blockX = nbttagcompound.getShort("xTile");
         this.blockY = nbttagcompound.getShort("yTile");
         this.blockZ = nbttagcompound.getShort("zTile");

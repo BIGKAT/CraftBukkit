@@ -1,6 +1,5 @@
 package net.minecraft.src;
 
-import net.minecraft.src.EntityMob;
 import net.minecraft.server.EnumMonsterType;
 import net.minecraft.server.Item;
 import net.minecraft.server.MathHelper;
@@ -13,12 +12,12 @@ public class EntitySpider extends EntityMob {
     public EntitySpider(net.minecraft.src.World world) {
         super(world);
         this.texture = "/mob/spider.png";
-        this.a(1.4F, 0.9F);
-        this.bw = 0.8F;
+        this.setSize(1.4F, 0.9F);
+        this.moveSpeed = 0.8F;
     }
 
-    protected void a() {
-        super.a();
+    protected void entityInit() {
+        super.entityInit();
         this.datawatcher.a(16, new Byte((byte) 0));
     }
 

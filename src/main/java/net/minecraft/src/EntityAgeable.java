@@ -7,8 +7,8 @@ public abstract class EntityAgeable extends EntityCreature {
         super(world);
     }
 
-    protected void a() {
-        super.a();
+    protected void entityInit() {
+        super.entityInit();
         this.datawatcher.a(12, new Integer(0));
     }
 
@@ -20,14 +20,14 @@ public abstract class EntityAgeable extends EntityCreature {
         this.datawatcher.watch(12, Integer.valueOf(i));
     }
 
-    public void b(net.minecraft.src.NBTTagCompound nbttagcompound) {
-        super.b(nbttagcompound);
+    public void readEntityFromNBT(net.minecraft.src.NBTTagCompound nbttagcompound) {
+        super.readEntityFromNBT(nbttagcompound);
         nbttagcompound.setInteger("Age", this.getGrowingAge());
         nbttagcompound.setBoolean("AgeLocked", this.ageLocked); // CraftBukkit
     }
 
-    public void a(net.minecraft.src.NBTTagCompound nbttagcompound) {
-        super.a(nbttagcompound);
+    public void writeEntityToNBT(net.minecraft.src.NBTTagCompound nbttagcompound) {
+        super.writeEntityToNBT(nbttagcompound);
         this.setGrowingAge(nbttagcompound.getInteger("Age"));
         this.ageLocked = nbttagcompound.getBoolean("AgeLocked"); // CraftBukkit
     }

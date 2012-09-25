@@ -23,7 +23,7 @@ public class EntityChicken extends EntityAnimal {
     public EntityChicken(net.minecraft.src.World world) {
         super(world);
         this.texture = "/mob/chicken.png";
-        this.a(0.3F, 0.7F);
+        this.setSize(0.3F, 0.7F);
         this.j = this.random.nextInt(6000) + 6000;
         float f = 0.25F;
 

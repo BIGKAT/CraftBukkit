@@ -4,7 +4,6 @@ package net.minecraft.src;
 
 import net.minecraft.server.Block;
 import net.minecraft.server.DamageSource;
-import net.minecraft.src.EntityMob;
 import net.minecraft.server.EntityGolem;
 import net.minecraft.server.Item;
 import net.minecraft.server.MathHelper;
@@ -22,7 +21,7 @@ public class EntitySnowman extends EntityGolem {
     public EntitySnowman(net.minecraft.src.World world) {
         super(world);
         this.texture = "/mob/snowman.png";
-        this.a(0.4F, 1.8F);
+        this.setSize(0.4F, 1.8F);
         this.getNavigation().a(true);
         this.goalSelector.a(1, new EntityAIArrowAttack(this, 0.25F, 2, 20));
         this.goalSelector.a(2, new PathfinderGoalRandomStroll(this, 0.2F));

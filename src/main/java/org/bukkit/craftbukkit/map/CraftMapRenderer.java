@@ -1,7 +1,7 @@
 package org.bukkit.craftbukkit.map;
 
+import net.minecraft.src.MapCoord;
 import net.minecraft.src.MapData;
-import net.minecraft.server.WorldMapDecoration;
 
 import org.bukkit.entity.Player;
 import org.bukkit.map.MapCanvas;
@@ -33,8 +33,8 @@ public class CraftMapRenderer extends MapRenderer {
             cursors.removeCursor(cursors.getCursor(0));
         }
         for (int i = 0; i < worldMap.decorations.size(); ++i) {
-            WorldMapDecoration decoration = (WorldMapDecoration) worldMap.decorations.get(i);
-            cursors.addCursor(decoration.locX, decoration.locY, (byte) (decoration.rotation & 15), (byte) (decoration.type));
+			MapCoord decoration = (MapCoord) worldMap.decorations.get(i);
+            cursors.addCursor(decoration.centerX, decoration.centerZ, (byte) (decoration.iconRotation & 15), (byte) (decoration.iconSize));
         }
     }
 

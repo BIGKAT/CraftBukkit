@@ -2,8 +2,6 @@ package net.minecraft.src;
 
 // CraftBukkit start
 
-import net.minecraft.server.*;
-
 import org.bukkit.craftbukkit.event.CraftEventFactory;
 import org.bukkit.event.entity.ExplosionPrimeEvent;
 // CraftBukkit end
@@ -36,21 +34,21 @@ public class EntityCreeper extends EntityMob {
         return 20;
     }
 
-    protected void a() {
-        super.a();
+    protected void entityInit() {
+        super.entityInit();
         this.datawatcher.a(16, Byte.valueOf((byte) -1));
         this.datawatcher.a(17, Byte.valueOf((byte) 0));
     }
 
-    public void b(net.minecraft.src.NBTTagCompound nbttagcompound) {
-        super.b(nbttagcompound);
+    public void readEntityFromNBT(net.minecraft.src.NBTTagCompound nbttagcompound) {
+        super.readEntityFromNBT(nbttagcompound);
         if (this.datawatcher.getByte(17) == 1) {
             nbttagcompound.setBoolean("powered", true);
         }
     }
 
-    public void a(net.minecraft.src.NBTTagCompound nbttagcompound) {
-        super.a(nbttagcompound);
+    public void writeEntityToNBT(net.minecraft.src.NBTTagCompound nbttagcompound) {
+        super.writeEntityToNBT(nbttagcompound);
         this.datawatcher.watch(17, Byte.valueOf((byte) (nbttagcompound.getBoolean("powered") ? 1 : 0)));
     }
 

@@ -4,7 +4,7 @@ import org.bukkit.ChunkSnapshot;
 import org.bukkit.block.Biome;
 import org.bukkit.craftbukkit.block.CraftBlock;
 
-import net.minecraft.server.BiomeGenBase;
+import net.minecraft.src.BiomeGenBase;
 
 /**
  * Represents a static, thread-safe snapshot of chunk of blocks

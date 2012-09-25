@@ -1,6 +1,6 @@
 package org.bukkit.support;
 
-import net.minecraft.server.StatisticList;
+import net.minecraft.src.StatList;
 
 import org.junit.BeforeClass;
 
@@ -16,6 +16,6 @@ public abstract class AbstractTestingBase {
 
     @BeforeClass
     public static void setup() {
-        StatisticList.a();
+		StatList.initStats();
     }
 }

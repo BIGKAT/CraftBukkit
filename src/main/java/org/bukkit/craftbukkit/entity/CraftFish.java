@@ -1,6 +1,6 @@
 package org.bukkit.craftbukkit.entity;
 
-import net.minecraft.src.EntityFishingHook;
+import net.minecraft.src.EntityFishHook;
 import net.minecraft.src.EntityPlayer;
 
 import org.bukkit.craftbukkit.CraftServer;
@@ -9,7 +9,7 @@ import org.bukkit.entity.Fish;
 import org.bukkit.entity.LivingEntity;
 
 public class CraftFish extends AbstractProjectile implements Fish {
-    public CraftFish(CraftServer server, EntityFishingHook entity) {
+    public CraftFish(CraftServer server, EntityFishHook entity) {
         super(server, entity);
     }
 
@@ -28,8 +28,8 @@ public class CraftFish extends AbstractProjectile implements Fish {
     }
 
     @Override
-    public EntityFishingHook getHandle() {
-        return (EntityFishingHook) entity;
+    public EntityFishHook getHandle() {
+        return (EntityFishHook) entity;
     }
 
     @Override

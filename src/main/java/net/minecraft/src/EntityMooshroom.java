@@ -1,7 +1,5 @@
 package net.minecraft.src;
 
-import net.minecraft.server.*;
-
 import org.bukkit.event.player.PlayerShearEntityEvent; // CraftBukkit
 
 public class EntityMooshroom extends net.minecraft.src.EntityCow {
@@ -9,7 +7,7 @@ public class EntityMooshroom extends net.minecraft.src.EntityCow {
     public EntityMooshroom(net.minecraft.src.World world) {
         super(world);
         this.texture = "/mob/redcow.png";
-        this.a(0.9F, 1.3F);
+        this.setSize(0.9F, 1.3F);
     }
 
     public boolean c(net.minecraft.src.EntityPlayer entityhuman) {

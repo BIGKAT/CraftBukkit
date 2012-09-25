@@ -5,8 +5,6 @@ import java.util.Random;
 // CraftBukkit start
 
 import net.minecraft.server.Block;
-import net.minecraft.src.EntityAIEatGrass;
-import net.minecraft.src.EntityAIMate;
 import net.minecraft.server.EntityAnimal;
 import net.minecraft.server.Item;
 import net.minecraft.server.PathfinderGoalFloat;
@@ -30,7 +28,7 @@ public class EntitySheep extends EntityAnimal {
     public EntitySheep(net.minecraft.src.World world) {
         super(world);
         this.texture = "/mob/sheep.png";
-        this.a(0.9F, 1.3F);
+        this.setSize(0.9F, 1.3F);
         float f = 0.23F;
 
         this.getNavigation().a(true);
@@ -66,8 +64,8 @@ public class EntitySheep extends EntityAnimal {
         return 8;
     }
 
-    protected void a() {
-        super.a();
+    protected void entityInit() {
+        super.entityInit();
         this.datawatcher.a(16, new Byte((byte) 0));
     }
 
@@ -119,14 +117,14 @@ public class EntitySheep extends EntityAnimal {
         return super.c(entityhuman);
     }
 
-    public void b(net.minecraft.src.NBTTagCompound nbttagcompound) {
-        super.b(nbttagcompound);
+    public void readEntityFromNBT(net.minecraft.src.NBTTagCompound nbttagcompound) {
+        super.readEntityFromNBT(nbttagcompound);
         nbttagcompound.setBoolean("Sheared", this.getSheared());
         nbttagcompound.setByte("Color", (byte) this.getFleeceColor());
     }
 
-    public void a(net.minecraft.src.NBTTagCompound nbttagcompound) {
-        super.a(nbttagcompound);
+    public void writeEntityToNBT(net.minecraft.src.NBTTagCompound nbttagcompound) {
+        super.writeEntityToNBT(nbttagcompound);
         this.setSheared(nbttagcompound.getBoolean("Sheared"));
         this.setColor(nbttagcompound.getByte("Color"));
     }

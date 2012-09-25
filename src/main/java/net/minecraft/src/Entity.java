@@ -7,22 +7,6 @@ import java.util.Random;
 // CraftBukkit start
 import java.util.UUID;
 
-import net.minecraft.server.AxisAlignedBB;
-import net.minecraft.server.Block;
-import net.minecraft.server.BlockFluids;
-import net.minecraft.server.DamageSource;
-import net.minecraft.server.DataWatcher;
-import net.minecraft.src.EntityLightningBolt;
-import net.minecraft.server.EntityTypes;
-import net.minecraft.server.EnumEntitySize;
-import net.minecraft.server.LocaleI18n;
-import net.minecraft.server.Material;
-import net.minecraft.server.MathHelper;
-import net.minecraft.server.NBTTagDouble;
-import net.minecraft.server.NBTTagFloat;
-import net.minecraft.server.NBTTagList;
-import net.minecraft.server.StepSound;
-
 import org.bukkit.Bukkit;
 import org.bukkit.Server;
 import org.bukkit.block.BlockFace;
@@ -51,7 +35,7 @@ public abstract class Entity {
     public boolean m;
     public Entity riddenByEntity;
     public Entity ridingEntity;
-    public net.minecraft.src.World worldObj;
+    public World worldObj;
     public double lastX;
     public double lastY;
     public double lastZ;
@@ -74,7 +58,7 @@ public abstract class Entity {
     protected boolean J;
     public boolean K;
     public boolean isDead;
-    public float height;
+    public float yOffset;
     public float width;
     public float length;
     public float P;
@@ -109,7 +93,7 @@ public abstract class Entity {
     public UUID uniqueId = UUID.randomUUID(); // CraftBukkit
     public boolean valid = false; // CraftBukkit
 
-    public Entity(net.minecraft.src.World world) {
+    public Entity(World world) {
         this.entityId = entityCount++;
         this.l = 1.0D;
         this.m = false;
@@ -119,7 +103,7 @@ public abstract class Entity {
         this.velocityChanged = false;
         this.K = true;
         this.isDead = false;
-        this.height = 0.0F;
+        this.yOffset = 0.0F;
         this.width = 0.6F;
         this.length = 1.8F;
         this.P = 0.0F;
@@ -145,10 +129,10 @@ public abstract class Entity {
         this.setPosition(0.0D, 0.0D, 0.0D);
         this.datawatcher.a(0, Byte.valueOf((byte) 0));
         this.datawatcher.a(1, Short.valueOf((short) 300));
-        this.a();
+        this.entityInit();
     }
 
-    protected abstract void a();
+    protected abstract void entityInit();
 
     public DataWatcher getDataWatcher() {
         return this.datawatcher;
@@ -166,7 +150,7 @@ public abstract class Entity {
         this.isDead = true;
     }
 
-    protected void a(float f, float f1) {
+    protected void setSize(float f, float f1) {
         this.width = f;
         this.length = f1;
         float f2 = f % 2.0F;
@@ -225,7 +209,7 @@ public abstract class Entity {
         float f = this.width / 2.0F;
         float f1 = this.length;
 
-        this.boundingBox.b(d0 - (double) f, d1 - (double) this.height + (double) this.V, d2 - (double) f, d0 + (double) f, d1 - (double) this.height + (double) this.V + (double) f1, d2 + (double) f);
+        this.boundingBox.b(d0 - (double) f, d1 - (double) this.yOffset + (double) this.V, d2 - (double) f, d0 + (double) f, d1 - (double) this.yOffset + (double) this.V + (double) f1, d2 + (double) f);
     }
 
     public void h_() {
@@ -249,7 +233,7 @@ public abstract class Entity {
 
         if (this.isSprinting() && !this.H()) {
             int j = MathHelper.floor(this.posX);
-            int k = MathHelper.floor(this.posY - 0.20000000298023224D - (double) this.height);
+            int k = MathHelper.floor(this.posY - 0.20000000298023224D - (double) this.yOffset);
 
             i = MathHelper.floor(this.posZ);
             int l = this.worldObj.getBlockId(j, k, i);
@@ -406,7 +390,7 @@ public abstract class Entity {
         if (this.X) {
             this.boundingBox.d(d0, d1, d2);
             this.posX = (this.boundingBox.a + this.boundingBox.d) / 2.0D;
-            this.posY = this.boundingBox.b + (double) this.height - (double) this.V;
+            this.posY = this.boundingBox.b + (double) this.yOffset - (double) this.V;
             this.posZ = (this.boundingBox.c + this.boundingBox.f) / 2.0D;
         } else {
             // this.world.methodProfiler.a("move"); // CraftBukkit - not in production code
@@ -600,7 +584,7 @@ public abstract class Entity {
             // this.world.methodProfiler.b(); // CraftBukkit - not in production code
             // this.world.methodProfiler.a("rest"); // CraftBukkit - not in production code
             this.posX = (this.boundingBox.a + this.boundingBox.d) / 2.0D;
-            this.posY = this.boundingBox.b + (double) this.height - (double) this.V;
+            this.posY = this.boundingBox.b + (double) this.yOffset - (double) this.V;
             this.posZ = (this.boundingBox.c + this.boundingBox.f) / 2.0D;
             this.positionChanged = d5 != d0 || d7 != d2;
             this.G = d6 != d1;
@@ -625,7 +609,7 @@ public abstract class Entity {
             // CraftBukkit start
             if ((this.positionChanged) && (this.getBukkitEntity() instanceof Vehicle)) {
                 Vehicle vehicle = (Vehicle) this.getBukkitEntity();
-                org.bukkit.block.Block block = this.worldObj.getWorld().getBlockAt(MathHelper.floor(this.posX), MathHelper.floor(this.posY - (double) this.height), MathHelper.floor(this.posZ));
+                org.bukkit.block.Block block = this.worldObj.getWorld().getBlockAt(MathHelper.floor(this.posX), MathHelper.floor(this.posY - (double) this.yOffset), MathHelper.floor(this.posZ));
 
                 if (d5 > d0) {
                     block = block.getRelative(BlockFace.SOUTH);
@@ -645,7 +629,7 @@ public abstract class Entity {
             if (this.e_() && !flag && this.ridingEntity == null) {
                 this.Q = (float) ((double) this.Q + (double) MathHelper.sqrt(d9 * d9 + d10 * d10) * 0.6D);
                 int i = MathHelper.floor(this.posX);
-                int j = MathHelper.floor(this.posY - 0.20000000298023224D - (double) this.height);
+                int j = MathHelper.floor(this.posY - 0.20000000298023224D - (double) this.yOffset);
                 int k = MathHelper.floor(this.posZ);
                 int l = this.worldObj.getBlockId(i, j, k);
 
@@ -736,7 +720,7 @@ public abstract class Entity {
             if (this.fallDistance > 0.0F) {
                 if (this instanceof net.minecraft.src.EntityLiving) {
                     int i = MathHelper.floor(this.posX);
-                    int j = MathHelper.floor(this.posY - 0.20000000298023224D - (double) this.height);
+                    int j = MathHelper.floor(this.posY - 0.20000000298023224D - (double) this.yOffset);
                     int k = MathHelper.floor(this.posZ);
                     int l = this.worldObj.getBlockId(i, j, k);
 
@@ -854,7 +838,7 @@ public abstract class Entity {
 
         if (this.worldObj.isLoaded(i, 0, j)) {
             double d0 = (this.boundingBox.e - this.boundingBox.b) * 0.66D;
-            int k = MathHelper.floor(this.posY - (double) this.height + d0);
+            int k = MathHelper.floor(this.posY - (double) this.yOffset + d0);
 
             return this.worldObj.o(i, k, j);
         } else {
@@ -897,7 +881,7 @@ public abstract class Entity {
 
     public void setPositionRotation(double d0, double d1, double d2, float f, float f1) {
         this.S = this.lastX = this.posX = d0;
-        this.T = this.lastY = this.posY = d1 + (double) this.height;
+        this.T = this.lastY = this.posY = d1 + (double) this.yOffset;
         this.U = this.lastZ = this.posZ = d2;
         this.rotationYaw = f;
         this.rotationPitch = f1;
@@ -1030,7 +1014,7 @@ public abstract class Entity {
         nbttagcompound.setLong("UUIDLeast", this.uniqueId.getLeastSignificantBits());
         nbttagcompound.setLong("UUIDMost", this.uniqueId.getMostSignificantBits());
         // CraftBukkit end
-        this.b(nbttagcompound);
+        this.readEntityFromNBT(nbttagcompound);
     }
 
     public void e(net.minecraft.src.NBTTagCompound nbttagcompound) {
@@ -1076,7 +1060,7 @@ public abstract class Entity {
         // CraftBukkit end
 
         this.b(this.rotationYaw, this.rotationPitch);
-        this.a(nbttagcompound);
+        this.writeEntityToNBT(nbttagcompound);
 
         // CraftBukkit start - exempt Vehicles from notch's sanity check
         if (!(this.getBukkitEntity() instanceof Vehicle)) {
@@ -1123,9 +1107,9 @@ public abstract class Entity {
         return EntityTypes.b(this);
     }
 
-    protected abstract void a(net.minecraft.src.NBTTagCompound nbttagcompound);
+    protected abstract void writeEntityToNBT(net.minecraft.src.NBTTagCompound nbttagcompound);
 
-    protected abstract void b(net.minecraft.src.NBTTagCompound nbttagcompound);
+    protected abstract void readEntityFromNBT(net.minecraft.src.NBTTagCompound nbttagcompound);
 
     protected NBTTagList a(double... adouble) {
         NBTTagList nbttaglist = new NBTTagList();
@@ -1267,7 +1251,7 @@ public abstract class Entity {
     }
 
     public double W() {
-        return (double) this.height;
+        return (double) this.yOffset;
     }
 
     public double X() {

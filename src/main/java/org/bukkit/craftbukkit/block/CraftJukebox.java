@@ -6,8 +6,8 @@ import org.bukkit.block.Block;
 import org.bukkit.block.Jukebox;
 import org.bukkit.craftbukkit.CraftWorld;
 
-import net.minecraft.server.BlockJukeBox;
-import net.minecraft.server.TileEntityRecordPlayer;
+import net.minecraft.src.BlockJukeBox;
+import net.minecraft.src.TileEntityRecordPlayer;
 
 public class CraftJukebox extends CraftBlockState implements Jukebox {
     private final CraftWorld world;
@@ -44,7 +44,7 @@ public class CraftJukebox extends CraftBlockState implements Jukebox {
 
     public boolean eject() {
         boolean result = isPlaying();
-        ((BlockJukeBox) net.minecraft.server.Block.jukebox).ejectRecord(world.getHandle(), getX(), getY(), getZ());
+        ((BlockJukeBox) net.minecraft.src.Block.jukebox).ejectRecord(world.getHandle(), getX(), getY(), getZ());
         return result;
     }
 }

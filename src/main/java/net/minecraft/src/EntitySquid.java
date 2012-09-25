@@ -6,7 +6,7 @@ import net.minecraft.server.MathHelper;
 
 import org.bukkit.craftbukkit.TrigMath; // CraftBukkit
 
-public class EntitySquid extends EntityWaterAnimal {
+public class EntitySquid extends EntityWaterMob {
 
     public float d = 0.0F;
     public float e = 0.0F;

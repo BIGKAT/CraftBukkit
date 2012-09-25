@@ -1,4 +1,4 @@
-package net.minecraft.server;
+package net.minecraft.src;
 
 import java.util.logging.ConsoleHandler;
 import java.util.logging.FileHandler;

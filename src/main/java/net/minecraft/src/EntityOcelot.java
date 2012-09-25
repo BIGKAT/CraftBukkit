@@ -1,32 +1,30 @@
 package net.minecraft.src;
 
-import net.minecraft.server.*;
+public class EntityOcelot extends EntityTameable {
 
-public class EntityOcelot extends EntityTameableAnimal {
-
-    private PathfinderGoalTempt e;
+    private EntityAITempt e;
 
     public EntityOcelot(net.minecraft.src.World world) {
         super(world);
         this.texture = "/mob/ozelot.png";
-        this.a(0.6F, 0.8F);
+        this.setSize(0.6F, 0.8F);
         this.getNavigation().a(true);
         this.goalSelector.a(1, new PathfinderGoalFloat(this));
         this.goalSelector.a(2, this.d);
-        this.goalSelector.a(3, this.e = new PathfinderGoalTempt(this, 0.18F, Item.RAW_FISH.id, true));
+        this.goalSelector.a(3, this.e = new EntityAITempt(this, 0.18F, Item.RAW_FISH.id, true));
         this.goalSelector.a(4, new PathfinderGoalAvoidPlayer(this, EntityPlayer.class, 16.0F, 0.23F, 0.4F));
         this.goalSelector.a(5, new PathfinderGoalFollowOwner(this, 0.3F, 10.0F, 5.0F));
         this.goalSelector.a(6, new PathfinderGoalJumpOnBlock(this, 0.4F));
-        this.goalSelector.a(7, new PathfinderGoalLeapAtTarget(this, 0.3F));
-        this.goalSelector.a(8, new PathfinderGoalOzelotAttack(this));
+        this.goalSelector.a(7, new EntityAILeapAtTarget(this, 0.3F));
+        this.goalSelector.a(8, new EntityAIOzelotAttack(this));
         this.goalSelector.a(9, new EntityAIMate(this, 0.23F));
         this.goalSelector.a(10, new PathfinderGoalRandomStroll(this, 0.23F));
         this.goalSelector.a(11, new PathfinderGoalLookAtPlayer(this, EntityPlayer.class, 10.0F));
         this.targetSelector.a(1, new PathfinderGoalRandomTargetNonTamed(this, EntityChicken.class, 14.0F, 750, false));
     }
 
-    protected void a() {
-        super.a();
+    protected void entityInit() {
+        super.entityInit();
         this.datawatcher.a(18, Byte.valueOf((byte) 0));
     }
 
@@ -64,13 +62,13 @@ public class EntityOcelot extends EntityTameableAnimal {
 
     protected void a(float f) {}
 
-    public void b(net.minecraft.src.NBTTagCompound nbttagcompound) {
-        super.b(nbttagcompound);
+    public void readEntityFromNBT(net.minecraft.src.NBTTagCompound nbttagcompound) {
+        super.readEntityFromNBT(nbttagcompound);
         nbttagcompound.setInteger("CatType", this.getTameSkin());
     }
 
-    public void a(net.minecraft.src.NBTTagCompound nbttagcompound) {
-        super.a(nbttagcompound);
+    public void writeEntityToNBT(net.minecraft.src.NBTTagCompound nbttagcompound) {
+        super.writeEntityToNBT(nbttagcompound);
         this.setTameSkin(nbttagcompound.getInteger("CatType"));
     }
 

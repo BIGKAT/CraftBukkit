@@ -110,7 +110,7 @@ public final class ChunkCompressionThread implements Runnable {
     }
 
     private void sendToNetworkQueue(QueuedPacket queuedPacket) {
-        queuedPacket.player.serverForThisPlayer.theNetworkManager.queue(queuedPacket.packet);
+        queuedPacket.player.serverForThisPlayer.theNetworkManager.addToSendQueue(queuedPacket.packet);
     }
 
     public static void sendPacket(EntityPlayerMP player, Packet packet) {

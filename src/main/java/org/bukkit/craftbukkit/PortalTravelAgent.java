@@ -2,8 +2,8 @@ package org.bukkit.craftbukkit;
 
 import java.util.Random;
 
-import net.minecraft.server.Block;
-import net.minecraft.server.MathHelper;
+import net.minecraft.src.Block;
+import net.minecraft.src.MathHelper;
 import net.minecraft.src.World;
 import net.minecraft.src.WorldServer;
 
@@ -54,9 +54,9 @@ public class PortalTravelAgent implements TravelAgent {
         World world = ((CraftWorld) location.getWorld()).getHandle();
 
         if (location.getWorld().getEnvironment() == Environment.THE_END) {
-            int i = MathHelper.floor(location.getBlockX());
-            int j = MathHelper.floor(location.getBlockY()) - 1;
-            int k = MathHelper.floor(location.getBlockZ());
+            int i = MathHelper.floor_double(location.getBlockX());
+            int j = MathHelper.floor_double(location.getBlockY()) - 1;
+            int k = MathHelper.floor_double(location.getBlockZ());
             byte b0 = 1;
             byte b1 = 0;
 
@@ -145,9 +145,9 @@ public class PortalTravelAgent implements TravelAgent {
         World world = ((CraftWorld) location.getWorld()).getHandle();
 
         if (location.getWorld().getEnvironment() == Environment.THE_END) {
-            int i = MathHelper.floor(location.getBlockX());
-            int j = MathHelper.floor(location.getBlockY()) - 1;
-            int k = MathHelper.floor(location.getBlockZ());
+            int i = MathHelper.floor_double(location.getBlockX());
+            int j = MathHelper.floor_double(location.getBlockY()) - 1;
+            int k = MathHelper.floor_double(location.getBlockZ());
             byte b0 = 1;
             byte b1 = 0;
 
@@ -222,7 +222,7 @@ public class PortalTravelAgent implements TravelAgent {
                                         k4 = l2 + j4;
                                         int l4 = j2 + (k3 - 1) * i3 - l3 * j3;
 
-                                        if (j4 < 0 && !world.getMaterial(i4, k4, l4).isBuildable() || j4 >= 0 && !world.isEmpty(i4, k4, l4)) {
+                                        if (j4 < 0 && !world.getMaterial(i4, k4, l4).isSolid() || j4 >= 0 && !world.isEmpty(i4, k4, l4)) {
                                             continue label271;
                                         }
                                     }
@@ -267,7 +267,7 @@ public class PortalTravelAgent implements TravelAgent {
                                         j4 = i2 + (l3 - 1) * j3;
                                         i4 = l2 + k3;
                                         k4 = j2 + (l3 - 1) * i3;
-                                        if (k3 < 0 && !world.getMaterial(j4, i4, k4).isBuildable() || k3 >= 0 && !world.isEmpty(j4, i4, k4)) {
+                                        if (k3 < 0 && !world.getMaterial(j4, i4, k4).isSolid() || k3 >= 0 && !world.isEmpty(j4, i4, k4)) {
                                             continue label219;
                                         }
                                     }
@@ -306,7 +306,7 @@ public class PortalTravelAgent implements TravelAgent {
         // CraftBukkit start - portal create event
         java.util.ArrayList<org.bukkit.block.Block> blocks = new java.util.ArrayList<org.bukkit.block.Block>();
         // Find out what blocks the portal is going to modify, duplicated from below
-        CraftWorld craftWorld = ((WorldServer) world).getWorld();
+        CraftWorld craftWorld = world.getWorld();
 
         if (d0 < 0.0D) {
             if (i1 < 70) {
@@ -348,7 +348,7 @@ public class PortalTravelAgent implements TravelAgent {
             }
         }
 
-        PortalCreateEvent event = new PortalCreateEvent(blocks, (org.bukkit.World) craftWorld, PortalCreateEvent.CreateReason.OBC_DESTINATION);
+        PortalCreateEvent event = new PortalCreateEvent(blocks, craftWorld, PortalCreateEvent.CreateReason.OBC_DESTINATION);
         Bukkit.getServer().getPluginManager().callEvent(event);
         if (event.isCancelled()) {
             return false;

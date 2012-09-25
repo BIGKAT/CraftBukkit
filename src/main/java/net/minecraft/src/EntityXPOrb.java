@@ -1,31 +1,24 @@
 package net.minecraft.src;
 
 // CraftBukkit start
-
-import net.minecraft.server.Block;
-import net.minecraft.server.DamageSource;
-import net.minecraft.server.Material;
-import net.minecraft.server.MathHelper;
-import net.minecraft.src.*;
-
 import org.bukkit.craftbukkit.event.CraftEventFactory;
 import org.bukkit.event.entity.EntityTargetEvent;
 // CraftBukkit end
 
-public class EntityXPOrb extends net.minecraft.src.Entity {
+public class EntityXPOrb extends Entity {
 
     public int a;
     public int b = 0;
     public int c;
     private int d = 5;
     public int xpValue; // CraftBukkit - private -> public
-    private net.minecraft.src.EntityPlayer targetPlayer;
+    private EntityPlayer targetPlayer;
     private int targetTime;
 
-    public EntityXPOrb(net.minecraft.src.World world, double d0, double d1, double d2, int i) {
+    public EntityXPOrb(World world, double d0, double d1, double d2, int i) {
         super(world);
-        this.a(0.5F, 0.5F);
-        this.height = this.length / 2.0F;
+        this.setSize(0.5F, 0.5F);
+        this.yOffset = this.length / 2.0F;
         this.setPosition(d0, d1, d2);
         this.rotationYaw = (float) (Math.random() * 360.0D);
         this.motionX = (double) ((float) (Math.random() * 0.20000000298023224D - 0.10000000149011612D) * 2.0F);
@@ -40,11 +33,11 @@ public class EntityXPOrb extends net.minecraft.src.Entity {
 
     public EntityXPOrb(net.minecraft.src.World world) {
         super(world);
-        this.a(0.25F, 0.25F);
-        this.height = this.length / 2.0F;
+        this.setSize(0.25F, 0.25F);
+        this.yOffset = this.length / 2.0F;
     }
 
-    protected void a() {}
+    protected void entityInit() {}
 
     public void h_() {
         super.h_();
@@ -122,11 +115,11 @@ public class EntityXPOrb extends net.minecraft.src.Entity {
     }
 
     public boolean I() {
-        return this.worldObj.a(this.boundingBox, Material.WATER, this);
+        return this.worldObj.a(this.boundingBox, Material.water, this);
     }
 
     protected void burn(int i) {
-        this.damageEntity(DamageSource.FIRE, i);
+        this.damageEntity(DamageSource.inFire, i);
     }
 
     public boolean damageEntity(DamageSource damagesource, int i) {
@@ -139,19 +132,19 @@ public class EntityXPOrb extends net.minecraft.src.Entity {
         return false;
     }
 
-    public void b(net.minecraft.src.NBTTagCompound nbttagcompound) {
+    public void readEntityFromNBT(net.minecraft.src.NBTTagCompound nbttagcompound) {
         nbttagcompound.setShort("Health", (short) ((byte) this.d));
         nbttagcompound.setShort("Age", (short) this.b);
         nbttagcompound.setShort("Value", (short) this.xpValue);
     }
 
-    public void a(net.minecraft.src.NBTTagCompound nbttagcompound) {
+    public void writeEntityToNBT(net.minecraft.src.NBTTagCompound nbttagcompound) {
         this.d = nbttagcompound.getShort("Health") & 255;
         this.b = nbttagcompound.getShort("Age");
         this.xpValue = nbttagcompound.getShort("Value");
     }
 
-    public void b_(net.minecraft.src.EntityPlayer entityhuman) {
+    public void b_(EntityPlayer entityhuman) {
         if (!this.worldObj.isStatic) {
             if (this.c == 0 && entityhuman.bL == 0) {
                 entityhuman.bL = 2;

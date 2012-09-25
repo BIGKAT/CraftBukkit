@@ -1,7 +1,5 @@
 package net.minecraft.src;
 
-import net.minecraft.server.*;
-
 import org.bukkit.craftbukkit.inventory.CraftItemStack; // CraftBukkit
 
 public class EntityIronGolem extends EntityGolem {
@@ -14,7 +12,7 @@ public class EntityIronGolem extends EntityGolem {
     public EntityIronGolem(net.minecraft.src.World world) {
         super(world);
         this.texture = "/mob/villager_golem.png";
-        this.a(1.4F, 2.9F);
+        this.setSize(1.4F, 2.9F);
         this.getNavigation().a(true);
         this.goalSelector.a(1, new EntityAIAttackOnCollide(this, 0.25F, true));
         this.goalSelector.a(2, new PathfinderGoalMoveTowardsTarget(this, 0.22F, 32.0F));
@@ -29,8 +27,8 @@ public class EntityIronGolem extends EntityGolem {
         this.targetSelector.a(3, new PathfinderGoalNearestAttackableTarget(this, EntityMob.class, 16.0F, 0, false, true));
     }
 
-    protected void a() {
-        super.a();
+    protected void entityInit() {
+        super.entityInit();
         this.datawatcher.a(16, Byte.valueOf((byte) 0));
     }
 
@@ -74,7 +72,7 @@ public class EntityIronGolem extends EntityGolem {
 
         if (this.motionX * this.motionX + this.motionZ * this.motionZ > 2.500000277905201E-7D && this.random.nextInt(5) == 0) {
             int i = MathHelper.floor(this.posX);
-            int j = MathHelper.floor(this.posY - 0.20000000298023224D - (double) this.height);
+            int j = MathHelper.floor(this.posY - 0.20000000298023224D - (double) this.yOffset);
             int k = MathHelper.floor(this.posZ);
             int l = this.worldObj.getTypeId(i, j, k);
 

@@ -3,11 +3,11 @@ package org.bukkit.craftbukkit;
 import java.lang.ref.WeakReference;
 import java.util.Arrays;
 
-import net.minecraft.server.BiomeGenBase;
-import net.minecraft.server.ChunkPosition;
+import net.minecraft.src.BiomeGenBase;
+import net.minecraft.src.ChunkPosition;
 import net.minecraft.src.ExtendedBlockStorage;
-import net.minecraft.server.EmptyChunk;
-import net.minecraft.server.WorldChunkManager;
+import net.minecraft.src.EmptyChunk;
+import net.minecraft.src.WorldChunkManager;
 import net.minecraft.src.WorldServer;
 
 import org.bukkit.Chunk;
@@ -19,7 +19,7 @@ import org.bukkit.entity.Entity;
 import org.bukkit.ChunkSnapshot;
 
 public class CraftChunk implements Chunk {
-    private WeakReference<net.minecraft.server.Chunk> weakChunk;
+    private WeakReference<net.minecraft.src.Chunk> weakChunk;
     private WorldServer worldServer;
     private int x;
     private int z;
@@ -27,9 +27,9 @@ public class CraftChunk implements Chunk {
     private static final short[] emptyBlockIDs = new short[4096];
     private static final byte[] emptySkyLight = new byte[2048];
 
-    public CraftChunk(net.minecraft.server.Chunk chunk) {
+    public CraftChunk(net.minecraft.src.Chunk chunk) {
         if (!(chunk instanceof EmptyChunk)) {
-            this.weakChunk = new WeakReference<net.minecraft.server.Chunk>(chunk);
+            this.weakChunk = new WeakReference<net.minecraft.src.Chunk>(chunk);
         }
 
         worldServer = (WorldServer) getHandle().world;
@@ -45,14 +45,14 @@ public class CraftChunk implements Chunk {
         return (CraftWorld) getWorld();
     }
 
-    public net.minecraft.server.Chunk getHandle() {
-        net.minecraft.server.Chunk c = weakChunk.get();
+    public net.minecraft.src.Chunk getHandle() {
+        net.minecraft.src.Chunk c = weakChunk.get();
 
         if (c == null) {
             c = worldServer.getChunkAt(x, z);
 
             if (!(c instanceof EmptyChunk)) {
-                weakChunk = new WeakReference<net.minecraft.server.Chunk>(c);
+                weakChunk = new WeakReference<net.minecraft.src.Chunk>(c);
             }
         }
 
@@ -82,7 +82,7 @@ public class CraftChunk implements Chunk {
 
     public Entity[] getEntities() {
         int count = 0, index = 0;
-        net.minecraft.server.Chunk chunk = getHandle();
+        net.minecraft.src.Chunk chunk = getHandle();
 
         for (int i = 0; i < 16; i++) {
             count += chunk.entityLists[i].size();
@@ -105,7 +105,7 @@ public class CraftChunk implements Chunk {
 
     public BlockState[] getTileEntities() {
         int index = 0;
-        net.minecraft.server.Chunk chunk = getHandle();
+        net.minecraft.src.Chunk chunk = getHandle();
         BlockState[] entities = new BlockState[chunk.chunkTileEntityMap.size()];
 
         for (Object obj : chunk.chunkTileEntityMap.keySet().toArray()) {
@@ -148,7 +148,7 @@ public class CraftChunk implements Chunk {
     }
 
     public ChunkSnapshot getChunkSnapshot(boolean includeMaxBlockY, boolean includeBiome, boolean includeBiomeTempRain) {
-        net.minecraft.server.Chunk chunk = getHandle();
+        net.minecraft.src.Chunk chunk = getHandle();
 
         ExtendedBlockStorage[] cs = chunk.getBlockStorageArray(); /* Get sections */
         short[][] sectionBlockIDs = new short[cs.length][];

@@ -1,4 +1,4 @@
-package net.minecraft.server;
+package net.minecraft.src;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -7,9 +7,6 @@ import java.util.List;
 import java.util.Set;
 
 // CraftBukkit start
-
-import net.minecraft.src.*;
-
 import org.bukkit.craftbukkit.inventory.CraftInventory;
 import org.bukkit.inventory.InventoryView;
 // CraftBukkit end
@@ -49,7 +46,7 @@ public abstract class Container {
             throw new IllegalArgumentException("Listener already listening");
         } else {
             this.listeners.add(icrafting);
-            icrafting.a(this, this.a());
+            icrafting.sendContainerAndContentsToPlayer(this, this.a());
             this.b();
         }
     }
@@ -80,7 +77,7 @@ public abstract class Container {
                 while (iterator.hasNext()) {
                     ICrafting icrafting = (ICrafting) iterator.next();
 
-                    icrafting.a(this, i, itemstack1);
+                    icrafting.updateCraftingInventorySlot(this, i, itemstack1);
                 }
             }
         }

@@ -19,7 +19,6 @@ import net.minecraft.server.ChunkCache;
 import net.minecraft.server.ChunkCoordinates;
 import net.minecraft.server.ChunkPosition;
 import net.minecraft.server.ChunkProviderServer;
-import net.minecraft.src.EntityMob;
 import net.minecraft.server.CrashReportChunkStats;
 import net.minecraft.server.CrashReportEntities;
 import net.minecraft.server.CrashReportPlayers;
@@ -85,9 +84,9 @@ public abstract class World implements IBlockAccess {
     protected List x = new ArrayList();
     public IChunkProvider chunkProvider; // CraftBukkit - protected -> public
     protected final ISaveHandler dataManager;
-    public WorldData worldData; // CraftBukkit - protected -> public
+    public WorldInfo worldData; // CraftBukkit - protected -> public
     public boolean isLoading;
-    public WorldMapCollection worldMaps;
+    public MapStorage worldMaps;
     public final VillageCollection villages = new VillageCollection(this);
     protected final VillageSiege siegeManager = new VillageSiege(this);
     public final Profiler methodProfiler;
@@ -802,7 +801,7 @@ public abstract class World implements IBlockAccess {
             while (iterator.hasNext()) {
                 IWorldAccess iworldaccess = (IWorldAccess) iterator.next();
 
-                iworldaccess.a(s, entity.posX, entity.posY - (double) entity.height, entity.posZ, f, f1);
+                iworldaccess.a(s, entity.posX, entity.posY - (double) entity.yOffset, entity.posZ, f, f1);
             }
         }
     }
@@ -2545,7 +2544,7 @@ public abstract class World implements IBlockAccess {
         return this.dataManager;
     }
 
-    public WorldData getWorldData() {
+    public WorldInfo getWorldData() {
         return this.worldData;
     }
 

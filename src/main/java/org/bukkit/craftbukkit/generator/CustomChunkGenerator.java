@@ -3,15 +3,15 @@ package org.bukkit.craftbukkit.generator;
 import java.util.List;
 import java.util.Random;
 
-import net.minecraft.server.BiomeGenBase;
-import net.minecraft.server.Chunk;
-import net.minecraft.server.ChunkPosition;
+import net.minecraft.src.BiomeGenBase;
+import net.minecraft.src.Chunk;
+import net.minecraft.src.ChunkPosition;
 import net.minecraft.src.ExtendedBlockStorage;
-import net.minecraft.server.EnumCreatureType;
-import net.minecraft.server.IChunkProvider;
-import net.minecraft.server.IProgressUpdate;
+import net.minecraft.src.EnumCreatureType;
+import net.minecraft.src.IChunkProvider;
+import net.minecraft.src.IProgressUpdate;
 import net.minecraft.src.World;
-import net.minecraft.server.WorldGenStronghold;
+import net.minecraft.src.MapGenStronghold;
 import net.minecraft.src.WorldServer;
 
 import org.bukkit.block.Biome;
@@ -23,7 +23,7 @@ public class CustomChunkGenerator extends InternalChunkGenerator {
     private final ChunkGenerator generator;
     private final WorldServer world;
     private final Random random;
-    private final WorldGenStronghold strongholdGen = new WorldGenStronghold();
+    private final MapGenStronghold strongholdGen = new MapGenStronghold();
 
     private static class CustomBiomeGrid implements BiomeGrid {
         BiomeGenBase[] biome;
@@ -56,7 +56,7 @@ public class CustomChunkGenerator extends InternalChunkGenerator {
         // Get default biome data for chunk
         CustomBiomeGrid biomegrid = new CustomBiomeGrid();
         biomegrid.biome = new BiomeGenBase[256];
-        world.getWorldChunkManager().getBiomeBlock(biomegrid.biome, x << 4, z << 4, 16, 16);
+        world.getWorldChunkManager().getBiomesForGeneration(biomegrid.biome, x << 4, z << 4, 16, 16);
 
         // Try extended block method (1.2+)
         short[][] xbtypes = generator.generateExtBlockSections(this.world.getWorld(), this.random, x, z, biomegrid);
@@ -209,11 +209,11 @@ public class CustomChunkGenerator extends InternalChunkGenerator {
     public List<?> getMobsFor(EnumCreatureType type, int x, int y, int z) {
         BiomeGenBase biomebase = world.getBiome(x, z);
 
-        return biomebase == null ? null : biomebase.getMobs(type);
+        return biomebase == null ? null : biomebase.getSpawnableList(type);
     }
 
     public ChunkPosition findNearestMapFeature(World world, String type, int x, int y, int z) {
-        return "Stronghold".equals(type) && this.strongholdGen != null ? this.strongholdGen.getNearestGeneratedFeature(world, x, y, z) : null;
+        return "Stronghold".equals(type) && this.strongholdGen != null ? this.strongholdGen.getNearestInstance(world, x, y, z) : null;
     }
 
     public int getLoadedChunks() {

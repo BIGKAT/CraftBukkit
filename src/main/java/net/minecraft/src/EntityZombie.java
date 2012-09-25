@@ -1,6 +1,5 @@
 package net.minecraft.src;
 
-import net.minecraft.src.EntityMob;
 import net.minecraft.server.EntityVillager;
 import net.minecraft.server.EnumMonsterType;
 import net.minecraft.server.Item;
@@ -21,16 +20,16 @@ public class EntityZombie extends EntityMob {
     public EntityZombie(net.minecraft.src.World world) {
         super(world);
         this.texture = "/mob/zombie.png";
-        this.bw = 0.23F;
+        this.moveSpeed = 0.23F;
         this.damage = 4;
         this.getNavigation().b(true);
         this.goalSelector.a(0, new PathfinderGoalFloat(this));
         this.goalSelector.a(1, new EntityAIBreakDoor(this));
-        this.goalSelector.a(2, new EntityAIAttackOnCollide(this, EntityPlayer.class, this.bw, false));
-        this.goalSelector.a(3, new EntityAIAttackOnCollide(this, EntityVillager.class, this.bw, true));
-        this.goalSelector.a(4, new PathfinderGoalMoveTowardsRestriction(this, this.bw));
-        this.goalSelector.a(5, new PathfinderGoalMoveThroughVillage(this, this.bw, false));
-        this.goalSelector.a(6, new PathfinderGoalRandomStroll(this, this.bw));
+        this.goalSelector.a(2, new EntityAIAttackOnCollide(this, EntityPlayer.class, this.moveSpeed, false));
+        this.goalSelector.a(3, new EntityAIAttackOnCollide(this, EntityVillager.class, this.moveSpeed, true));
+        this.goalSelector.a(4, new PathfinderGoalMoveTowardsRestriction(this, this.moveSpeed));
+        this.goalSelector.a(5, new PathfinderGoalMoveThroughVillage(this, this.moveSpeed, false));
+        this.goalSelector.a(6, new PathfinderGoalRandomStroll(this, this.moveSpeed));
         this.goalSelector.a(7, new PathfinderGoalLookAtPlayer(this, EntityPlayer.class, 8.0F));
         this.goalSelector.a(7, new PathfinderGoalRandomLookaround(this));
         this.targetSelector.a(1, new PathfinderGoalHurtByTarget(this, false));

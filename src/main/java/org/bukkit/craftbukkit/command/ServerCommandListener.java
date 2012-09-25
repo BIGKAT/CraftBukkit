@@ -2,12 +2,12 @@ package org.bukkit.craftbukkit.command;
 
 import java.lang.reflect.Method;
 
-import net.minecraft.server.ICommandListener;
-import net.minecraft.server.LocaleLanguage;
+import net.minecraft.src.ICommandSender;
+import net.minecraft.src.StringTranslate;
 
 import org.bukkit.command.CommandSender;
 
-public class ServerCommandListener implements ICommandListener {
+public class ServerCommandListener implements ICommandSender {
     private final CommandSender commandSender;
     private final String prefix;
 
@@ -17,7 +17,7 @@ public class ServerCommandListener implements ICommandListener {
         this.prefix = parts[parts.length - 1];
     }
 
-    public void sendMessage(String msg) {
+    public void sendChatToPlayer(String msg) {
         this.commandSender.sendMessage(msg);
     }
 
@@ -25,7 +25,7 @@ public class ServerCommandListener implements ICommandListener {
         return commandSender;
     }
 
-    public String getName() {
+    public String getCommandSenderName() {
         try {
             Method getName = commandSender.getClass().getMethod("getName");
 
@@ -35,11 +35,11 @@ public class ServerCommandListener implements ICommandListener {
         return this.prefix;
     }
 
-    public String a(String s, Object... aobject) {
-        return LocaleLanguage.a().a(s, aobject);
+    public String translateString(String s, Object... aobject) {
+        return StringTranslate.getInstance().translateKeyFormat(s, aobject);
     }
 
-    public boolean b(String s) {
+    public boolean canCommandSenderUseCommand(String s) {
         return true;
     }
 }

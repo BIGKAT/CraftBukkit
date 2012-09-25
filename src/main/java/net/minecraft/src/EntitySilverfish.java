@@ -3,7 +3,6 @@ package net.minecraft.src;
 import net.minecraft.server.Block;
 import net.minecraft.server.BlockMonsterEggs;
 import net.minecraft.server.DamageSource;
-import net.minecraft.src.EntityMob;
 import net.minecraft.server.EntityDamageSource;
 import net.minecraft.server.EnumMonsterType;
 import net.minecraft.server.Facing;
@@ -18,8 +17,8 @@ public class EntitySilverfish extends EntityMob {
     public EntitySilverfish(net.minecraft.src.World world) {
         super(world);
         this.texture = "/mob/silverfish.png";
-        this.a(0.3F, 0.7F);
-        this.bw = 0.6F;
+        this.setSize(0.3F, 0.7F);
+        this.moveSpeed = 0.6F;
         this.damage = 1;
     }
 

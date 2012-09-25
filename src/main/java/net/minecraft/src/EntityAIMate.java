@@ -7,7 +7,7 @@ import java.util.Random;
 import net.minecraft.server.EntityAnimal;
 import net.minecraft.server.PathfinderGoal;
 
-public class EntityAIMate extends PathfinderGoal {
+public class EntityAIMate extends EntityAIBase {
 
     private EntityAnimal d;
     net.minecraft.src.World a;

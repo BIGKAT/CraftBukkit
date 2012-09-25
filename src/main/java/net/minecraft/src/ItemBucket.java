@@ -4,7 +4,6 @@ package net.minecraft.src;
 
 import net.minecraft.server.Block;
 import net.minecraft.server.CreativeModeTab;
-import net.minecraft.src.EntityCow;
 import net.minecraft.server.EnumMovingObjectType;
 import net.minecraft.server.Item;
 import net.minecraft.server.Material;
@@ -30,7 +29,7 @@ public class ItemBucket extends Item {
     public net.minecraft.src.ItemStack a(net.minecraft.src.ItemStack itemstack, net.minecraft.src.World world, EntityPlayer entityhuman) {
         float f = 1.0F;
         double d0 = entityhuman.lastX + (entityhuman.posX - entityhuman.lastX) * (double) f;
-        double d1 = entityhuman.lastY + (entityhuman.posY - entityhuman.lastY) * (double) f + 1.62D - (double) entityhuman.height;
+        double d1 = entityhuman.lastY + (entityhuman.posY - entityhuman.lastY) * (double) f + 1.62D - (double) entityhuman.yOffset;
         double d2 = entityhuman.lastZ + (entityhuman.posZ - entityhuman.lastZ) * (double) f;
         boolean flag = this.a == 0;
         MovingObjectPosition movingobjectposition = this.a(world, entityhuman, flag);

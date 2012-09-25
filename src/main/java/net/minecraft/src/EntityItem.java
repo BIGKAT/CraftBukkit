@@ -2,8 +2,6 @@ package net.minecraft.src;
 
 import java.util.Iterator;
 
-import net.minecraft.server.*;
-
 import org.bukkit.event.player.PlayerPickupItemEvent; // CraftBukkit
 
 public class EntityItem extends Entity {
@@ -17,8 +15,8 @@ public class EntityItem extends Entity {
 
     public EntityItem(net.minecraft.src.World world, double d0, double d1, double d2, net.minecraft.src.ItemStack itemstack) {
         super(world);
-        this.a(0.25F, 0.25F);
-        this.height = this.length / 2.0F;
+        this.setSize(0.25F, 0.25F);
+        this.yOffset = this.length / 2.0F;
         this.setPosition(d0, d1, d2);
         this.item = itemstack;
         // CraftBukkit start - infinite item fix & nullcheck
@@ -41,11 +39,11 @@ public class EntityItem extends Entity {
 
     public EntityItem(net.minecraft.src.World world) {
         super(world);
-        this.a(0.25F, 0.25F);
-        this.height = this.length / 2.0F;
+        this.setSize(0.25F, 0.25F);
+        this.yOffset = this.length / 2.0F;
     }
 
-    protected void a() {}
+    protected void entityInit() {}
 
     public void h_() {
         super.h_();
@@ -162,7 +160,7 @@ public class EntityItem extends Entity {
         return false;
     }
 
-    public void b(net.minecraft.src.NBTTagCompound nbttagcompound) {
+    public void readEntityFromNBT(net.minecraft.src.NBTTagCompound nbttagcompound) {
         nbttagcompound.setShort("Health", (short) ((byte) this.e));
         nbttagcompound.setShort("Age", (short) this.age);
         if (this.item != null) {
@@ -170,7 +168,7 @@ public class EntityItem extends Entity {
         }
     }
 
-    public void a(net.minecraft.src.NBTTagCompound nbttagcompound) {
+    public void writeEntityToNBT(net.minecraft.src.NBTTagCompound nbttagcompound) {
         this.e = nbttagcompound.getShort("Health") & 255;
         this.age = nbttagcompound.getShort("Age");
         net.minecraft.src.NBTTagCompound nbttagcompound1 = nbttagcompound.getCompoundTag("Item");

@@ -1,7 +1,5 @@
 package net.minecraft.src;
 
-import net.minecraft.server.*;
-
 public final class ItemStack {
 
     public int count;
@@ -23,15 +21,15 @@ public final class ItemStack {
     }
 
     public ItemStack(Item item) {
-        this(item.id, 1, 0);
+        this(item.shiftedIndex, 1, 0);
     }
 
     public ItemStack(Item item, int i) {
-        this(item.id, i, 0);
+        this(item.shiftedIndex, i, 0);
     }
 
     public ItemStack(Item item, int i, int j) {
-        this(item.id, i, j);
+        this(item.shiftedIndex, i, j);
     }
 
     public ItemStack(int i, int j, int k) {
@@ -50,7 +48,7 @@ public final class ItemStack {
                 this.setTag(new NBTTagCompound());
             }
 
-            this.tag.set("ench", enchantments.clone()); // modify this part to use passed in enchantments list
+            this.tag.set("ench", enchantments.copy()); // modify this part to use passed in enchantments list
             // TODO Books
         }
     }

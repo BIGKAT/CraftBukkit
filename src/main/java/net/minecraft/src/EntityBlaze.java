@@ -1,7 +1,5 @@
 package net.minecraft.src;
 
-import net.minecraft.server.*;
-
 public class EntityBlaze extends EntityMob {
 
     private float d = 0.5F;
@@ -20,8 +18,8 @@ public class EntityBlaze extends EntityMob {
         return 20;
     }
 
-    protected void a() {
-        super.a();
+    protected void entityInit() {
+        super.entityInit();
         this.datawatcher.a(16, new Byte((byte) 0));
     }
 

@@ -5,7 +5,7 @@ import com.google.common.collect.ImmutableSet.Builder;
 
 import java.util.Set;
 
-import net.minecraft.server.EntityComplexPart;
+import net.minecraft.src.EntityDragonPart;
 import net.minecraft.src.EntityDragon;
 
 import org.bukkit.craftbukkit.CraftServer;
@@ -21,7 +21,7 @@ public class CraftEnderDragon extends CraftComplexLivingEntity implements EnderD
     public Set<ComplexEntityPart> getParts() {
         Builder<ComplexEntityPart> builder = ImmutableSet.builder();
 
-        for (EntityComplexPart part : getHandle().children) {
+        for (EntityDragonPart part : getHandle().children) {
             builder.add((ComplexEntityPart) part.getBukkitEntity());
         }
 

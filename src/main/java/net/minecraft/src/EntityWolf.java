@@ -1,28 +1,19 @@
 package net.minecraft.src;
 
-import net.minecraft.server.DamageSource;
-import net.minecraft.src.Entity;
-import net.minecraft.src.EntityAIAttackOnCollide;
-import net.minecraft.src.EntityAIMate;
-import net.minecraft.server.EntityAnimal;
-import net.minecraft.src.EntityArrow;
-import net.minecraft.server.EntityTameableAnimal;
-import net.minecraft.server.Item;
-import net.minecraft.server.MathHelper;
-import net.minecraft.server.PathEntity;
-import net.minecraft.server.PathfinderGoalBeg;
-import net.minecraft.server.PathfinderGoalFloat;
-import net.minecraft.server.PathfinderGoalFollowOwner;
-import net.minecraft.server.PathfinderGoalHurtByTarget;
-import net.minecraft.server.PathfinderGoalLeapAtTarget;
-import net.minecraft.server.PathfinderGoalLookAtPlayer;
-import net.minecraft.server.PathfinderGoalOwnerHurtByTarget;
-import net.minecraft.server.PathfinderGoalOwnerHurtTarget;
-import net.minecraft.server.PathfinderGoalRandomLookaround;
-import net.minecraft.server.PathfinderGoalRandomStroll;
-import net.minecraft.server.PathfinderGoalRandomTargetNonTamed;
+import net.minecraft.src.EntityTameableAnimal;
+import net.minecraft.src.PathfinderGoalBeg;
+import net.minecraft.src.PathfinderGoalFloat;
+import net.minecraft.src.PathfinderGoalFollowOwner;
+import net.minecraft.src.PathfinderGoalHurtByTarget;
+import net.minecraft.src.PathfinderGoalLeapAtTarget;
+import net.minecraft.src.PathfinderGoalLookAtPlayer;
+import net.minecraft.src.PathfinderGoalOwnerHurtByTarget;
+import net.minecraft.src.PathfinderGoalOwnerHurtTarget;
+import net.minecraft.src.PathfinderGoalRandomLookaround;
+import net.minecraft.src.PathfinderGoalRandomStroll;
+import net.minecraft.src.PathfinderGoalRandomTargetNonTamed;
 
-public class EntityWolf extends EntityTameableAnimal {
+public class EntityWolf extends EntityTameable {
 
     private float e;
     private float f;
@@ -34,16 +25,16 @@ public class EntityWolf extends EntityTameableAnimal {
     public EntityWolf(net.minecraft.src.World world) {
         super(world);
         this.texture = "/mob/wolf.png";
-        this.a(0.6F, 0.8F);
-        this.bw = 0.3F;
+        this.setSize(0.6F, 0.8F);
+        this.moveSpeed = 0.3F;
         this.getNavigation().a(true);
         this.goalSelector.a(1, new PathfinderGoalFloat(this));
         this.goalSelector.a(2, this.d);
         this.goalSelector.a(3, new PathfinderGoalLeapAtTarget(this, 0.4F));
-        this.goalSelector.a(4, new EntityAIAttackOnCollide(this, this.bw, true));
-        this.goalSelector.a(5, new PathfinderGoalFollowOwner(this, this.bw, 10.0F, 2.0F));
-        this.goalSelector.a(6, new EntityAIMate(this, this.bw));
-        this.goalSelector.a(7, new PathfinderGoalRandomStroll(this, this.bw));
+        this.goalSelector.a(4, new EntityAIAttackOnCollide(this, this.moveSpeed, true));
+        this.goalSelector.a(5, new PathfinderGoalFollowOwner(this, this.moveSpeed, 10.0F, 2.0F));
+        this.goalSelector.a(6, new EntityAIMate(this, this.moveSpeed));
+        this.goalSelector.a(7, new PathfinderGoalRandomStroll(this, this.moveSpeed));
         this.goalSelector.a(8, new PathfinderGoalBeg(this, 8.0F));
         this.goalSelector.a(9, new PathfinderGoalLookAtPlayer(this, EntityPlayer.class, 8.0F));
         this.goalSelector.a(9, new PathfinderGoalRandomLookaround(this));
@@ -72,8 +63,8 @@ public class EntityWolf extends EntityTameableAnimal {
         return this.isTamed() ? 20 : 8;
     }
 
-    protected void a() {
-        super.a();
+    protected void entityInit() {
+        super.entityInit();
         this.datawatcher.a(18, new Integer(this.getHealth()));
         this.datawatcher.a(19, new Byte((byte) 0));
     }
@@ -82,13 +73,13 @@ public class EntityWolf extends EntityTameableAnimal {
         return false;
     }
 
-    public void b(net.minecraft.src.NBTTagCompound nbttagcompound) {
-        super.b(nbttagcompound);
+    public void readEntityFromNBT(net.minecraft.src.NBTTagCompound nbttagcompound) {
+        super.readEntityFromNBT(nbttagcompound);
         nbttagcompound.setBoolean("Angry", this.isAngry());
     }
 
-    public void a(net.minecraft.src.NBTTagCompound nbttagcompound) {
-        super.a(nbttagcompound);
+    public void writeEntityToNBT(net.minecraft.src.NBTTagCompound nbttagcompound) {
+        super.writeEntityToNBT(nbttagcompound);
         this.setAngry(nbttagcompound.getBoolean("Angry"));
     }
 
@@ -255,7 +246,7 @@ public class EntityWolf extends EntityTameableAnimal {
         return super.c(entityhuman);
     }
 
-    public boolean b(net.minecraft.server.ItemStack itemstack) {
+    public boolean b(net.minecraft.src.ItemStack itemstack) {
         return itemstack == null ? false : (!(Item.itemsList[itemstack.id] instanceof net.minecraft.src.ItemFood) ? false : ((net.minecraft.src.ItemFood) Item.itemsList[itemstack.id]).h());
     }
 

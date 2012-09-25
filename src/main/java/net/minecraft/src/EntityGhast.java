@@ -2,8 +2,6 @@ package net.minecraft.src;
 
 // CraftBukkit start
 
-import net.minecraft.server.*;
-
 import org.bukkit.craftbukkit.entity.CraftEntity;
 import org.bukkit.craftbukkit.inventory.CraftItemStack;
 import org.bukkit.event.entity.EntityTargetEvent;
@@ -23,7 +21,7 @@ public class EntityGhast extends EntityFlying implements IMonster {
     public EntityGhast(net.minecraft.src.World world) {
         super(world);
         this.texture = "/mob/ghast.png";
-        this.a(4.0F, 4.0F);
+        this.setSize(4.0F, 4.0F);
         this.fireProof = true;
         this.aV = 5;
     }
@@ -38,8 +36,8 @@ public class EntityGhast extends EntityFlying implements IMonster {
         }
     }
 
-    protected void a() {
-        super.a();
+    protected void entityInit() {
+        super.entityInit();
         this.datawatcher.a(16, Byte.valueOf((byte) 0));
     }
 

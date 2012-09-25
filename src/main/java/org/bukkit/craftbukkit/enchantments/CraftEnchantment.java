@@ -1,6 +1,6 @@
 package org.bukkit.craftbukkit.enchantments;
 
-import net.minecraft.server.Item;
+import net.minecraft.src.Item;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.enchantments.EnchantmentTarget;
 import org.bukkit.enchantments.EnchantmentWrapper;
@@ -27,23 +27,23 @@ public class CraftEnchantment extends Enchantment {
     @Override
     public EnchantmentTarget getItemTarget() {
         switch (target.type) {
-        case ALL:
+        case all:
             return EnchantmentTarget.ALL;
-        case ARMOR:
+        case armor:
             return EnchantmentTarget.ARMOR;
-        case ARMOR_FEET:
+        case armor_feet:
             return EnchantmentTarget.ARMOR_FEET;
-        case ARMOR_HEAD:
+        case armor_head:
             return EnchantmentTarget.ARMOR_HEAD;
-        case ARMOR_LEGS:
+        case armor_legs:
             return EnchantmentTarget.ARMOR_LEGS;
-        case ARMOR_TORSO:
+        case armor_torso:
             return EnchantmentTarget.ARMOR_TORSO;
-        case DIGGER:
+        case digger:
             return EnchantmentTarget.TOOL;
-        case WEAPON:
+        case weapon:
             return EnchantmentTarget.WEAPON;
-        case BOW:
+        case bow:
             return EnchantmentTarget.BOW;
         default:
             return null;

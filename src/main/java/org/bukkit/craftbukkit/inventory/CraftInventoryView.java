@@ -9,7 +9,7 @@ import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryView;
 import org.bukkit.inventory.ItemStack;
 
-import net.minecraft.server.Container;
+import net.minecraft.src.Container;
 
 public class CraftInventoryView extends InventoryView {
     private Container container;

@@ -2,8 +2,6 @@ package net.minecraft.src;
 
 // CraftBukkit start
 
-import net.minecraft.server.*;
-
 import org.bukkit.Location;
 import org.bukkit.craftbukkit.event.CraftEventFactory;
 import org.bukkit.event.entity.EntityTeleportEvent;
@@ -18,9 +16,9 @@ public class EntityEnderman extends EntityMob {
     public EntityEnderman(net.minecraft.src.World world) {
         super(world);
         this.texture = "/mob/enderman.png";
-        this.bw = 0.2F;
+        this.moveSpeed = 0.2F;
         this.damage = 7;
-        this.a(0.6F, 2.9F);
+        this.setSize(0.6F, 2.9F);
         this.W = 1.0F;
     }
 
@@ -28,21 +26,21 @@ public class EntityEnderman extends EntityMob {
         return 40;
     }
 
-    protected void a() {
-        super.a();
+    protected void entityInit() {
+        super.entityInit();
         this.datawatcher.a(16, new Byte((byte) 0));
         this.datawatcher.a(17, new Byte((byte) 0));
         this.datawatcher.a(18, new Byte((byte) 0));
     }
 
-    public void b(net.minecraft.src.NBTTagCompound nbttagcompound) {
-        super.b(nbttagcompound);
+    public void readEntityFromNBT(net.minecraft.src.NBTTagCompound nbttagcompound) {
+        super.readEntityFromNBT(nbttagcompound);
         nbttagcompound.setShort("carried", (short) this.getCarried());
         nbttagcompound.setShort("carriedData", (short) this.getCarryingData());
     }
 
-    public void a(net.minecraft.src.NBTTagCompound nbttagcompound) {
-        super.a(nbttagcompound);
+    public void writeEntityToNBT(net.minecraft.src.NBTTagCompound nbttagcompound) {
+        super.writeEntityToNBT(nbttagcompound);
         this.setCarried(nbttagcompound.getShort("carried"));
         this.setCarryingData(nbttagcompound.getShort("carriedData"));
     }
@@ -87,7 +85,7 @@ public class EntityEnderman extends EntityMob {
             this.damageEntity(DamageSource.DROWN, 1);
         }
 
-        this.bw = this.entityToAttack != null ? 6.5F : 0.3F;
+        this.moveSpeed = this.entityToAttack != null ? 6.5F : 0.3F;
         int i;
 
         if (!this.worldObj.isStatic) {
@@ -160,7 +158,7 @@ public class EntityEnderman extends EntityMob {
             if (this.entityToAttack != null) {
                 if (this.entityToAttack instanceof net.minecraft.src.EntityPlayer && this.d((net.minecraft.src.EntityPlayer) this.entityToAttack)) {
                     this.br = this.bs = 0.0F;
-                    this.bw = 0.0F;
+                    this.moveSpeed = 0.0F;
                     if (this.entityToAttack.e((Entity) this) < 16.0D) {
                         this.n();
                     }

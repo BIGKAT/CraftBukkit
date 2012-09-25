@@ -1,7 +1,5 @@
 package net.minecraft.src;
 
-import net.minecraft.src.Entity;
-
 import org.bukkit.event.entity.ExplosionPrimeEvent; // CraftBukkit
 
 public class EntityTNTPrimed extends Entity {
@@ -14,8 +12,8 @@ public class EntityTNTPrimed extends Entity {
         super(world);
         this.fuse = 0;
         this.m = true;
-        this.a(0.98F, 0.98F);
-        this.height = this.length / 2.0F;
+        this.setSize(0.98F, 0.98F);
+        this.yOffset = this.length / 2.0F;
     }
 
     public EntityTNTPrimed(net.minecraft.src.World world, double d0, double d1, double d2) {
@@ -32,7 +30,7 @@ public class EntityTNTPrimed extends Entity {
         this.lastZ = d2;
     }
 
-    protected void a() {}
+    protected void entityInit() {}
 
     protected boolean e_() {
         return false;
@@ -85,11 +83,11 @@ public class EntityTNTPrimed extends Entity {
         // CraftBukkit end
     }
 
-    protected void b(net.minecraft.src.NBTTagCompound nbttagcompound) {
+    protected void readEntityFromNBT(net.minecraft.src.NBTTagCompound nbttagcompound) {
         nbttagcompound.setByte("Fuse", (byte) this.fuse);
     }
 
-    protected void a(net.minecraft.src.NBTTagCompound nbttagcompound) {
+    protected void writeEntityToNBT(net.minecraft.src.NBTTagCompound nbttagcompound) {
         this.fuse = nbttagcompound.getByte("Fuse");
     }
 }

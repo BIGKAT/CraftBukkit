@@ -8,8 +8,6 @@ import java.util.Random;
 
 // CraftBukkit start
 
-import net.minecraft.server.*;
-
 import org.bukkit.craftbukkit.event.CraftEventFactory;
 import org.bukkit.event.entity.EntityDamageByBlockEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
@@ -59,7 +57,7 @@ public abstract class EntityLiving extends Entity {
     public float aY;
     public float aZ;
     public float ba;
-    public net.minecraft.src.EntityPlayer attackingPlayer = null; // CraftBukkit - protected -> public
+    public EntityPlayer attackingPlayer = null; // CraftBukkit - protected -> public
     protected int lastDamageByPlayerTime = 0;
     public EntityLiving lastDamager = null; // CraftBukkit - private -> public
     private int c = 0;
@@ -95,14 +93,14 @@ public abstract class EntityLiving extends Entity {
     protected float bt;
     protected boolean bu = false;
     protected float bv = 0.0F;
-    protected float bw = 0.7F;
+    protected float moveSpeed = 0.7F;
     private int bE = 0;
     private Entity bF;
     protected int bx = 0;
     public int expToDrop = 0; // CraftBukkit
     public int maxAirTicks = 300; // CraftBukkit
 
-    public EntityLiving(net.minecraft.src.World world) {
+    public EntityLiving(World world) {
         super(world);
         this.m = true;
         this.goalSelector = new EntityAITasks(world != null && world.methodProfiler != null ? world.methodProfiler : null);
@@ -229,7 +227,7 @@ public abstract class EntityLiving extends Entity {
         this.c = this.lastDamager != null ? 60 : 0;
     }
 
-    protected void a() {
+    protected void entityInit() {
         this.datawatcher.a(8, Integer.valueOf(this.f));
     }
 
@@ -408,7 +406,7 @@ public abstract class EntityLiving extends Entity {
         return i - 1;
     }
 
-    protected int getExpValue(net.minecraft.src.EntityPlayer entityhuman) {
+    protected int getExpValue(EntityPlayer entityhuman) {
         return this.aV;
     }
 
@@ -623,9 +621,9 @@ public abstract class EntityLiving extends Entity {
                         this.c((EntityLiving) entity);
                     }
 
-                    if (entity instanceof net.minecraft.src.EntityPlayer) {
+                    if (entity instanceof EntityPlayer) {
                         this.lastDamageByPlayerTime = 60;
-                        this.attackingPlayer = (net.minecraft.src.EntityPlayer) entity;
+                        this.attackingPlayer = (EntityPlayer) entity;
                     } else if (entity instanceof EntityWolf) {
                         EntityWolf entitywolf = (EntityWolf) entity;
 
@@ -762,8 +760,8 @@ public abstract class EntityLiving extends Entity {
         if (!this.worldObj.isStatic) {
             int i = 0;
 
-            if (entity instanceof net.minecraft.src.EntityPlayer) {
-                i = EnchantmentManager.getBonusMonsterLootEnchantmentLevel(((net.minecraft.src.EntityPlayer) entity).inventory);
+            if (entity instanceof EntityPlayer) {
+                i = EnchantmentManager.getBonusMonsterLootEnchantmentLevel(((EntityPlayer) entity).inventory);
             }
 
             if (!this.isBaby()) {
@@ -784,7 +782,7 @@ public abstract class EntityLiving extends Entity {
     }
 
     // CraftBukkit start - change return type to ItemStack
-    protected net.minecraft.src.ItemStack l(int i) {
+    protected ItemStack l(int i) {
         return null;
     }
     // CraftBukkit end
@@ -811,7 +809,7 @@ public abstract class EntityLiving extends Entity {
             int k = this.random.nextInt(200) - i;
 
             if (k < 5) {
-                net.minecraft.src.ItemStack itemstack = this.l(k <= 0 ? 1 : 0);
+                ItemStack itemstack = this.l(k <= 0 ? 1 : 0);
                 if (itemstack != null) {
                     loot.add(new org.bukkit.craftbukkit.inventory.CraftItemStack(itemstack));
                 }
@@ -849,7 +847,7 @@ public abstract class EntityLiving extends Entity {
             }
             // CraftBukkit end
 
-            int j = this.worldObj.getBlockId(MathHelper.floor(this.posX), MathHelper.floor(this.posY - 0.20000000298023224D - (double) this.height), MathHelper.floor(this.posZ));
+            int j = this.worldObj.getBlockId(MathHelper.floor(this.posX), MathHelper.floor(this.posY - 0.20000000298023224D - (double) this.yOffset), MathHelper.floor(this.posZ));
 
             if (j > 0) {
                 StepSound stepsound = Block.blocksList[j].stepSound;
@@ -862,7 +860,7 @@ public abstract class EntityLiving extends Entity {
     public void e(float f, float f1) {
         double d0;
 
-        if (this.H() && (!(this instanceof net.minecraft.src.EntityPlayer) || !((net.minecraft.src.EntityPlayer) this).capabilities.isFlying)) {
+        if (this.H() && (!(this instanceof EntityPlayer) || !((EntityPlayer) this).capabilities.isFlying)) {
             d0 = this.posY;
             this.a(f, f1, this.aV() ? 0.04F : 0.02F);
             this.move(this.motionX, this.motionY, this.motionZ);
@@ -873,7 +871,7 @@ public abstract class EntityLiving extends Entity {
             if (this.positionChanged && this.c(this.motionX, this.motionY + 0.6000000238418579D - this.posY + d0, this.motionZ)) {
                 this.motionY = 0.30000001192092896D;
             }
-        } else if (this.J() && (!(this instanceof net.minecraft.src.EntityPlayer) || !((net.minecraft.src.EntityPlayer) this).capabilities.isFlying)) {
+        } else if (this.J() && (!(this instanceof EntityPlayer) || !((EntityPlayer) this).capabilities.isFlying)) {
             d0 = this.posY;
             this.a(f, f1, 0.02F);
             this.move(this.motionX, this.motionY, this.motionZ);
@@ -946,7 +944,7 @@ public abstract class EntityLiving extends Entity {
                     this.motionY = -0.15D;
                 }
 
-                boolean flag = this.isSneaking() && this instanceof net.minecraft.src.EntityPlayer;
+                boolean flag = this.isSneaking() && this instanceof EntityPlayer;
 
                 if (flag && this.motionY < 0.0D) {
                     this.motionY = 0.0D;
@@ -986,7 +984,7 @@ public abstract class EntityLiving extends Entity {
         return l == Block.LADDER.blockID || l == Block.VINE.blockID;
     }
 
-    public void b(net.minecraft.src.NBTTagCompound nbttagcompound) {
+    public void readEntityFromNBT(NBTTagCompound nbttagcompound) {
         nbttagcompound.setShort("Health", (short) this.health);
         nbttagcompound.setShort("HurtTime", (short) this.hurtTicks);
         nbttagcompound.setShort("DeathTime", (short) this.deathTicks);
@@ -997,7 +995,7 @@ public abstract class EntityLiving extends Entity {
 
             while (iterator.hasNext()) {
                 MobEffect mobeffect = (MobEffect) iterator.next();
-                net.minecraft.src.NBTTagCompound nbttagcompound1 = new net.minecraft.src.NBTTagCompound();
+                NBTTagCompound nbttagcompound1 = new NBTTagCompound();
 
                 nbttagcompound1.setByte("Id", (byte) mobeffect.getEffectId());
                 nbttagcompound1.setByte("Amplifier", (byte) mobeffect.getAmplifier());
@@ -1009,7 +1007,7 @@ public abstract class EntityLiving extends Entity {
         }
     }
 
-    public void a(net.minecraft.src.NBTTagCompound nbttagcompound) {
+    public void writeEntityToNBT(NBTTagCompound nbttagcompound) {
         if (this.health < -32768) {
             this.health = -32768;
         }
@@ -1026,7 +1024,7 @@ public abstract class EntityLiving extends Entity {
             NBTTagList nbttaglist = nbttagcompound.getList("ActiveEffects");
 
             for (int i = 0; i < nbttaglist.size(); ++i) {
-                net.minecraft.src.NBTTagCompound nbttagcompound1 = (net.minecraft.src.NBTTagCompound) nbttaglist.get(i);
+                NBTTagCompound nbttagcompound1 = (NBTTagCompound) nbttaglist.get(i);
                 byte b0 = nbttagcompound1.getByte("Id");
                 byte b1 = nbttagcompound1.getByte("Amplifier");
                 int j = nbttagcompound1.getInteger("Duration");
@@ -1184,7 +1182,7 @@ public abstract class EntityLiving extends Entity {
     }
 
     protected void bb() {
-        net.minecraft.src.EntityPlayer entityhuman = this.worldObj.findNearbyPlayer(this, -1.0D);
+        EntityPlayer entityhuman = this.worldObj.findNearbyPlayer(this, -1.0D);
 
         if (entityhuman != null) {
             double d0 = entityhuman.posX - this.posX;
@@ -1245,7 +1243,7 @@ public abstract class EntityLiving extends Entity {
         float f = 8.0F;
 
         if (this.random.nextFloat() < 0.02F) {
-            net.minecraft.src.EntityPlayer entityhuman = this.worldObj.findNearbyPlayer(this, (double) f);
+            EntityPlayer entityhuman = this.worldObj.findNearbyPlayer(this, (double) f);
 
             if (entityhuman != null) {
                 this.bF = entityhuman;
@@ -1405,7 +1403,7 @@ public abstract class EntityLiving extends Entity {
                 double d1 = (double) (i >> 8 & 255) / 255.0D;
                 double d2 = (double) (i >> 0 & 255) / 255.0D;
 
-                this.worldObj.a("mobSpell", this.posX + (this.random.nextDouble() - 0.5D) * (double) this.width, this.posY + this.random.nextDouble() * (double) this.length - (double) this.height, this.posZ + (this.random.nextDouble() - 0.5D) * (double) this.width, d0, d1, d2);
+                this.worldObj.a("mobSpell", this.posX + (this.random.nextDouble() - 0.5D) * (double) this.width, this.posY + this.random.nextDouble() * (double) this.length - (double) this.yOffset, this.posZ + (this.random.nextDouble() - 0.5D) * (double) this.width, d0, d1, d2);
             }
         }
     }
@@ -1432,15 +1430,15 @@ public abstract class EntityLiving extends Entity {
         return this.activePotionsMap.containsKey(Integer.valueOf(mobeffectlist.id));
     }
 
-    public MobEffect getEffect(Potion mobeffectlist) {
-        return (MobEffect) this.activePotionsMap.get(Integer.valueOf(mobeffectlist.id));
+    public PotionEffect getEffect(Potion mobeffectlist) {
+        return (PotionEffect) this.activePotionsMap.get(Integer.valueOf(mobeffectlist.id));
     }
 
-    public void addPotionEffect(MobEffect mobeffect) {
+    public void addPotionEffect(PotionEffect mobeffect) {
         if (this.e(mobeffect)) {
             if (this.activePotionsMap.containsKey(Integer.valueOf(mobeffect.getEffectId()))) {
-                ((MobEffect) this.activePotionsMap.get(Integer.valueOf(mobeffect.getEffectId()))).a(mobeffect);
-                this.b((MobEffect) this.activePotionsMap.get(Integer.valueOf(mobeffect.getEffectId())));
+                ((PotionEffect) this.activePotionsMap.get(Integer.valueOf(mobeffect.getEffectId()))).a(mobeffect);
+                this.b((PotionEffect) this.activePotionsMap.get(Integer.valueOf(mobeffect.getEffectId())));
             } else {
                 this.activePotionsMap.put(Integer.valueOf(mobeffect.getEffectId()), mobeffect);
                 this.a(mobeffect);
@@ -1448,8 +1446,8 @@ public abstract class EntityLiving extends Entity {
         }
     }
 
-    public boolean e(MobEffect mobeffect) {
-        if (this.getMonsterType() == EnumMonsterType.UNDEAD) {
+    public boolean e(PotionEffect mobeffect) {
+        if (this.getMonsterType() == EnumCreatureAttribute.UNDEAD) {
             int i = mobeffect.getEffectId();
 
             if (i == Potion.REGENERATION.id || i == Potion.POISON.id) {
@@ -1461,18 +1459,18 @@ public abstract class EntityLiving extends Entity {
     }
 
     public boolean br() {
-        return this.getMonsterType() == EnumMonsterType.UNDEAD;
+        return this.getMonsterType() == EnumCreatureAttribute.UNDEAD;
     }
 
-    protected void a(MobEffect mobeffect) {
+    protected void a(PotionEffect mobeffect) {
         this.potionsNeedUpdate = true;
     }
 
-    protected void b(MobEffect mobeffect) {
+    protected void b(PotionEffect mobeffect) {
         this.potionsNeedUpdate = true;
     }
 
-    protected void c(MobEffect mobeffect) {
+    protected void c(PotionEffect mobeffect) {
         this.potionsNeedUpdate = true;
     }
 
@@ -1498,8 +1496,8 @@ public abstract class EntityLiving extends Entity {
         return false;
     }
 
-    public EnumMonsterType getMonsterType() {
-        return EnumMonsterType.UNDEFINED;
+    public EnumCreatureAttribute getMonsterType() {
+        return EnumCreatureAttribute.UNDEFINED;
     }
 
     public void a(ItemStack itemstack) {

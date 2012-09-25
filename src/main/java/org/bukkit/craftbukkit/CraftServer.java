@@ -17,35 +17,30 @@ import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import net.minecraft.server.BanEntry;
-import net.minecraft.server.ChunkCoordinates;
-import net.minecraft.server.Convertable;
-import net.minecraft.server.ConvertProgressUpdater;
+import net.minecraft.src.BanEntry;
+import net.minecraft.src.ChunkCoordinates;
 import net.minecraft.src.CraftingManager;
 import net.minecraft.src.DedicatedServer;
 import net.minecraft.src.Enchantment;
 import net.minecraft.src.EntityPlayerMP;
 import net.minecraft.src.EntityTracker;
-import net.minecraft.server.EnumGamemode;
-import net.minecraft.server.ExceptionWorldConflict;
+import net.minecraft.src.EnumGameType;
+import net.minecraft.src.ExceptionWorldConflict;
 import net.minecraft.src.MapData;
+import net.minecraft.src.MapStorage;
 import net.minecraft.src.Potion;
 import net.minecraft.src.FurnaceRecipes;
-import net.minecraft.server.IProgressUpdate;
-import net.minecraft.server.IWorldAccess;
-import net.minecraft.server.Item;
+import net.minecraft.src.IProgressUpdate;
+import net.minecraft.src.Item;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.src.PropertyManager;
 import net.minecraft.src.SaveHandler;
-import net.minecraft.server.ServerCommand;
+import net.minecraft.src.ServerCommand;
 import net.minecraft.src.ServerConfigurationManager;
-import net.minecraft.server.ServerNBTManager;
-import net.minecraft.server.WorldLoaderServer;
 import net.minecraft.src.WorldManager;
-import net.minecraft.server.WorldMapCollection;
 import net.minecraft.src.WorldServer;
-import net.minecraft.server.WorldSettings;
-import net.minecraft.server.WorldType;
+import net.minecraft.src.WorldSettings;
+import net.minecraft.src.WorldType;
 
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -290,7 +285,7 @@ public final class CraftServer implements Server {
 
     @SuppressWarnings("unchecked")
     public Player[] getOnlinePlayers() {
-        List<EntityPlayerMP> online = server.playerEntityList;
+        List<EntityPlayerMP> online = server.players;
         Player[] players = new Player[online.size()];
 
         for (int i = 0; i < players.length; i++) {
@@ -642,7 +637,7 @@ public final class CraftServer implements Server {
         ChunkGenerator generator = creator.generator();
         File folder = new File(getWorldContainer(), name);
         World world = getWorld(name);
-        WorldType type = WorldType.getType(creator.type().getName());
+        WorldType type = WorldType.parseWorldType(creator.type().getName());
         boolean generateStructures = creator.generateStructures();
 
         if (world != null) {
@@ -656,13 +651,13 @@ public final class CraftServer implements Server {
         if (generator == null) {
             generator = getGenerator(name);
         }
-
+/*
         Convertable converter = new WorldLoaderServer(getWorldContainer());
         if (converter.isConvertable(name)) {
             getLogger().info("Converting world '" + name + "'");
             converter.convert(name, new ConvertProgressUpdater(console));
         }
-
+*/
         int dimension = 10 + console.worlds.size();
         boolean used = false;
         do {
@@ -676,7 +671,7 @@ public final class CraftServer implements Server {
         } while(used);
         boolean hardcore = false;
 
-        WorldServer internal = new WorldServer(console, new ServerNBTManager(getWorldContainer(), name, true), name, dimension, new WorldSettings(creator.seed(), EnumGamemode.a(getDefaultGameMode().getValue()), generateStructures, hardcore, type), console.methodProfiler, creator.environment(), generator);
+        WorldServer internal = new WorldServer(console, new SaveHandler(getWorldContainer(), name, true), name, dimension, new WorldSettings(creator.seed(), EnumGameType.getByID(getDefaultGameMode().getValue()), generateStructures, hardcore, type), console.methodProfiler, creator.environment(), generator);
 
         if (!(worlds.containsKey(name.toLowerCase()))) {
             return null;
@@ -685,7 +680,7 @@ public final class CraftServer implements Server {
         internal.worldMaps = console.worlds.get(0).worldMaps;
 
         internal.tracker = new EntityTracker(internal); // CraftBukkit
-        internal.addIWorldAccess((IWorldAccess) new WorldManager(console, internal));
+        internal.addIWorldAccess(new WorldManager(console, internal));
         internal.difficulty = 1;
         internal.setSpawnFlags(true, true);
         console.worlds.add(internal);
@@ -717,7 +712,7 @@ public final class CraftServer implements Server {
                     }
 
                     ChunkCoordinates chunkcoordinates = internal.getSpawn();
-                    internal.chunkProviderServer.getChunkAt(chunkcoordinates.x + j >> 4, chunkcoordinates.z + k >> 4);
+                    internal.chunkProviderServer.getChunkAt(chunkcoordinates.posX + j >> 4, chunkcoordinates.posZ + k >> 4);
 
                     while (internal.updateLights()) {
                         ;
@@ -962,8 +957,8 @@ public final class CraftServer implements Server {
     }
 
     public CraftMapView getMap(short id) {
-        WorldMapCollection collection = console.worlds.get(0).worldMaps;
-        MapData worldmap = (MapData) collection.get(MapData.class, "map_" + id);
+        MapStorage collection = console.worlds.get(0).worldMaps;
+        MapData worldmap = (MapData) collection.loadData(MapData.class, "map_" + id);
         if (worldmap == null) {
             return null;
         }
@@ -971,8 +966,8 @@ public final class CraftServer implements Server {
     }
 
     public CraftMapView createMap(World world) {
-        net.minecraft.src.ItemStack stack = new net.minecraft.src.ItemStack(Item.MAP, 1, -1);
-        MapData worldmap = Item.MAP.getSavedMap(stack, ((CraftWorld) world).getHandle());
+        net.minecraft.src.ItemStack stack = new net.minecraft.src.ItemStack(Item.map, 1, -1);
+        MapData worldmap = Item.map.getSavedMap(stack, ((CraftWorld) world).getHandle());
         return worldmap.mapView;
     }
 
@@ -1015,24 +1010,24 @@ public final class CraftServer implements Server {
 
     @SuppressWarnings("unchecked")
     public Set<String> getIPBans() {
-        return server.getIPBans().getEntries().keySet();
+        return server.getIPBans().getBannedList().keySet();
     }
 
     public void banIP(String address) {
         BanEntry entry = new BanEntry(address);
-        server.getIPBans().add(entry);
-        server.getIPBans().save();
+        server.getIPBans().put(entry);
+        server.getIPBans().saveToFileWithHeader();
     }
 
     public void unbanIP(String address) {
         server.getIPBans().remove(address);
-        server.getIPBans().save();
+        server.getIPBans().saveToFileWithHeader();
     }
 
     public Set<OfflinePlayer> getBannedPlayers() {
         Set<OfflinePlayer> result = new HashSet<OfflinePlayer>();
 
-        for (Object name : server.getNameBans().getEntries().keySet()) {
+        for (Object name : server.getNameBans().getBannedList().keySet()) {
             result.add(getOfflinePlayer((String) name));
         }
 
@@ -1072,7 +1067,7 @@ public final class CraftServer implements Server {
     }
 
     public GameMode getDefaultGameMode() {
-        return GameMode.getByValue(console.worlds.get(0).getWorldData().getGameType().a());
+        return GameMode.getByValue(console.worlds.get(0).getWorldData().getGameType().getID());
     }
 
     public void setDefaultGameMode(GameMode mode) {
@@ -1081,7 +1076,7 @@ public final class CraftServer implements Server {
         }
 
         for (World world : getWorlds()) {
-            ((CraftWorld) world).getHandle().worldData.setGameType(EnumGamemode.a(mode.getValue()));
+            ((CraftWorld) world).getHandle().worldData.setGameType(EnumGameType.getByID(mode.getValue()));
         }
     }
 
@@ -1103,8 +1098,8 @@ public final class CraftServer implements Server {
 
     public void detectListNameConflict(EntityPlayerMP entityPlayer) {
         // Collisions will make for invisible people
-        for (int i = 0; i < getHandle().playerEntityList.size(); ++i) {
-            EntityPlayerMP testEntityPlayer = (EntityPlayerMP) getHandle().playerEntityList.get(i);
+        for (int i = 0; i < getHandle().players.size(); ++i) {
+            EntityPlayerMP testEntityPlayer = (EntityPlayerMP) getHandle().players.get(i);
 
             // We have a problem!
             if (testEntityPlayer != entityPlayer && testEntityPlayer.listName.equals(entityPlayer.listName)) {

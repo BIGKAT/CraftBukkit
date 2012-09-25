@@ -4,9 +4,9 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 
-import net.minecraft.server.BiomeGenBase;
-import net.minecraft.server.BlockRedstoneWire;
-import net.minecraft.server.EnumSkyBlock;
+import net.minecraft.src.BiomeGenBase;
+import net.minecraft.src.BlockRedstoneWire;
+import net.minecraft.src.EnumSkyBlock;
 
 import org.bukkit.Chunk;
 import org.bukkit.Location;
@@ -69,14 +69,14 @@ public class CraftBlock implements Block {
     }
 
     public void setData(final byte data) {
-        chunk.getHandle().world.setBlockMetadataWithNotify(x, y, z, data);
+        chunk.getHandle().worldObj.setBlockMetadataWithNotify(x, y, z, data);
     }
 
     public void setData(final byte data, boolean applyPhysics) {
         if (applyPhysics) {
-            chunk.getHandle().world.setBlockMetadataWithNotify(x, y, z, data);
+            chunk.getHandle().worldObj.setBlockMetadataWithNotify(x, y, z, data);
         } else {
-            chunk.getHandle().world.setBlockMetadata(x, y, z, data);
+            chunk.getHandle().worldObj.setBlockMetadata(x, y, z, data);
         }
     }
 
@@ -89,24 +89,24 @@ public class CraftBlock implements Block {
     }
 
     public boolean setTypeId(final int type) {
-        return chunk.getHandle().world.setBlockWithNotify(x, y, z, type);
+        return chunk.getHandle().worldObj.setBlockWithNotify(x, y, z, type);
     }
 
     public boolean setTypeId(final int type, final boolean applyPhysics) {
         if (applyPhysics) {
             return setTypeId(type);
         } else {
-            return chunk.getHandle().world.setBlock(x, y, z, type);
+            return chunk.getHandle().worldObj.setBlock(x, y, z, type);
         }
     }
 
     public boolean setTypeIdAndData(final int type, final byte data, final boolean applyPhysics) {
         if (applyPhysics) {
-            return chunk.getHandle().world.setBlockAndMetadataWithNotify(x, y, z, type, data);
+            return chunk.getHandle().worldObj.setBlockAndMetadataWithNotify(x, y, z, type, data);
         } else {
-            boolean success = chunk.getHandle().world.setBlockAndMetadata(x, y, z, type, data);
+            boolean success = chunk.getHandle().worldObj.setBlockAndMetadata(x, y, z, type, data);
             if (success) {
-                chunk.getHandle().world.markBlockNeedsUpdate(x, y, z);
+                chunk.getHandle().worldObj.markBlockNeedsUpdate(x, y, z);
             }
             return success;
         }
@@ -121,7 +121,7 @@ public class CraftBlock implements Block {
     }
 
     public byte getLightLevel() {
-        return (byte) chunk.getHandle().world.getBlockLightValue(this.x, this.y, this.z);
+        return (byte) chunk.getHandle().worldObj.getBlockLightValue(this.x, this.y, this.z);
     }
 
     public byte getLightFromSky() {
@@ -277,11 +277,11 @@ public class CraftBlock implements Block {
     }
 
     public boolean isBlockPowered() {
-        return chunk.getHandle().world.isBlockGettingPowered(x, y, z);
+        return chunk.getHandle().worldObj.isBlockGettingPowered(x, y, z);
     }
 
     public boolean isBlockIndirectlyPowered() {
-        return chunk.getHandle().world.isBlockIndirectlyGettingPowered(x, y, z);
+        return chunk.getHandle().worldObj.isBlockIndirectlyGettingPowered(x, y, z);
     }
 
     @Override
@@ -299,17 +299,17 @@ public class CraftBlock implements Block {
     }
 
     public boolean isBlockFacePowered(BlockFace face) {
-        return chunk.getHandle().world.isBlockProvidingPowerTo(x, y, z, blockFaceToNotch(face));
+        return chunk.getHandle().worldObj.isBlockProvidingPowerTo(x, y, z, blockFaceToNotch(face));
     }
 
     public boolean isBlockFaceIndirectlyPowered(BlockFace face) {
-        return chunk.getHandle().world.isBlockIndirectlyProvidingPowerTo(x, y, z, blockFaceToNotch(face));
+        return chunk.getHandle().worldObj.isBlockIndirectlyProvidingPowerTo(x, y, z, blockFaceToNotch(face));
     }
 
     public int getBlockPower(BlockFace face) {
         int power = 0;
-        BlockRedstoneWire wire = (BlockRedstoneWire) net.minecraft.server.Block.redstoneWire;
-        net.minecraft.src.World world = chunk.getHandle().world;
+        BlockRedstoneWire wire = (BlockRedstoneWire) net.minecraft.src.Block.redstoneWire;
+        net.minecraft.src.World world = chunk.getHandle().worldObj;
         if ((face == BlockFace.DOWN || face == BlockFace.SELF) && world.isBlockProvidingPowerTo(x, y - 1, z, 0)) power = wire.getMaxCurrentStrength(world, x, y - 1, z, power);
         if ((face == BlockFace.UP || face == BlockFace.SELF) && world.isBlockProvidingPowerTo(x, y + 1, z, 1)) power = wire.getMaxCurrentStrength(world, x, y + 1, z, power);
         if ((face == BlockFace.EAST || face == BlockFace.SELF) && world.isBlockProvidingPowerTo(x, y, z - 1, 2)) power = wire.getMaxCurrentStrength(world, x, y, z - 1, power);
@@ -332,22 +332,22 @@ public class CraftBlock implements Block {
     }
 
     public PistonMoveReaction getPistonMoveReaction() {
-        return PistonMoveReaction.getById(net.minecraft.server.Block.blocksList[this.getTypeId()].blockMaterial.getMaterialMobility());
+        return PistonMoveReaction.getById(net.minecraft.src.Block.blocksList[this.getTypeId()].blockMaterial.getMaterialMobility());
     }
 
     private boolean itemCausesDrops(ItemStack item) {
-        net.minecraft.server.Block block = net.minecraft.server.Block.blocksList[this.getTypeId()];
-        net.minecraft.server.Item itemType = item != null ? net.minecraft.server.Item.itemsList[item.getTypeId()] : null;
+        net.minecraft.src.Block block = net.minecraft.src.Block.blocksList[this.getTypeId()];
+        net.minecraft.src.Item itemType = item != null ? net.minecraft.src.Item.itemsList[item.getTypeId()] : null;
         return block != null && (block.blockMaterial.isHarvestable() || (itemType != null && itemType.canHarvestBlock(block)));
     }
 
     public boolean breakNaturally() {
-        net.minecraft.server.Block block = net.minecraft.server.Block.blocksList[this.getTypeId()];
+        net.minecraft.src.Block block = net.minecraft.src.Block.blocksList[this.getTypeId()];
         byte data = getData();
 
         setTypeId(Material.AIR.getId());
         if (block != null) {
-            block.dropBlockAsItemWithChance(chunk.getHandle().world, x, y, z, data, 1.0F, 0);
+            block.dropBlockAsItemWithChance(chunk.getHandle().worldObj, x, y, z, data, 1.0F, 0);
             return true;
         }
         return false;
@@ -364,15 +364,15 @@ public class CraftBlock implements Block {
     public Collection<ItemStack> getDrops() {
         List<ItemStack> drops = new ArrayList<ItemStack>();
 
-        net.minecraft.server.Block block = net.minecraft.server.Block.blocksList[this.getTypeId()];
+        net.minecraft.src.Block block = net.minecraft.src.Block.blocksList[this.getTypeId()];
         if (block != null) {
             byte data = getData();
             // based on nms.Block.dropNaturally
-            int count = block.getDropCount(0, chunk.getHandle().world.rand);
+            int count = block.quantityDroppedWithBonus(0, chunk.getHandle().worldObj.rand);
             for (int i = 0; i < count; ++i) {
-                int item = block.getDropType(data, chunk.getHandle().world.rand, 0);
+                int item = block.idDropped(data, chunk.getHandle().worldObj.rand, 0);
                 if (item > 0) {
-                    drops.add(new ItemStack(item, 1, (short) net.minecraft.server.Block.getDropData(block, data)));
+                    drops.add(new ItemStack(item, 1, (short) net.minecraft.src.Block.damageDropped(data)));
                 }
             }
         }
@@ -389,39 +389,39 @@ public class CraftBlock implements Block {
 
     /* Build biome index based lookup table for BiomeBase to Biome mapping */
     static {
-        BIOME_MAPPING = new Biome[BiomeGenBase.biomes.length];
+        BIOME_MAPPING = new Biome[BiomeGenBase.biomeList.length];
         BIOMEBASE_MAPPING = new BiomeGenBase[Biome.values().length];
-        BIOME_MAPPING[BiomeGenBase.SWAMPLAND.biomeID] = Biome.SWAMPLAND;
-        BIOME_MAPPING[BiomeGenBase.FOREST.biomeID] = Biome.FOREST;
-        BIOME_MAPPING[BiomeGenBase.TAIGA.biomeID] = Biome.TAIGA;
-        BIOME_MAPPING[BiomeGenBase.DESERT.biomeID] = Biome.DESERT;
-        BIOME_MAPPING[BiomeGenBase.PLAINS.biomeID] = Biome.PLAINS;
-        BIOME_MAPPING[BiomeGenBase.HELL.biomeID] = Biome.HELL;
-        BIOME_MAPPING[BiomeGenBase.SKY.biomeID] = Biome.SKY;
-        BIOME_MAPPING[BiomeGenBase.RIVER.biomeID] = Biome.RIVER;
-        BIOME_MAPPING[BiomeGenBase.EXTREME_HILLS.biomeID] = Biome.EXTREME_HILLS;
-        BIOME_MAPPING[BiomeGenBase.OCEAN.biomeID] = Biome.OCEAN;
-        BIOME_MAPPING[BiomeGenBase.FROZEN_OCEAN.biomeID] = Biome.FROZEN_OCEAN;
-        BIOME_MAPPING[BiomeGenBase.FROZEN_RIVER.biomeID] = Biome.FROZEN_RIVER;
-        BIOME_MAPPING[BiomeGenBase.ICE_PLAINS.biomeID] = Biome.ICE_PLAINS;
-        BIOME_MAPPING[BiomeGenBase.ICE_MOUNTAINS.biomeID] = Biome.ICE_MOUNTAINS;
-        BIOME_MAPPING[BiomeGenBase.MUSHROOM_ISLAND.biomeID] = Biome.MUSHROOM_ISLAND;
-        BIOME_MAPPING[BiomeGenBase.MUSHROOM_SHORE.biomeID] = Biome.MUSHROOM_SHORE;
-        BIOME_MAPPING[BiomeGenBase.BEACH.biomeID] = Biome.BEACH;
-        BIOME_MAPPING[BiomeGenBase.DESERT_HILLS.biomeID] = Biome.DESERT_HILLS;
-        BIOME_MAPPING[BiomeGenBase.FOREST_HILLS.biomeID] = Biome.FOREST_HILLS;
-        BIOME_MAPPING[BiomeGenBase.TAIGA_HILLS.biomeID] = Biome.TAIGA_HILLS;
-        BIOME_MAPPING[BiomeGenBase.SMALL_MOUNTAINS.biomeID] = Biome.SMALL_MOUNTAINS;
-        BIOME_MAPPING[BiomeGenBase.JUNGLE.biomeID] = Biome.JUNGLE;
-        BIOME_MAPPING[BiomeGenBase.JUNGLE_HILLS.biomeID] = Biome.JUNGLE_HILLS;
+        BIOME_MAPPING[BiomeGenBase.swampland.biomeID] = Biome.SWAMPLAND;
+        BIOME_MAPPING[BiomeGenBase.forest.biomeID] = Biome.FOREST;
+        BIOME_MAPPING[BiomeGenBase.taiga.biomeID] = Biome.TAIGA;
+        BIOME_MAPPING[BiomeGenBase.desert.biomeID] = Biome.DESERT;
+        BIOME_MAPPING[BiomeGenBase.plains.biomeID] = Biome.PLAINS;
+        BIOME_MAPPING[BiomeGenBase.hell.biomeID] = Biome.HELL;
+        BIOME_MAPPING[BiomeGenBase.sky.biomeID] = Biome.SKY;
+        BIOME_MAPPING[BiomeGenBase.river.biomeID] = Biome.RIVER;
+        BIOME_MAPPING[BiomeGenBase.extremeHills.biomeID] = Biome.EXTREME_HILLS;
+        BIOME_MAPPING[BiomeGenBase.ocean.biomeID] = Biome.OCEAN;
+        BIOME_MAPPING[BiomeGenBase.frozenOcean.biomeID] = Biome.FROZEN_OCEAN;
+        BIOME_MAPPING[BiomeGenBase.frozenRiver.biomeID] = Biome.FROZEN_RIVER;
+        BIOME_MAPPING[BiomeGenBase.icePlains.biomeID] = Biome.ICE_PLAINS;
+        BIOME_MAPPING[BiomeGenBase.iceMountains.biomeID] = Biome.ICE_MOUNTAINS;
+        BIOME_MAPPING[BiomeGenBase.mushroomIsland.biomeID] = Biome.MUSHROOM_ISLAND;
+        BIOME_MAPPING[BiomeGenBase.mushroomIslandShore.biomeID] = Biome.MUSHROOM_SHORE;
+        BIOME_MAPPING[BiomeGenBase.beach.biomeID] = Biome.BEACH;
+        BIOME_MAPPING[BiomeGenBase.desertHills.biomeID] = Biome.DESERT_HILLS;
+        BIOME_MAPPING[BiomeGenBase.forestHills.biomeID] = Biome.FOREST_HILLS;
+        BIOME_MAPPING[BiomeGenBase.taigaHills.biomeID] = Biome.TAIGA_HILLS;
+        BIOME_MAPPING[BiomeGenBase.extremeHillsEdge.biomeID] = Biome.SMALL_MOUNTAINS;
+        BIOME_MAPPING[BiomeGenBase.jungle.biomeID] = Biome.JUNGLE;
+        BIOME_MAPPING[BiomeGenBase.jungleHills.biomeID] = Biome.JUNGLE_HILLS;
         /* Sanity check - we should have a record for each record in the BiomeBase.a table */
         /* Helps avoid missed biomes when we upgrade bukkit to new code with new biomes */
         for (int i = 0; i < BIOME_MAPPING.length; i++) {
-            if ((BiomeGenBase.biomes[i] != null) && (BIOME_MAPPING[i] == null)) {
+            if ((BiomeGenBase.biomeList[i] != null) && (BIOME_MAPPING[i] == null)) {
                 throw new IllegalArgumentException("Missing Biome mapping for BiomeBase[" + i + "]");
             }
             if (BIOME_MAPPING[i] != null) {  /* Build reverse mapping for setBiome */
-                BIOMEBASE_MAPPING[BIOME_MAPPING[i].ordinal()] = BiomeGenBase.biomes[i];
+                BIOMEBASE_MAPPING[BIOME_MAPPING[i].ordinal()] = BiomeGenBase.biomeList[i];
             }
         }
     }

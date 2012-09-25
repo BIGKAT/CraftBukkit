@@ -11,9 +11,6 @@ import net.minecraft.server.MathHelper;
 import net.minecraft.server.MovingObjectPosition;
 import net.minecraft.server.NBTTagDouble;
 import net.minecraft.server.NBTTagList;
-import net.minecraft.src.*;
-import net.minecraft.src.Entity;
-import net.minecraft.src.EntityLiving;
 
 import org.bukkit.event.entity.ExplosionPrimeEvent;
 import org.bukkit.event.entity.ProjectileHitEvent;
@@ -37,14 +34,14 @@ public class EntityFireball extends net.minecraft.src.Entity {
 
     public EntityFireball(net.minecraft.src.World world) {
         super(world);
-        this.a(1.0F, 1.0F);
+        this.setSize(1.0F, 1.0F);
     }
 
-    protected void a() {}
+    protected void entityInit() {}
 
     public EntityFireball(net.minecraft.src.World world, double d0, double d1, double d2, double d3, double d4, double d5) {
         super(world);
-        this.a(1.0F, 1.0F);
+        this.setSize(1.0F, 1.0F);
         this.setPositionRotation(d0, d1, d2, this.rotationYaw, this.rotationPitch);
         this.setPosition(d0, d1, d2);
         double d6 = (double) MathHelper.sqrt(d3 * d3 + d4 * d4 + d5 * d5);
@@ -57,10 +54,10 @@ public class EntityFireball extends net.minecraft.src.Entity {
     public EntityFireball(net.minecraft.src.World world, net.minecraft.src.EntityLiving entityliving, double d0, double d1, double d2) {
         super(world);
         this.shootingEntity = entityliving;
-        this.a(1.0F, 1.0F);
+        this.setSize(1.0F, 1.0F);
         this.setPositionRotation(entityliving.posX, entityliving.posY, entityliving.posZ, entityliving.rotationYaw, entityliving.rotationPitch);
         this.setPosition(this.posX, this.posY, this.posZ);
-        this.height = 0.0F;
+        this.yOffset = 0.0F;
         this.motionX = this.motionY = this.motionZ = 0.0D;
         // CraftBukkit start - (added setDirection method)
         this.setDirection(d0, d1, d2);
@@ -222,7 +219,7 @@ public class EntityFireball extends net.minecraft.src.Entity {
         }
     }
 
-    public void b(net.minecraft.src.NBTTagCompound nbttagcompound) {
+    public void readEntityFromNBT(net.minecraft.src.NBTTagCompound nbttagcompound) {
         nbttagcompound.setShort("xTile", (short) this.e);
         nbttagcompound.setShort("yTile", (short) this.f);
         nbttagcompound.setShort("zTile", (short) this.g);
@@ -231,7 +228,7 @@ public class EntityFireball extends net.minecraft.src.Entity {
         nbttagcompound.set("direction", this.a(new double[] { this.motionX, this.motionY, this.motionZ}));
     }
 
-    public void a(net.minecraft.src.NBTTagCompound nbttagcompound) {
+    public void writeEntityToNBT(net.minecraft.src.NBTTagCompound nbttagcompound) {
         this.e = nbttagcompound.getShort("xTile");
         this.f = nbttagcompound.getShort("yTile");
         this.g = nbttagcompound.getShort("zTile");

@@ -2,9 +2,9 @@ package org.bukkit.craftbukkit.inventory;
 
 import java.util.HashMap;
 import java.util.Map;
-import net.minecraft.server.EnchantmentManager;
+import net.minecraft.src.EnchantmentHelper;
 import net.minecraft.src.NBTTagCompound;
-import net.minecraft.server.NBTTagList;
+import net.minecraft.src.NBTTagList;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.Material;
@@ -136,7 +136,7 @@ public class CraftItemStack extends ItemStack {
 
     @Override
     public int getMaxStackSize() {
-        return (item == null) ? 0 : item.getItem().getMaxStackSize();
+        return (item == null) ? 0 : item.getItem().getItemStackLimit();
     }
 
     @Override
@@ -154,7 +154,7 @@ public class CraftItemStack extends ItemStack {
     @Override
     public int getEnchantmentLevel(Enchantment ench) {
         if (item == null) return 0;
-        return EnchantmentManager.getEnchantmentLevel(ench.getId(), item);
+        return EnchantmentHelper.getEnchantmentLevel(ench.getId(), item);
     }
 
     @Override
@@ -176,9 +176,9 @@ public class CraftItemStack extends ItemStack {
             return result;
         }
 
-        for (int i = 0; i < list.size(); i++) {
-            short id = ((NBTTagCompound) list.get(i)).getShort("id");
-            short level = ((NBTTagCompound) list.get(i)).getShort("lvl");
+        for (int i = 0; i < list.tagCount(); i++) {
+            short id = ((NBTTagCompound) list.tagAt(i)).getShort("id");
+            short level = ((NBTTagCompound) list.tagAt(i)).getShort("lvl");
 
             result.put(Enchantment.getById(id), (int) level);
         }
@@ -202,7 +202,7 @@ public class CraftItemStack extends ItemStack {
             subtag.setShort("id", (short) entry.getKey().getId());
             subtag.setShort("lvl", (short) (int) entry.getValue());
 
-            list.add(subtag);
+            list.appendTag(subtag);
         }
 
         if (enchantments.isEmpty()) {

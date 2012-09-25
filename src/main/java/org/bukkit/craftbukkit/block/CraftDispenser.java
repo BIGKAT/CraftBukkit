@@ -1,7 +1,7 @@
 package org.bukkit.craftbukkit.block;
 
 import java.util.Random;
-import net.minecraft.server.BlockDispenser;
+import net.minecraft.src.BlockDispenser;
 import net.minecraft.src.TileEntityDispenser;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
@@ -30,7 +30,7 @@ public class CraftDispenser extends CraftBlockState implements Dispenser {
 
         synchronized (block) {
             if (block.getType() == Material.DISPENSER) {
-                BlockDispenser dispense = (BlockDispenser) net.minecraft.server.Block.dispenser;
+                BlockDispenser dispense = (BlockDispenser) net.minecraft.src.Block.dispenser;
 
                 dispense.dispenseItem(world.getHandle(), getX(), getY(), getZ(), new Random());
                 return true;

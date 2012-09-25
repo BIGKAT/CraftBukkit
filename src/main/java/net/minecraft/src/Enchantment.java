@@ -44,10 +44,10 @@ public abstract class Enchantment {
     public static final Enchantment ARROW_INFINITE = new EnchantmentInfiniteArrows(51, 1);
     public final int effectId;
     private final int weight;
-    public EnchantmentSlotType type;
+    public EnumEnchantmentType type;
     protected String name;
 
-    protected Enchantment(int i, int j, EnchantmentSlotType enchantmentslottype) {
+    protected Enchantment(int i, int j, EnumEnchantmentType enchantmentslottype) {
         this.effectId = i;
         this.weight = j;
         this.type = enchantmentslottype;

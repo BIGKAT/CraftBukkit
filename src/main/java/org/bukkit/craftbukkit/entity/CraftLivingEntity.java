@@ -6,19 +6,20 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 
-import net.minecraft.server.DamageSource;
-import net.minecraft.src.EntityDragonBase;
+import net.minecraft.src.Packet42RemoveEntityEffect;
+import net.minecraft.src.DamageSource;
 import net.minecraft.src.EntityArrow;
+import net.minecraft.src.EntityDragonBase;
 import net.minecraft.src.EntityEgg;
 import net.minecraft.src.EntityEnderPearl;
 import net.minecraft.src.EntityFireball;
 import net.minecraft.src.EntityLiving;
 import net.minecraft.src.EntityPlayerMP;
 import net.minecraft.src.EntitySmallFireball;
-import net.minecraft.server.EntitySnowball;
-import net.minecraft.server.MobEffect;
+import net.minecraft.src.EntitySnowball;
 import net.minecraft.src.Potion;
-import net.minecraft.server.Packet42RemoveMobEffect;
+import net.minecraft.src.World;
+import org.apache.commons.lang.Validate;
 
 import org.bukkit.Location;
 import org.bukkit.block.Block;
@@ -26,11 +27,11 @@ import org.bukkit.craftbukkit.CraftServer;
 import org.bukkit.craftbukkit.CraftWorld;
 import org.bukkit.entity.Arrow;
 import org.bukkit.entity.Egg;
+import org.bukkit.entity.EnderPearl;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
-import org.bukkit.entity.HumanEntity;
-import org.bukkit.entity.EnderPearl;
 import org.bukkit.entity.Fireball;
+import org.bukkit.entity.HumanEntity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.Projectile;
@@ -40,9 +41,6 @@ import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.util.BlockIterator;
 import org.bukkit.util.Vector;
-
-import net.minecraft.src.World;
-import org.apache.commons.lang.Validate;
 
 public class CraftLivingEntity extends CraftEntity implements LivingEntity {
     public CraftLivingEntity(final CraftServer server, final EntityLiving entity) {
@@ -59,10 +57,10 @@ public class CraftLivingEntity extends CraftEntity implements LivingEntity {
         }
 
         if (entity instanceof EntityPlayerMP && health == 0) {
-            ((EntityPlayerMP) entity).die(DamageSource.GENERIC);
+            ((EntityPlayerMP) entity).onDeath(DamageSource.generic);
         }
 
-        getHandle().setHealth(health);
+        getHandle().setEntityHealth(health);
     }
 
     public int getMaxHealth() {
@@ -140,11 +138,11 @@ public class CraftLivingEntity extends CraftEntity implements LivingEntity {
     }
 
     public int getMaximumAir() {
-        return getHandle().maxAirTicks;
+        return getHandle().getAir();
     }
 
     public void setMaximumAir(int ticks) {
-        getHandle().maxAirTicks = ticks;
+        getHandle().setAir(ticks);
     }
 
     public void damage(int amount) {
@@ -152,18 +150,18 @@ public class CraftLivingEntity extends CraftEntity implements LivingEntity {
     }
 
     public void damage(int amount, org.bukkit.entity.Entity source) {
-        DamageSource reason = DamageSource.GENERIC;
+        DamageSource reason = DamageSource.generic;
 
         if (source instanceof HumanEntity) {
-            reason = DamageSource.playerAttack(((CraftHumanEntity) source).getHandle());
+            reason = DamageSource.causePlayerDamage(((CraftHumanEntity) source).getHandle());
         } else if (source instanceof LivingEntity) {
-            reason = DamageSource.mobAttack(((CraftLivingEntity) source).getHandle());
+            reason = DamageSource.causeMobDamage(((CraftLivingEntity) source).getHandle());
         }
 
         if (entity instanceof EntityDragonBase) {
-            ((EntityDragonBase) entity).dealDamage(reason, amount);
+            entity.attackEntityFrom(reason, amount);
         } else {
-            entity.damageEntity(reason, amount);
+            entity.attackEntityFrom(reason, amount);
         }
     }
 
@@ -182,11 +180,11 @@ public class CraftLivingEntity extends CraftEntity implements LivingEntity {
     }
 
     public int getLastDamage() {
-        return getHandle().lastDamage;
+        return getHandle().carryoverDamage;
     }
 
     public void setLastDamage(int damage) {
-        getHandle().lastDamage = damage;
+        getHandle().carryoverDamage = damage;
     }
 
     public int getNoDamageTicks() {
@@ -212,7 +210,7 @@ public class CraftLivingEntity extends CraftEntity implements LivingEntity {
     }
 
     public Player getKiller() {
-        return getHandle().attackingPlayer == null ? null : (Player) getHandle().attackingPlayer.getBukkitEntity();
+        return getHandle().getLastAttackingEntity() == null ? null : (Player) getHandle().getLastAttackingEntity().getBukkitEntity();
     }
 
     public boolean addPotionEffect(PotionEffect effect) {
@@ -226,7 +224,7 @@ public class CraftLivingEntity extends CraftEntity implements LivingEntity {
             }
             removePotionEffect(effect.getType());
         }
-        getHandle().addPotionEffect(new MobEffect(effect.getType().getId(), effect.getDuration(), effect.getAmplifier()));
+        getHandle().addPotionEffect(new net.minecraft.src.PotionEffect(effect.getType().getId(), effect.getDuration(), effect.getAmplifier()));
         return true;
     }
 
@@ -239,25 +237,28 @@ public class CraftLivingEntity extends CraftEntity implements LivingEntity {
     }
 
     public boolean hasPotionEffect(PotionEffectType type) {
-        return getHandle().hasEffect(Potion.byId[type.getId()]);
+        return getHandle().isPotionActive(Potion.potionTypes[type.getId()]);
     }
 
     public void removePotionEffect(PotionEffectType type) {
         getHandle().activePotionsMap.remove(type.getId());
         getHandle().potionsNeedUpdate = true;
         if (getHandle() instanceof EntityPlayerMP) {
-            if (((EntityPlayerMP) getHandle()).serverForThisPlayer == null) return;
-            ((EntityPlayerMP) getHandle()).serverForThisPlayer.sendPacketToPlayer(new Packet42RemoveMobEffect(getHandle().entityId, new MobEffect(type.getId(), 0, 0)));
+			if (((EntityPlayerMP) getHandle()).serverForThisPlayer == null) {
+				return;
+			}
+            ((EntityPlayerMP) getHandle()).serverForThisPlayer.sendPacketToPlayer(new Packet42RemoveEntityEffect(getHandle().entityId, new net.minecraft.src.PotionEffect(type.getId(), 0, 0)));
         }
     }
 
     public Collection<PotionEffect> getActivePotionEffects() {
         List<PotionEffect> effects = new ArrayList<PotionEffect>();
         for (Object raw : getHandle().activePotionsMap.values()) {
-            if (!(raw instanceof MobEffect))
-                continue;
-            MobEffect handle = (MobEffect) raw;
-            effects.add(new PotionEffect(PotionEffectType.getById(handle.getEffectId()), handle.getDuration(), handle.getAmplifier()));
+			if (!(raw instanceof net.minecraft.src.PotionEffect)) {
+				continue;
+			}
+            net.minecraft.src.PotionEffect handle = (net.minecraft.src.PotionEffect) raw;
+            effects.add(new PotionEffect(PotionEffectType.getById(handle.getPotionID()), handle.getDuration(), handle.getAmplifier()));
         }
         return effects;
     }
@@ -285,13 +286,13 @@ public class CraftLivingEntity extends CraftEntity implements LivingEntity {
             Location location = getEyeLocation();
             Vector direction = location.getDirection().multiply(10);
 
-            launch.setPositionRotation(location.getX(), location.getY(), location.getZ(), location.getYaw(), location.getPitch());
-            ((EntityFireball) launch).setDirection(direction.getX(), direction.getY(), direction.getZ());
+            launch.setPositionAndRotation(location.getX(), location.getY(), location.getZ(), location.getYaw(), location.getPitch());
+            launch.setVelocity(direction.getX(), direction.getY(), direction.getZ());
         }
 
         Validate.notNull(launch, "Projectile not supported");
 
-        world.addEntity(launch);
+        world.joinEntityInSurroundings(launch);
         return (T) launch.getBukkitEntity();
     }
 

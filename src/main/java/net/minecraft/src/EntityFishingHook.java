@@ -5,12 +5,6 @@ import java.util.List;
 
 // CraftBukkit start
 
-import net.minecraft.server.*;
-import net.minecraft.src.*;
-import net.minecraft.src.EntityItem;
-import net.minecraft.src.EntityPlayer;
-import net.minecraft.src.ItemStack;
-
 import org.bukkit.entity.Player;
 import org.bukkit.event.player.PlayerFishEvent;
 // CraftBukkit end
@@ -37,7 +31,7 @@ public class EntityFishingHook extends Entity {
 
     public EntityFishingHook(net.minecraft.src.World world) {
         super(world);
-        this.a(0.25F, 0.25F);
+        this.setSize(0.25F, 0.25F);
         this.ak = true;
     }
 
@@ -46,13 +40,13 @@ public class EntityFishingHook extends Entity {
         this.ak = true;
         this.angler = entityhuman;
         this.angler.hookedFish = this;
-        this.a(0.25F, 0.25F);
-        this.setPositionRotation(entityhuman.posX, entityhuman.posY + 1.62D - (double) entityhuman.height, entityhuman.posZ, entityhuman.rotationYaw, entityhuman.rotationPitch);
+        this.setSize(0.25F, 0.25F);
+        this.setPositionRotation(entityhuman.posX, entityhuman.posY + 1.62D - (double) entityhuman.yOffset, entityhuman.posZ, entityhuman.rotationYaw, entityhuman.rotationPitch);
         this.posX -= (double) (MathHelper.cos(this.rotationYaw / 180.0F * 3.1415927F) * 0.16F);
         this.posY -= 0.10000000149011612D;
         this.posZ -= (double) (MathHelper.sin(this.rotationYaw / 180.0F * 3.1415927F) * 0.16F);
         this.setPosition(this.posX, this.posY, this.posZ);
-        this.height = 0.0F;
+        this.yOffset = 0.0F;
         float f = 0.4F;
 
         this.motionX = (double) (-MathHelper.sin(this.rotationYaw / 180.0F * 3.1415927F) * MathHelper.cos(this.rotationPitch / 180.0F * 3.1415927F) * f);
@@ -61,7 +55,7 @@ public class EntityFishingHook extends Entity {
         this.c(this.motionX, this.motionY, this.motionZ, 1.5F, 1.0F);
     }
 
-    protected void a() {}
+    protected void entityInit() {}
 
     public void c(double d0, double d1, double d2, float f, float f1) {
         float f2 = MathHelper.sqrt(d0 * d0 + d1 * d1 + d2 * d2);
@@ -292,7 +286,7 @@ public class EntityFishingHook extends Entity {
         }
     }
 
-    public void b(net.minecraft.src.NBTTagCompound nbttagcompound) {
+    public void readEntityFromNBT(net.minecraft.src.NBTTagCompound nbttagcompound) {
         nbttagcompound.setShort("xTile", (short) this.d);
         nbttagcompound.setShort("yTile", (short) this.e);
         nbttagcompound.setShort("zTile", (short) this.f);
@@ -301,7 +295,7 @@ public class EntityFishingHook extends Entity {
         nbttagcompound.setByte("inGround", (byte) (this.h ? 1 : 0));
     }
 
-    public void a(net.minecraft.src.NBTTagCompound nbttagcompound) {
+    public void writeEntityToNBT(net.minecraft.src.NBTTagCompound nbttagcompound) {
         this.d = nbttagcompound.getShort("xTile");
         this.e = nbttagcompound.getShort("yTile");
         this.f = nbttagcompound.getShort("zTile");

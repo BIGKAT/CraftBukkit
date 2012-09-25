@@ -21,19 +21,19 @@ public class EntitySlime extends EntityLiving implements IMonster {
         this.texture = "/mob/slime.png";
         int i = 1 << this.random.nextInt(3);
 
-        this.height = 0.0F;
+        this.yOffset = 0.0F;
         this.jumpDelay = this.random.nextInt(20) + 10;
         this.setSlimeSize(i);
     }
 
-    protected void a() {
-        super.a();
+    protected void entityInit() {
+        super.entityInit();
         this.datawatcher.a(16, new Byte((byte) 1));
     }
 
     public void setSlimeSize(int i) {
         this.datawatcher.watch(16, new Byte((byte) i));
-        this.a(0.6F * (float) i, 0.6F * (float) i);
+        this.setSize(0.6F * (float) i, 0.6F * (float) i);
         this.setPosition(this.posX, this.posY, this.posZ);
         this.setHealth(this.getMaxHealth());
         this.aV = i;
@@ -49,13 +49,13 @@ public class EntitySlime extends EntityLiving implements IMonster {
         return this.datawatcher.getByte(16);
     }
 
-    public void b(net.minecraft.src.NBTTagCompound nbttagcompound) {
-        super.b(nbttagcompound);
+    public void readEntityFromNBT(net.minecraft.src.NBTTagCompound nbttagcompound) {
+        super.readEntityFromNBT(nbttagcompound);
         nbttagcompound.setInteger("Size", this.getSlimeSize() - 1);
     }
 
-    public void a(net.minecraft.src.NBTTagCompound nbttagcompound) {
-        super.a(nbttagcompound);
+    public void writeEntityToNBT(net.minecraft.src.NBTTagCompound nbttagcompound) {
+        super.writeEntityToNBT(nbttagcompound);
         this.setSlimeSize(nbttagcompound.getInteger("Size") + 1);
     }
 

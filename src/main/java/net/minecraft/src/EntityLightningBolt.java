@@ -9,7 +9,7 @@ import net.minecraft.server.MathHelper;
 
 import org.bukkit.event.block.BlockIgniteEvent; // CraftBukkit
 
-public class EntityLightningBolt extends EntityWeather {
+public class EntityLightningBolt extends EntityWeatherEffect {
 
     private int lifeTicks;
     public long a = 0L;
@@ -126,9 +126,9 @@ public class EntityLightningBolt extends EntityWeather {
         }
     }
 
-    protected void a() {}
+    protected void entityInit() {}
 
-    protected void a(net.minecraft.src.NBTTagCompound nbttagcompound) {}
+    protected void writeEntityToNBT(net.minecraft.src.NBTTagCompound nbttagcompound) {}
 
-    protected void b(net.minecraft.src.NBTTagCompound nbttagcompound) {}
+    protected void readEntityFromNBT(net.minecraft.src.NBTTagCompound nbttagcompound) {}
 }

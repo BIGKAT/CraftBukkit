@@ -7,7 +7,6 @@ import java.util.List;
 import java.util.HashMap;
 
 import net.minecraft.server.AxisAlignedBB;
-import net.minecraft.src.EntityProjectile;
 import net.minecraft.server.Item;
 import net.minecraft.server.MobEffect;
 import net.minecraft.server.MovingObjectPosition;
@@ -125,13 +124,13 @@ public class EntityPotion extends EntityProjectile {
         }
     }
 
-    public void a(net.minecraft.src.NBTTagCompound nbttagcompound) {
-        super.a(nbttagcompound);
+    public void writeEntityToNBT(net.minecraft.src.NBTTagCompound nbttagcompound) {
+        super.writeEntityToNBT(nbttagcompound);
         this.d = nbttagcompound.getInteger("potionValue");
     }
 
-    public void b(net.minecraft.src.NBTTagCompound nbttagcompound) {
-        super.b(nbttagcompound);
+    public void readEntityFromNBT(net.minecraft.src.NBTTagCompound nbttagcompound) {
+        super.readEntityFromNBT(nbttagcompound);
         nbttagcompound.setInteger("potionValue", this.d);
     }
 }

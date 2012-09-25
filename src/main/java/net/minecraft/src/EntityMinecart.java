@@ -4,8 +4,6 @@ import java.util.List;
 
 // CraftBukkit start
 
-import net.minecraft.server.*;
-
 import org.bukkit.Location;
 import org.bukkit.entity.HumanEntity;
 import org.bukkit.entity.Vehicle;
@@ -78,15 +76,15 @@ public class EntityMinecart extends Entity implements IInventory {
         this.e = 0;
         this.f = false;
         this.m = true;
-        this.a(0.98F, 0.7F);
-        this.height = this.length / 2.0F;
+        this.setSize(0.98F, 0.7F);
+        this.yOffset = this.length / 2.0F;
     }
 
     protected boolean e_() {
         return false;
     }
 
-    protected void a() {
+    protected void entityInit() {
         this.datawatcher.a(16, new Byte((byte) 0));
         this.datawatcher.a(17, new Integer(0));
         this.datawatcher.a(18, new Integer(1));
@@ -107,7 +105,7 @@ public class EntityMinecart extends Entity implements IInventory {
 
     public EntityMinecart(net.minecraft.src.World world, double d0, double d1, double d2, int i) {
         this(world);
-        this.setPosition(d0, d1 + (double) this.height, d2);
+        this.setPosition(d0, d1 + (double) this.yOffset, d2);
         this.motionX = 0.0D;
         this.motionY = 0.0D;
         this.motionZ = 0.0D;
@@ -409,7 +407,7 @@ public class EntityMinecart extends Entity implements IInventory {
 
                 this.posX = d11 + d6 * d12;
                 this.posZ = d13 + d7 * d12;
-                this.setPosition(this.posX, this.posY + (double) this.height, this.posZ);
+                this.setPosition(this.posX, this.posY + (double) this.yOffset, this.posZ);
                 d16 = this.motionX;
                 d17 = this.motionZ;
                 if (this.riddenByEntity != null) {
@@ -701,7 +699,7 @@ public class EntityMinecart extends Entity implements IInventory {
         }
     }
 
-    protected void b(net.minecraft.src.NBTTagCompound nbttagcompound) {
+    protected void readEntityFromNBT(net.minecraft.src.NBTTagCompound nbttagcompound) {
         nbttagcompound.setInteger("Type", this.type);
         if (this.type == 2) {
             nbttagcompound.setDouble("PushX", this.b);
@@ -724,7 +722,7 @@ public class EntityMinecart extends Entity implements IInventory {
         }
     }
 
-    protected void a(net.minecraft.src.NBTTagCompound nbttagcompound) {
+    protected void writeEntityToNBT(net.minecraft.src.NBTTagCompound nbttagcompound) {
         this.type = nbttagcompound.getInteger("Type");
         if (this.type == 2) {
             this.b = nbttagcompound.getDouble("PushX");
