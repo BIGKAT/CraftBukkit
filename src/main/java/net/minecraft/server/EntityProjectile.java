@@ -13,7 +13,7 @@ public abstract class EntityProjectile extends Entity {
     private int inBlockId = 0;
     protected boolean inGround = false;
     public int shake = 0;
-    public EntityLiving shooter; // CraftBukkit - protected -> public
+    public EntityLiving shootingEntity; // CraftBukkit - protected -> public
     private int h;
     private int i = 0;
 
@@ -26,20 +26,20 @@ public abstract class EntityProjectile extends Entity {
 
     public EntityProjectile(World world, EntityLiving entityliving) {
         super(world);
-        this.shooter = entityliving;
+        this.shootingEntity = entityliving;
         this.a(0.25F, 0.25F);
-        this.setPositionRotation(entityliving.locX, entityliving.locY + (double) entityliving.getHeadHeight(), entityliving.locZ, entityliving.yaw, entityliving.pitch);
-        this.locX -= (double) (MathHelper.cos(this.yaw / 180.0F * 3.1415927F) * 0.16F);
-        this.locY -= 0.10000000149011612D;
-        this.locZ -= (double) (MathHelper.sin(this.yaw / 180.0F * 3.1415927F) * 0.16F);
-        this.setPosition(this.locX, this.locY, this.locZ);
+        this.setPositionRotation(entityliving.posX, entityliving.posY + (double) entityliving.getHeadHeight(), entityliving.posZ, entityliving.rotationYaw, entityliving.rotationPitch);
+        this.posX -= (double) (MathHelper.cos(this.rotationYaw / 180.0F * 3.1415927F) * 0.16F);
+        this.posY -= 0.10000000149011612D;
+        this.posZ -= (double) (MathHelper.sin(this.rotationYaw / 180.0F * 3.1415927F) * 0.16F);
+        this.setPosition(this.posX, this.posY, this.posZ);
         this.height = 0.0F;
         float f = 0.4F;
 
-        this.motX = (double) (-MathHelper.sin(this.yaw / 180.0F * 3.1415927F) * MathHelper.cos(this.pitch / 180.0F * 3.1415927F) * f);
-        this.motZ = (double) (MathHelper.cos(this.yaw / 180.0F * 3.1415927F) * MathHelper.cos(this.pitch / 180.0F * 3.1415927F) * f);
-        this.motY = (double) (-MathHelper.sin((this.pitch + this.g()) / 180.0F * 3.1415927F) * f);
-        this.c(this.motX, this.motY, this.motZ, this.d(), 1.0F);
+        this.motionX = (double) (-MathHelper.sin(this.rotationYaw / 180.0F * 3.1415927F) * MathHelper.cos(this.rotationPitch / 180.0F * 3.1415927F) * f);
+        this.motionZ = (double) (MathHelper.cos(this.rotationYaw / 180.0F * 3.1415927F) * MathHelper.cos(this.rotationPitch / 180.0F * 3.1415927F) * f);
+        this.motionY = (double) (-MathHelper.sin((this.rotationPitch + this.g()) / 180.0F * 3.1415927F) * f);
+        this.c(this.motionX, this.motionY, this.motionZ, this.d(), 1.0F);
     }
 
     public EntityProjectile(World world, double d0, double d1, double d2) {
@@ -70,67 +70,67 @@ public abstract class EntityProjectile extends Entity {
         d0 *= (double) f;
         d1 *= (double) f;
         d2 *= (double) f;
-        this.motX = d0;
-        this.motY = d1;
-        this.motZ = d2;
+        this.motionX = d0;
+        this.motionY = d1;
+        this.motionZ = d2;
         float f3 = MathHelper.sqrt(d0 * d0 + d2 * d2);
 
-        this.lastYaw = this.yaw = (float) (Math.atan2(d0, d2) * 180.0D / 3.1415927410125732D);
-        this.lastPitch = this.pitch = (float) (Math.atan2(d1, (double) f3) * 180.0D / 3.1415927410125732D);
+        this.lastYaw = this.rotationYaw = (float) (Math.atan2(d0, d2) * 180.0D / 3.1415927410125732D);
+        this.lastPitch = this.rotationPitch = (float) (Math.atan2(d1, (double) f3) * 180.0D / 3.1415927410125732D);
         this.h = 0;
     }
 
     public void h_() {
-        this.S = this.locX;
-        this.T = this.locY;
-        this.U = this.locZ;
+        this.S = this.posX;
+        this.T = this.posY;
+        this.U = this.posZ;
         super.h_();
         if (this.shake > 0) {
             --this.shake;
         }
 
         if (this.inGround) {
-            int i = this.world.getTypeId(this.blockX, this.blockY, this.blockZ);
+            int i = this.worldObj.getBlockId(this.blockX, this.blockY, this.blockZ);
 
             if (i == this.inBlockId) {
                 ++this.h;
                 if (this.h == 1200) {
-                    this.die();
+                    this.setDead();
                 }
 
                 return;
             }
 
             this.inGround = false;
-            this.motX *= (double) (this.random.nextFloat() * 0.2F);
-            this.motY *= (double) (this.random.nextFloat() * 0.2F);
-            this.motZ *= (double) (this.random.nextFloat() * 0.2F);
+            this.motionX *= (double) (this.random.nextFloat() * 0.2F);
+            this.motionY *= (double) (this.random.nextFloat() * 0.2F);
+            this.motionZ *= (double) (this.random.nextFloat() * 0.2F);
             this.h = 0;
             this.i = 0;
         } else {
             ++this.i;
         }
 
-        Vec3D vec3d = Vec3D.a().create(this.locX, this.locY, this.locZ);
-        Vec3D vec3d1 = Vec3D.a().create(this.locX + this.motX, this.locY + this.motY, this.locZ + this.motZ);
-        MovingObjectPosition movingobjectposition = this.world.a(vec3d, vec3d1);
+        Vec3D vec3d = Vec3D.a().create(this.posX, this.posY, this.posZ);
+        Vec3D vec3d1 = Vec3D.a().create(this.posX + this.motionX, this.posY + this.motionY, this.posZ + this.motionZ);
+        MovingObjectPosition movingobjectposition = this.worldObj.a(vec3d, vec3d1);
 
-        vec3d = Vec3D.a().create(this.locX, this.locY, this.locZ);
-        vec3d1 = Vec3D.a().create(this.locX + this.motX, this.locY + this.motY, this.locZ + this.motZ);
+        vec3d = Vec3D.a().create(this.posX, this.posY, this.posZ);
+        vec3d1 = Vec3D.a().create(this.posX + this.motionX, this.posY + this.motionY, this.posZ + this.motionZ);
         if (movingobjectposition != null) {
             vec3d1 = Vec3D.a().create(movingobjectposition.pos.a, movingobjectposition.pos.b, movingobjectposition.pos.c);
         }
 
-        if (!this.world.isStatic) {
+        if (!this.worldObj.isStatic) {
             Entity entity = null;
-            List list = this.world.getEntities(this, this.boundingBox.a(this.motX, this.motY, this.motZ).grow(1.0D, 1.0D, 1.0D));
+            List list = this.worldObj.getEntities(this, this.boundingBox.a(this.motionX, this.motionY, this.motionZ).grow(1.0D, 1.0D, 1.0D));
             double d0 = 0.0D;
             Iterator iterator = list.iterator();
 
             while (iterator.hasNext()) {
                 Entity entity1 = (Entity) iterator.next();
 
-                if (entity1.L() && (entity1 != this.shooter || this.i >= 5)) {
+                if (entity1.L() && (entity1 != this.shootingEntity || this.i >= 5)) {
                     float f = 0.3F;
                     AxisAlignedBB axisalignedbb = entity1.boundingBox.grow((double) f, (double) f, (double) f);
                     MovingObjectPosition movingobjectposition1 = axisalignedbb.a(vec3d, vec3d1);
@@ -154,38 +154,38 @@ public abstract class EntityProjectile extends Entity {
         if (movingobjectposition != null) {
             this.a(movingobjectposition);
             // CraftBukkit start
-            if (this.dead) {
+            if (this.isDead) {
                 ProjectileHitEvent hitEvent = new ProjectileHitEvent((org.bukkit.entity.Projectile) this.getBukkitEntity());
                 org.bukkit.Bukkit.getPluginManager().callEvent(hitEvent);
             }
             // CraftBukkit end
         }
 
-        this.locX += this.motX;
-        this.locY += this.motY;
-        this.locZ += this.motZ;
-        float f1 = MathHelper.sqrt(this.motX * this.motX + this.motZ * this.motZ);
+        this.posX += this.motionX;
+        this.posY += this.motionY;
+        this.posZ += this.motionZ;
+        float f1 = MathHelper.sqrt(this.motionX * this.motionX + this.motionZ * this.motionZ);
 
-        this.yaw = (float) (Math.atan2(this.motX, this.motZ) * 180.0D / 3.1415927410125732D);
+        this.rotationYaw = (float) (Math.atan2(this.motionX, this.motionZ) * 180.0D / 3.1415927410125732D);
 
-        for (this.pitch = (float) (Math.atan2(this.motY, (double) f1) * 180.0D / 3.1415927410125732D); this.pitch - this.lastPitch < -180.0F; this.lastPitch -= 360.0F) {
+        for (this.rotationPitch = (float) (Math.atan2(this.motionY, (double) f1) * 180.0D / 3.1415927410125732D); this.rotationPitch - this.lastPitch < -180.0F; this.lastPitch -= 360.0F) {
             ;
         }
 
-        while (this.pitch - this.lastPitch >= 180.0F) {
+        while (this.rotationPitch - this.lastPitch >= 180.0F) {
             this.lastPitch += 360.0F;
         }
 
-        while (this.yaw - this.lastYaw < -180.0F) {
+        while (this.rotationYaw - this.lastYaw < -180.0F) {
             this.lastYaw -= 360.0F;
         }
 
-        while (this.yaw - this.lastYaw >= 180.0F) {
+        while (this.rotationYaw - this.lastYaw >= 180.0F) {
             this.lastYaw += 360.0F;
         }
 
-        this.pitch = this.lastPitch + (this.pitch - this.lastPitch) * 0.2F;
-        this.yaw = this.lastYaw + (this.yaw - this.lastYaw) * 0.2F;
+        this.rotationPitch = this.lastPitch + (this.rotationPitch - this.lastPitch) * 0.2F;
+        this.rotationYaw = this.lastYaw + (this.rotationYaw - this.lastYaw) * 0.2F;
         float f2 = 0.99F;
         float f3 = this.h();
 
@@ -193,17 +193,17 @@ public abstract class EntityProjectile extends Entity {
             for (int j = 0; j < 4; ++j) {
                 float f4 = 0.25F;
 
-                this.world.a("bubble", this.locX - this.motX * (double) f4, this.locY - this.motY * (double) f4, this.locZ - this.motZ * (double) f4, this.motX, this.motY, this.motZ);
+                this.worldObj.a("bubble", this.posX - this.motionX * (double) f4, this.posY - this.motionY * (double) f4, this.posZ - this.motionZ * (double) f4, this.motionX, this.motionY, this.motionZ);
             }
 
             f2 = 0.8F;
         }
 
-        this.motX *= (double) f2;
-        this.motY *= (double) f2;
-        this.motZ *= (double) f2;
-        this.motY -= (double) f3;
-        this.setPosition(this.locX, this.locY, this.locZ);
+        this.motionX *= (double) f2;
+        this.motionY *= (double) f2;
+        this.motionZ *= (double) f2;
+        this.motionY -= (double) f3;
+        this.setPosition(this.posX, this.posY, this.posZ);
     }
 
     protected float h() {

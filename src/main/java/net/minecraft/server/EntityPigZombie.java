@@ -27,16 +27,16 @@ public class EntityPigZombie extends EntityZombie {
     }
 
     public void h_() {
-        this.bw = this.target != null ? 0.95F : 0.5F;
+        this.bw = this.entityToAttack != null ? 0.95F : 0.5F;
         if (this.soundDelay > 0 && --this.soundDelay == 0) {
-            this.world.makeSound(this, "mob.zombiepig.zpigangry", this.aP() * 2.0F, ((this.random.nextFloat() - this.random.nextFloat()) * 0.2F + 1.0F) * 1.8F);
+            this.worldObj.makeSound(this, "mob.zombiepig.zpigangry", this.aP() * 2.0F, ((this.random.nextFloat() - this.random.nextFloat()) * 0.2F + 1.0F) * 1.8F);
         }
 
         super.h_();
     }
 
     public boolean canSpawn() {
-        return this.world.difficulty > 0 && this.world.b(this.boundingBox) && this.world.getCubes(this, this.boundingBox).isEmpty() && !this.world.containsLiquid(this.boundingBox);
+        return this.worldObj.difficulty > 0 && this.worldObj.b(this.boundingBox) && this.worldObj.getCubes(this, this.boundingBox).isEmpty() && !this.worldObj.containsLiquid(this.boundingBox);
     }
 
     public void b(NBTTagCompound nbttagcompound) {
@@ -57,7 +57,7 @@ public class EntityPigZombie extends EntityZombie {
         Entity entity = damagesource.getEntity();
 
         if (entity instanceof EntityHuman) {
-            List list = this.world.getEntities(this, this.boundingBox.grow(32.0D, 32.0D, 32.0D));
+            List list = this.worldObj.getEntities(this, this.boundingBox.grow(32.0D, 32.0D, 32.0D));
             Iterator iterator = list.iterator();
 
             while (iterator.hasNext()) {
@@ -81,20 +81,20 @@ public class EntityPigZombie extends EntityZombie {
         org.bukkit.entity.Entity bukkitTarget = entity == null ? null : entity.getBukkitEntity();
 
         EntityTargetEvent event = new EntityTargetEvent(this.getBukkitEntity(), bukkitTarget, EntityTargetEvent.TargetReason.PIG_ZOMBIE_TARGET);
-        this.world.getServer().getPluginManager().callEvent(event);
+        this.worldObj.getServer().getPluginManager().callEvent(event);
 
         if (event.isCancelled()) {
             return;
         }
 
         if (event.getTarget() == null) {
-            this.target = null;
+            this.entityToAttack = null;
             return;
         }
         entity = ((org.bukkit.craftbukkit.entity.CraftEntity) event.getTarget()).getHandle();
         // CraftBukkit end
 
-        this.target = entity;
+        this.entityToAttack = entity;
         this.angerLevel = 400 + this.random.nextInt(400);
         this.soundDelay = this.random.nextInt(40);
     }

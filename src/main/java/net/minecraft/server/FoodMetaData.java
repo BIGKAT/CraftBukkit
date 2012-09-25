@@ -24,7 +24,7 @@ public class FoodMetaData {
     }
 
     public void a(EntityHuman entityhuman) {
-        int i = entityhuman.world.difficulty;
+        int i = entityhuman.worldObj.difficulty;
 
         this.e = this.foodLevel;
         if (this.exhaustionLevel > 4.0F) {
@@ -55,7 +55,7 @@ public class FoodMetaData {
                 if (entityhuman.getHealth() > 10 || i >= 3 || entityhuman.getHealth() > 1 && i >= 2) {
                     // CraftBukkit start
                     EntityDamageEvent event = new EntityDamageEvent(entityhuman.getBukkitEntity(), EntityDamageEvent.DamageCause.STARVATION, 1);
-                    entityhuman.world.getServer().getPluginManager().callEvent(event);
+                    entityhuman.worldObj.getServer().getPluginManager().callEvent(event);
 
                     if (!event.isCancelled()) {
                         event.getEntity().setLastDamageCause(event);
@@ -73,16 +73,16 @@ public class FoodMetaData {
 
     public void a(NBTTagCompound nbttagcompound) {
         if (nbttagcompound.hasKey("foodLevel")) {
-            this.foodLevel = nbttagcompound.getInt("foodLevel");
-            this.foodTickTimer = nbttagcompound.getInt("foodTickTimer");
+            this.foodLevel = nbttagcompound.getInteger("foodLevel");
+            this.foodTickTimer = nbttagcompound.getInteger("foodTickTimer");
             this.saturationLevel = nbttagcompound.getFloat("foodSaturationLevel");
             this.exhaustionLevel = nbttagcompound.getFloat("foodExhaustionLevel");
         }
     }
 
     public void b(NBTTagCompound nbttagcompound) {
-        nbttagcompound.setInt("foodLevel", this.foodLevel);
-        nbttagcompound.setInt("foodTickTimer", this.foodTickTimer);
+        nbttagcompound.setInteger("foodLevel", this.foodLevel);
+        nbttagcompound.setInteger("foodTickTimer", this.foodTickTimer);
         nbttagcompound.setFloat("foodSaturationLevel", this.saturationLevel);
         nbttagcompound.setFloat("foodExhaustionLevel", this.exhaustionLevel);
     }

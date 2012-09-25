@@ -24,11 +24,11 @@ public class EntityEgg extends EntityProjectile {
 
     protected void a(MovingObjectPosition movingobjectposition) {
         if (movingobjectposition.entity != null) {
-            movingobjectposition.entity.damageEntity(DamageSource.projectile(this, this.shooter), 0);
+            movingobjectposition.entity.damageEntity(DamageSource.projectile(this, this.shootingEntity), 0);
         }
 
         // CraftBukkit start
-        boolean hatching = !this.world.isStatic && this.random.nextInt(8) == 0;
+        boolean hatching = !this.worldObj.isStatic && this.random.nextInt(8) == 0;
         int numHatching = (this.random.nextInt(32) == 0) ? 4 : 1;
         if (!hatching) {
             numHatching = 0;
@@ -36,11 +36,11 @@ public class EntityEgg extends EntityProjectile {
 
         EntityType hatchingType = EntityType.CHICKEN;
 
-        if (this.shooter instanceof EntityPlayer) {
-            Player player = (this.shooter == null) ? null : (Player) this.shooter.getBukkitEntity();
+        if (this.shootingEntity instanceof EntityPlayer) {
+            Player player = (this.shootingEntity == null) ? null : (Player) this.shootingEntity.getBukkitEntity();
 
             PlayerEggThrowEvent event = new PlayerEggThrowEvent(player, (org.bukkit.entity.Egg) this.getBukkitEntity(), hatching, (byte) numHatching, hatchingType);
-            this.world.getServer().getPluginManager().callEvent(event);
+            this.worldObj.getServer().getPluginManager().callEvent(event);
 
             hatching = event.isHatching();
             numHatching = event.getNumHatches();
@@ -49,7 +49,7 @@ public class EntityEgg extends EntityProjectile {
 
         if (hatching) {
             for (int k = 0; k < numHatching; k++) {
-                org.bukkit.entity.Entity entity = world.getWorld().spawn(new org.bukkit.Location(world.getWorld(), this.locX, this.locY, this.locZ, this.yaw, 0.0F), hatchingType.getEntityClass(), SpawnReason.EGG);
+                org.bukkit.entity.Entity entity = worldObj.getWorld().spawn(new org.bukkit.Location(worldObj.getWorld(), this.posX, this.posY, this.posZ, this.rotationYaw, 0.0F), hatchingType.getEntityClass(), SpawnReason.EGG);
                 if (entity instanceof Ageable) {
                     ((Ageable) entity).setBaby();
                 }
@@ -58,11 +58,11 @@ public class EntityEgg extends EntityProjectile {
         // CraftBukkit end
 
         for (int j = 0; j < 8; ++j) {
-            this.world.a("snowballpoof", this.locX, this.locY, this.locZ, 0.0D, 0.0D, 0.0D);
+            this.worldObj.a("snowballpoof", this.posX, this.posY, this.posZ, 0.0D, 0.0D, 0.0D);
         }
 
-        if (!this.world.isStatic) {
-            this.die();
+        if (!this.worldObj.isStatic) {
+            this.setDead();
         }
     }
 }

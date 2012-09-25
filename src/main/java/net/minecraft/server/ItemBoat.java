@@ -13,11 +13,11 @@ public class ItemBoat extends Item {
 
     public ItemStack a(ItemStack itemstack, World world, EntityHuman entityhuman) {
         float f = 1.0F;
-        float f1 = entityhuman.lastPitch + (entityhuman.pitch - entityhuman.lastPitch) * f;
-        float f2 = entityhuman.lastYaw + (entityhuman.yaw - entityhuman.lastYaw) * f;
-        double d0 = entityhuman.lastX + (entityhuman.locX - entityhuman.lastX) * (double) f;
-        double d1 = entityhuman.lastY + (entityhuman.locY - entityhuman.lastY) * (double) f + 1.62D - (double) entityhuman.height;
-        double d2 = entityhuman.lastZ + (entityhuman.locZ - entityhuman.lastZ) * (double) f;
+        float f1 = entityhuman.lastPitch + (entityhuman.rotationPitch - entityhuman.lastPitch) * f;
+        float f2 = entityhuman.lastYaw + (entityhuman.rotationYaw - entityhuman.lastYaw) * f;
+        double d0 = entityhuman.lastX + (entityhuman.posX - entityhuman.lastX) * (double) f;
+        double d1 = entityhuman.lastY + (entityhuman.posY - entityhuman.lastY) * (double) f + 1.62D - (double) entityhuman.height;
+        double d2 = entityhuman.lastZ + (entityhuman.posZ - entityhuman.lastZ) * (double) f;
         Vec3D vec3d = Vec3D.a().create(d0, d1, d2);
         float f3 = MathHelper.cos(-f2 * 0.017453292F - 3.1415927F);
         float f4 = MathHelper.sin(-f2 * 0.017453292F - 3.1415927F);
@@ -68,14 +68,14 @@ public class ItemBoat extends Item {
                         }
                         // CraftBukkit end
 
-                        if (world.getTypeId(i, j, k) == Block.SNOW.blockID) {
+                        if (world.getBlockId(i, j, k) == Block.SNOW.blockID) {
                             --j;
                         }
 
                         world.addEntity(new EntityBoat(world, (double) ((float) i + 0.5F), (double) ((float) j + 1.0F), (double) ((float) k + 0.5F)));
                     }
 
-                    if (!entityhuman.abilities.canInstantlyBuild) {
+                    if (!entityhuman.capabilities.canInstantlyBuild) {
                         --itemstack.count;
                     }
                 }

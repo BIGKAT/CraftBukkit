@@ -447,7 +447,7 @@ public class CraftEventFactory {
     }
 
     public static EntityChangeBlockEvent callEntityChangeBlockEvent(Entity entity, int x, int y, int z, int type) {
-        Block block = entity.world.getWorld().getBlockAt(x, y, z);
+        Block block = entity.worldObj.getWorld().getBlockAt(x, y, z);
         Material material = Material.getMaterial(type);
 
         return callEntityChangeBlockEvent(entity, block, material);
@@ -482,19 +482,19 @@ public class CraftEventFactory {
     }
 
     public static Container callInventoryOpenEvent(EntityPlayer player, Container container) {
-        if (player.activeContainer != player.defaultContainer) { // fire INVENTORY_CLOSE if one already open
-            player.netServerHandler.handleContainerClose(new Packet101CloseWindow(player.activeContainer.windowId));
+        if (player.craftingInventory != player.defaultContainer) { // fire INVENTORY_CLOSE if one already open
+            player.serverForThisPlayer.handleContainerClose(new Packet101CloseWindow(player.craftingInventory.windowId));
         }
 
-        CraftServer server = ((WorldServer) player.world).getServer();
+        CraftServer server = ((WorldServer) player.worldObj).getServer();
         CraftPlayer craftPlayer = (CraftPlayer) player.getBukkitEntity();
-        player.activeContainer.transferTo(container, craftPlayer);
+        player.craftingInventory.transferTo(container, craftPlayer);
 
         InventoryOpenEvent event = new InventoryOpenEvent(container.getBukkitView());
         server.getPluginManager().callEvent(event);
 
         if (event.isCancelled()) {
-            container.transferTo(player.activeContainer, craftPlayer);
+            container.transferTo(player.craftingInventory, craftPlayer);
             return null;
         }
 

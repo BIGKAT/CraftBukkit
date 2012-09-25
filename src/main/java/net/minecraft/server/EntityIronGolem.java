@@ -39,7 +39,7 @@ public class EntityIronGolem extends EntityGolem {
     protected void bd() {
         if (--this.e <= 0) {
             this.e = 70 + this.random.nextInt(50);
-            this.d = this.world.villages.getClosestVillage(MathHelper.floor(this.locX), MathHelper.floor(this.locY), MathHelper.floor(this.locZ), 32);
+            this.d = this.worldObj.villages.getClosestVillage(MathHelper.floor(this.posX), MathHelper.floor(this.posY), MathHelper.floor(this.posZ), 32);
             if (this.d == null) {
                 this.aE();
             } else {
@@ -70,32 +70,32 @@ public class EntityIronGolem extends EntityGolem {
             --this.g;
         }
 
-        if (this.motX * this.motX + this.motZ * this.motZ > 2.500000277905201E-7D && this.random.nextInt(5) == 0) {
-            int i = MathHelper.floor(this.locX);
-            int j = MathHelper.floor(this.locY - 0.20000000298023224D - (double) this.height);
-            int k = MathHelper.floor(this.locZ);
-            int l = this.world.getTypeId(i, j, k);
+        if (this.motionX * this.motionX + this.motionZ * this.motionZ > 2.500000277905201E-7D && this.random.nextInt(5) == 0) {
+            int i = MathHelper.floor(this.posX);
+            int j = MathHelper.floor(this.posY - 0.20000000298023224D - (double) this.height);
+            int k = MathHelper.floor(this.posZ);
+            int l = this.worldObj.getTypeId(i, j, k);
 
             if (l > 0) {
-                this.world.a("tilecrack_" + l, this.locX + ((double) this.random.nextFloat() - 0.5D) * (double) this.width, this.boundingBox.b + 0.1D, this.locZ + ((double) this.random.nextFloat() - 0.5D) * (double) this.width, 4.0D * ((double) this.random.nextFloat() - 0.5D), 0.5D, ((double) this.random.nextFloat() - 0.5D) * 4.0D);
+                this.worldObj.a("tilecrack_" + l, this.posX + ((double) this.random.nextFloat() - 0.5D) * (double) this.width, this.boundingBox.b + 0.1D, this.posZ + ((double) this.random.nextFloat() - 0.5D) * (double) this.width, 4.0D * ((double) this.random.nextFloat() - 0.5D), 0.5D, ((double) this.random.nextFloat() - 0.5D) * 4.0D);
             }
         }
     }
 
     public boolean a(Class oclass) {
-        return this.q() && EntityHuman.class.isAssignableFrom(oclass) ? false : super.a(oclass);
+        return this.getBit1Flag() && EntityHuman.class.isAssignableFrom(oclass) ? false : super.a(oclass);
     }
 
     public boolean k(Entity entity) {
         this.f = 10;
-        this.world.broadcastEntityEffect(this, (byte) 4);
+        this.worldObj.broadcastEntityEffect(this, (byte) 4);
         boolean flag = entity.damageEntity(DamageSource.mobAttack(this), 7 + this.random.nextInt(15));
 
         if (flag) {
-            entity.motY += 0.4000000059604645D;
+            entity.motionY += 0.4000000059604645D;
         }
 
-        this.world.makeSound(this, "mob.irongolem.throw", 1.0F, 1.0F);
+        this.worldObj.makeSound(this, "mob.irongolem.throw", 1.0F, 1.0F);
         return flag;
     }
 
@@ -105,7 +105,7 @@ public class EntityIronGolem extends EntityGolem {
 
     public void e(boolean flag) {
         this.g = flag ? 400 : 0;
-        this.world.broadcastEntityEffect(this, (byte) 11);
+        this.worldObj.broadcastEntityEffect(this, (byte) 11);
     }
 
     protected String aQ() {
@@ -121,7 +121,7 @@ public class EntityIronGolem extends EntityGolem {
     }
 
     protected void a(int i, int j, int k, int l) {
-        this.world.makeSound(this, "mob.irongolem.walk", 1.0F, 1.0F);
+        this.worldObj.makeSound(this, "mob.irongolem.walk", 1.0F, 1.0F);
     }
 
     protected void dropDeathLoot(boolean flag, int i) {
@@ -149,11 +149,11 @@ public class EntityIronGolem extends EntityGolem {
         return this.g;
     }
 
-    public boolean q() {
+    public boolean getBit1Flag() {
         return (this.datawatcher.getByte(16) & 1) != 0;
     }
 
-    public void f(boolean flag) {
+    public void setBit1FlagTo(boolean flag) {
         byte b0 = this.datawatcher.getByte(16);
 
         if (flag) {

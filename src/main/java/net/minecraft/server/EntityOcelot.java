@@ -64,12 +64,12 @@ public class EntityOcelot extends EntityTameableAnimal {
 
     public void b(NBTTagCompound nbttagcompound) {
         super.b(nbttagcompound);
-        nbttagcompound.setInt("CatType", this.getCatType());
+        nbttagcompound.setInteger("CatType", this.getTameSkin());
     }
 
     public void a(NBTTagCompound nbttagcompound) {
         super.a(nbttagcompound);
-        this.setCatType(nbttagcompound.getInt("CatType"));
+        this.setTameSkin(nbttagcompound.getInteger("CatType"));
     }
 
     protected String aQ() {
@@ -109,11 +109,11 @@ public class EntityOcelot extends EntityTameableAnimal {
         ItemStack itemstack = entityhuman.inventory.getItemInHand();
 
         if (this.isTamed()) {
-            if (entityhuman.name.equalsIgnoreCase(this.getOwnerName()) && !this.world.isStatic && !this.b(itemstack)) {
+            if (entityhuman.username.equalsIgnoreCase(this.getOwnerName()) && !this.worldObj.isStatic && !this.b(itemstack)) {
                 this.d.a(!this.isSitting());
             }
         } else if (this.e.f() && itemstack != null && itemstack.id == Item.RAW_FISH.id && entityhuman.e(this) < 9.0D) {
-            if (!entityhuman.abilities.canInstantlyBuild) {
+            if (!entityhuman.capabilities.canInstantlyBuild) {
                 --itemstack.count;
             }
 
@@ -121,18 +121,18 @@ public class EntityOcelot extends EntityTameableAnimal {
                 entityhuman.inventory.setItem(entityhuman.inventory.itemInHandIndex, (ItemStack) null);
             }
 
-            if (!this.world.isStatic) {
+            if (!this.worldObj.isStatic) {
                 // CraftBukkit - added event call and isCancelled check
                 if (this.random.nextInt(3) == 0 && !org.bukkit.craftbukkit.event.CraftEventFactory.callEntityTameEvent(this, entityhuman).isCancelled()) {
                     this.setTamed(true);
-                    this.setCatType(1 + this.world.random.nextInt(3));
-                    this.setOwnerName(entityhuman.name);
+                    this.setTameSkin(1 + this.worldObj.rand.nextInt(3));
+                    this.setOwnerName(entityhuman.username);
                     this.e(true);
                     this.d.a(true);
-                    this.world.broadcastEntityEffect(this, (byte) 7);
+                    this.worldObj.broadcastEntityEffect(this, (byte) 7);
                 } else {
                     this.e(false);
-                    this.world.broadcastEntityEffect(this, (byte) 6);
+                    this.worldObj.broadcastEntityEffect(this, (byte) 6);
                 }
             }
 
@@ -143,12 +143,12 @@ public class EntityOcelot extends EntityTameableAnimal {
     }
 
     public EntityAnimal createChild(EntityAnimal entityanimal) {
-        EntityOcelot entityocelot = new EntityOcelot(this.world);
+        EntityOcelot entityocelot = new EntityOcelot(this.worldObj);
 
         if (this.isTamed()) {
             entityocelot.setOwnerName(this.getOwnerName());
             entityocelot.setTamed(true);
-            entityocelot.setCatType(this.getCatType());
+            entityocelot.setTameSkin(this.getTameSkin());
         }
 
         return entityocelot;
@@ -172,28 +172,28 @@ public class EntityOcelot extends EntityTameableAnimal {
         }
     }
 
-    public int getCatType() {
+    public int getTameSkin() {
         return this.datawatcher.getByte(18);
     }
 
-    public void setCatType(int i) {
+    public void setTameSkin(int i) {
         this.datawatcher.watch(18, Byte.valueOf((byte) i));
     }
 
     public boolean canSpawn() {
-        if (this.world.random.nextInt(3) == 0) {
+        if (this.worldObj.rand.nextInt(3) == 0) {
             return false;
         } else {
-            if (this.world.b(this.boundingBox) && this.world.getCubes(this, this.boundingBox).isEmpty() && !this.world.containsLiquid(this.boundingBox)) {
-                int i = MathHelper.floor(this.locX);
+            if (this.worldObj.b(this.boundingBox) && this.worldObj.getCubes(this, this.boundingBox).isEmpty() && !this.worldObj.containsLiquid(this.boundingBox)) {
+                int i = MathHelper.floor(this.posX);
                 int j = MathHelper.floor(this.boundingBox.b);
-                int k = MathHelper.floor(this.locZ);
+                int k = MathHelper.floor(this.posZ);
 
                 if (j < 63) {
                     return false;
                 }
 
-                int l = this.world.getTypeId(i, j - 1, k);
+                int l = this.worldObj.getTypeId(i, j - 1, k);
 
                 if (l == Block.GRASS.blockID || l == Block.LEAVES.blockID) {
                     return true;

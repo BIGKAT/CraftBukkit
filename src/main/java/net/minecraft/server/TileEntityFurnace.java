@@ -13,9 +13,9 @@ import org.bukkit.craftbukkit.entity.CraftHumanEntity;
 public class TileEntityFurnace extends TileEntity implements IInventory {
 
     private ItemStack[] items = new ItemStack[3];
-    public int burnTime = 0;
+    public int furnaceBurnTime = 0;
     public int ticksForCurrentFuel = 0;
-    public int cookTime = 0;
+    public int furnaceCookTime = 0;
 
     // CraftBukkit start
     private int lastTick = (int) (System.currentTimeMillis() / 50);
@@ -111,15 +111,15 @@ public class TileEntityFurnace extends TileEntity implements IInventory {
             }
         }
 
-        this.burnTime = nbttagcompound.getShort("BurnTime");
-        this.cookTime = nbttagcompound.getShort("CookTime");
+        this.furnaceBurnTime = nbttagcompound.getShort("BurnTime");
+        this.furnaceCookTime = nbttagcompound.getShort("CookTime");
         this.ticksForCurrentFuel = fuelTime(this.items[1]);
     }
 
     public void b(NBTTagCompound nbttagcompound) {
         super.b(nbttagcompound);
-        nbttagcompound.setShort("BurnTime", (short) this.burnTime);
-        nbttagcompound.setShort("CookTime", (short) this.cookTime);
+        nbttagcompound.setShort("BurnTime", (short) this.furnaceBurnTime);
+        nbttagcompound.setShort("CookTime", (short) this.furnaceCookTime);
         NBTTagList nbttaglist = new NBTTagList();
 
         for (int i = 0; i < this.items.length; ++i) {
@@ -140,11 +140,11 @@ public class TileEntityFurnace extends TileEntity implements IInventory {
     }
 
     public boolean isBurning() {
-        return this.burnTime > 0;
+        return this.furnaceBurnTime > 0;
     }
 
     public void g() {
-        boolean flag = this.burnTime > 0;
+        boolean flag = this.furnaceBurnTime > 0;
         boolean flag1 = false;
 
         // CraftBukkit start
@@ -154,24 +154,24 @@ public class TileEntityFurnace extends TileEntity implements IInventory {
 
         // CraftBukkit - moved from below
         if (this.isBurning() && this.canBurn()) {
-            this.cookTime += elapsedTicks;
-            if (this.cookTime >= 200) {
-                this.cookTime %= 200;
+            this.furnaceCookTime += elapsedTicks;
+            if (this.furnaceCookTime >= 200) {
+                this.furnaceCookTime %= 200;
                 this.burn();
                 flag1 = true;
             }
         } else {
-            this.cookTime = 0;
+            this.furnaceCookTime = 0;
         }
         // CraftBukkit end
 
-        if (this.burnTime > 0) {
-            this.burnTime -= elapsedTicks; // CraftBukkit
+        if (this.furnaceBurnTime > 0) {
+            this.furnaceBurnTime -= elapsedTicks; // CraftBukkit
         }
 
         if (!this.world.isStatic) {
             // CraftBukkit start - handle multiple elapsed ticks
-            if (this.burnTime <= 0 && this.canBurn() && this.items[1] != null) { // CraftBukkit - == to <=
+            if (this.furnaceBurnTime <= 0 && this.canBurn() && this.items[1] != null) { // CraftBukkit - == to <=
                 CraftItemStack fuel = new CraftItemStack(this.items[1]);
 
                 FurnaceBurnEvent furnaceBurnEvent = new FurnaceBurnEvent(this.world.getWorld().getBlockAt(this.x, this.y, this.z), fuel, fuelTime(this.items[1]));
@@ -182,8 +182,8 @@ public class TileEntityFurnace extends TileEntity implements IInventory {
                 }
 
                 this.ticksForCurrentFuel = furnaceBurnEvent.getBurnTime();
-                this.burnTime += this.ticksForCurrentFuel;
-                if (this.burnTime > 0 && furnaceBurnEvent.isBurning()) {
+                this.furnaceBurnTime += this.ticksForCurrentFuel;
+                if (this.furnaceBurnTime > 0 && furnaceBurnEvent.isBurning()) {
                     // CraftBukkit end
                     flag1 = true;
                     if (this.items[1] != null) {
@@ -199,25 +199,25 @@ public class TileEntityFurnace extends TileEntity implements IInventory {
 
             /* CraftBukkit start - moved up
             if (this.isBurning() && this.canBurn()) {
-                ++this.cookTime;
-                if (this.cookTime == 200) {
-                    this.cookTime = 0;
+                ++this.furnaceCookTime;
+                if (this.furnaceCookTime == 200) {
+                    this.furnaceCookTime = 0;
                     this.burn();
                     flag1 = true;
                 }
             } else {
-                this.cookTime = 0;
+                this.furnaceCookTime = 0;
             }
             // CraftBukkit end */
 
-            if (flag != this.burnTime > 0) {
+            if (flag != this.furnaceBurnTime > 0) {
                 flag1 = true;
-                BlockFurnace.a(this.burnTime > 0, this.world, this.x, this.y, this.z);
+                BlockFurnace.a(this.furnaceBurnTime > 0, this.world, this.x, this.y, this.z);
             }
         }
 
         if (flag1) {
-            this.update();
+            this.onInventoryChanged();
         }
     }
 

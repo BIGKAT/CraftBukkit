@@ -70,7 +70,7 @@ public class Explosion {
                         d3 /= d6;
                         d4 /= d6;
                         d5 /= d6;
-                        float f1 = this.size * (0.7F + this.world.random.nextFloat() * 0.6F);
+                        float f1 = this.size * (0.7F + this.world.rand.nextFloat() * 0.6F);
 
                         d0 = this.posX;
                         d1 = this.posY;
@@ -80,7 +80,7 @@ public class Explosion {
                             int l = MathHelper.floor(d0);
                             int i1 = MathHelper.floor(d1);
                             int j1 = MathHelper.floor(d2);
-                            int k1 = this.world.getTypeId(l, i1, j1);
+                            int k1 = this.world.getBlockId(l, i1, j1);
 
                             if (k1 > 0) {
                                 f1 -= (Block.blocksList[k1].a(this.source) + 0.3F) * f2;
@@ -115,9 +115,9 @@ public class Explosion {
             double d7 = entity.f(this.posX, this.posY, this.posZ) / (double) this.size;
 
             if (d7 <= 1.0D) {
-                d0 = entity.locX - this.posX;
-                d1 = entity.locY + (double) entity.getHeadHeight() - this.posY;
-                d2 = entity.locZ - this.posZ;
+                d0 = entity.posX - this.posX;
+                d1 = entity.posY + (double) entity.getHeadHeight() - this.posY;
+                d2 = entity.posZ - this.posZ;
                 double d8 = (double) MathHelper.sqrt(d0 * d0 + d1 * d1 + d2 * d2);
 
                 if (d8 != 0.0D) {
@@ -141,9 +141,9 @@ public class Explosion {
                             damagee.setLastDamageCause(event);
                             entity.damageEntity(DamageSource.EXPLOSION, event.getDamage());
 
-                            entity.motX += d0 * d10;
-                            entity.motY += d1 * d10;
-                            entity.motZ += d2 * d10;
+                            entity.motionX += d0 * d10;
+                            entity.motionY += d1 * d10;
+                            entity.motionZ += d2 * d10;
                             if (entity instanceof EntityHuman) {
                                 this.k.put((EntityHuman) entity, Vec3D.a().create(d0 * d10, d1 * d10, d2 * d10));
                             }
@@ -165,9 +165,9 @@ public class Explosion {
                             entity.getBukkitEntity().setLastDamageCause(event);
                             entity.damageEntity(DamageSource.EXPLOSION, event.getDamage());
 
-                            entity.motX += d0 * d10;
-                            entity.motY += d1 * d10;
-                            entity.motZ += d2 * d10;
+                            entity.motionX += d0 * d10;
+                            entity.motionY += d1 * d10;
+                            entity.motionZ += d2 * d10;
                             if (entity instanceof EntityHuman) {
                                 this.k.put((EntityHuman) entity, Vec3D.a().create(d0 * d10, d1 * d10, d2 * d10));
                             }
@@ -182,7 +182,7 @@ public class Explosion {
     }
 
     public void a(boolean flag) {
-        this.world.makeSound(this.posX, this.posY, this.posZ, "random.explode", 4.0F, (1.0F + (this.world.random.nextFloat() - this.world.random.nextFloat()) * 0.2F) * 0.7F);
+        this.world.makeSound(this.posX, this.posY, this.posZ, "random.explode", 4.0F, (1.0F + (this.world.rand.nextFloat() - this.world.rand.nextFloat()) * 0.2F) * 0.7F);
         this.world.a("hugeexplosion", this.posX, this.posY, this.posZ, 0.0D, 0.0D, 0.0D);
 
         // CraftBukkit start
@@ -228,11 +228,11 @@ public class Explosion {
             i = chunkposition.x;
             j = chunkposition.y;
             k = chunkposition.z;
-            l = this.world.getTypeId(i, j, k);
+            l = this.world.getBlockId(i, j, k);
             if (flag) {
-                double d0 = (double) ((float) i + this.world.random.nextFloat());
-                double d1 = (double) ((float) j + this.world.random.nextFloat());
-                double d2 = (double) ((float) k + this.world.random.nextFloat());
+                double d0 = (double) ((float) i + this.world.rand.nextFloat());
+                double d1 = (double) ((float) j + this.world.rand.nextFloat());
+                double d2 = (double) ((float) k + this.world.rand.nextFloat());
                 double d3 = d0 - this.posX;
                 double d4 = d1 - this.posY;
                 double d5 = d2 - this.posZ;
@@ -243,7 +243,7 @@ public class Explosion {
                 d5 /= d6;
                 double d7 = 0.5D / (d6 / (double) this.size + 0.1D);
 
-                d7 *= (double) (this.world.random.nextFloat() * this.world.random.nextFloat() + 0.3F);
+                d7 *= (double) (this.world.rand.nextFloat() * this.world.rand.nextFloat() + 0.3F);
                 d3 *= d7;
                 d4 *= d7;
                 d5 *= d7;
@@ -271,11 +271,11 @@ public class Explosion {
                 i = chunkposition.x;
                 j = chunkposition.y;
                 k = chunkposition.z;
-                l = this.world.getTypeId(i, j, k);
-                int i1 = this.world.getTypeId(i, j - 1, k);
+                l = this.world.getBlockId(i, j, k);
+                int i1 = this.world.getBlockId(i, j - 1, k);
 
                 if (l == 0 && Block.n[i1] && this.i.nextInt(3) == 0) {
-                    this.world.setTypeId(i, j, k, Block.FIRE.blockID);
+                    this.world.setBlockWithNotify(i, j, k, Block.FIRE.blockID);
                 }
             }
         }

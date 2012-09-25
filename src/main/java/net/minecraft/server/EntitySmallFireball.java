@@ -23,12 +23,12 @@ public class EntitySmallFireball extends EntityFireball {
     }
 
     protected void a(MovingObjectPosition movingobjectposition) {
-        if (!this.world.isStatic) {
+        if (!this.worldObj.isStatic) {
             if (movingobjectposition.entity != null) {
-                if (!movingobjectposition.entity.isFireproof() && movingobjectposition.entity.damageEntity(DamageSource.fireball(this, this.shooter), 5)) {
+                if (!movingobjectposition.entity.isFireproof() && movingobjectposition.entity.damageEntity(DamageSource.fireball(this, this.shootingEntity), 5)) {
                     // CraftBukkit start - entity damage by entity event + combust event
                     EntityCombustByEntityEvent event = new EntityCombustByEntityEvent((org.bukkit.entity.Projectile) this.getBukkitEntity(), movingobjectposition.entity.getBukkitEntity(), 5);
-                    movingobjectposition.entity.world.getServer().getPluginManager().callEvent(event);
+                    movingobjectposition.entity.worldObj.getServer().getPluginManager().callEvent(event);
 
                     if (!event.isCancelled()) {
                         movingobjectposition.entity.setOnFire(event.getDuration());
@@ -65,20 +65,20 @@ public class EntitySmallFireball extends EntityFireball {
                     ++i;
                 }
 
-                if (this.world.isEmpty(i, j, k)) {
+                if (this.worldObj.isEmpty(i, j, k)) {
                     // CraftBukkit start
-                    org.bukkit.block.Block block = world.getWorld().getBlockAt(i, j, k);
+                    org.bukkit.block.Block block = worldObj.getWorld().getBlockAt(i, j, k);
                     BlockIgniteEvent event = new BlockIgniteEvent(block, BlockIgniteEvent.IgniteCause.FIREBALL, null);
-                    world.getServer().getPluginManager().callEvent(event);
+                    worldObj.getServer().getPluginManager().callEvent(event);
 
                     if (!event.isCancelled()) {
-                        this.world.setTypeId(i, j, k, Block.FIRE.blockID);
+                        this.worldObj.setBlockWithNotify(i, j, k, Block.FIRE.blockID);
                     }
                     // CraftBukkit end
                 }
             }
 
-            this.die();
+            this.setDead();
         }
     }
 

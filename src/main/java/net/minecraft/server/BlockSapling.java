@@ -24,11 +24,11 @@ public class BlockSapling extends BlockFlower {
     public void b(World world, int i, int j, int k, Random random) {
         if (!world.isStatic) {
             super.b(world, i, j, k, random);
-            if (world.getLightLevel(i, j + 1, k) >= 9 && random.nextInt(7) == 0) {
+            if (world.getBlockLightValue(i, j + 1, k) >= 9 && random.nextInt(7) == 0) {
                 int l = world.getData(i, j, k);
 
                 if ((l & 8) == 0) {
-                    world.setData(i, j, k, l | 8);
+                    world.setBlockMetadataWithNotify(i, j, k, l | 8);
                 } else {
                     this.grow(world, i, j, k, random, false, null, null); // CraftBukkit - added bonemeal, player and itemstack
                 }
@@ -91,12 +91,12 @@ public class BlockSapling extends BlockFlower {
         }
 
         if (flag) {
-            world.setRawTypeId(i + i1, j, k + j1, 0);
-            world.setRawTypeId(i + i1 + 1, j, k + j1, 0);
-            world.setRawTypeId(i + i1, j, k + j1 + 1, 0);
-            world.setRawTypeId(i + i1 + 1, j, k + j1 + 1, 0);
+            world.setBlock(i + i1, j, k + j1, 0);
+            world.setBlock(i + i1 + 1, j, k + j1, 0);
+            world.setBlock(i + i1, j, k + j1 + 1, 0);
+            world.setBlock(i + i1 + 1, j, k + j1 + 1, 0);
         } else {
-            world.setRawTypeId(i, j, k, 0);
+            world.setBlock(i, j, k, 0);
         }
 
         grownTree = gen.generate(delegate, random, i + i1, j, k + j1);
@@ -117,19 +117,19 @@ public class BlockSapling extends BlockFlower {
         }
         if (!grownTree) {
             if (flag) {
-                world.setRawTypeIdAndData(i + i1, j, k + j1, this.blockID, l);
-                world.setRawTypeIdAndData(i + i1 + 1, j, k + j1, this.blockID, l);
-                world.setRawTypeIdAndData(i + i1, j, k + j1 + 1, this.blockID, l);
-                world.setRawTypeIdAndData(i + i1 + 1, j, k + j1 + 1, this.blockID, l);
+                world.setBlockAndMetadata(i + i1, j, k + j1, this.blockID, l);
+                world.setBlockAndMetadata(i + i1 + 1, j, k + j1, this.blockID, l);
+                world.setBlockAndMetadata(i + i1, j, k + j1 + 1, this.blockID, l);
+                world.setBlockAndMetadata(i + i1 + 1, j, k + j1 + 1, this.blockID, l);
             } else {
-                world.setRawTypeIdAndData(i, j, k, this.blockID, l);
+                world.setBlockAndMetadata(i, j, k, this.blockID, l);
             }
         }
         // CraftBukkit end
     }
 
     public boolean e(World world, int i, int j, int k, int l) {
-        return world.getTypeId(i, j, k) == this.blockID && (world.getData(i, j, k) & 3) == l;
+        return world.getBlockId(i, j, k) == this.blockID && (world.getData(i, j, k) & 3) == l;
     }
 
     protected int getDropData(int i) {

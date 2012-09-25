@@ -64,7 +64,7 @@ public class EntitySquid extends EntityWaterAnimal {
     }
 
     public boolean H() {
-        return this.world.a(this.boundingBox.grow(0.0D, -0.6000000238418579D, 0.0D), Material.WATER, this);
+        return this.worldObj.a(this.boundingBox.grow(0.0D, -0.6000000238418579D, 0.0D), Material.WATER, this);
     }
 
     public void d() {
@@ -99,26 +99,26 @@ public class EntitySquid extends EntityWaterAnimal {
                 this.bB *= 0.99F;
             }
 
-            if (!this.world.isStatic) {
-                this.motX = (double) (this.bC * this.bz);
-                this.motY = (double) (this.bD * this.bz);
-                this.motZ = (double) (this.bE * this.bz);
+            if (!this.worldObj.isStatic) {
+                this.motionX = (double) (this.bC * this.bz);
+                this.motionY = (double) (this.bD * this.bz);
+                this.motionZ = (double) (this.bE * this.bz);
             }
 
-            f = MathHelper.sqrt(this.motX * this.motX + this.motZ * this.motZ);
+            f = MathHelper.sqrt(this.motionX * this.motionX + this.motionZ * this.motionZ);
             // CraftBukkit - Math -> TrigMath
-            this.aq += (-((float) TrigMath.atan2(this.motX, this.motZ)) * 180.0F / 3.1415927F - this.aq) * 0.1F;
-            this.yaw = this.aq;
+            this.aq += (-((float) TrigMath.atan2(this.motionX, this.motionZ)) * 180.0F / 3.1415927F - this.aq) * 0.1F;
+            this.rotationYaw = this.aq;
             this.f += 3.1415927F * this.bB * 1.5F;
             // CraftBukkit - Math -> TrigMath
-            this.d += (-((float) TrigMath.atan2((double) f, this.motY)) * 180.0F / 3.1415927F - this.d) * 0.1F;
+            this.d += (-((float) TrigMath.atan2((double) f, this.motionY)) * 180.0F / 3.1415927F - this.d) * 0.1F;
         } else {
             this.j = MathHelper.abs(MathHelper.sin(this.h)) * 3.1415927F * 0.25F;
-            if (!this.world.isStatic) {
-                this.motX = 0.0D;
-                this.motY -= 0.08D;
-                this.motY *= 0.9800000190734863D;
-                this.motZ = 0.0D;
+            if (!this.worldObj.isStatic) {
+                this.motionX = 0.0D;
+                this.motionY -= 0.08D;
+                this.motionY *= 0.9800000190734863D;
+                this.motionZ = 0.0D;
             }
 
             this.d = (float) ((double) this.d + (double) (-90.0F - this.d) * 0.02D);
@@ -126,7 +126,7 @@ public class EntitySquid extends EntityWaterAnimal {
     }
 
     public void e(float f, float f1) {
-        this.move(this.motX, this.motY, this.motZ);
+        this.move(this.motionX, this.motionY, this.motionZ);
     }
 
     protected void be() {
@@ -145,6 +145,6 @@ public class EntitySquid extends EntityWaterAnimal {
     }
 
     public boolean canSpawn() {
-        return this.locY > 45.0D && this.locY < 63.0D && super.canSpawn();
+        return this.posY > 45.0D && this.posY < 63.0D && super.canSpawn();
     }
 }

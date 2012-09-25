@@ -2,7 +2,7 @@ package net.minecraft.server;
 
 public class TileEntitySign extends TileEntity {
 
-    public String[] lines = new String[] { "", "", "", ""};
+    public String[] signText = new String[] { "", "", "", ""};
     public int b = -1;
     public boolean isEditable = true; // CraftBukkit - privite -> public
 
@@ -10,10 +10,10 @@ public class TileEntitySign extends TileEntity {
 
     public void b(NBTTagCompound nbttagcompound) {
         super.b(nbttagcompound);
-        nbttagcompound.setString("Text1", this.lines[0]);
-        nbttagcompound.setString("Text2", this.lines[1]);
-        nbttagcompound.setString("Text3", this.lines[2]);
-        nbttagcompound.setString("Text4", this.lines[3]);
+        nbttagcompound.setString("Text1", this.signText[0]);
+        nbttagcompound.setString("Text2", this.signText[1]);
+        nbttagcompound.setString("Text3", this.signText[2]);
+        nbttagcompound.setString("Text4", this.signText[3]);
     }
 
     public void a(NBTTagCompound nbttagcompound) {
@@ -21,9 +21,9 @@ public class TileEntitySign extends TileEntity {
         super.a(nbttagcompound);
 
         for (int i = 0; i < 4; ++i) {
-            this.lines[i] = nbttagcompound.getString("Text" + (i + 1));
-            if (this.lines[i].length() > 15) {
-                this.lines[i] = this.lines[i].substring(0, 15);
+            this.signText[i] = nbttagcompound.getString("Text" + (i + 1));
+            if (this.signText[i].length() > 15) {
+                this.signText[i] = this.signText[i].substring(0, 15);
             }
         }
     }
@@ -33,10 +33,10 @@ public class TileEntitySign extends TileEntity {
 
         // CraftBukkit start - limit sign text to 15 chars per line
         for (int i = 0; i < 4; ++i) {
-            astring[i] = this.lines[i];
+            astring[i] = this.signText[i];
 
-            if (this.lines[i].length() > 15) {
-                astring[i] = this.lines[i].substring(0, 15);
+            if (this.signText[i].length() > 15) {
+                astring[i] = this.signText[i].substring(0, 15);
             }
         }
         // CraftBukkit end

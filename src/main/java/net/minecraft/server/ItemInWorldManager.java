@@ -40,8 +40,8 @@ public class ItemInWorldManager {
 
     public void setGameMode(EnumGamemode enumgamemode) {
         this.gamemode = enumgamemode;
-        enumgamemode.a(this.player.abilities);
-        this.player.updateAbilities();
+        enumgamemode.a(this.player.capabilities);
+        this.player.sendPlayerAbilities();
     }
 
     public EnumGamemode getGameMode() {
@@ -68,17 +68,17 @@ public class ItemInWorldManager {
 
         if (this.j) {
             i = this.currentTick - this.n;
-            int k = this.world.getTypeId(this.k, this.l, this.m);
+            int k = this.world.getBlockId(this.k, this.l, this.m);
 
             if (k == 0) {
                 this.j = false;
             } else {
                 Block block = Block.blocksList[k];
 
-                f = block.getDamage(this.player, this.player.world, this.k, this.l, this.m) * (float) (i + 1);
+                f = block.getDamage(this.player, this.player.worldObj, this.k, this.l, this.m) * (float) (i + 1);
                 j = (int) (f * 10.0F);
                 if (j != this.o) {
-                    this.world.f(this.player.id, this.k, this.l, this.m, j);
+                    this.world.f(this.player.entityId, this.k, this.l, this.m, j);
                     this.o = j;
                 }
 
@@ -88,20 +88,20 @@ public class ItemInWorldManager {
                 }
             }
         } else if (this.d) {
-            i = this.world.getTypeId(this.f, this.g, this.h);
+            i = this.world.getBlockId(this.f, this.g, this.h);
             Block block1 = Block.blocksList[i];
 
             if (block1 == null) {
-                this.world.f(this.player.id, this.f, this.g, this.h, -1);
+                this.world.f(this.player.entityId, this.f, this.g, this.h, -1);
                 this.o = -1;
                 this.d = false;
             } else {
                 int l = this.currentTick - this.lastDigTick;
 
-                f = block1.getDamage(this.player, this.player.world, this.f, this.g, this.h) * (float) (l + 1);
+                f = block1.getDamage(this.player, this.player.worldObj, this.f, this.g, this.h) * (float) (l + 1);
                 j = (int) (f * 10.0F);
                 if (j != this.o) {
-                    this.world.f(this.player.id, this.f, this.g, this.h, j);
+                    this.world.f(this.player.entityId, this.f, this.g, this.h, j);
                     this.o = j;
                 }
             }
@@ -117,7 +117,7 @@ public class ItemInWorldManager {
             // CraftBukkit start
             if (event.isCancelled()) {
                 // Let the client know the block still exists
-                ((EntityPlayer) this.player).netServerHandler.sendPacket(new Packet53BlockChange(i, j, k, this.world));
+                ((EntityPlayer) this.player).serverForThisPlayer.sendPacketToPlayer(new Packet53BlockChange(i, j, k, this.world));
                 return;
             }
             // CraftBukkit end
@@ -129,7 +129,7 @@ public class ItemInWorldManager {
                 this.world.douseFire(this.player, i, j, k, l);
                 this.lastDigTick = this.currentTick;
                 float f = 1.0F;
-                int i1 = this.world.getTypeId(i, j, k);
+                int i1 = this.world.getBlockId(i, j, k);
                 // CraftBukkit start - Swings at air do *NOT* exist.
                 if (i1 <= 0) {
                     return;
@@ -140,10 +140,10 @@ public class ItemInWorldManager {
                     if (i1 == Block.WOODEN_DOOR.blockID) {
                         // For some reason *BOTH* the bottom/top part have to be marked updated.
                         boolean bottom = (this.world.getData(i, j, k) & 8) == 0;
-                        ((EntityPlayer) this.player).netServerHandler.sendPacket(new Packet53BlockChange(i, j, k, this.world));
-                        ((EntityPlayer) this.player).netServerHandler.sendPacket(new Packet53BlockChange(i, j + (bottom ? 1 : -1), k, this.world));
+                        ((EntityPlayer) this.player).serverForThisPlayer.sendPacketToPlayer(new Packet53BlockChange(i, j, k, this.world));
+                        ((EntityPlayer) this.player).serverForThisPlayer.sendPacketToPlayer(new Packet53BlockChange(i, j + (bottom ? 1 : -1), k, this.world));
                     } else if (i1 == Block.TRAP_DOOR.blockID) {
-                        ((EntityPlayer) this.player).netServerHandler.sendPacket(new Packet53BlockChange(i, j, k, this.world));
+                        ((EntityPlayer) this.player).serverForThisPlayer.sendPacketToPlayer(new Packet53BlockChange(i, j, k, this.world));
                     }
                 } else {
                     Block.blocksList[i1].attack(this.world, i, j, k, this.player);
@@ -156,7 +156,7 @@ public class ItemInWorldManager {
                 if (event.useItemInHand() == Event.Result.DENY) {
                     // If we 'insta destroyed' then the client needs to be informed.
                     if (toolDamage > 1.0f) {
-                        ((EntityPlayer) this.player).netServerHandler.sendPacket(new Packet53BlockChange(i, j, k, this.world));
+                        ((EntityPlayer) this.player).serverForThisPlayer.sendPacketToPlayer(new Packet53BlockChange(i, j, k, this.world));
                     }
                     return;
                 }
@@ -164,7 +164,7 @@ public class ItemInWorldManager {
 
                 if (blockEvent.isCancelled()) {
                     // Let the client know the block still exists
-                    ((EntityPlayer) this.player).netServerHandler.sendPacket(new Packet53BlockChange(i, j, k, this.world));
+                    ((EntityPlayer) this.player).serverForThisPlayer.sendPacketToPlayer(new Packet53BlockChange(i, j, k, this.world));
                     return;
                 }
 
@@ -182,7 +182,7 @@ public class ItemInWorldManager {
                     this.h = k;
                     int j1 = (int) (f * 10.0F);
 
-                    this.world.f(this.player.id, i, j, k, j1);
+                    this.world.f(this.player.entityId, i, j, k, j1);
                     this.o = j1;
                 }
             }
@@ -193,15 +193,15 @@ public class ItemInWorldManager {
         if (i == this.f && j == this.g && k == this.h) {
             this.currentTick = (int) (System.currentTimeMillis() / 50); // CraftBukkit
             int l = this.currentTick - this.lastDigTick;
-            int i1 = this.world.getTypeId(i, j, k);
+            int i1 = this.world.getBlockId(i, j, k);
 
             if (i1 != 0) {
                 Block block = Block.blocksList[i1];
-                float f = block.getDamage(this.player, this.player.world, i, j, k) * (float) (l + 1);
+                float f = block.getDamage(this.player, this.player.worldObj, i, j, k) * (float) (l + 1);
 
                 if (f >= 0.7F) {
                     this.d = false;
-                    this.world.f(this.player.id, i, j, k, -1);
+                    this.world.f(this.player.entityId, i, j, k, -1);
                     this.breakBlock(i, j, k);
                 } else if (!this.j) {
                     this.d = false;
@@ -214,25 +214,25 @@ public class ItemInWorldManager {
             }
         // CraftBukkit start - force blockreset to client
         } else {
-            ((EntityPlayer) this.player).netServerHandler.sendPacket(new Packet53BlockChange(i, j, k, this.world));
+            ((EntityPlayer) this.player).serverForThisPlayer.sendPacketToPlayer(new Packet53BlockChange(i, j, k, this.world));
             // CraftBukkit end
         }
     }
 
     public void c(int i, int j, int k) {
         this.d = false;
-        this.world.f(this.player.id, this.f, this.g, this.h, -1);
+        this.world.f(this.player.entityId, this.f, this.g, this.h, -1);
     }
 
     private boolean d(int i, int j, int k) {
-        Block block = Block.blocksList[this.world.getTypeId(i, j, k)];
+        Block block = Block.blocksList[this.world.getBlockId(i, j, k)];
         int l = this.world.getData(i, j, k);
 
         if (block != null) {
             block.a(this.world, i, j, k, l, this.player);
         }
 
-        boolean flag = this.world.setTypeId(i, j, k, 0);
+        boolean flag = this.world.setBlockWithNotify(i, j, k, 0);
 
         if (block != null && flag) {
             block.postBreak(this.world, i, j, k, l);
@@ -254,7 +254,7 @@ public class ItemInWorldManager {
 
                 packet.material = 0;
                 packet.data = 0;
-                ((EntityPlayer) this.player).netServerHandler.sendPacket(packet);
+                ((EntityPlayer) this.player).serverForThisPlayer.sendPacketToPlayer(packet);
             }
 
             event = new BlockBreakEvent(block, this.player.getBukkitEntity());
@@ -279,7 +279,7 @@ public class ItemInWorldManager {
 
             if (event.isCancelled()) {
                 // Let the client know the block still exists
-                ((EntityPlayer) this.player).netServerHandler.sendPacket(new Packet53BlockChange(i, j, k, this.world));
+                ((EntityPlayer) this.player).serverForThisPlayer.sendPacketToPlayer(new Packet53BlockChange(i, j, k, this.world));
                 return false;
             }
         }
@@ -288,7 +288,7 @@ public class ItemInWorldManager {
             // CraftBukkit end
             return false;
         } else {
-            int l = this.world.getTypeId(i, j, k);
+            int l = this.world.getBlockId(i, j, k);
             if (Block.blocksList[l] == null) return false; // CraftBukkit - a plugin set block to air without cancelling
             int i1 = this.world.getData(i, j, k);
 
@@ -296,7 +296,7 @@ public class ItemInWorldManager {
             boolean flag = this.d(i, j, k);
 
             if (this.isCreative()) {
-                this.player.netServerHandler.sendPacket(new Packet53BlockChange(i, j, k, this.world));
+                this.player.serverForThisPlayer.sendPacketToPlayer(new Packet53BlockChange(i, j, k, this.world));
             } else {
                 ItemStack itemstack = this.player.bC();
                 boolean flag1 = this.player.b(Block.blocksList[l]);
@@ -347,7 +347,7 @@ public class ItemInWorldManager {
 
     // CraftBukkit - TODO: Review this code, it changed in 1.8 but I'm not sure if we need to update or not
     public boolean interact(EntityHuman entityhuman, World world, ItemStack itemstack, int i, int j, int k, int l, float f, float f1, float f2) {
-        int i1 = world.getTypeId(i, j, k);
+        int i1 = world.getBlockId(i, j, k);
 
         // CraftBukkit start - Interact
         boolean result = false;
@@ -357,7 +357,7 @@ public class ItemInWorldManager {
                 // If we denied a door from opening, we need to send a correcting update to the client, as it already opened the door.
                 if (i1 == Block.WOODEN_DOOR.blockID) {
                     boolean bottom = (world.getData(i, j, k) & 8) == 0;
-                    ((EntityPlayer) entityhuman).netServerHandler.sendPacket(new Packet53BlockChange(i, j + (bottom ? 1 : -1), k, world));
+                    ((EntityPlayer) entityhuman).serverForThisPlayer.sendPacketToPlayer(new Packet53BlockChange(i, j + (bottom ? 1 : -1), k, world));
                 }
                 result = (event.useItemInHand() != Event.Result.ALLOW);
             } else {

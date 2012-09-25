@@ -18,7 +18,7 @@ public class ItemBlock extends Item {
 
     public boolean interactWith(ItemStack itemstack, EntityHuman entityhuman, World world, int i, int j, int k, int l, float f, float f1, float f2) {
         int clickedX = i, clickedY = j, clickedZ = k; // CraftBukkit
-        int i1 = world.getTypeId(i, j, k);
+        int i1 = world.getBlockId(i, j, k);
 
         if (i1 == Block.SNOW.blockID) {
             l = 1;
@@ -72,9 +72,9 @@ public class ItemBlock extends Item {
             CraftBlockState replacedBlockState = CraftBlockState.getBlockState(world, i, j, k);
 
             world.suppressPhysics = true;
-            world.setTypeIdAndData(i, j, k, id, this.filterData(itemstack.getData()));
+            world.setBlockAndMetadataWithNotify(i, j, k, id, this.filterData(itemstack.getData()));
             org.bukkit.event.block.BlockPlaceEvent event = org.bukkit.craftbukkit.event.CraftEventFactory.callBlockPlaceEvent(world, entityhuman, replacedBlockState, clickedX, clickedY, clickedZ);
-            id = world.getTypeId(i, j, k);
+            id = world.getBlockId(i, j, k);
             int data = world.getData(i, j, k);
             replacedBlockState.update(true);
             world.suppressPhysics = false;
@@ -82,8 +82,8 @@ public class ItemBlock extends Item {
             if (event.isCancelled() || !event.canBuild()) {
                 return true;
             }
-            if (world.setTypeIdAndData(i, j, k, id, data)) {
-                if (world.getTypeId(i, j, k) == id && Block.blocksList[id] != null) {
+            if (world.setBlockAndMetadataWithNotify(i, j, k, id, data)) {
+                if (world.getBlockId(i, j, k) == id && Block.blocksList[id] != null) {
                     Block.blocksList[id].postPlace(world, i, j, k, l, f, f1, f2);
                     Block.blocksList[id].postPlace(world, i, j, k, entityhuman);
                     // CraftBukkit end

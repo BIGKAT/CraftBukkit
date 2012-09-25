@@ -164,7 +164,7 @@ public class PlayerInventory implements IInventory {
     public void k() {
         for (int i = 0; i < this.items.length; ++i) {
             if (this.items[i] != null) {
-                this.items[i].a(this.player.world, this.player, i, this.itemInHandIndex == i);
+                this.items[i].a(this.player.worldObj, this.player, i, this.itemInHandIndex == i);
             }
         }
     }
@@ -199,7 +199,7 @@ public class PlayerInventory implements IInventory {
                 this.items[i].b = 5;
                 itemstack.count = 0;
                 return true;
-            } else if (this.player.abilities.canInstantlyBuild) {
+            } else if (this.player.capabilities.canInstantlyBuild) {
                 itemstack.count = 0;
                 return true;
             } else {
@@ -211,7 +211,7 @@ public class PlayerInventory implements IInventory {
                 itemstack.count = this.e(itemstack);
             } while (itemstack.count > 0 && itemstack.count < i);
 
-            if (itemstack.count == i && this.player.abilities.canInstantlyBuild) {
+            if (itemstack.count == i && this.player.capabilities.canInstantlyBuild) {
                 itemstack.count = 0;
                 return true;
             } else {
@@ -428,21 +428,21 @@ public class PlayerInventory implements IInventory {
         this.e = true;
     }
 
-    public void setCarried(ItemStack itemstack) {
+    public void setItemStack(ItemStack itemstack) {
         this.g = itemstack;
     }
 
-    public ItemStack getCarried() {
+    public ItemStack getItemStack() {
         // CraftBukkit start
         if (this.g != null && this.g.count == 0) {
-            this.setCarried(null);
+            this.setItemStack(null);
         }
         // CraftBukkit end
         return this.g;
     }
 
     public boolean a(EntityHuman entityhuman) {
-        return this.player.dead ? false : entityhuman.e(this.player) <= 64.0D;
+        return this.player.isDead ? false : entityhuman.e(this.player) <= 64.0D;
     }
 
     public boolean c(ItemStack itemstack) {

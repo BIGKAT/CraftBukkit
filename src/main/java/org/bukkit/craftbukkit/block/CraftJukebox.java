@@ -29,11 +29,11 @@ public class CraftJukebox extends CraftBlockState implements Jukebox {
             record = Material.AIR;
         }
         jukebox.record = record.getId();
-        jukebox.update();
+        jukebox.onInventoryChanged();
         if (record == Material.AIR) {
-            world.getHandle().setData(getX(), getY(), getZ(), 0);
+            world.getHandle().setBlockMetadataWithNotify(getX(), getY(), getZ(), 0);
         } else {
-            world.getHandle().setData(getX(), getY(), getZ(), 1);
+            world.getHandle().setBlockMetadataWithNotify(getX(), getY(), getZ(), 1);
         }
         world.playEffect(getLocation(), Effect.RECORD_PLAY, record.getId());
     }
@@ -44,7 +44,7 @@ public class CraftJukebox extends CraftBlockState implements Jukebox {
 
     public boolean eject() {
         boolean result = isPlaying();
-        ((BlockJukeBox) net.minecraft.server.Block.jukebox).dropRecord(world.getHandle(), getX(), getY(), getZ());
+        ((BlockJukeBox) net.minecraft.server.Block.jukebox).ejectRecord(world.getHandle(), getX(), getY(), getZ());
         return result;
     }
 }

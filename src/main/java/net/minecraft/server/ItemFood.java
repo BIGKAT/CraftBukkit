@@ -37,14 +37,14 @@ public class ItemFood extends Item {
         }
         // CraftBukkit end
 
-        world.makeSound(entityhuman, "random.burp", 0.5F, world.random.nextFloat() * 0.1F + 0.9F);
+        world.makeSound(entityhuman, "random.burp", 0.5F, world.rand.nextFloat() * 0.1F + 0.9F);
         this.c(itemstack, world, entityhuman);
         return itemstack;
     }
 
     protected void c(ItemStack itemstack, World world, EntityHuman entityhuman) {
-        if (!world.isStatic && this.ca > 0 && world.random.nextFloat() < this.cd) {
-            entityhuman.addEffect(new MobEffect(this.ca, this.cb * 20, this.cc));
+        if (!world.isStatic && this.ca > 0 && world.rand.nextFloat() < this.cd) {
+            entityhuman.addPotionEffect(new MobEffect(this.ca, this.cb * 20, this.cc));
         }
     }
 

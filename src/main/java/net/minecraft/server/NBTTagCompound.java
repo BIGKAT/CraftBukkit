@@ -71,7 +71,7 @@ public class NBTTagCompound extends NBTBase {
         this.map.put(s, new NBTTagShort(s, short1));
     }
 
-    public void setInt(String s, int i) {
+    public void setInteger(String s, int i) {
         this.map.put(s, new NBTTagInt(s, i));
     }
 
@@ -99,7 +99,7 @@ public class NBTTagCompound extends NBTBase {
         this.map.put(s, new NBTTagIntArray(s, aint));
     }
 
-    public void setCompound(String s, NBTTagCompound nbttagcompound) {
+    public void setCompoundTag(String s, NBTTagCompound nbttagcompound) {
         this.map.put(s, nbttagcompound.setName(s));
     }
 
@@ -123,7 +123,7 @@ public class NBTTagCompound extends NBTBase {
         return !this.map.containsKey(s) ? 0 : ((NBTTagShort) this.map.get(s)).data;
     }
 
-    public int getInt(String s) {
+    public int getInteger(String s) {
         return !this.map.containsKey(s) ? 0 : ((NBTTagInt) this.map.get(s)).data;
     }
 
@@ -151,7 +151,7 @@ public class NBTTagCompound extends NBTBase {
         return !this.map.containsKey(s) ? new int[0] : ((NBTTagIntArray) this.map.get(s)).data;
     }
 
-    public NBTTagCompound getCompound(String s) {
+    public NBTTagCompound getCompoundTag(String s) {
         return !this.map.containsKey(s) ? new NBTTagCompound(s) : (NBTTagCompound) this.map.get(s);
     }
 

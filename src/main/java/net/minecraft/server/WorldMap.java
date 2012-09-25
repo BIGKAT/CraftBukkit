@@ -64,8 +64,8 @@ public class WorldMap extends WorldMapBase {
 
         this.map = dimension;
         // CraftBukkit end
-        this.centerX = nbttagcompound.getInt("xCenter");
-        this.centerZ = nbttagcompound.getInt("zCenter");
+        this.centerX = nbttagcompound.getInteger("xCenter");
+        this.centerZ = nbttagcompound.getInteger("zCenter");
         this.scale = nbttagcompound.getByte("scale");
         if (this.scale < 0) {
             this.scale = 0;
@@ -124,8 +124,8 @@ public class WorldMap extends WorldMapBase {
         }
         // CraftBukkit end
         nbttagcompound.setByte("dimension", this.map);
-        nbttagcompound.setInt("xCenter", this.centerX);
-        nbttagcompound.setInt("zCenter", this.centerZ);
+        nbttagcompound.setInteger("xCenter", this.centerX);
+        nbttagcompound.setInteger("zCenter", this.centerZ);
         nbttagcompound.setByte("scale", this.scale);
         nbttagcompound.setShort("width", (short) 128);
         nbttagcompound.setShort("height", (short) 128);
@@ -145,9 +145,9 @@ public class WorldMap extends WorldMapBase {
         for (int i = 0; i < this.g.size(); ++i) {
             WorldMapHumanTracker worldmaphumantracker1 = (WorldMapHumanTracker) this.g.get(i);
 
-            if (!worldmaphumantracker1.trackee.dead && worldmaphumantracker1.trackee.inventory.c(itemstack)) {
-                float f = (float) (worldmaphumantracker1.trackee.locX - (double) this.centerX) / (float) (1 << this.scale);
-                float f1 = (float) (worldmaphumantracker1.trackee.locZ - (double) this.centerZ) / (float) (1 << this.scale);
+            if (!worldmaphumantracker1.trackee.isDead && worldmaphumantracker1.trackee.inventory.c(itemstack)) {
+                float f = (float) (worldmaphumantracker1.trackee.posX - (double) this.centerX) / (float) (1 << this.scale);
+                float f1 = (float) (worldmaphumantracker1.trackee.posZ - (double) this.centerZ) / (float) (1 << this.scale);
                 byte b0 = 64;
                 byte b1 = 64;
 
@@ -155,7 +155,7 @@ public class WorldMap extends WorldMapBase {
                     byte b2 = 0;
                     byte b3 = (byte) ((int) ((double) (f * 2.0F) + 0.5D));
                     byte b4 = (byte) ((int) ((double) (f1 * 2.0F) + 0.5D));
-                    byte b5 = (byte) ((int) ((double) worldmaphumantracker1.trackee.yaw * 16.0D / 360.0D));
+                    byte b5 = (byte) ((int) ((double) worldmaphumantracker1.trackee.rotationYaw * 16.0D / 360.0D));
 
                     if (this.map < 0) {
                         int j = this.f / 10;

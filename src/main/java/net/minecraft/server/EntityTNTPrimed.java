@@ -4,13 +4,13 @@ import org.bukkit.event.entity.ExplosionPrimeEvent; // CraftBukkit
 
 public class EntityTNTPrimed extends Entity {
 
-    public int fuseTicks;
+    public int fuse;
     public float yield = 4; // CraftBukkit
     public boolean isIncendiary = false; // CraftBukkit
 
     public EntityTNTPrimed(World world) {
         super(world);
-        this.fuseTicks = 0;
+        this.fuse = 0;
         this.m = true;
         this.a(0.98F, 0.98F);
         this.height = this.length / 2.0F;
@@ -21,10 +21,10 @@ public class EntityTNTPrimed extends Entity {
         this.setPosition(d0, d1, d2);
         float f = (float) (Math.random() * 3.1415927410125732D * 2.0D);
 
-        this.motX = (double) (-((float) Math.sin((double) f)) * 0.02F);
-        this.motY = 0.20000000298023224D;
-        this.motZ = (double) (-((float) Math.cos((double) f)) * 0.02F);
-        this.fuseTicks = 80;
+        this.motionX = (double) (-((float) Math.sin((double) f)) * 0.02F);
+        this.motionY = 0.20000000298023224D;
+        this.motionZ = (double) (-((float) Math.cos((double) f)) * 0.02F);
+        this.fuse = 80;
         this.lastX = d0;
         this.lastY = d1;
         this.lastZ = d2;
@@ -37,33 +37,33 @@ public class EntityTNTPrimed extends Entity {
     }
 
     public boolean L() {
-        return !this.dead;
+        return !this.isDead;
     }
 
     public void h_() {
-        this.lastX = this.locX;
-        this.lastY = this.locY;
-        this.lastZ = this.locZ;
-        this.motY -= 0.03999999910593033D;
-        this.move(this.motX, this.motY, this.motZ);
-        this.motX *= 0.9800000190734863D;
-        this.motY *= 0.9800000190734863D;
-        this.motZ *= 0.9800000190734863D;
+        this.lastX = this.posX;
+        this.lastY = this.posY;
+        this.lastZ = this.posZ;
+        this.motionY -= 0.03999999910593033D;
+        this.move(this.motionX, this.motionY, this.motionZ);
+        this.motionX *= 0.9800000190734863D;
+        this.motionY *= 0.9800000190734863D;
+        this.motionZ *= 0.9800000190734863D;
         if (this.onGround) {
-            this.motX *= 0.699999988079071D;
-            this.motZ *= 0.699999988079071D;
-            this.motY *= -0.5D;
+            this.motionX *= 0.699999988079071D;
+            this.motionZ *= 0.699999988079071D;
+            this.motionY *= -0.5D;
         }
 
-        if (this.fuseTicks-- <= 0) {
+        if (this.fuse-- <= 0) {
             // CraftBukkit start - Need to reverse the order of the explosion and the entity death so we have a location for the event
-            if (!this.world.isStatic) {
+            if (!this.worldObj.isStatic) {
                 this.explode();
             }
-            this.die();
+            this.setDead();
             // CraftBukkit end
         } else {
-            this.world.a("smoke", this.locX, this.locY + 0.5D, this.locZ, 0.0D, 0.0D, 0.0D);
+            this.worldObj.a("smoke", this.posX, this.posY + 0.5D, this.posZ, 0.0D, 0.0D, 0.0D);
         }
     }
 
@@ -71,23 +71,23 @@ public class EntityTNTPrimed extends Entity {
         // CraftBukkit start
         // float f = 4.0F;
 
-        org.bukkit.craftbukkit.CraftServer server = this.world.getServer();
+        org.bukkit.craftbukkit.CraftServer server = this.worldObj.getServer();
 
         ExplosionPrimeEvent event = new ExplosionPrimeEvent((org.bukkit.entity.Explosive) org.bukkit.craftbukkit.entity.CraftEntity.getEntity(server, this));
         server.getPluginManager().callEvent(event);
 
         if (!event.isCancelled()) {
             // give 'this' instead of (Entity) null so we know what causes the damage
-            this.world.createExplosion(this, this.locX, this.locY, this.locZ, event.getRadius(), event.getFire());
+            this.worldObj.createExplosion(this, this.posX, this.posY, this.posZ, event.getRadius(), event.getFire());
         }
         // CraftBukkit end
     }
 
     protected void b(NBTTagCompound nbttagcompound) {
-        nbttagcompound.setByte("Fuse", (byte) this.fuseTicks);
+        nbttagcompound.setByte("Fuse", (byte) this.fuse);
     }
 
     protected void a(NBTTagCompound nbttagcompound) {
-        this.fuseTicks = nbttagcompound.getByte("Fuse");
+        this.fuse = nbttagcompound.getByte("Fuse");
     }
 }

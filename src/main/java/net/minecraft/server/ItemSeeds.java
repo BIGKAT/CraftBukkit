@@ -18,12 +18,12 @@ public class ItemSeeds extends Item {
         if (l != 1) {
             return false;
         } else if (entityhuman.e(i, j, k) && entityhuman.e(i, j + 1, k)) {
-            int i1 = world.getTypeId(i, j, k);
+            int i1 = world.getBlockId(i, j, k);
 
             if (i1 == this.b && world.isEmpty(i, j + 1, k)) {
                 CraftBlockState blockState = CraftBlockState.getBlockState(world, i, j + 1, k); // CraftBukkit
 
-                world.setTypeId(i, j + 1, k, this.id);
+                world.setBlockWithNotify(i, j + 1, k, this.id);
 
                 // CraftBukkit start - seeds
                 org.bukkit.event.block.BlockPlaceEvent event = org.bukkit.craftbukkit.event.CraftEventFactory.callBlockPlaceEvent(world, entityhuman, blockState, i, j, k);

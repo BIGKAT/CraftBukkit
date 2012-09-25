@@ -14,8 +14,8 @@ public class CraftSign extends CraftBlockState implements Sign {
 
         CraftWorld world = (CraftWorld) block.getWorld();
         sign = (TileEntitySign) world.getTileEntityAt(getX(), getY(), getZ());
-        lines = new String[sign.lines.length];
-        System.arraycopy(sign.lines, 0, lines, 0, lines.length);
+        lines = new String[sign.signText.length];
+        System.arraycopy(sign.signText, 0, lines, 0, lines.length);
     }
 
     public String[] getLines() {
@@ -37,12 +37,12 @@ public class CraftSign extends CraftBlockState implements Sign {
         if (result) {
             for(int i = 0; i < 4; i++) {
                 if(lines[i] != null) {
-                    sign.lines[i] = lines[i];
+                    sign.signText[i] = lines[i];
                 } else {
-                    sign.lines[i] = "";
+                    sign.signText[i] = "";
                 }
             }
-            sign.update();
+            sign.onInventoryChanged();
         }
 
         return result;

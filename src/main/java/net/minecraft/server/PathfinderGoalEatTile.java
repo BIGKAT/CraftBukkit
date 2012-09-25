@@ -13,7 +13,7 @@ public class PathfinderGoalEatTile extends PathfinderGoal {
 
     public PathfinderGoalEatTile(EntityLiving entityliving) {
         this.b = entityliving;
-        this.c = entityliving.world;
+        this.c = entityliving.worldObj;
         this.a(7);
     }
 
@@ -21,17 +21,17 @@ public class PathfinderGoalEatTile extends PathfinderGoal {
         if (this.b.au().nextInt(this.b.isBaby() ? 50 : 1000) != 0) {
             return false;
         } else {
-            int i = MathHelper.floor(this.b.locX);
-            int j = MathHelper.floor(this.b.locY);
-            int k = MathHelper.floor(this.b.locZ);
+            int i = MathHelper.floor(this.b.posX);
+            int j = MathHelper.floor(this.b.posY);
+            int k = MathHelper.floor(this.b.posZ);
 
-            return this.c.getTypeId(i, j, k) == Block.LONG_GRASS.blockID && this.c.getData(i, j, k) == 1 ? true : this.c.getTypeId(i, j - 1, k) == Block.GRASS.blockID;
+            return this.c.getBlockId(i, j, k) == Block.LONG_GRASS.blockID && this.c.getData(i, j, k) == 1 ? true : this.c.getBlockId(i, j - 1, k) == Block.GRASS.blockID;
         }
     }
 
     public void e() {
         this.a = 40;
-        this.c.broadcastEntityEffect(this.b, (byte) 10);
+        this.c.setEntityState(this.b, (byte) 10);
         this.b.getNavigation().g();
     }
 
@@ -50,23 +50,23 @@ public class PathfinderGoalEatTile extends PathfinderGoal {
     public void d() {
         this.a = Math.max(0, this.a - 1);
         if (this.a == 4) {
-            int i = MathHelper.floor(this.b.locX);
-            int j = MathHelper.floor(this.b.locY);
-            int k = MathHelper.floor(this.b.locZ);
+            int i = MathHelper.floor(this.b.posX);
+            int j = MathHelper.floor(this.b.posY);
+            int k = MathHelper.floor(this.b.posZ);
 
-            if (this.c.getTypeId(i, j, k) == Block.LONG_GRASS.blockID) {
+            if (this.c.getBlockId(i, j, k) == Block.LONG_GRASS.blockID) {
                 // CraftBukkit start
-                if (!CraftEventFactory.callEntityChangeBlockEvent(this.b.getBukkitEntity(), this.b.world.getWorld().getBlockAt(i, j, k), Material.AIR).isCancelled()) {
+                if (!CraftEventFactory.callEntityChangeBlockEvent(this.b.getBukkitEntity(), this.b.worldObj.getWorld().getBlockAt(i, j, k), Material.AIR).isCancelled()) {
                     this.c.triggerEffect(2001, i, j, k, Block.LONG_GRASS.blockID + 4096);
-                    this.c.setTypeId(i, j, k, 0);
+                    this.c.setBlockWithNotify(i, j, k, 0);
                     this.b.aA();
                 }
                 // CraftBukkit end
-            } else if (this.c.getTypeId(i, j - 1, k) == Block.GRASS.blockID) {
+            } else if (this.c.getBlockId(i, j - 1, k) == Block.GRASS.blockID) {
                 // CraftBukkit start
-                if (!CraftEventFactory.callEntityChangeBlockEvent(this.b.getBukkitEntity(), this.b.world.getWorld().getBlockAt(i, j - 1, k), Material.DIRT).isCancelled()) {
+                if (!CraftEventFactory.callEntityChangeBlockEvent(this.b.getBukkitEntity(), this.b.worldObj.getWorld().getBlockAt(i, j - 1, k), Material.DIRT).isCancelled()) {
                     this.c.triggerEffect(2001, i, j - 1, k, Block.GRASS.blockID);
-                    this.c.setTypeId(i, j - 1, k, Block.DIRT.blockID);
+                    this.c.setBlockWithNotify(i, j - 1, k, Block.DIRT.blockID);
                     this.b.aA();
                 }
                 // CraftBukkit end

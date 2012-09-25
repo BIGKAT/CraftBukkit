@@ -14,8 +14,8 @@ public class CraftFish extends AbstractProjectile implements Fish {
     }
 
     public LivingEntity getShooter() {
-        if (getHandle().owner != null) {
-            return (LivingEntity) getHandle().owner.getBukkitEntity();
+        if (getHandle().angler != null) {
+            return (LivingEntity) getHandle().angler.getBukkitEntity();
         }
 
         return null;
@@ -23,7 +23,7 @@ public class CraftFish extends AbstractProjectile implements Fish {
 
     public void setShooter(LivingEntity shooter) {
         if (shooter instanceof CraftHumanEntity) {
-            getHandle().owner = (EntityHuman) ((CraftHumanEntity) shooter).entity;
+            getHandle().angler = (EntityHuman) ((CraftHumanEntity) shooter).entity;
         }
     }
 

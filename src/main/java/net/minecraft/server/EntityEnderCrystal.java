@@ -23,17 +23,17 @@ public class EntityEnderCrystal extends Entity {
     }
 
     public void h_() {
-        this.lastX = this.locX;
-        this.lastY = this.locY;
-        this.lastZ = this.locZ;
+        this.lastX = this.posX;
+        this.lastY = this.posY;
+        this.lastZ = this.posZ;
         ++this.a;
         this.datawatcher.watch(8, Integer.valueOf(this.b));
-        int i = MathHelper.floor(this.locX);
-        int j = MathHelper.floor(this.locY);
-        int k = MathHelper.floor(this.locZ);
+        int i = MathHelper.floor(this.posX);
+        int j = MathHelper.floor(this.posY);
+        int k = MathHelper.floor(this.posZ);
 
-        if (this.world.getTypeId(i, j, k) != Block.FIRE.blockID) {
-            this.world.setTypeId(i, j, k, Block.FIRE.blockID);
+        if (this.worldObj.getBlockId(i, j, k) != Block.FIRE.blockID) {
+            this.worldObj.setBlockWithNotify(i, j, k, Block.FIRE.blockID);
         }
     }
 
@@ -46,7 +46,7 @@ public class EntityEnderCrystal extends Entity {
     }
 
     public boolean damageEntity(DamageSource damagesource, int i) {
-        if (!this.dead && !this.world.isStatic) {
+        if (!this.isDead && !this.worldObj.isStatic) {
             // CraftBukkit start - All non-living entities need this
             if (org.bukkit.craftbukkit.event.CraftEventFactory.handleNonLivingEntityDamageEvent(this, damagesource, i)) {
                 return false;
@@ -55,9 +55,9 @@ public class EntityEnderCrystal extends Entity {
 
             this.b = 0;
             if (this.b <= 0) {
-                this.die();
-                if (!this.world.isStatic) {
-                    this.world.explode(this, this.locX, this.locY, this.locZ, 6.0F); // CraftBukkit - (Entity) null -> this
+                this.setDead();
+                if (!this.worldObj.isStatic) {
+                    this.worldObj.explode(this, this.posX, this.posY, this.posZ, 6.0F); // CraftBukkit - (Entity) null -> this
                 }
             }
         }

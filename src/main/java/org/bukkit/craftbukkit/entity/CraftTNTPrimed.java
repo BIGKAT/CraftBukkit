@@ -29,11 +29,11 @@ public class CraftTNTPrimed extends CraftEntity implements TNTPrimed {
     }
 
     public int getFuseTicks() {
-        return getHandle().fuseTicks;
+        return getHandle().fuse;
     }
 
     public void setFuseTicks(int fuseTicks) {
-        getHandle().fuseTicks = fuseTicks;
+        getHandle().fuse = fuseTicks;
     }
 
     @Override

@@ -96,11 +96,11 @@ public class EntityWolf extends EntityTameableAnimal {
 
     public void d() {
         super.d();
-        if (!this.world.isStatic && this.g && !this.h && !this.l() && this.onGround) {
+        if (!this.worldObj.isStatic && this.g && !this.h && !this.l() && this.onGround) {
             this.h = true;
             this.i = 0.0F;
             this.j = 0.0F;
-            this.world.broadcastEntityEffect(this, (byte) 8);
+            this.worldObj.broadcastEntityEffect(this, (byte) 8);
         }
     }
 
@@ -124,7 +124,7 @@ public class EntityWolf extends EntityTameableAnimal {
             this.j = 0.0F;
         } else if ((this.g || this.h) && this.h) {
             if (this.i == 0.0F) {
-                this.world.makeSound(this, "mob.wolf.shake", this.aP(), (this.random.nextFloat() - this.random.nextFloat()) * 0.2F + 1.0F);
+                this.worldObj.makeSound(this, "mob.wolf.shake", this.aP(), (this.random.nextFloat() - this.random.nextFloat()) * 0.2F + 1.0F);
             }
 
             this.j = this.i;
@@ -144,7 +144,7 @@ public class EntityWolf extends EntityTameableAnimal {
                     float f1 = (this.random.nextFloat() * 2.0F - 1.0F) * this.width * 0.5F;
                     float f2 = (this.random.nextFloat() * 2.0F - 1.0F) * this.width * 0.5F;
 
-                    this.world.a("splash", this.locX + (double) f1, (double) (f + 0.8F), this.locZ + (double) f2, this.motX, this.motY, this.motZ);
+                    this.worldObj.a("splash", this.posX + (double) f1, (double) (f + 0.8F), this.posZ + (double) f2, this.motionX, this.motionY, this.motionZ);
                 }
             }
         }
@@ -183,7 +183,7 @@ public class EntityWolf extends EntityTameableAnimal {
                 ItemFood itemfood = (ItemFood) Item.itemsList[itemstack.id];
 
                 if (itemfood.h() && this.datawatcher.getInt(18) < 20) {
-                    if (!entityhuman.abilities.canInstantlyBuild) {
+                    if (!entityhuman.capabilities.canInstantlyBuild) {
                         --itemstack.count;
                     }
 
@@ -196,13 +196,13 @@ public class EntityWolf extends EntityTameableAnimal {
                 }
             }
 
-            if (entityhuman.name.equalsIgnoreCase(this.getOwnerName()) && !this.world.isStatic && !this.b(itemstack)) {
+            if (entityhuman.username.equalsIgnoreCase(this.getOwnerName()) && !this.worldObj.isStatic && !this.b(itemstack)) {
                 this.d.a(!this.isSitting());
                 this.bu = false;
-                this.setPathEntity((PathEntity) null);
+                this.setPathToEntity((PathEntity) null);
             }
         } else if (itemstack != null && itemstack.id == Item.BONE.id && !this.isAngry()) {
-            if (!entityhuman.abilities.canInstantlyBuild) {
+            if (!entityhuman.capabilities.canInstantlyBuild) {
                 --itemstack.count;
             }
 
@@ -210,20 +210,20 @@ public class EntityWolf extends EntityTameableAnimal {
                 entityhuman.inventory.setItem(entityhuman.inventory.itemInHandIndex, (ItemStack) null);
             }
 
-            if (!this.world.isStatic) {
+            if (!this.worldObj.isStatic) {
                 // CraftBukkit - added event call and isCancelled check.
                 if (this.random.nextInt(3) == 0 && !org.bukkit.craftbukkit.event.CraftEventFactory.callEntityTameEvent(this, entityhuman).isCancelled()) {
                     this.setTamed(true);
-                    this.setPathEntity((PathEntity) null);
+                    this.setPathToEntity((PathEntity) null);
                     this.b((EntityLiving) null);
                     this.d.a(true);
                     this.setHealth(20);
-                    this.setOwnerName(entityhuman.name);
+                    this.setOwnerName(entityhuman.username);
                     this.e(true);
-                    this.world.broadcastEntityEffect(this, (byte) 7);
+                    this.worldObj.broadcastEntityEffect(this, (byte) 7);
                 } else {
                     this.e(false);
-                    this.world.broadcastEntityEffect(this, (byte) 6);
+                    this.worldObj.broadcastEntityEffect(this, (byte) 6);
                 }
             }
 
@@ -256,7 +256,7 @@ public class EntityWolf extends EntityTameableAnimal {
     }
 
     public EntityAnimal createChild(EntityAnimal entityanimal) {
-        EntityWolf entitywolf = new EntityWolf(this.world);
+        EntityWolf entitywolf = new EntityWolf(this.worldObj);
 
         entitywolf.setOwnerName(this.getOwnerName());
         entitywolf.setTamed(true);

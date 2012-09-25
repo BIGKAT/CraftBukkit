@@ -30,7 +30,7 @@ public class ItemWaterLily extends ItemWithAuxData {
                 if (world.getMaterial(i, j, k) == Material.WATER && world.getData(i, j, k) == 0 && world.isEmpty(i, j + 1, k)) {
                     CraftBlockState blockState = CraftBlockState.getBlockState(world, i, j + 1, k); // CraftBukkit
 
-                    world.setTypeId(i, j + 1, k, Block.WATER_LILY.blockID);
+                    world.setBlockWithNotify(i, j + 1, k, Block.WATER_LILY.blockID);
 
                     // CraftBukkit start - waterlily
                     org.bukkit.event.block.BlockPlaceEvent event = org.bukkit.craftbukkit.event.CraftEventFactory.callBlockPlaceEvent(world, entityhuman, blockState, i, j, k);
@@ -41,7 +41,7 @@ public class ItemWaterLily extends ItemWithAuxData {
                     }
                     // CraftBukkit end
 
-                    if (!entityhuman.abilities.canInstantlyBuild) {
+                    if (!entityhuman.capabilities.canInstantlyBuild) {
                         --itemstack.count;
                     }
                 }

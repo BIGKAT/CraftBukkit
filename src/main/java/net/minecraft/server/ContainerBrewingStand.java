@@ -38,9 +38,9 @@ public class ContainerBrewingStand extends Container {
         }
     }
 
-    public void addSlotListener(ICrafting icrafting) {
-        super.addSlotListener(icrafting);
-        icrafting.setContainerData(this, 0, this.brewingStand.t_());
+    public void addCraftingToCrafters(ICrafting icrafting) {
+        super.addCraftingToCrafters(icrafting);
+        icrafting.updateCraftingInventoryInfo(this, 0, this.brewingStand.t_());
     }
 
     public void b() {
@@ -51,7 +51,7 @@ public class ContainerBrewingStand extends Container {
             ICrafting icrafting = (ICrafting) iterator.next();
 
             if (this.g != this.brewingStand.t_()) {
-                icrafting.setContainerData(this, 0, this.brewingStand.t_());
+                icrafting.updateCraftingInventoryInfo(this, 0, this.brewingStand.t_());
             }
         }
 

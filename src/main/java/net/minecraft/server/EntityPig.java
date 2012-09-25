@@ -34,12 +34,12 @@ public class EntityPig extends EntityAnimal {
 
     public void b(NBTTagCompound nbttagcompound) {
         super.b(nbttagcompound);
-        nbttagcompound.setBoolean("Saddle", this.hasSaddle());
+        nbttagcompound.setBoolean("Saddle", this.getSaddled());
     }
 
     public void a(NBTTagCompound nbttagcompound) {
         super.a(nbttagcompound);
-        this.setSaddle(nbttagcompound.getBoolean("Saddle"));
+        this.setSaddled(nbttagcompound.getBoolean("Saddle"));
     }
 
     protected String aQ() {
@@ -57,7 +57,7 @@ public class EntityPig extends EntityAnimal {
     public boolean c(EntityHuman entityhuman) {
         if (super.c(entityhuman)) {
             return true;
-        } else if (this.hasSaddle() && !this.world.isStatic && (this.passenger == null || this.passenger == entityhuman)) {
+        } else if (this.getSaddled() && !this.worldObj.isStatic && (this.riddenByEntity == null || this.riddenByEntity == entityhuman)) {
             entityhuman.mount(this);
             return true;
         } else {
@@ -86,11 +86,11 @@ public class EntityPig extends EntityAnimal {
         // CraftBukkit end
     }
 
-    public boolean hasSaddle() {
+    public boolean getSaddled() {
         return (this.datawatcher.getByte(16) & 1) != 0;
     }
 
-    public void setSaddle(boolean flag) {
+    public void setSaddled(boolean flag) {
         if (flag) {
             this.datawatcher.watch(16, Byte.valueOf((byte) 1));
         } else {
@@ -99,8 +99,8 @@ public class EntityPig extends EntityAnimal {
     }
 
     public void a(EntityLightning entitylightning) {
-        if (!this.world.isStatic) {
-            EntityPigZombie entitypigzombie = new EntityPigZombie(this.world);
+        if (!this.worldObj.isStatic) {
+            EntityPigZombie entitypigzombie = new EntityPigZombie(this.worldObj);
 
             // CraftBukkit start
             if (org.bukkit.craftbukkit.event.CraftEventFactory.callPigZapEvent(this, entitylightning, entitypigzombie).isCancelled()) {
@@ -108,21 +108,21 @@ public class EntityPig extends EntityAnimal {
             }
             // CraftBukkit end
 
-            entitypigzombie.setPositionRotation(this.locX, this.locY, this.locZ, this.yaw, this.pitch);
+            entitypigzombie.setPositionRotation(this.posX, this.posY, this.posZ, this.rotationYaw, this.rotationPitch);
             // CraftBukkit - added a reason for spawning this creature
-            this.world.addEntity(entitypigzombie, org.bukkit.event.entity.CreatureSpawnEvent.SpawnReason.LIGHTNING);
-            this.die();
+            this.worldObj.addEntity(entitypigzombie, org.bukkit.event.entity.CreatureSpawnEvent.SpawnReason.LIGHTNING);
+            this.setDead();
         }
     }
 
     protected void a(float f) {
         super.a(f);
-        if (f > 5.0F && this.passenger instanceof EntityHuman) {
-            ((EntityHuman) this.passenger).a((Statistic) AchievementList.u);
+        if (f > 5.0F && this.riddenByEntity instanceof EntityHuman) {
+            ((EntityHuman) this.riddenByEntity).a((Statistic) AchievementList.u);
         }
     }
 
     public EntityAnimal createChild(EntityAnimal entityanimal) {
-        return new EntityPig(this.world);
+        return new EntityPig(this.worldObj);
     }
 }

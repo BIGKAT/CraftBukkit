@@ -27,7 +27,7 @@ public class CraftBrewingStand extends CraftBlockState implements BrewingStand {
         boolean result = super.update(force);
 
         if (result) {
-            brewingStand.update();
+            brewingStand.onInventoryChanged();
         }
 
         return result;

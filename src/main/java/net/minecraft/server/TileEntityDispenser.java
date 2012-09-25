@@ -56,7 +56,7 @@ public class TileEntityDispenser extends TileEntity implements IInventory {
             if (this.items[i].count <= j) {
                 itemstack = this.items[i];
                 this.items[i] = null;
-                this.update();
+                this.onInventoryChanged();
                 return itemstack;
             } else {
                 itemstack = this.items[i].a(j);
@@ -64,7 +64,7 @@ public class TileEntityDispenser extends TileEntity implements IInventory {
                     this.items[i] = null;
                 }
 
-                this.update();
+                this.onInventoryChanged();
                 return itemstack;
             }
         } else {
@@ -103,7 +103,7 @@ public class TileEntityDispenser extends TileEntity implements IInventory {
             itemstack.count = this.getMaxStackSize();
         }
 
-        this.update();
+        this.onInventoryChanged();
     }
 
     public int a(ItemStack itemstack) {

@@ -55,10 +55,10 @@ public class CraftPainting extends CraftEntity implements Painting {
     public boolean setFacingDirection(BlockFace face, boolean force) {
         Block block = getLocation().getBlock().getRelative(getAttachedFace()).getRelative(face.getOppositeFace()).getRelative(getFacing());
         EntityPainting painting = getHandle();
-        int x = painting.x, y = painting.y, z = painting.z, dir = painting.direction;
-        painting.x = block.getX();
-        painting.y = block.getY();
-        painting.z = block.getZ();
+        int x = painting.xPosition, y = painting.yPosition, z = painting.zPosition, dir = painting.direction;
+        painting.xPosition = block.getX();
+        painting.yPosition = block.getY();
+        painting.zPosition = block.getZ();
         switch (face) {
         case EAST:
         default:
@@ -76,9 +76,9 @@ public class CraftPainting extends CraftEntity implements Painting {
         }
         if (!force && !painting.survives()) {
             // Revert painting since it doesn't fit
-            painting.x = x;
-            painting.y = y;
-            painting.z = z;
+            painting.xPosition = x;
+            painting.yPosition = y;
+            painting.zPosition = z;
             painting.setDirection(dir);
             return false;
         }
@@ -103,12 +103,12 @@ public class CraftPainting extends CraftEntity implements Painting {
     private void update() {
         WorldServer world = ((CraftWorld) getWorld()).getHandle();
         EntityPainting painting = new EntityPainting(world);
-        painting.x = getHandle().x;
-        painting.y = getHandle().y;
-        painting.z = getHandle().z;
+        painting.xPosition = getHandle().xPosition;
+        painting.yPosition = getHandle().yPosition;
+        painting.zPosition = getHandle().zPosition;
         painting.art = getHandle().art;
         painting.setDirection(getHandle().direction);
-        getHandle().die();
+        getHandle().setDead();
         getHandle().velocityChanged = true; // because this occurs when the painting is broken, so it might be important
         world.addEntity(painting);
         this.entity = painting;

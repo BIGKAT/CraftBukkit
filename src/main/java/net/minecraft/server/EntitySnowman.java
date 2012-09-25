@@ -32,7 +32,7 @@ public class EntitySnowman extends EntityGolem {
         if (this.G()) {
             // CraftBukkit start
             EntityDamageEvent event = new EntityDamageEvent(this.getBukkitEntity(), EntityDamageEvent.DamageCause.DROWNING, 1);
-            this.world.getServer().getPluginManager().callEvent(event);
+            this.worldObj.getServer().getPluginManager().callEvent(event);
 
             if (!event.isCancelled()) {
                 event.getEntity().setLastDamageCause(event);
@@ -41,13 +41,13 @@ public class EntitySnowman extends EntityGolem {
             // CraftBukkit end
         }
 
-        int i = MathHelper.floor(this.locX);
-        int j = MathHelper.floor(this.locZ);
+        int i = MathHelper.floor(this.posX);
+        int j = MathHelper.floor(this.posZ);
 
-        if (this.world.getBiome(i, j).j() > 1.0F) {
+        if (this.worldObj.getBiome(i, j).j() > 1.0F) {
             // CraftBukkit start
             EntityDamageEvent event = new EntityDamageEvent(this.getBukkitEntity(), EntityDamageEvent.DamageCause.MELTING, 1);
-            this.world.getServer().getPluginManager().callEvent(event);
+            this.worldObj.getServer().getPluginManager().callEvent(event);
 
             if (!event.isCancelled()) {
                 event.getEntity().setLastDamageCause(event);
@@ -57,17 +57,17 @@ public class EntitySnowman extends EntityGolem {
         }
 
         for (i = 0; i < 4; ++i) {
-            j = MathHelper.floor(this.locX + (double) ((float) (i % 2 * 2 - 1) * 0.25F));
-            int k = MathHelper.floor(this.locY);
-            int l = MathHelper.floor(this.locZ + (double) ((float) (i / 2 % 2 * 2 - 1) * 0.25F));
+            j = MathHelper.floor(this.posX + (double) ((float) (i % 2 * 2 - 1) * 0.25F));
+            int k = MathHelper.floor(this.posY);
+            int l = MathHelper.floor(this.posZ + (double) ((float) (i / 2 % 2 * 2 - 1) * 0.25F));
 
-            if (this.world.getTypeId(j, k, l) == 0 && this.world.getBiome(j, l).j() < 0.8F && Block.SNOW.canPlace(this.world, j, k, l)) {
+            if (this.worldObj.getTypeId(j, k, l) == 0 && this.worldObj.getBiome(j, l).j() < 0.8F && Block.SNOW.canPlace(this.worldObj, j, k, l)) {
                 // CraftBukkit start
-                org.bukkit.block.BlockState blockState = this.world.getWorld().getBlockAt(j, k, l).getState();
+                org.bukkit.block.BlockState blockState = this.worldObj.getWorld().getBlockAt(j, k, l).getState();
                 blockState.setTypeId(Block.SNOW.blockID);
 
                 EntityBlockFormEvent event = new EntityBlockFormEvent(this.getBukkitEntity(), blockState.getBlock(), blockState);
-                this.world.getServer().getPluginManager().callEvent(event);
+                this.worldObj.getServer().getPluginManager().callEvent(event);
 
                 if(!event.isCancelled()) {
                     blockState.update(true);

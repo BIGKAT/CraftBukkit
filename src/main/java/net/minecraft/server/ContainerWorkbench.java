@@ -63,7 +63,7 @@ public class ContainerWorkbench extends Container {
         }
 
         EntityPlayer player = (EntityPlayer) super.listeners.get(0); // TODO: Is this _always_ correct? Seems like it.
-        player.netServerHandler.sendPacket(new Packet103SetSlot(player.activeContainer.windowId, 0, craftResult));
+        player.serverForThisPlayer.sendPacketToPlayer(new Packet103SetSlot(player.craftingInventory.windowId, 0, craftResult));
         // CraftBukkit end
     }
 
@@ -82,7 +82,7 @@ public class ContainerWorkbench extends Container {
 
     public boolean c(EntityHuman entityhuman) {
         if (!this.checkReachable) return true; // CraftBukkit
-        return this.g.getTypeId(this.h, this.i, this.j) != Block.WORKBENCH.blockID ? false : entityhuman.e((double) this.h + 0.5D, (double) this.i + 0.5D, (double) this.j + 0.5D) <= 64.0D;
+        return this.g.getBlockId(this.h, this.i, this.j) != Block.WORKBENCH.blockID ? false : entityhuman.e((double) this.h + 0.5D, (double) this.i + 0.5D, (double) this.j + 0.5D) <= 64.0D;
     }
 
     public ItemStack b(int i) {

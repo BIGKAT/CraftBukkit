@@ -1,7 +1,6 @@
 package net.minecraft.server;
 
 import java.util.Iterator;
-import java.util.List;
 
 import org.bukkit.event.block.BlockIgniteEvent; // CraftBukkit
 
@@ -40,13 +39,13 @@ public class EntityLightning extends EntityWeather {
             int j = MathHelper.floor(d1);
             int k = MathHelper.floor(d2);
 
-            if (world.getTypeId(i, j, k) == 0 && Block.FIRE.canPlace(world, i, j, k)) {
+            if (world.getBlockId(i, j, k) == 0 && Block.FIRE.canPlace(world, i, j, k)) {
                 // CraftBukkit start
                 BlockIgniteEvent event = new BlockIgniteEvent(this.cworld.getBlockAt(i, j, k), BlockIgniteEvent.IgniteCause.LIGHTNING, null);
                 world.getServer().getPluginManager().callEvent(event);
 
                 if (!event.isCancelled()) {
-                    world.setTypeId(i, j, k, Block.FIRE.blockID);
+                    world.setBlockWithNotify(i, j, k, Block.FIRE.blockID);
                 }
                 // CraftBukkit end
             }
@@ -56,13 +55,13 @@ public class EntityLightning extends EntityWeather {
                 k = MathHelper.floor(d1) + this.random.nextInt(3) - 1;
                 int l = MathHelper.floor(d2) + this.random.nextInt(3) - 1;
 
-                if (world.getTypeId(j, k, l) == 0 && Block.FIRE.canPlace(world, j, k, l)) {
+                if (world.getBlockId(j, k, l) == 0 && Block.FIRE.canPlace(world, j, k, l)) {
                     // CraftBukkit start
                     BlockIgniteEvent event = new BlockIgniteEvent(this.cworld.getBlockAt(j, k, l), BlockIgniteEvent.IgniteCause.LIGHTNING, null);
                     world.getServer().getPluginManager().callEvent(event);
 
                     if (!event.isCancelled()) {
-                        world.setTypeId(j, k, l, Block.FIRE.blockID);
+                        world.setBlockWithNotify(j, k, l, Block.FIRE.blockID);
                     }
                     // CraftBukkit end
                 }
@@ -73,31 +72,31 @@ public class EntityLightning extends EntityWeather {
     public void h_() {
         super.h_();
         if (this.lifeTicks == 2) {
-            this.world.makeSound(this.locX, this.locY, this.locZ, "ambient.weather.thunder", 10000.0F, 0.8F + this.random.nextFloat() * 0.2F);
-            this.world.makeSound(this.locX, this.locY, this.locZ, "random.explode", 2.0F, 0.5F + this.random.nextFloat() * 0.2F);
+            this.worldObj.makeSound(this.posX, this.posY, this.posZ, "ambient.weather.thunder", 10000.0F, 0.8F + this.random.nextFloat() * 0.2F);
+            this.worldObj.makeSound(this.posX, this.posY, this.posZ, "random.explode", 2.0F, 0.5F + this.random.nextFloat() * 0.2F);
         }
 
         --this.lifeTicks;
         if (this.lifeTicks < 0) {
             if (this.c == 0) {
-                this.die();
+                this.setDead();
             } else if (this.lifeTicks < -this.random.nextInt(10)) {
                 --this.c;
                 this.lifeTicks = 1;
                 this.a = this.random.nextLong();
                 // CraftBukkit
-                if (!this.isEffect && this.world.areChunksLoaded(MathHelper.floor(this.locX), MathHelper.floor(this.locY), MathHelper.floor(this.locZ), 10)) {
-                    int i = MathHelper.floor(this.locX);
-                    int j = MathHelper.floor(this.locY);
-                    int k = MathHelper.floor(this.locZ);
+                if (!this.isEffect && this.worldObj.areChunksLoaded(MathHelper.floor(this.posX), MathHelper.floor(this.posY), MathHelper.floor(this.posZ), 10)) {
+                    int i = MathHelper.floor(this.posX);
+                    int j = MathHelper.floor(this.posY);
+                    int k = MathHelper.floor(this.posZ);
 
-                    if (this.world.getTypeId(i, j, k) == 0 && Block.FIRE.canPlace(this.world, i, j, k)) {
+                    if (this.worldObj.getTypeId(i, j, k) == 0 && Block.FIRE.canPlace(this.worldObj, i, j, k)) {
                         // CraftBukkit start
                         BlockIgniteEvent event = new BlockIgniteEvent(this.cworld.getBlockAt(i, j, k), BlockIgniteEvent.IgniteCause.LIGHTNING, null);
-                        this.world.getServer().getPluginManager().callEvent(event);
+                        this.worldObj.getServer().getPluginManager().callEvent(event);
 
                         if (!event.isCancelled()) {
-                            this.world.setTypeId(i, j, k, Block.FIRE.blockID);
+                            this.worldObj.setBlockWithNotify(i, j, k, Block.FIRE.blockID);
                         }
                         // CraftBukkit end
                     }
@@ -108,7 +107,7 @@ public class EntityLightning extends EntityWeather {
         if (this.lifeTicks >= 0 && !this.isEffect) { // CraftBukkit
             double d0 = 3.0D;
             // CraftBukkit start - switch to array copy of list to avoid CMEs
-            Object[] array = this.world.getEntities(this, AxisAlignedBB.a().a(this.locX - d0, this.locY - d0, this.locZ - d0, this.locX + d0, this.locY + 6.0D + d0, this.locZ + d0)).toArray();
+            Object[] array = this.worldObj.getEntities(this, AxisAlignedBB.a().a(this.posX - d0, this.posY - d0, this.posZ - d0, this.posX + d0, this.posY + 6.0D + d0, this.posZ + d0)).toArray();
             Iterator iterator = com.google.common.collect.Iterators.forArray(array);
             // CraftBukkit end
 
@@ -118,7 +117,7 @@ public class EntityLightning extends EntityWeather {
                 entity.a(this);
             }
 
-            this.world.s = 2;
+            this.worldObj.s = 2;
         }
     }
 

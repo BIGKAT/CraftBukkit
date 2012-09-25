@@ -56,11 +56,11 @@ public class ContainerEnchantTable extends Container {
         // CraftBukkit end
     }
 
-    public void addSlotListener(ICrafting icrafting) {
-        super.addSlotListener(icrafting);
-        icrafting.setContainerData(this, 0, this.costs[0]);
-        icrafting.setContainerData(this, 1, this.costs[1]);
-        icrafting.setContainerData(this, 2, this.costs[2]);
+    public void addCraftingToCrafters(ICrafting icrafting) {
+        super.addCraftingToCrafters(icrafting);
+        icrafting.updateCraftingInventoryInfo(this, 0, this.costs[0]);
+        icrafting.updateCraftingInventoryInfo(this, 1, this.costs[1]);
+        icrafting.updateCraftingInventoryInfo(this, 2, this.costs[2]);
     }
 
     public void b() {
@@ -70,9 +70,9 @@ public class ContainerEnchantTable extends Container {
         while (iterator.hasNext()) {
             ICrafting icrafting = (ICrafting) iterator.next();
 
-            icrafting.setContainerData(this, 0, this.costs[0]);
-            icrafting.setContainerData(this, 1, this.costs[1]);
-            icrafting.setContainerData(this, 2, this.costs[2]);
+            icrafting.updateCraftingInventoryInfo(this, 0, this.costs[0]);
+            icrafting.updateCraftingInventoryInfo(this, 1, this.costs[1]);
+            icrafting.updateCraftingInventoryInfo(this, 2, this.costs[2]);
         }
     }
 
@@ -91,28 +91,28 @@ public class ContainerEnchantTable extends Container {
                     for (j = -1; j <= 1; ++j) {
                         for (int k = -1; k <= 1; ++k) {
                             if ((j != 0 || k != 0) && this.world.isEmpty(this.x + k, this.y, this.z + j) && this.world.isEmpty(this.x + k, this.y + 1, this.z + j)) {
-                                if (this.world.getTypeId(this.x + k * 2, this.y, this.z + j * 2) == Block.BOOKSHELF.blockID) {
+                                if (this.world.getBlockId(this.x + k * 2, this.y, this.z + j * 2) == Block.BOOKSHELF.blockID) {
                                     ++i;
                                 }
 
-                                if (this.world.getTypeId(this.x + k * 2, this.y + 1, this.z + j * 2) == Block.BOOKSHELF.blockID) {
+                                if (this.world.getBlockId(this.x + k * 2, this.y + 1, this.z + j * 2) == Block.BOOKSHELF.blockID) {
                                     ++i;
                                 }
 
                                 if (k != 0 && j != 0) {
-                                    if (this.world.getTypeId(this.x + k * 2, this.y, this.z + j) == Block.BOOKSHELF.blockID) {
+                                    if (this.world.getBlockId(this.x + k * 2, this.y, this.z + j) == Block.BOOKSHELF.blockID) {
                                         ++i;
                                     }
 
-                                    if (this.world.getTypeId(this.x + k * 2, this.y + 1, this.z + j) == Block.BOOKSHELF.blockID) {
+                                    if (this.world.getBlockId(this.x + k * 2, this.y + 1, this.z + j) == Block.BOOKSHELF.blockID) {
                                         ++i;
                                     }
 
-                                    if (this.world.getTypeId(this.x + k, this.y, this.z + j * 2) == Block.BOOKSHELF.blockID) {
+                                    if (this.world.getBlockId(this.x + k, this.y, this.z + j * 2) == Block.BOOKSHELF.blockID) {
                                         ++i;
                                     }
 
-                                    if (this.world.getTypeId(this.x + k, this.y + 1, this.z + j * 2) == Block.BOOKSHELF.blockID) {
+                                    if (this.world.getBlockId(this.x + k, this.y + 1, this.z + j * 2) == Block.BOOKSHELF.blockID) {
                                         ++i;
                                     }
                                 }
@@ -150,7 +150,7 @@ public class ContainerEnchantTable extends Container {
     public boolean a(EntityHuman entityhuman, int i) {
         ItemStack itemstack = this.enchantSlots.getItem(0);
 
-        if (this.costs[i] > 0 && itemstack != null && (entityhuman.expLevel >= this.costs[i] || entityhuman.abilities.canInstantlyBuild)) {
+        if (this.costs[i] > 0 && itemstack != null && (entityhuman.expLevel >= this.costs[i] || entityhuman.capabilities.canInstantlyBuild)) {
             if (!this.world.isStatic) {
                 List list = EnchantmentManager.b(this.l, itemstack, this.costs[i]);
 
@@ -159,7 +159,7 @@ public class ContainerEnchantTable extends Container {
                     Map<org.bukkit.enchantments.Enchantment, Integer> enchants = new java.util.HashMap<org.bukkit.enchantments.Enchantment, Integer>();
                     for (Object obj : list) {
                         EnchantmentInstance instance = (EnchantmentInstance) obj;
-                        enchants.put(org.bukkit.enchantments.Enchantment.getById(instance.enchantment.id), instance.level);
+                        enchants.put(org.bukkit.enchantments.Enchantment.getById(instance.enchantment.effectId), instance.level);
                     }
                     CraftItemStack item = new CraftItemStack(itemstack);
 
@@ -167,7 +167,7 @@ public class ContainerEnchantTable extends Container {
                     this.world.getServer().getPluginManager().callEvent(event);
 
                     int level = event.getExpLevelCost();
-                    if (event.isCancelled() || (level > entityhuman.expLevel && !entityhuman.abilities.canInstantlyBuild) || enchants.isEmpty()) {
+                    if (event.isCancelled() || (level > entityhuman.expLevel && !entityhuman.capabilities.canInstantlyBuild) || enchants.isEmpty()) {
                         return false;
                     }
 
@@ -204,7 +204,7 @@ public class ContainerEnchantTable extends Container {
 
     public boolean c(EntityHuman entityhuman) {
         if (!this.checkReachable) return true; // CraftBukkit
-        return this.world.getTypeId(this.x, this.y, this.z) != Block.ENCHANTMENT_TABLE.blockID ? false : entityhuman.e((double) this.x + 0.5D, (double) this.y + 0.5D, (double) this.z + 0.5D) <= 64.0D;
+        return this.world.getBlockId(this.x, this.y, this.z) != Block.ENCHANTMENT_TABLE.blockID ? false : entityhuman.e((double) this.x + 0.5D, (double) this.y + 0.5D, (double) this.z + 0.5D) <= 64.0D;
     }
 
     public ItemStack b(int i) {

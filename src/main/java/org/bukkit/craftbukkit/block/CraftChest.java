@@ -1,7 +1,6 @@
 package org.bukkit.craftbukkit.block;
 
 import net.minecraft.server.TileEntityChest;
-import org.bukkit.Location;
 
 import org.bukkit.Material;
 import org.bukkit.block.Block;
@@ -56,7 +55,7 @@ public class CraftChest extends CraftBlockState implements Chest {
         boolean result = super.update(force);
 
         if (result) {
-            chest.update();
+            chest.onInventoryChanged();
         }
 
         return result;

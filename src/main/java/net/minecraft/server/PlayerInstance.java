@@ -34,7 +34,7 @@ class PlayerInstance {
 
     public void b(EntityPlayer entityplayer) {
         if (this.b.contains(entityplayer)) {
-            entityplayer.netServerHandler.sendPacket(new Packet51MapChunk(PlayerManager.a(this.playerManager).getChunkAt(this.location.x, this.location.z), true, 0));
+            entityplayer.serverForThisPlayer.sendPacketToPlayer(new Packet51MapChunk(PlayerManager.a(this.playerManager).getChunkAt(this.location.x, this.location.z), true, 0));
             this.b.remove(entityplayer);
             entityplayer.chunkCoordIntPairQueue.remove(this.location);
             if (this.b.isEmpty()) {
@@ -76,7 +76,7 @@ class PlayerInstance {
             EntityPlayer entityplayer = (EntityPlayer) iterator.next();
 
             if (!entityplayer.chunkCoordIntPairQueue.contains(this.location)) {
-                entityplayer.netServerHandler.sendPacket(packet);
+                entityplayer.serverForThisPlayer.sendPacketToPlayer(packet);
             }
         }
     }

@@ -105,15 +105,15 @@ public class EntityMinecart extends Entity implements IInventory {
     public EntityMinecart(World world, double d0, double d1, double d2, int i) {
         this(world);
         this.setPosition(d0, d1 + (double) this.height, d2);
-        this.motX = 0.0D;
-        this.motY = 0.0D;
-        this.motZ = 0.0D;
+        this.motionX = 0.0D;
+        this.motionY = 0.0D;
+        this.motionZ = 0.0D;
         this.lastX = d0;
         this.lastY = d1;
         this.lastZ = d2;
         this.type = i;
 
-        this.world.getServer().getPluginManager().callEvent(new org.bukkit.event.vehicle.VehicleCreateEvent((Vehicle) this.getBukkitEntity())); // CraftBukkit
+        this.worldObj.getServer().getPluginManager().callEvent(new org.bukkit.event.vehicle.VehicleCreateEvent((Vehicle) this.getBukkitEntity())); // CraftBukkit
     }
 
     public double X() {
@@ -121,13 +121,13 @@ public class EntityMinecart extends Entity implements IInventory {
     }
 
     public boolean damageEntity(DamageSource damagesource, int i) {
-        if (!this.world.isStatic && !this.dead) {
+        if (!this.worldObj.isStatic && !this.isDead) {
             // CraftBukkit start
             Vehicle vehicle = (Vehicle) this.getBukkitEntity();
             org.bukkit.entity.Entity passenger = (damagesource.getEntity() == null) ? null : damagesource.getEntity().getBukkitEntity();
 
             VehicleDamageEvent event = new VehicleDamageEvent(vehicle, passenger, i);
-            this.world.getServer().getPluginManager().callEvent(event);
+            this.worldObj.getServer().getPluginManager().callEvent(event);
 
             if (event.isCancelled()) {
                 return true;
@@ -140,18 +140,18 @@ public class EntityMinecart extends Entity implements IInventory {
             this.h(10);
             this.K();
             this.setDamage(this.getDamage() + i * 10);
-            if (damagesource.getEntity() instanceof EntityHuman && ((EntityHuman) damagesource.getEntity()).abilities.canInstantlyBuild) {
+            if (damagesource.getEntity() instanceof EntityHuman && ((EntityHuman) damagesource.getEntity()).capabilities.canInstantlyBuild) {
                 this.setDamage(100);
             }
 
             if (this.getDamage() > 40) {
-                if (this.passenger != null) {
-                    this.passenger.mount(this);
+                if (this.riddenByEntity != null) {
+                    this.riddenByEntity.mount(this);
                 }
 
                 // CraftBukkit start
                 VehicleDestroyEvent destroyEvent = new VehicleDestroyEvent(vehicle, passenger);
-                this.world.getServer().getPluginManager().callEvent(destroyEvent);
+                this.worldObj.getServer().getPluginManager().callEvent(destroyEvent);
 
                 if (destroyEvent.isCancelled()) {
                     this.setDamage(40); // Maximize damage so this doesn't get triggered again right away
@@ -159,7 +159,7 @@ public class EntityMinecart extends Entity implements IInventory {
                 }
                 // CraftBukkit end
 
-                this.die();
+                this.setDead();
                 this.a(Item.MINECART.id, 1, 0.0F);
                 if (this.type == 1) {
                     EntityMinecart entityminecart = this;
@@ -181,13 +181,13 @@ public class EntityMinecart extends Entity implements IInventory {
 
                                 itemstack.count -= k;
                                 // CraftBukkit - include enchantments in the new itemstack
-                                EntityItem entityitem = new EntityItem(this.world, this.locX + (double) f, this.locY + (double) f1, this.locZ + (double) f2, new ItemStack(itemstack.id, k, itemstack.getData(), itemstack.getEnchantments()));
+                                EntityItem entityitem = new EntityItem(this.worldObj, this.posX + (double) f, this.posY + (double) f1, this.posZ + (double) f2, new ItemStack(itemstack.id, k, itemstack.getData(), itemstack.getEnchantments()));
                                 float f3 = 0.05F;
 
-                                entityitem.motX = (double) ((float) this.random.nextGaussian() * f3);
-                                entityitem.motY = (double) ((float) this.random.nextGaussian() * f3 + 0.2F);
-                                entityitem.motZ = (double) ((float) this.random.nextGaussian() * f3);
-                                this.world.addEntity(entityitem);
+                                entityitem.motionX = (double) ((float) this.random.nextGaussian() * f3);
+                                entityitem.motionY = (double) ((float) this.random.nextGaussian() * f3 + 0.2F);
+                                entityitem.motionZ = (double) ((float) this.random.nextGaussian() * f3);
+                                this.worldObj.addEntity(entityitem);
                             }
                         }
                     }
@@ -205,10 +205,10 @@ public class EntityMinecart extends Entity implements IInventory {
     }
 
     public boolean L() {
-        return !this.dead;
+        return !this.isDead;
     }
 
-    public void die() {
+    public void setDead() {
         for (int i = 0; i < this.getSize(); ++i) {
             ItemStack itemstack = this.getItem(i);
 
@@ -225,32 +225,32 @@ public class EntityMinecart extends Entity implements IInventory {
                     }
 
                     itemstack.count -= j;
-                    EntityItem entityitem = new EntityItem(this.world, this.locX + (double) f, this.locY + (double) f1, this.locZ + (double) f2, new ItemStack(itemstack.id, j, itemstack.getData()));
+                    EntityItem entityitem = new EntityItem(this.worldObj, this.posX + (double) f, this.posY + (double) f1, this.posZ + (double) f2, new ItemStack(itemstack.id, j, itemstack.getData()));
 
                     if (itemstack.hasTag()) {
-                        entityitem.itemStack.setTag((NBTTagCompound) itemstack.getTag().clone());
+                        entityitem.item.setTag((NBTTagCompound) itemstack.getTag().clone());
                     }
 
                     float f3 = 0.05F;
 
-                    entityitem.motX = (double) ((float) this.random.nextGaussian() * f3);
-                    entityitem.motY = (double) ((float) this.random.nextGaussian() * f3 + 0.2F);
-                    entityitem.motZ = (double) ((float) this.random.nextGaussian() * f3);
-                    this.world.addEntity(entityitem);
+                    entityitem.motionX = (double) ((float) this.random.nextGaussian() * f3);
+                    entityitem.motionY = (double) ((float) this.random.nextGaussian() * f3 + 0.2F);
+                    entityitem.motionZ = (double) ((float) this.random.nextGaussian() * f3);
+                    this.worldObj.addEntity(entityitem);
                 }
             }
         }
 
-        super.die();
+        super.setDead();
     }
 
     public void h_() {
         // CraftBukkit start
-        double prevX = this.locX;
-        double prevY = this.locY;
-        double prevZ = this.locZ;
-        float prevYaw = this.yaw;
-        float prevPitch = this.pitch;
+        double prevX = this.posX;
+        double prevY = this.posY;
+        double prevZ = this.posZ;
+        float prevYaw = this.rotationYaw;
+        float prevPitch = this.rotationPitch;
         // CraftBukkit end
 
         if (this.j() > 0) {
@@ -261,53 +261,53 @@ public class EntityMinecart extends Entity implements IInventory {
             this.setDamage(this.getDamage() - 1);
         }
 
-        if (this.locY < -64.0D) {
+        if (this.posY < -64.0D) {
             this.C();
         }
 
         if (this.h() && this.random.nextInt(4) == 0) {
-            this.world.a("largesmoke", this.locX, this.locY + 0.8D, this.locZ, 0.0D, 0.0D, 0.0D);
+            this.worldObj.a("largesmoke", this.posX, this.posY + 0.8D, this.posZ, 0.0D, 0.0D, 0.0D);
         }
 
-        if (this.world.isStatic) {
+        if (this.worldObj.isStatic) {
             if (this.h > 0) {
-                double d0 = this.locX + (this.i - this.locX) / (double) this.h;
-                double d1 = this.locY + (this.j - this.locY) / (double) this.h;
-                double d2 = this.locZ + (this.an - this.locZ) / (double) this.h;
-                double d3 = MathHelper.g(this.ao - (double) this.yaw);
+                double d0 = this.posX + (this.i - this.posX) / (double) this.h;
+                double d1 = this.posY + (this.j - this.posY) / (double) this.h;
+                double d2 = this.posZ + (this.an - this.posZ) / (double) this.h;
+                double d3 = MathHelper.g(this.ao - (double) this.rotationYaw);
 
-                this.yaw = (float) ((double) this.yaw + d3 / (double) this.h);
-                this.pitch = (float) ((double) this.pitch + (this.ap - (double) this.pitch) / (double) this.h);
+                this.rotationYaw = (float) ((double) this.rotationYaw + d3 / (double) this.h);
+                this.rotationPitch = (float) ((double) this.rotationPitch + (this.ap - (double) this.rotationPitch) / (double) this.h);
                 --this.h;
                 this.setPosition(d0, d1, d2);
-                this.b(this.yaw, this.pitch);
+                this.b(this.rotationYaw, this.rotationPitch);
             } else {
-                this.setPosition(this.locX, this.locY, this.locZ);
-                this.b(this.yaw, this.pitch);
+                this.setPosition(this.posX, this.posY, this.posZ);
+                this.b(this.rotationYaw, this.rotationPitch);
             }
         } else {
-            this.lastX = this.locX;
-            this.lastY = this.locY;
-            this.lastZ = this.locZ;
-            this.motY -= 0.03999999910593033D;
-            int i = MathHelper.floor(this.locX);
-            int j = MathHelper.floor(this.locY);
-            int k = MathHelper.floor(this.locZ);
+            this.lastX = this.posX;
+            this.lastY = this.posY;
+            this.lastZ = this.posZ;
+            this.motionY -= 0.03999999910593033D;
+            int i = MathHelper.floor(this.posX);
+            int j = MathHelper.floor(this.posY);
+            int k = MathHelper.floor(this.posZ);
 
-            if (BlockMinecartTrack.d_(this.world, i, j - 1, k)) {
+            if (BlockMinecartTrack.d_(this.worldObj, i, j - 1, k)) {
                 --j;
             }
 
             // CraftBukkit
             double d4 = this.maxSpeed;
             double d5 = 0.0078125D;
-            int l = this.world.getTypeId(i, j, k);
+            int l = this.worldObj.getBlockId(i, j, k);
 
             if (BlockMinecartTrack.d(l)) {
-                Vec3D vec3d = this.a(this.locX, this.locY, this.locZ);
-                int i1 = this.world.getData(i, j, k);
+                Vec3D vec3d = this.a(this.posX, this.posY, this.posZ);
+                int i1 = this.worldObj.getData(i, j, k);
 
-                this.locY = (double) j;
+                this.posY = (double) j;
                 boolean flag = false;
                 boolean flag1 = false;
 
@@ -321,63 +321,63 @@ public class EntityMinecart extends Entity implements IInventory {
                 }
 
                 if (i1 >= 2 && i1 <= 5) {
-                    this.locY = (double) (j + 1);
+                    this.posY = (double) (j + 1);
                 }
 
                 if (i1 == 2) {
-                    this.motX -= d5;
+                    this.motionX -= d5;
                 }
 
                 if (i1 == 3) {
-                    this.motX += d5;
+                    this.motionX += d5;
                 }
 
                 if (i1 == 4) {
-                    this.motZ += d5;
+                    this.motionZ += d5;
                 }
 
                 if (i1 == 5) {
-                    this.motZ -= d5;
+                    this.motionZ -= d5;
                 }
 
                 int[][] aint = matrix[i1];
                 double d6 = (double) (aint[1][0] - aint[0][0]);
                 double d7 = (double) (aint[1][2] - aint[0][2]);
                 double d8 = Math.sqrt(d6 * d6 + d7 * d7);
-                double d9 = this.motX * d6 + this.motZ * d7;
+                double d9 = this.motionX * d6 + this.motionZ * d7;
 
                 if (d9 < 0.0D) {
                     d6 = -d6;
                     d7 = -d7;
                 }
 
-                double d10 = Math.sqrt(this.motX * this.motX + this.motZ * this.motZ);
+                double d10 = Math.sqrt(this.motionX * this.motionX + this.motionZ * this.motionZ);
 
-                this.motX = d10 * d6 / d8;
-                this.motZ = d10 * d7 / d8;
+                this.motionX = d10 * d6 / d8;
+                this.motionZ = d10 * d7 / d8;
                 double d11;
                 double d12;
 
-                if (this.passenger != null) {
-                    d12 = this.passenger.motX * this.passenger.motX + this.passenger.motZ * this.passenger.motZ;
-                    d11 = this.motX * this.motX + this.motZ * this.motZ;
+                if (this.riddenByEntity != null) {
+                    d12 = this.riddenByEntity.motionX * this.riddenByEntity.motionX + this.riddenByEntity.motionZ * this.riddenByEntity.motionZ;
+                    d11 = this.motionX * this.motionX + this.motionZ * this.motionZ;
                     if (d12 > 1.0E-4D && d11 < 0.01D) {
-                        this.motX += this.passenger.motX * 0.1D;
-                        this.motZ += this.passenger.motZ * 0.1D;
+                        this.motionX += this.riddenByEntity.motionX * 0.1D;
+                        this.motionZ += this.riddenByEntity.motionZ * 0.1D;
                         flag1 = false;
                     }
                 }
 
                 if (flag1) {
-                    d12 = Math.sqrt(this.motX * this.motX + this.motZ * this.motZ);
+                    d12 = Math.sqrt(this.motionX * this.motionX + this.motionZ * this.motionZ);
                     if (d12 < 0.03D) {
-                        this.motX *= 0.0D;
-                        this.motY *= 0.0D;
-                        this.motZ *= 0.0D;
+                        this.motionX *= 0.0D;
+                        this.motionY *= 0.0D;
+                        this.motionZ *= 0.0D;
                     } else {
-                        this.motX *= 0.5D;
-                        this.motY *= 0.0D;
-                        this.motZ *= 0.5D;
+                        this.motionX *= 0.5D;
+                        this.motionY *= 0.0D;
+                        this.motionZ *= 0.5D;
                     }
                 }
 
@@ -393,23 +393,23 @@ public class EntityMinecart extends Entity implements IInventory {
                 double d17;
 
                 if (d6 == 0.0D) {
-                    this.locX = (double) i + 0.5D;
-                    d12 = this.locZ - (double) k;
+                    this.posX = (double) i + 0.5D;
+                    d12 = this.posZ - (double) k;
                 } else if (d7 == 0.0D) {
-                    this.locZ = (double) k + 0.5D;
-                    d12 = this.locX - (double) i;
+                    this.posZ = (double) k + 0.5D;
+                    d12 = this.posX - (double) i;
                 } else {
-                    d16 = this.locX - d11;
-                    d17 = this.locZ - d13;
+                    d16 = this.posX - d11;
+                    d17 = this.posZ - d13;
                     d12 = (d16 * d6 + d17 * d7) * 2.0D;
                 }
 
-                this.locX = d11 + d6 * d12;
-                this.locZ = d13 + d7 * d12;
-                this.setPosition(this.locX, this.locY + (double) this.height, this.locZ);
-                d16 = this.motX;
-                d17 = this.motZ;
-                if (this.passenger != null) {
+                this.posX = d11 + d6 * d12;
+                this.posZ = d13 + d7 * d12;
+                this.setPosition(this.posX, this.posY + (double) this.height, this.posZ);
+                d16 = this.motionX;
+                d17 = this.motionZ;
+                if (this.riddenByEntity != null) {
                     d16 *= 0.75D;
                     d17 *= 0.75D;
                 }
@@ -431,17 +431,17 @@ public class EntityMinecart extends Entity implements IInventory {
                 }
 
                 this.move(d16, 0.0D, d17);
-                if (aint[0][1] != 0 && MathHelper.floor(this.locX) - i == aint[0][0] && MathHelper.floor(this.locZ) - k == aint[0][2]) {
-                    this.setPosition(this.locX, this.locY + (double) aint[0][1], this.locZ);
-                } else if (aint[1][1] != 0 && MathHelper.floor(this.locX) - i == aint[1][0] && MathHelper.floor(this.locZ) - k == aint[1][2]) {
-                    this.setPosition(this.locX, this.locY + (double) aint[1][1], this.locZ);
+                if (aint[0][1] != 0 && MathHelper.floor(this.posX) - i == aint[0][0] && MathHelper.floor(this.posZ) - k == aint[0][2]) {
+                    this.setPosition(this.posX, this.posY + (double) aint[0][1], this.posZ);
+                } else if (aint[1][1] != 0 && MathHelper.floor(this.posX) - i == aint[1][0] && MathHelper.floor(this.posZ) - k == aint[1][2]) {
+                    this.setPosition(this.posX, this.posY + (double) aint[1][1], this.posZ);
                 }
 
                 // CraftBukkit
-                if (this.passenger != null || !this.slowWhenEmpty) {
-                    this.motX *= 0.996999979019165D;
-                    this.motY *= 0.0D;
-                    this.motZ *= 0.996999979019165D;
+                if (this.riddenByEntity != null || !this.slowWhenEmpty) {
+                    this.motionX *= 0.996999979019165D;
+                    this.motionY *= 0.0D;
+                    this.motionZ *= 0.996999979019165D;
                 } else {
                     if (this.type == 2) {
                         double d18 = this.b * this.b + this.c * this.c;
@@ -452,173 +452,173 @@ public class EntityMinecart extends Entity implements IInventory {
                             this.c /= d18;
                             double d19 = 0.04D;
 
-                            this.motX *= 0.800000011920929D;
-                            this.motY *= 0.0D;
-                            this.motZ *= 0.800000011920929D;
-                            this.motX += this.b * d19;
-                            this.motZ += this.c * d19;
+                            this.motionX *= 0.800000011920929D;
+                            this.motionY *= 0.0D;
+                            this.motionZ *= 0.800000011920929D;
+                            this.motionX += this.b * d19;
+                            this.motionZ += this.c * d19;
                         } else {
-                            this.motX *= 0.8999999761581421D;
-                            this.motY *= 0.0D;
-                            this.motZ *= 0.8999999761581421D;
+                            this.motionX *= 0.8999999761581421D;
+                            this.motionY *= 0.0D;
+                            this.motionZ *= 0.8999999761581421D;
                         }
                     }
 
-                    this.motX *= 0.9599999785423279D;
-                    this.motY *= 0.0D;
-                    this.motZ *= 0.9599999785423279D;
+                    this.motionX *= 0.9599999785423279D;
+                    this.motionY *= 0.0D;
+                    this.motionZ *= 0.9599999785423279D;
                 }
 
-                Vec3D vec3d1 = this.a(this.locX, this.locY, this.locZ);
+                Vec3D vec3d1 = this.a(this.posX, this.posY, this.posZ);
 
                 if (vec3d1 != null && vec3d != null) {
                     double d20 = (vec3d.b - vec3d1.b) * 0.05D;
 
-                    d10 = Math.sqrt(this.motX * this.motX + this.motZ * this.motZ);
+                    d10 = Math.sqrt(this.motionX * this.motionX + this.motionZ * this.motionZ);
                     if (d10 > 0.0D) {
-                        this.motX = this.motX / d10 * (d10 + d20);
-                        this.motZ = this.motZ / d10 * (d10 + d20);
+                        this.motionX = this.motionX / d10 * (d10 + d20);
+                        this.motionZ = this.motionZ / d10 * (d10 + d20);
                     }
 
-                    this.setPosition(this.locX, vec3d1.b, this.locZ);
+                    this.setPosition(this.posX, vec3d1.b, this.posZ);
                 }
 
-                int j1 = MathHelper.floor(this.locX);
-                int k1 = MathHelper.floor(this.locZ);
+                int j1 = MathHelper.floor(this.posX);
+                int k1 = MathHelper.floor(this.posZ);
 
                 if (j1 != i || k1 != k) {
-                    d10 = Math.sqrt(this.motX * this.motX + this.motZ * this.motZ);
-                    this.motX = d10 * (double) (j1 - i);
-                    this.motZ = d10 * (double) (k1 - k);
+                    d10 = Math.sqrt(this.motionX * this.motionX + this.motionZ * this.motionZ);
+                    this.motionX = d10 * (double) (j1 - i);
+                    this.motionZ = d10 * (double) (k1 - k);
                 }
 
                 double d21;
 
                 if (this.type == 2) {
                     d21 = this.b * this.b + this.c * this.c;
-                    if (d21 > 1.0E-4D && this.motX * this.motX + this.motZ * this.motZ > 0.001D) {
+                    if (d21 > 1.0E-4D && this.motionX * this.motionX + this.motionZ * this.motionZ > 0.001D) {
                         d21 = (double) MathHelper.sqrt(d21);
                         this.b /= d21;
                         this.c /= d21;
-                        if (this.b * this.motX + this.c * this.motZ < 0.0D) {
+                        if (this.b * this.motionX + this.c * this.motionZ < 0.0D) {
                             this.b = 0.0D;
                             this.c = 0.0D;
                         } else {
-                            this.b = this.motX;
-                            this.c = this.motZ;
+                            this.b = this.motionX;
+                            this.c = this.motionZ;
                         }
                     }
                 }
 
                 if (flag) {
-                    d21 = Math.sqrt(this.motX * this.motX + this.motZ * this.motZ);
+                    d21 = Math.sqrt(this.motionX * this.motionX + this.motionZ * this.motionZ);
                     if (d21 > 0.01D) {
                         double d22 = 0.06D;
 
-                        this.motX += this.motX / d21 * d22;
-                        this.motZ += this.motZ / d21 * d22;
+                        this.motionX += this.motionX / d21 * d22;
+                        this.motionZ += this.motionZ / d21 * d22;
                     } else if (i1 == 1) {
-                        if (this.world.s(i - 1, j, k)) {
-                            this.motX = 0.02D;
-                        } else if (this.world.s(i + 1, j, k)) {
-                            this.motX = -0.02D;
+                        if (this.worldObj.s(i - 1, j, k)) {
+                            this.motionX = 0.02D;
+                        } else if (this.worldObj.s(i + 1, j, k)) {
+                            this.motionX = -0.02D;
                         }
                     } else if (i1 == 0) {
-                        if (this.world.s(i, j, k - 1)) {
-                            this.motZ = 0.02D;
-                        } else if (this.world.s(i, j, k + 1)) {
-                            this.motZ = -0.02D;
+                        if (this.worldObj.s(i, j, k - 1)) {
+                            this.motionZ = 0.02D;
+                        } else if (this.worldObj.s(i, j, k + 1)) {
+                            this.motionZ = -0.02D;
                         }
                     }
                 }
 
                 this.D();
             } else {
-                if (this.motX < -d4) {
-                    this.motX = -d4;
+                if (this.motionX < -d4) {
+                    this.motionX = -d4;
                 }
 
-                if (this.motX > d4) {
-                    this.motX = d4;
+                if (this.motionX > d4) {
+                    this.motionX = d4;
                 }
 
-                if (this.motZ < -d4) {
-                    this.motZ = -d4;
+                if (this.motionZ < -d4) {
+                    this.motionZ = -d4;
                 }
 
-                if (this.motZ > d4) {
-                    this.motZ = d4;
+                if (this.motionZ > d4) {
+                    this.motionZ = d4;
                 }
 
                 if (this.onGround) {
                     // CraftBukkit start
-                    this.motX *= this.derailedX;
-                    this.motY *= this.derailedY;
-                    this.motZ *= this.derailedZ;
+                    this.motionX *= this.derailedX;
+                    this.motionY *= this.derailedY;
+                    this.motionZ *= this.derailedZ;
                     // CraftBukkit end
                 }
 
-                this.move(this.motX, this.motY, this.motZ);
+                this.move(this.motionX, this.motionY, this.motionZ);
                 if (!this.onGround) {
                     // CraftBukkit start
-                    this.motX *= this.flyingX;
-                    this.motY *= this.flyingY;
-                    this.motZ *= this.flyingZ;
+                    this.motionX *= this.flyingX;
+                    this.motionY *= this.flyingY;
+                    this.motionZ *= this.flyingZ;
                     // CraftBukkit end
                 }
             }
 
-            this.pitch = 0.0F;
-            double d23 = this.lastX - this.locX;
-            double d24 = this.lastZ - this.locZ;
+            this.rotationPitch = 0.0F;
+            double d23 = this.lastX - this.posX;
+            double d24 = this.lastZ - this.posZ;
 
             if (d23 * d23 + d24 * d24 > 0.001D) {
-                this.yaw = (float) (Math.atan2(d24, d23) * 180.0D / 3.141592653589793D);
+                this.rotationYaw = (float) (Math.atan2(d24, d23) * 180.0D / 3.141592653589793D);
                 if (this.f) {
-                    this.yaw += 180.0F;
+                    this.rotationYaw += 180.0F;
                 }
             }
 
-            double d25 = (double) MathHelper.g(this.yaw - this.lastYaw);
+            double d25 = (double) MathHelper.g(this.rotationYaw - this.lastYaw);
 
             if (d25 < -170.0D || d25 >= 170.0D) {
-                this.yaw += 180.0F;
+                this.rotationYaw += 180.0F;
                 this.f = !this.f;
             }
 
-            this.b(this.yaw, this.pitch);
+            this.b(this.rotationYaw, this.rotationPitch);
 
             // CraftBukkit start
-            org.bukkit.World bworld = this.world.getWorld();
+            org.bukkit.World bworld = this.worldObj.getWorld();
             Location from = new Location(bworld, prevX, prevY, prevZ, prevYaw, prevPitch);
-            Location to = new Location(bworld, this.locX, this.locY, this.locZ, this.yaw, this.pitch);
+            Location to = new Location(bworld, this.posX, this.posY, this.posZ, this.rotationYaw, this.rotationPitch);
             Vehicle vehicle = (Vehicle) this.getBukkitEntity();
 
-            this.world.getServer().getPluginManager().callEvent(new org.bukkit.event.vehicle.VehicleUpdateEvent(vehicle));
+            this.worldObj.getServer().getPluginManager().callEvent(new org.bukkit.event.vehicle.VehicleUpdateEvent(vehicle));
 
             if (!from.equals(to)) {
-                this.world.getServer().getPluginManager().callEvent(new org.bukkit.event.vehicle.VehicleMoveEvent(vehicle, from, to));
+                this.worldObj.getServer().getPluginManager().callEvent(new org.bukkit.event.vehicle.VehicleMoveEvent(vehicle, from, to));
             }
             // CraftBukkit end
 
-            List list = this.world.getEntities(this, this.boundingBox.grow(0.20000000298023224D, 0.0D, 0.20000000298023224D));
+            List list = this.worldObj.getEntities(this, this.boundingBox.grow(0.20000000298023224D, 0.0D, 0.20000000298023224D));
 
             if (list != null && !list.isEmpty()) {
                 for (int l1 = 0; l1 < list.size(); ++l1) {
                     Entity entity = (Entity) list.get(l1);
 
-                    if (entity != this.passenger && entity.M() && entity instanceof EntityMinecart) {
+                    if (entity != this.riddenByEntity && entity.M() && entity instanceof EntityMinecart) {
                         entity.collide(this);
                     }
                 }
             }
 
-            if (this.passenger != null && this.passenger.dead) {
-                if (this.passenger.vehicle == this) {
-                    this.passenger.vehicle = null;
+            if (this.riddenByEntity != null && this.riddenByEntity.isDead) {
+                if (this.riddenByEntity.ridingEntity == this) {
+                    this.riddenByEntity.ridingEntity = null;
                 }
 
-                this.passenger = null;
+                this.riddenByEntity = null;
             }
 
             if (this.e > 0) {
@@ -638,14 +638,14 @@ public class EntityMinecart extends Entity implements IInventory {
         int j = MathHelper.floor(d1);
         int k = MathHelper.floor(d2);
 
-        if (BlockMinecartTrack.d_(this.world, i, j - 1, k)) {
+        if (BlockMinecartTrack.d_(this.worldObj, i, j - 1, k)) {
             --j;
         }
 
-        int l = this.world.getTypeId(i, j, k);
+        int l = this.worldObj.getBlockId(i, j, k);
 
         if (BlockMinecartTrack.d(l)) {
-            int i1 = this.world.getData(i, j, k);
+            int i1 = this.worldObj.getData(i, j, k);
 
             d1 = (double) j;
             if (((BlockMinecartTrack) Block.blocksList[l]).n()) {
@@ -699,7 +699,7 @@ public class EntityMinecart extends Entity implements IInventory {
     }
 
     protected void b(NBTTagCompound nbttagcompound) {
-        nbttagcompound.setInt("Type", this.type);
+        nbttagcompound.setInteger("Type", this.type);
         if (this.type == 2) {
             nbttagcompound.setDouble("PushX", this.b);
             nbttagcompound.setDouble("PushZ", this.c);
@@ -722,7 +722,7 @@ public class EntityMinecart extends Entity implements IInventory {
     }
 
     protected void a(NBTTagCompound nbttagcompound) {
-        this.type = nbttagcompound.getInt("Type");
+        this.type = nbttagcompound.getInteger("Type");
         if (this.type == 2) {
             this.b = nbttagcompound.getDouble("PushX");
             this.c = nbttagcompound.getDouble("PushZ");
@@ -744,26 +744,26 @@ public class EntityMinecart extends Entity implements IInventory {
     }
 
     public void collide(Entity entity) {
-        if (!this.world.isStatic) {
-            if (entity != this.passenger) {
+        if (!this.worldObj.isStatic) {
+            if (entity != this.riddenByEntity) {
                 // CraftBukkit start
                 Vehicle vehicle = (Vehicle) this.getBukkitEntity();
                 org.bukkit.entity.Entity hitEntity = (entity == null) ? null : entity.getBukkitEntity();
 
                 VehicleEntityCollisionEvent collisionEvent = new VehicleEntityCollisionEvent(vehicle, hitEntity);
-                this.world.getServer().getPluginManager().callEvent(collisionEvent);
+                this.worldObj.getServer().getPluginManager().callEvent(collisionEvent);
 
                 if (collisionEvent.isCancelled()) {
                     return;
                 }
                 // CraftBukkit end
 
-                if (entity instanceof EntityLiving && !(entity instanceof EntityHuman) && !(entity instanceof EntityIronGolem) && this.type == 0 && this.motX * this.motX + this.motZ * this.motZ > 0.01D && this.passenger == null && entity.vehicle == null) {
+                if (entity instanceof EntityLiving && !(entity instanceof EntityHuman) && !(entity instanceof EntityIronGolem) && this.type == 0 && this.motionX * this.motionX + this.motionZ * this.motionZ > 0.01D && this.riddenByEntity == null && entity.ridingEntity == null) {
                     entity.mount(this);
                 }
 
-                double d0 = entity.locX - this.locX;
-                double d1 = entity.locZ - this.locZ;
+                double d0 = entity.posX - this.posX;
+                double d1 = entity.posZ - this.posZ;
                 double d2 = d0 * d0 + d1 * d1;
 
                 // CraftBukkit - collision
@@ -786,39 +786,39 @@ public class EntityMinecart extends Entity implements IInventory {
                     d0 *= 0.5D;
                     d1 *= 0.5D;
                     if (entity instanceof EntityMinecart) {
-                        double d4 = entity.locX - this.locX;
-                        double d5 = entity.locZ - this.locZ;
+                        double d4 = entity.posX - this.posX;
+                        double d5 = entity.posZ - this.posZ;
                         Vec3D vec3d = Vec3D.a().create(d4, 0.0D, d5).b();
-                        Vec3D vec3d1 = Vec3D.a().create((double) MathHelper.cos(this.yaw * 3.1415927F / 180.0F), 0.0D, (double) MathHelper.sin(this.yaw * 3.1415927F / 180.0F)).b();
+                        Vec3D vec3d1 = Vec3D.a().create((double) MathHelper.cos(this.rotationYaw * 3.1415927F / 180.0F), 0.0D, (double) MathHelper.sin(this.rotationYaw * 3.1415927F / 180.0F)).b();
                         double d6 = Math.abs(vec3d.b(vec3d1));
 
                         if (d6 < 0.800000011920929D) {
                             return;
                         }
 
-                        double d7 = entity.motX + this.motX;
-                        double d8 = entity.motZ + this.motZ;
+                        double d7 = entity.motionX + this.motionX;
+                        double d8 = entity.motionZ + this.motionZ;
 
                         if (((EntityMinecart) entity).type == 2 && this.type != 2) {
-                            this.motX *= 0.20000000298023224D;
-                            this.motZ *= 0.20000000298023224D;
-                            this.g(entity.motX - d0, 0.0D, entity.motZ - d1);
-                            entity.motX *= 0.949999988079071D;
-                            entity.motZ *= 0.949999988079071D;
+                            this.motionX *= 0.20000000298023224D;
+                            this.motionZ *= 0.20000000298023224D;
+                            this.g(entity.motionX - d0, 0.0D, entity.motionZ - d1);
+                            entity.motionX *= 0.949999988079071D;
+                            entity.motionZ *= 0.949999988079071D;
                         } else if (((EntityMinecart) entity).type != 2 && this.type == 2) {
-                            entity.motX *= 0.20000000298023224D;
-                            entity.motZ *= 0.20000000298023224D;
-                            entity.g(this.motX + d0, 0.0D, this.motZ + d1);
-                            this.motX *= 0.949999988079071D;
-                            this.motZ *= 0.949999988079071D;
+                            entity.motionX *= 0.20000000298023224D;
+                            entity.motionZ *= 0.20000000298023224D;
+                            entity.g(this.motionX + d0, 0.0D, this.motionZ + d1);
+                            this.motionX *= 0.949999988079071D;
+                            this.motionZ *= 0.949999988079071D;
                         } else {
                             d7 /= 2.0D;
                             d8 /= 2.0D;
-                            this.motX *= 0.20000000298023224D;
-                            this.motZ *= 0.20000000298023224D;
+                            this.motionX *= 0.20000000298023224D;
+                            this.motionZ *= 0.20000000298023224D;
                             this.g(d7 - d0, 0.0D, d8 - d1);
-                            entity.motX *= 0.20000000298023224D;
-                            entity.motZ *= 0.20000000298023224D;
+                            entity.motionX *= 0.20000000298023224D;
+                            entity.motionZ *= 0.20000000298023224D;
                             entity.g(d7 + d0, 0.0D, d8 + d1);
                         }
                     } else {
@@ -889,16 +889,16 @@ public class EntityMinecart extends Entity implements IInventory {
 
     public boolean c(EntityHuman entityhuman) {
         if (this.type == 0) {
-            if (this.passenger != null && this.passenger instanceof EntityHuman && this.passenger != entityhuman) {
+            if (this.riddenByEntity != null && this.riddenByEntity instanceof EntityHuman && this.riddenByEntity != entityhuman) {
                 return true;
             }
 
-            if (!this.world.isStatic) {
+            if (!this.worldObj.isStatic) {
                 entityhuman.mount(this);
             }
         } else if (this.type == 1) {
-            if (!this.world.isStatic) {
-                entityhuman.openContainer(this);
+            if (!this.worldObj.isStatic) {
+                entityhuman.displayGUIChest(this);
             }
         } else if (this.type == 2) {
             ItemStack itemstack = entityhuman.inventory.getItemInHand();
@@ -911,15 +911,15 @@ public class EntityMinecart extends Entity implements IInventory {
                 this.e += 3600;
             }
 
-            this.b = this.locX - entityhuman.locX;
-            this.c = this.locZ - entityhuman.locZ;
+            this.b = this.posX - entityhuman.posX;
+            this.c = this.posZ - entityhuman.posZ;
         }
 
         return true;
     }
 
     public boolean a(EntityHuman entityhuman) {
-        return this.dead ? false : entityhuman.e(this) <= 64.0D;
+        return this.isDead ? false : entityhuman.e(this) <= 64.0D;
     }
 
     protected boolean h() {

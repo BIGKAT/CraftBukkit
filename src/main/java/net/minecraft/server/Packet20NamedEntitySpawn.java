@@ -22,21 +22,21 @@ public class Packet20NamedEntitySpawn extends Packet {
     public Packet20NamedEntitySpawn() {}
 
     public Packet20NamedEntitySpawn(EntityHuman entityhuman) {
-        this.a = entityhuman.id;
+        this.a = entityhuman.entityId;
 
         // CraftBukkit start - limit name length to 16 characters
-        if (entityhuman.name.length() > 16) {
-            this.b = entityhuman.name.substring(0, 16);
+        if (entityhuman.username.length() > 16) {
+            this.b = entityhuman.username.substring(0, 16);
         } else {
-            this.b = entityhuman.name;
+            this.b = entityhuman.username;
         }
         // CraftBukkit end
 
-        this.c = MathHelper.floor(entityhuman.locX * 32.0D);
-        this.d = MathHelper.floor(entityhuman.locY * 32.0D);
-        this.e = MathHelper.floor(entityhuman.locZ * 32.0D);
-        this.f = (byte) ((int) (entityhuman.yaw * 256.0F / 360.0F));
-        this.g = (byte) ((int) (entityhuman.pitch * 256.0F / 360.0F));
+        this.c = MathHelper.floor(entityhuman.posX * 32.0D);
+        this.d = MathHelper.floor(entityhuman.posY * 32.0D);
+        this.e = MathHelper.floor(entityhuman.posZ * 32.0D);
+        this.f = (byte) ((int) (entityhuman.rotationYaw * 256.0F / 360.0F));
+        this.g = (byte) ((int) (entityhuman.rotationPitch * 256.0F / 360.0F));
         ItemStack itemstack = entityhuman.inventory.getItemInHand();
 
         this.h = itemstack == null ? 0 : itemstack.id;

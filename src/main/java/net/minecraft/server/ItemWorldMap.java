@@ -45,8 +45,8 @@ public class ItemWorldMap extends ItemWorldMapBase {
             int i = 1 << worldmap.scale;
             int j = worldmap.centerX;
             int k = worldmap.centerZ;
-            int l = MathHelper.floor(entity.locX - (double) j) / i + short1 / 2;
-            int i1 = MathHelper.floor(entity.locZ - (double) k) / i + short2 / 2;
+            int l = MathHelper.floor(entity.posX - (double) j) / i + short1 / 2;
+            int i1 = MathHelper.floor(entity.posZ - (double) k) / i + short2 / 2;
             int j1 = 128 / i;
 
             if (world.worldProvider.e) {
@@ -105,7 +105,7 @@ public class ItemWorldMap extends ItemWorldMapBase {
 
                                                 do {
                                                     flag1 = true;
-                                                    j5 = chunk.getTypeId(l4 + k3, k4 - 1, j4 + l3);
+                                                    j5 = chunk.getBlockID(l4 + k3, k4 - 1, j4 + l3);
                                                     if (j5 == 0) {
                                                         flag1 = false;
                                                     } else if (k4 > 0 && j5 > 0 && Block.blocksList[j5].blockMaterial.F == MaterialMapColor.b) {
@@ -118,7 +118,7 @@ public class ItemWorldMap extends ItemWorldMapBase {
                                                             break;
                                                         }
 
-                                                        j5 = chunk.getTypeId(l4 + k3, k4 - 1, j4 + l3);
+                                                        j5 = chunk.getBlockID(l4 + k3, k4 - 1, j4 + l3);
                                                     }
                                                 } while (k4 > 0 && !flag1);
 
@@ -129,7 +129,7 @@ public class ItemWorldMap extends ItemWorldMapBase {
                                                     int k5;
 
                                                     do {
-                                                        k5 = chunk.getTypeId(l4 + k3, i5--, j4 + l3);
+                                                        k5 = chunk.getBlockID(l4 + k3, i5--, j4 + l3);
                                                         ++i4;
                                                     } while (i5 > 0 && k5 != 0 && Block.blocksList[k5].blockMaterial.isLiquid());
                                                 }
@@ -237,8 +237,8 @@ public class ItemWorldMap extends ItemWorldMapBase {
         WorldMap worldmap = new WorldMap(s);
 
         world.a(s, (WorldMapBase) worldmap);
-        worldmap.centerX = MathHelper.floor(entityhuman.locX);
-        worldmap.centerZ = MathHelper.floor(entityhuman.locZ);
+        worldmap.centerX = MathHelper.floor(entityhuman.posX);
+        worldmap.centerZ = MathHelper.floor(entityhuman.posZ);
         worldmap.scale = 3;
         worldmap.map = (byte) ((WorldServer) world).dimension; // CraftBukkit - fixes Bukkit multiworld maps.
         worldmap.a();

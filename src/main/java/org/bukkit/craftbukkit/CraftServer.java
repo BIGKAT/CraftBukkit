@@ -292,11 +292,11 @@ public final class CraftServer implements Server {
 
     @SuppressWarnings("unchecked")
     public Player[] getOnlinePlayers() {
-        List<EntityPlayer> online = server.players;
+        List<EntityPlayer> online = server.playerEntityList;
         Player[] players = new Player[online.size()];
 
         for (int i = 0; i < players.length; i++) {
-            players[i] = online.get(i).netServerHandler.getPlayer();
+            players[i] = online.get(i).serverForThisPlayer.getPlayer();
         }
 
         return players;
@@ -338,7 +338,7 @@ public final class CraftServer implements Server {
     }
 
     public Player getPlayer(final EntityPlayer entity) {
-        return entity.netServerHandler.getPlayer();
+        return entity.serverForThisPlayer.getPlayer();
     }
 
     public List<Player> matchPlayer(String partialName) {
@@ -1105,8 +1105,8 @@ public final class CraftServer implements Server {
 
     public void detectListNameConflict(EntityPlayer entityPlayer) {
         // Collisions will make for invisible people
-        for (int i = 0; i < getHandle().players.size(); ++i) {
-            EntityPlayer testEntityPlayer = (EntityPlayer) getHandle().players.get(i);
+        for (int i = 0; i < getHandle().playerEntityList.size(); ++i) {
+            EntityPlayer testEntityPlayer = (EntityPlayer) getHandle().playerEntityList.get(i);
 
             // We have a problem!
             if (testEntityPlayer != entityPlayer && testEntityPlayer.listName.equals(entityPlayer.listName)) {

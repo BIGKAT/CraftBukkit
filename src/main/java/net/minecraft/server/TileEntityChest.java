@@ -62,7 +62,7 @@ public class TileEntityChest extends TileEntity implements IInventory {
             if (this.items[i].count <= j) {
                 itemstack = this.items[i];
                 this.items[i] = null;
-                this.update();
+                this.onInventoryChanged();
                 return itemstack;
             } else {
                 itemstack = this.items[i].a(j);
@@ -70,7 +70,7 @@ public class TileEntityChest extends TileEntity implements IInventory {
                     this.items[i] = null;
                 }
 
-                this.update();
+                this.onInventoryChanged();
                 return itemstack;
             }
         } else {
@@ -95,7 +95,7 @@ public class TileEntityChest extends TileEntity implements IInventory {
             itemstack.count = this.getMaxStackSize();
         }
 
-        this.update();
+        this.onInventoryChanged();
     }
 
     public String getName() {
@@ -156,19 +156,19 @@ public class TileEntityChest extends TileEntity implements IInventory {
             this.c = null;
             this.d = null;
             this.e = null;
-            if (this.world.getTypeId(this.x - 1, this.y, this.z) == Block.CHEST.blockID) {
+            if (this.world.getBlockId(this.x - 1, this.y, this.z) == Block.CHEST.blockID) {
                 this.d = (TileEntityChest) this.world.getTileEntity(this.x - 1, this.y, this.z);
             }
 
-            if (this.world.getTypeId(this.x + 1, this.y, this.z) == Block.CHEST.blockID) {
+            if (this.world.getBlockId(this.x + 1, this.y, this.z) == Block.CHEST.blockID) {
                 this.c = (TileEntityChest) this.world.getTileEntity(this.x + 1, this.y, this.z);
             }
 
-            if (this.world.getTypeId(this.x, this.y, this.z - 1) == Block.CHEST.blockID) {
+            if (this.world.getBlockId(this.x, this.y, this.z - 1) == Block.CHEST.blockID) {
                 this.b = (TileEntityChest) this.world.getTileEntity(this.x, this.y, this.z - 1);
             }
 
-            if (this.world.getTypeId(this.x, this.y, this.z + 1) == Block.CHEST.blockID) {
+            if (this.world.getBlockId(this.x, this.y, this.z + 1) == Block.CHEST.blockID) {
                 this.e = (TileEntityChest) this.world.getTileEntity(this.x, this.y, this.z + 1);
             }
 
@@ -214,7 +214,7 @@ public class TileEntityChest extends TileEntity implements IInventory {
                 d1 += 0.5D;
             }
 
-            this.world.makeSound(d1, (double) this.y + 0.5D, d0, "random.chestopen", 0.5F, this.world.random.nextFloat() * 0.1F + 0.9F);
+            this.world.makeSound(d1, (double) this.y + 0.5D, d0, "random.chestopen", 0.5F, this.world.rand.nextFloat() * 0.1F + 0.9F);
         }
 
         if (this.h == 0 && this.f > 0.0F || this.h > 0 && this.f < 1.0F) {
@@ -244,7 +244,7 @@ public class TileEntityChest extends TileEntity implements IInventory {
                     d0 += 0.5D;
                 }
 
-                this.world.makeSound(d0, (double) this.y + 0.5D, d2, "random.chestclosed", 0.5F, this.world.random.nextFloat() * 0.1F + 0.9F);
+                this.world.makeSound(d0, (double) this.y + 0.5D, d2, "random.chestclosed", 0.5F, this.world.rand.nextFloat() * 0.1F + 0.9F);
             }
 
             if (this.f < 0.0F) {
@@ -262,13 +262,13 @@ public class TileEntityChest extends TileEntity implements IInventory {
     public void startOpen() {
         ++this.h;
         if (this.world == null) return; // CraftBukkit
-        this.world.playNote(this.x, this.y, this.z, Block.CHEST.blockID, 1, this.h);
+        this.world.addBlockEvent(this.x, this.y, this.z, Block.CHEST.blockID, 1, this.h);
     }
 
     public void f() {
         --this.h;
         if (this.world == null) return; // CraftBukkit
-        this.world.playNote(this.x, this.y, this.z, Block.CHEST.blockID, 1, this.h);
+        this.world.addBlockEvent(this.x, this.y, this.z, Block.CHEST.blockID, 1, this.h);
     }
 
     public void j() {

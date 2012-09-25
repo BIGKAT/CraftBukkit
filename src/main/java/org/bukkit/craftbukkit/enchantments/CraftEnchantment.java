@@ -10,7 +10,7 @@ public class CraftEnchantment extends Enchantment {
     private final net.minecraft.server.Enchantment target;
 
     public CraftEnchantment(net.minecraft.server.Enchantment target) {
-        super(target.id);
+        super(target.effectId);
         this.target = target;
     }
 
@@ -21,12 +21,12 @@ public class CraftEnchantment extends Enchantment {
 
     @Override
     public int getStartLevel() {
-        return target.getStartLevel();
+        return target.getMinLevel();
     }
 
     @Override
     public EnchantmentTarget getItemTarget() {
-        switch (target.slot) {
+        switch (target.type) {
         case ALL:
             return EnchantmentTarget.ALL;
         case ARMOR:
@@ -52,12 +52,12 @@ public class CraftEnchantment extends Enchantment {
 
     @Override
     public boolean canEnchantItem(ItemStack item) {
-        return target.slot.canEnchant(Item.itemsList[item.getTypeId()]);
+        return target.type.canEnchantItem(Item.itemsList[item.getTypeId()]);
     }
 
     @Override
     public String getName() {
-        switch (target.id) {
+        switch (target.effectId) {
         case 0:
             return "PROTECTION_ENVIRONMENTAL";
         case 1:
@@ -101,7 +101,7 @@ public class CraftEnchantment extends Enchantment {
         case 51:
             return "ARROW_INFINITE";
         default:
-            return "UNKNOWN_ENCHANT_" + target.id;
+            return "UNKNOWN_ENCHANT_" + target.effectId;
         }
     }
 

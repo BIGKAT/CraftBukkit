@@ -1,7 +1,6 @@
 package net.minecraft.server;
 
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
@@ -19,9 +18,9 @@ public final class SpawnerCreature {
 
     protected static ChunkPosition getRandomPosition(World world, int i, int j) {
         Chunk chunk = world.getChunkAt(i, j);
-        int k = i * 16 + world.random.nextInt(16);
-        int l = j * 16 + world.random.nextInt(16);
-        int i1 = world.random.nextInt(chunk == null ? world.L() : chunk.h() + 16 - 1);
+        int k = i * 16 + world.rand.nextInt(16);
+        int l = j * 16 + world.rand.nextInt(16);
+        int i1 = world.rand.nextInt(chunk == null ? world.L() : chunk.h() + 16 - 1);
 
         return new ChunkPosition(k, i1, l);
     }
@@ -37,9 +36,9 @@ public final class SpawnerCreature {
 
             for (i = 0; i < worldserver.players.size(); ++i) {
                 EntityHuman entityhuman = (EntityHuman) worldserver.players.get(i);
-                int k = MathHelper.floor(entityhuman.locX / 16.0D);
+                int k = MathHelper.floor(entityhuman.posX / 16.0D);
 
-                j = MathHelper.floor(entityhuman.locZ / 16.0D);
+                j = MathHelper.floor(entityhuman.posZ / 16.0D);
                 byte b0 = 8;
 
                 for (int l = -b0; l <= b0; ++l) {
@@ -117,9 +116,9 @@ public final class SpawnerCreature {
                                     while (true) {
                                         if (k3 < 4) {
                                             label101: {
-                                                l2 += worldserver.random.nextInt(b1) - worldserver.random.nextInt(b1);
-                                                i3 += worldserver.random.nextInt(1) - worldserver.random.nextInt(1);
-                                                j3 += worldserver.random.nextInt(b1) - worldserver.random.nextInt(b1);
+                                                l2 += worldserver.rand.nextInt(b1) - worldserver.rand.nextInt(b1);
+                                                i3 += worldserver.rand.nextInt(1) - worldserver.rand.nextInt(1);
+                                                j3 += worldserver.rand.nextInt(b1) - worldserver.rand.nextInt(b1);
                                                 if (a(enumcreaturetype, worldserver, l2, i3, j3)) {
                                                     float f = (float) l2 + 0.5F;
                                                     float f1 = (float) i3;
@@ -148,7 +147,7 @@ public final class SpawnerCreature {
                                                                 return i;
                                                             }
 
-                                                            entityliving.setPositionRotation((double) f, (double) f1, (double) f2, worldserver.random.nextFloat() * 360.0F, 0.0F);
+                                                            entityliving.setPositionRotation((double) f, (double) f1, (double) f2, worldserver.rand.nextFloat() * 360.0F, 0.0F);
                                                             if (entityliving.canSpawn()) {
                                                                 ++j2;
                                                                 // CraftBukkit - added a reason for spawning this creature
@@ -189,29 +188,29 @@ public final class SpawnerCreature {
         } else if (!world.t(i, j - 1, k)) {
             return false;
         } else {
-            int l = world.getTypeId(i, j - 1, k);
+            int l = world.getBlockId(i, j - 1, k);
 
             return l != Block.BEDROCK.blockID && !world.s(i, j, k) && !world.getMaterial(i, j, k).isLiquid() && !world.s(i, j + 1, k);
         }
     }
 
     private static void a(EntityLiving entityliving, World world, float f, float f1, float f2) {
-        if (entityliving.dead) return; // CraftBukkit
-        if (entityliving instanceof EntitySpider && world.random.nextInt(100) == 0) {
+        if (entityliving.isDead) return; // CraftBukkit
+        if (entityliving instanceof EntitySpider && world.rand.nextInt(100) == 0) {
             EntitySkeleton entityskeleton = new EntitySkeleton(world);
 
-            entityskeleton.setPositionRotation((double) f, (double) f1, (double) f2, entityliving.yaw, 0.0F);
+            entityskeleton.setPositionRotation((double) f, (double) f1, (double) f2, entityliving.rotationYaw, 0.0F);
             // CraftBukkit - added a reason for spawning this creature
             world.addEntity(entityskeleton, SpawnReason.JOCKEY);
             entityskeleton.mount(entityliving);
         } else if (entityliving instanceof EntitySheep) {
-            ((EntitySheep) entityliving).setColor(EntitySheep.a(world.random));
-        } else if (entityliving instanceof EntityOcelot && world.random.nextInt(7) == 0) {
+            ((EntitySheep) entityliving).setColor(EntitySheep.a(world.rand));
+        } else if (entityliving instanceof EntityOcelot && world.rand.nextInt(7) == 0) {
             for (int i = 0; i < 2; ++i) {
                 EntityOcelot entityocelot = new EntityOcelot(world);
 
-                entityocelot.setPositionRotation((double) f, (double) f1, (double) f2, entityliving.yaw, 0.0F);
-                entityocelot.setAge(-24000);
+                entityocelot.setPositionRotation((double) f, (double) f1, (double) f2, entityliving.rotationYaw, 0.0F);
+                entityocelot.setGrowingAge(-24000);
                 world.addEntity(entityocelot, SpawnReason.NATURAL); // CraftBukkit - added SpawnReason
             }
         }
@@ -222,7 +221,7 @@ public final class SpawnerCreature {
 
         if (!list.isEmpty()) {
             while (random.nextFloat() < biomebase.f()) {
-                BiomeMeta biomemeta = (BiomeMeta) WeightedRandom.a(world.random, (Collection) list);
+                BiomeMeta biomemeta = (BiomeMeta) WeightedRandom.a(world.rand, (Collection) list);
                 int i1 = biomemeta.c + random.nextInt(1 + biomemeta.d - biomemeta.c);
                 int j1 = i + random.nextInt(k);
                 int k1 = j + random.nextInt(l);

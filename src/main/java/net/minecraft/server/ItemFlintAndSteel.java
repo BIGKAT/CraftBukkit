@@ -45,7 +45,7 @@ public class ItemFlintAndSteel extends Item {
         if (!entityhuman.e(i, j, k)) {
             return false;
         } else {
-            int i1 = world.getTypeId(i, j, k);
+            int i1 = world.getBlockId(i, j, k);
 
             if (i1 == 0) {
                 // CraftBukkit start - store the clicked block
@@ -64,7 +64,7 @@ public class ItemFlintAndSteel extends Item {
                 // CraftBukkit end
 
                 world.makeSound((double) i + 0.5D, (double) j + 0.5D, (double) k + 0.5D, "fire.ignite", 1.0F, d.nextFloat() * 0.4F + 0.8F);
-                world.setTypeId(i, j, k, Block.FIRE.blockID);
+                world.setBlockWithNotify(i, j, k, Block.FIRE.blockID);
 
                 // CraftBukkit start
                 org.bukkit.event.block.BlockPlaceEvent placeEvent = org.bukkit.craftbukkit.event.CraftEventFactory.callBlockPlaceEvent(world, entityhuman, blockState, clickedX, clickedY, clickedZ);

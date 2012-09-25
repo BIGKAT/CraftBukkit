@@ -23,13 +23,13 @@ public abstract class EntityMonster extends EntityCreature implements IMonster {
 
     public void h_() {
         super.h_();
-        if (!this.world.isStatic && this.world.difficulty == 0) {
-            this.die();
+        if (!this.worldObj.isStatic && this.worldObj.difficulty == 0) {
+            this.setDead();
         }
     }
 
     protected Entity findTarget() {
-        EntityHuman entityhuman = this.world.findNearbyVulnerablePlayer(this, 16.0D);
+        EntityHuman entityhuman = this.worldObj.findNearbyVulnerablePlayer(this, 16.0D);
 
         return entityhuman != null && this.l(entityhuman) ? entityhuman : null;
     }
@@ -38,21 +38,21 @@ public abstract class EntityMonster extends EntityCreature implements IMonster {
         if (super.damageEntity(damagesource, i)) {
             Entity entity = damagesource.getEntity();
 
-            if (this.passenger != entity && this.vehicle != entity) {
+            if (this.riddenByEntity != entity && this.ridingEntity != entity) {
                 if (entity != this) {
                     // CraftBukkit start - we still need to call events for entities without goals
-                    if (entity != this.target && (this instanceof EntityBlaze || this instanceof EntityEnderman || this instanceof EntitySpider || this instanceof EntityGiantZombie || this instanceof EntitySilverfish)) {
+                    if (entity != this.entityToAttack && (this instanceof EntityBlaze || this instanceof EntityEnderman || this instanceof EntitySpider || this instanceof EntityGiantZombie || this instanceof EntitySilverfish)) {
                         EntityTargetEvent event = org.bukkit.craftbukkit.event.CraftEventFactory.callEntityTargetEvent(this, entity, EntityTargetEvent.TargetReason.TARGET_ATTACKED_ENTITY);
 
                         if (!event.isCancelled()) {
                             if (event.getTarget() == null) {
-                                this.target = null;
+                                this.entityToAttack = null;
                             } else {
-                                this.target = ((org.bukkit.craftbukkit.entity.CraftEntity) event.getTarget()).getHandle();
+                                this.entityToAttack = ((org.bukkit.craftbukkit.entity.CraftEntity) event.getTarget()).getHandle();
                             }
                         }
                     } else {
-                        this.target = entity;
+                        this.entityToAttack = entity;
                     }
                     // CraftBukkit end
                 }
@@ -88,25 +88,25 @@ public abstract class EntityMonster extends EntityCreature implements IMonster {
     }
 
     public float a(int i, int j, int k) {
-        return 0.5F - this.world.o(i, j, k);
+        return 0.5F - this.worldObj.o(i, j, k);
     }
 
     protected boolean o() {
-        int i = MathHelper.floor(this.locX);
+        int i = MathHelper.floor(this.posX);
         int j = MathHelper.floor(this.boundingBox.b);
-        int k = MathHelper.floor(this.locZ);
+        int k = MathHelper.floor(this.posZ);
 
-        if (this.world.b(EnumSkyBlock.SKY, i, j, k) > this.random.nextInt(32)) {
+        if (this.worldObj.b(EnumSkyBlock.Sky, i, j, k) > this.random.nextInt(32)) {
             return false;
         } else {
-            int l = this.world.getLightLevel(i, j, k);
+            int l = this.worldObj.getBlockLightValue(i, j, k);
 
-            if (this.world.I()) {
-                int i1 = this.world.k;
+            if (this.worldObj.I()) {
+                int i1 = this.worldObj.k;
 
-                this.world.k = 10;
-                l = this.world.getLightLevel(i, j, k);
-                this.world.k = i1;
+                this.worldObj.k = 10;
+                l = this.worldObj.getBlockLightValue(i, j, k);
+                this.worldObj.k = i1;
             }
 
             return l <= this.random.nextInt(8);

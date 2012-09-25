@@ -40,17 +40,17 @@ public class EntityPotion extends EntityProjectile {
         return -20.0F;
     }
 
-    public int getPotionValue() {
+    public int getPotionDamage() {
         return this.d;
     }
 
     protected void a(MovingObjectPosition movingobjectposition) {
-        if (!this.world.isStatic) {
+        if (!this.worldObj.isStatic) {
             List list = Item.POTION.f(this.d);
 
             if (list != null && !list.isEmpty()) {
                 AxisAlignedBB axisalignedbb = this.boundingBox.grow(4.0D, 2.0D, 4.0D);
-                List list1 = this.world.a(EntityLiving.class, axisalignedbb);
+                List list1 = this.worldObj.a(EntityLiving.class, axisalignedbb);
 
                 if (list1 != null && !list1.isEmpty()) {
                     Iterator iterator = list1.iterator();
@@ -92,7 +92,7 @@ public class EntityPotion extends EntityProjectile {
                                 int i = mobeffect.getEffectId();
 
                                 // CraftBukkit start - abide by PVP settings
-                                if (!this.world.pvpMode && entityliving instanceof EntityPlayer && entityliving != this.shooter) {
+                                if (!this.worldObj.pvpMode && entityliving instanceof EntityPlayer && entityliving != this.shootingEntity) {
                                     // Block SLOWER_MOVEMENT, SLOWER_DIG, HARM, BLINDNESS, HUNGER, WEAKNESS and POISON potions
                                     if (i == 2 || i == 4 || i == 7 || i == 15 || i == 17 || i == 18 || i == 19) continue;
                                 }
@@ -100,12 +100,12 @@ public class EntityPotion extends EntityProjectile {
 
                                 if (MobEffectList.byId[i].isInstant()) {
                                     // CraftBukkit - added 'this'
-                                    MobEffectList.byId[i].applyInstantEffect(this.shooter, entityliving, mobeffect.getAmplifier(), d1, this);
+                                    MobEffectList.byId[i].applyInstantEffect(this.shootingEntity, entityliving, mobeffect.getAmplifier(), d1, this);
                                 } else {
                                     int j = (int) (d1 * (double) mobeffect.getDuration() + 0.5D);
 
                                     if (j > 20) {
-                                        entityliving.addEffect(new MobEffect(i, j, mobeffect.getAmplifier()));
+                                        entityliving.addPotionEffect(new MobEffect(i, j, mobeffect.getAmplifier()));
                                     }
                                 }
                             }
@@ -114,18 +114,18 @@ public class EntityPotion extends EntityProjectile {
                 }
             }
 
-            this.world.triggerEffect(2002, (int) Math.round(this.locX), (int) Math.round(this.locY), (int) Math.round(this.locZ), this.d);
-            this.die();
+            this.worldObj.triggerEffect(2002, (int) Math.round(this.posX), (int) Math.round(this.posY), (int) Math.round(this.posZ), this.d);
+            this.setDead();
         }
     }
 
     public void a(NBTTagCompound nbttagcompound) {
         super.a(nbttagcompound);
-        this.d = nbttagcompound.getInt("potionValue");
+        this.d = nbttagcompound.getInteger("potionValue");
     }
 
     public void b(NBTTagCompound nbttagcompound) {
         super.b(nbttagcompound);
-        nbttagcompound.setInt("potionValue", this.d);
+        nbttagcompound.setInteger("potionValue", this.d);
     }
 }

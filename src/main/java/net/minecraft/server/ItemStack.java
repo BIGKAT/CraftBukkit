@@ -118,7 +118,7 @@ public final class ItemStack {
         this.count = nbttagcompound.getByte("Count");
         this.damage = nbttagcompound.getShort("Damage");
         if (nbttagcompound.hasKey("tag")) {
-            this.tag = nbttagcompound.getCompound("tag");
+            this.tag = nbttagcompound.getCompoundTag("tag");
         }
     }
 
@@ -163,12 +163,12 @@ public final class ItemStack {
             if (i > 0 && entityliving instanceof EntityHuman) {
                 int j = EnchantmentManager.getDurabilityEnchantmentLevel(((EntityHuman) entityliving).inventory);
 
-                if (j > 0 && entityliving.world.random.nextInt(j + 1) > 0) {
+                if (j > 0 && entityliving.worldObj.rand.nextInt(j + 1) > 0) {
                     return;
                 }
             }
 
-            if (!(entityliving instanceof EntityHuman) || !((EntityHuman) entityliving).abilities.canInstantlyBuild) {
+            if (!(entityliving instanceof EntityHuman) || !((EntityHuman) entityliving).capabilities.canInstantlyBuild) {
                 this.damage += i;
             }
 
@@ -321,7 +321,7 @@ public final class ItemStack {
         NBTTagList nbttaglist = (NBTTagList) this.tag.get("ench");
         NBTTagCompound nbttagcompound = new NBTTagCompound();
 
-        nbttagcompound.setShort("id", (short) enchantment.id);
+        nbttagcompound.setShort("id", (short) enchantment.effectId);
         nbttagcompound.setShort("lvl", (short) ((byte) i));
         nbttaglist.add(nbttagcompound);
     }

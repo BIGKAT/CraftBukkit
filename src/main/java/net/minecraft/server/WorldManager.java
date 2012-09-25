@@ -43,18 +43,18 @@ public class WorldManager implements IWorldAccess {
     }
 
     public void a(int i, int j, int k, int l, int i1) {
-        Iterator iterator = this.server.getServerConfigurationManager().players.iterator();
+        Iterator iterator = this.server.getServerConfigurationManager().playerEntityList.iterator();
 
         while (iterator.hasNext()) {
             EntityPlayer entityplayer = (EntityPlayer) iterator.next();
 
-            if (entityplayer != null && entityplayer.world == this.world && entityplayer.id != i) {
-                double d0 = (double) j - entityplayer.locX;
-                double d1 = (double) k - entityplayer.locY;
-                double d2 = (double) l - entityplayer.locZ;
+            if (entityplayer != null && entityplayer.worldObj == this.world && entityplayer.entityId != i) {
+                double d0 = (double) j - entityplayer.posX;
+                double d1 = (double) k - entityplayer.posY;
+                double d2 = (double) l - entityplayer.posZ;
 
                 if (d0 * d0 + d1 * d1 + d2 * d2 < 1024.0D) {
-                    entityplayer.netServerHandler.sendPacket(new Packet55BlockBreakAnimation(i, j, k, l, i1));
+                    entityplayer.serverForThisPlayer.sendPacketToPlayer(new Packet55BlockBreakAnimation(i, j, k, l, i1));
                 }
             }
         }

@@ -45,7 +45,7 @@ public class CraftOfflinePlayer implements OfflinePlayer, ConfigurationSerializa
     }
 
     public boolean isOp() {
-        return server.getHandle().isOp(getName().toLowerCase());
+        return server.getHandle().areCommandsAllowed(getName().toLowerCase());
     }
 
     public void setOp(boolean value) {
@@ -103,10 +103,10 @@ public class CraftOfflinePlayer implements OfflinePlayer, ConfigurationSerializa
     }
 
     public Player getPlayer() {
-        for (Object obj : server.getHandle().players) {
+        for (Object obj : server.getHandle().playerEntityList) {
             EntityPlayer player = (EntityPlayer) obj;
-            if (player.name.equalsIgnoreCase(getName())) {
-                return (player.netServerHandler != null) ? player.netServerHandler.getPlayer() : null;
+            if (player.username.equalsIgnoreCase(getName())) {
+                return (player.serverForThisPlayer != null) ? player.serverForThisPlayer.getPlayer() : null;
             }
         }
 
@@ -144,9 +144,9 @@ public class CraftOfflinePlayer implements OfflinePlayer, ConfigurationSerializa
 
         if (result != null) {
             if (!result.hasKey("bukkit")) {
-                result.setCompound("bukkit", new NBTTagCompound());
+                result.setCompoundTag("bukkit", new NBTTagCompound());
             }
-            result = result.getCompound("bukkit");
+            result = result.getCompoundTag("bukkit");
         }
 
         return result;
@@ -203,7 +203,7 @@ public class CraftOfflinePlayer implements OfflinePlayer, ConfigurationSerializa
             if (spawnWorld.equals("")) {
                 spawnWorld = server.getWorlds().get(0).getName();
             }
-            return new Location(server.getWorld(spawnWorld), data.getInt("SpawnX"), data.getInt("SpawnY"), data.getInt("SpawnZ"));
+            return new Location(server.getWorld(spawnWorld), data.getInteger("SpawnX"), data.getInteger("SpawnY"), data.getInteger("SpawnZ"));
         }
         return null;
     }

@@ -17,14 +17,14 @@ public class ControllerLook {
     }
 
     public void a(Entity entity, float f, float f1) {
-        this.e = entity.locX;
+        this.e = entity.posX;
         if (entity instanceof EntityLiving) {
-            this.f = entity.locY + (double) entity.getHeadHeight();
+            this.f = entity.posY + (double) entity.getHeadHeight();
         } else {
             this.f = (entity.boundingBox.b + entity.boundingBox.e) / 2.0D;
         }
 
-        this.g = entity.locZ;
+        this.g = entity.posZ;
         this.b = f;
         this.c = f1;
         this.d = true;
@@ -40,19 +40,19 @@ public class ControllerLook {
     }
 
     public void a() {
-        this.a.pitch = 0.0F;
+        this.a.rotationPitch = 0.0F;
         if (this.d) {
             this.d = false;
-            double d0 = this.e - this.a.locX;
-            double d1 = this.f - (this.a.locY + (double) this.a.getHeadHeight());
-            double d2 = this.g - this.a.locZ;
+            double d0 = this.e - this.a.posX;
+            double d1 = this.f - (this.a.posY + (double) this.a.getHeadHeight());
+            double d2 = this.g - this.a.posZ;
             double d3 = (double) MathHelper.sqrt(d0 * d0 + d2 * d2);
             // CraftBukkit start - Math -> TrigMath
             float f = (float) (TrigMath.atan2(d2, d0) * 180.0D / 3.1415927410125732D) - 90.0F;
             float f1 = (float) (-(TrigMath.atan2(d1, d3) * 180.0D / 3.1415927410125732D));
             // CraftBukkit end
 
-            this.a.pitch = this.a(this.a.pitch, f1, this.c);
+            this.a.rotationPitch = this.a(this.a.rotationPitch, f1, this.c);
             this.a.as = this.a(this.a.as, f, this.b);
         } else {
             this.a.as = this.a(this.a.as, this.a.aq, 10.0F);

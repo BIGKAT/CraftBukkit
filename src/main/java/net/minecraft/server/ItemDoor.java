@@ -30,7 +30,7 @@ public class ItemDoor extends Item {
                 if (!block.canPlace(world, i, j, k)) {
                     return false;
                 } else {
-                    int i1 = MathHelper.floor((double) ((entityhuman.yaw + 180.0F) * 4.0F / 360.0F) - 0.5D) & 3;
+                    int i1 = MathHelper.floor((double) ((entityhuman.rotationYaw + 180.0F) * 4.0F / 360.0F) - 0.5D) & 3;
 
                     // CraftBukkit start
                     if (!place(world, i, j, k, i1, block, entityhuman)) {
@@ -75,8 +75,8 @@ public class ItemDoor extends Item {
 
         int i1 = (world.s(i - b0, j, k - b1) ? 1 : 0) + (world.s(i - b0, j + 1, k - b1) ? 1 : 0);
         int j1 = (world.s(i + b0, j, k + b1) ? 1 : 0) + (world.s(i + b0, j + 1, k + b1) ? 1 : 0);
-        boolean flag = world.getTypeId(i - b0, j, k - b1) == block.blockID || world.getTypeId(i - b0, j + 1, k - b1) == block.blockID;
-        boolean flag1 = world.getTypeId(i + b0, j, k + b1) == block.blockID || world.getTypeId(i + b0, j + 1, k + b1) == block.blockID;
+        boolean flag = world.getBlockId(i - b0, j, k - b1) == block.blockID || world.getBlockId(i - b0, j + 1, k - b1) == block.blockID;
+        boolean flag1 = world.getBlockId(i + b0, j, k + b1) == block.blockID || world.getBlockId(i + b0, j + 1, k + b1) == block.blockID;
         boolean flag2 = false;
 
         if (flag && !flag1) {
@@ -87,7 +87,7 @@ public class ItemDoor extends Item {
 
         CraftBlockState blockState = CraftBlockState.getBlockState(world, i, j, k); // CraftBukkit
         world.suppressPhysics = true;
-        world.setTypeIdAndData(i, j, k, block.blockID, l);
+        world.setBlockAndMetadataWithNotify(i, j, k, block.blockID, l);
         // CraftBukkit start
         if (entityhuman != null) {
             org.bukkit.event.block.BlockPlaceEvent event = org.bukkit.craftbukkit.event.CraftEventFactory.callBlockPlaceEvent(world, entityhuman, blockState, i, j, k);
@@ -98,7 +98,7 @@ public class ItemDoor extends Item {
             }
         }
         // CraftBukkit end
-        world.setTypeIdAndData(i, j + 1, k, block.blockID, 8 | (flag2 ? 1 : 0));
+        world.setBlockAndMetadataWithNotify(i, j + 1, k, block.blockID, 8 | (flag2 ? 1 : 0));
         world.suppressPhysics = false;
         world.applyPhysics(i, j, k, block.blockID);
         world.applyPhysics(i, j + 1, k, block.blockID);

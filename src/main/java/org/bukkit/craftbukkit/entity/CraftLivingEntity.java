@@ -36,7 +36,6 @@ import org.bukkit.entity.Player;
 import org.bukkit.entity.Projectile;
 import org.bukkit.entity.SmallFireball;
 import org.bukkit.entity.Snowball;
-import org.bukkit.entity.Vehicle;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.util.BlockIterator;
@@ -132,11 +131,11 @@ public class CraftLivingEntity extends CraftEntity implements LivingEntity {
     }
 
     public int getRemainingAir() {
-        return getHandle().getAirTicks();
+        return getHandle().getAir();
     }
 
     public void setRemainingAir(int ticks) {
-        getHandle().setAirTicks(ticks);
+        getHandle().setAir(ticks);
     }
 
     public int getMaximumAir() {
@@ -174,11 +173,11 @@ public class CraftLivingEntity extends CraftEntity implements LivingEntity {
     }
 
     public int getMaximumNoDamageTicks() {
-        return getHandle().maxNoDamageTicks;
+        return getHandle().maxHurtResistantTime;
     }
 
     public void setMaximumNoDamageTicks(int ticks) {
-        getHandle().maxNoDamageTicks = ticks;
+        getHandle().maxHurtResistantTime = ticks;
     }
 
     public int getLastDamage() {
@@ -190,11 +189,11 @@ public class CraftLivingEntity extends CraftEntity implements LivingEntity {
     }
 
     public int getNoDamageTicks() {
-        return getHandle().noDamageTicks;
+        return getHandle().hurtResistantTime;
     }
 
     public void setNoDamageTicks(int ticks) {
-        getHandle().noDamageTicks = ticks;
+        getHandle().hurtResistantTime = ticks;
     }
 
     @Override
@@ -212,7 +211,7 @@ public class CraftLivingEntity extends CraftEntity implements LivingEntity {
     }
 
     public Player getKiller() {
-        return getHandle().killer == null ? null : (Player) getHandle().killer.getBukkitEntity();
+        return getHandle().attackingPlayer == null ? null : (Player) getHandle().attackingPlayer.getBukkitEntity();
     }
 
     public boolean addPotionEffect(PotionEffect effect) {
@@ -226,7 +225,7 @@ public class CraftLivingEntity extends CraftEntity implements LivingEntity {
             }
             removePotionEffect(effect.getType());
         }
-        getHandle().addEffect(new MobEffect(effect.getType().getId(), effect.getDuration(), effect.getAmplifier()));
+        getHandle().addPotionEffect(new MobEffect(effect.getType().getId(), effect.getDuration(), effect.getAmplifier()));
         return true;
     }
 
@@ -243,17 +242,17 @@ public class CraftLivingEntity extends CraftEntity implements LivingEntity {
     }
 
     public void removePotionEffect(PotionEffectType type) {
-        getHandle().effects.remove(type.getId());
-        getHandle().updateEffects = true;
+        getHandle().activePotionsMap.remove(type.getId());
+        getHandle().potionsNeedUpdate = true;
         if (getHandle() instanceof EntityPlayer) {
-            if (((EntityPlayer) getHandle()).netServerHandler == null) return;
-            ((EntityPlayer) getHandle()).netServerHandler.sendPacket(new Packet42RemoveMobEffect(getHandle().id, new MobEffect(type.getId(), 0, 0)));
+            if (((EntityPlayer) getHandle()).serverForThisPlayer == null) return;
+            ((EntityPlayer) getHandle()).serverForThisPlayer.sendPacketToPlayer(new Packet42RemoveMobEffect(getHandle().entityId, new MobEffect(type.getId(), 0, 0)));
         }
     }
 
     public Collection<PotionEffect> getActivePotionEffects() {
         List<PotionEffect> effects = new ArrayList<PotionEffect>();
-        for (Object raw : getHandle().effects.values()) {
+        for (Object raw : getHandle().activePotionsMap.values()) {
             if (!(raw instanceof MobEffect))
                 continue;
             MobEffect handle = (MobEffect) raw;
@@ -300,6 +299,6 @@ public class CraftLivingEntity extends CraftEntity implements LivingEntity {
     }
 
     public boolean hasLineOfSight(Entity other) {
-        return getHandle().at().canSee(((CraftEntity) other).getHandle()); // am should be getEntitySenses
+        return getHandle().getEntitySenses().canSee(((CraftEntity) other).getHandle()); // am should be getEntitySenses
     }
 }

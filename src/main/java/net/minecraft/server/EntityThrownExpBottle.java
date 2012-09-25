@@ -27,16 +27,16 @@ public class EntityThrownExpBottle extends EntityProjectile {
     }
 
     protected void a(MovingObjectPosition movingobjectposition) {
-        if (!this.world.isStatic) {
+        if (!this.worldObj.isStatic) {
             // CraftBukkit moved after event
             // this.world.triggerEffect(2002, (int) Math.round(this.locX), (int) Math.round(this.locY), (int) Math.round(this.locZ), 0);
-            int i = 3 + this.world.random.nextInt(5) + this.world.random.nextInt(5);
+            int i = 3 + this.worldObj.rand.nextInt(5) + this.worldObj.rand.nextInt(5);
 
             // CraftBukkit start
             org.bukkit.event.entity.ExpBottleEvent event = org.bukkit.craftbukkit.event.CraftEventFactory.callExpBottleEvent(this, i);
             i = event.getExperience();
             if (event.getShowEffect()) {
-                this.world.triggerEffect(2002, (int) Math.round(this.locX), (int) Math.round(this.locY), (int) Math.round(this.locZ), 0);
+                this.worldObj.triggerEffect(2002, (int) Math.round(this.posX), (int) Math.round(this.posY), (int) Math.round(this.posZ), 0);
             }
             // CraftBukkit end
 
@@ -44,10 +44,10 @@ public class EntityThrownExpBottle extends EntityProjectile {
                 int j = EntityExperienceOrb.getOrbValue(i);
 
                 i -= j;
-                this.world.addEntity(new EntityExperienceOrb(this.world, this.locX, this.locY, this.locZ, j));
+                this.worldObj.addEntity(new EntityExperienceOrb(this.worldObj, this.posX, this.posY, this.posZ, j));
             }
 
-            this.die();
+            this.setDead();
         }
     }
 }

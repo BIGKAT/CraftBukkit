@@ -10,7 +10,7 @@ public class ItemBow extends Item {
     }
 
     public void a(ItemStack itemstack, World world, EntityHuman entityhuman, int i) {
-        boolean flag = entityhuman.abilities.canInstantlyBuild || EnchantmentManager.getEnchantmentLevel(Enchantment.ARROW_INFINITE.id, itemstack) > 0;
+        boolean flag = entityhuman.capabilities.canInstantlyBuild || EnchantmentManager.getEnchantmentLevel(Enchantment.ARROW_INFINITE.effectId, itemstack) > 0;
 
         if (flag || entityhuman.inventory.e(Item.ARROW.id)) {
             int j = this.a(itemstack) - i;
@@ -31,19 +31,19 @@ public class ItemBow extends Item {
                 entityarrow.d(true);
             }
 
-            int k = EnchantmentManager.getEnchantmentLevel(Enchantment.ARROW_DAMAGE.id, itemstack);
+            int k = EnchantmentManager.getEnchantmentLevel(Enchantment.ARROW_DAMAGE.effectId, itemstack);
 
             if (k > 0) {
                 entityarrow.b(entityarrow.d() + (double) k * 0.5D + 0.5D);
             }
 
-            int l = EnchantmentManager.getEnchantmentLevel(Enchantment.ARROW_KNOCKBACK.id, itemstack);
+            int l = EnchantmentManager.getEnchantmentLevel(Enchantment.ARROW_KNOCKBACK.effectId, itemstack);
 
             if (l > 0) {
                 entityarrow.a(l);
             }
 
-            if (EnchantmentManager.getEnchantmentLevel(Enchantment.ARROW_FIRE.id, itemstack) > 0) {
+            if (EnchantmentManager.getEnchantmentLevel(Enchantment.ARROW_FIRE.effectId, itemstack) > 0) {
                 entityarrow.setOnFire(100);
             }
 
@@ -83,7 +83,7 @@ public class ItemBow extends Item {
     }
 
     public ItemStack a(ItemStack itemstack, World world, EntityHuman entityhuman) {
-        if (entityhuman.abilities.canInstantlyBuild || entityhuman.inventory.e(Item.ARROW.id)) {
+        if (entityhuman.capabilities.canInstantlyBuild || entityhuman.inventory.e(Item.ARROW.id)) {
             entityhuman.a(itemstack, this.a(itemstack));
         }
 

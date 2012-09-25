@@ -17,12 +17,12 @@ public class CraftOcelot extends CraftTameableAnimal implements Ocelot {
     }
 
     public Type getCatType() {
-        return Type.getType(getHandle().getCatType());
+        return Type.getType(getHandle().getTameSkin());
     }
 
     public void setCatType(Type type) {
         Validate.notNull(type, "Cat type cannot be null");
-        getHandle().setCatType(type.getId());
+        getHandle().setTameSkin(type.getId());
     }
 
     @Override

@@ -69,19 +69,19 @@ public class CraftBlock implements Block {
     }
 
     public void setData(final byte data) {
-        chunk.getHandle().world.setData(x, y, z, data);
+        chunk.getHandle().world.setBlockMetadataWithNotify(x, y, z, data);
     }
 
     public void setData(final byte data, boolean applyPhysics) {
         if (applyPhysics) {
-            chunk.getHandle().world.setData(x, y, z, data);
+            chunk.getHandle().world.setBlockMetadataWithNotify(x, y, z, data);
         } else {
-            chunk.getHandle().world.setRawData(x, y, z, data);
+            chunk.getHandle().world.setBlockMetadata(x, y, z, data);
         }
     }
 
     public byte getData() {
-        return (byte) chunk.getHandle().getData(this.x & 0xF, this.y & 0xFF, this.z & 0xF);
+        return (byte) chunk.getHandle().getBlockMetadata(this.x & 0xF, this.y & 0xFF, this.z & 0xF);
     }
 
     public void setType(final Material type) {
@@ -89,24 +89,24 @@ public class CraftBlock implements Block {
     }
 
     public boolean setTypeId(final int type) {
-        return chunk.getHandle().world.setTypeId(x, y, z, type);
+        return chunk.getHandle().world.setBlockWithNotify(x, y, z, type);
     }
 
     public boolean setTypeId(final int type, final boolean applyPhysics) {
         if (applyPhysics) {
             return setTypeId(type);
         } else {
-            return chunk.getHandle().world.setRawTypeId(x, y, z, type);
+            return chunk.getHandle().world.setBlock(x, y, z, type);
         }
     }
 
     public boolean setTypeIdAndData(final int type, final byte data, final boolean applyPhysics) {
         if (applyPhysics) {
-            return chunk.getHandle().world.setTypeIdAndData(x, y, z, type, data);
+            return chunk.getHandle().world.setBlockAndMetadataWithNotify(x, y, z, type, data);
         } else {
-            boolean success = chunk.getHandle().world.setRawTypeIdAndData(x, y, z, type, data);
+            boolean success = chunk.getHandle().world.setBlockAndMetadata(x, y, z, type, data);
             if (success) {
-                chunk.getHandle().world.notify(x, y, z);
+                chunk.getHandle().world.markBlockNeedsUpdate(x, y, z);
             }
             return success;
         }
@@ -117,19 +117,19 @@ public class CraftBlock implements Block {
     }
 
     public int getTypeId() {
-        return chunk.getHandle().getTypeId(this.x & 0xF, this.y & 0xFF, this.z & 0xF);
+        return chunk.getHandle().getBlockID(this.x & 0xF, this.y & 0xFF, this.z & 0xF);
     }
 
     public byte getLightLevel() {
-        return (byte) chunk.getHandle().world.getLightLevel(this.x, this.y, this.z);
+        return (byte) chunk.getHandle().world.getBlockLightValue(this.x, this.y, this.z);
     }
 
     public byte getLightFromSky() {
-        return (byte) chunk.getHandle().getBrightness(EnumSkyBlock.SKY, this.x & 0xF, this.y & 0xFF, this.z & 0xF);
+        return (byte) chunk.getHandle().getSavedLightValue(EnumSkyBlock.Sky, this.x & 0xF, this.y & 0xFF, this.z & 0xF);
     }
 
     public byte getLightFromBlocks() {
-        return (byte) chunk.getHandle().getBrightness(EnumSkyBlock.BLOCK, this.x & 0xF, this.y & 0xFF, this.z & 0xF);
+        return (byte) chunk.getHandle().getSavedLightValue(EnumSkyBlock.Block, this.x & 0xF, this.y & 0xFF, this.z & 0xF);
     }
 
 
@@ -277,11 +277,11 @@ public class CraftBlock implements Block {
     }
 
     public boolean isBlockPowered() {
-        return chunk.getHandle().world.isBlockPowered(x, y, z);
+        return chunk.getHandle().world.isBlockGettingPowered(x, y, z);
     }
 
     public boolean isBlockIndirectlyPowered() {
-        return chunk.getHandle().world.isBlockIndirectlyPowered(x, y, z);
+        return chunk.getHandle().world.isBlockIndirectlyGettingPowered(x, y, z);
     }
 
     @Override
@@ -299,23 +299,23 @@ public class CraftBlock implements Block {
     }
 
     public boolean isBlockFacePowered(BlockFace face) {
-        return chunk.getHandle().world.isBlockFacePowered(x, y, z, blockFaceToNotch(face));
+        return chunk.getHandle().world.isBlockProvidingPowerTo(x, y, z, blockFaceToNotch(face));
     }
 
     public boolean isBlockFaceIndirectlyPowered(BlockFace face) {
-        return chunk.getHandle().world.isBlockFaceIndirectlyPowered(x, y, z, blockFaceToNotch(face));
+        return chunk.getHandle().world.isBlockIndirectlyProvidingPowerTo(x, y, z, blockFaceToNotch(face));
     }
 
     public int getBlockPower(BlockFace face) {
         int power = 0;
         BlockRedstoneWire wire = (BlockRedstoneWire) net.minecraft.server.Block.redstoneWire;
         net.minecraft.server.World world = chunk.getHandle().world;
-        if ((face == BlockFace.DOWN || face == BlockFace.SELF) && world.isBlockFacePowered(x, y - 1, z, 0)) power = wire.getMaxCurrentStrength(world, x, y - 1, z, power);
-        if ((face == BlockFace.UP || face == BlockFace.SELF) && world.isBlockFacePowered(x, y + 1, z, 1)) power = wire.getMaxCurrentStrength(world, x, y + 1, z, power);
-        if ((face == BlockFace.EAST || face == BlockFace.SELF) && world.isBlockFacePowered(x, y, z - 1, 2)) power = wire.getMaxCurrentStrength(world, x, y, z - 1, power);
-        if ((face == BlockFace.WEST || face == BlockFace.SELF) && world.isBlockFacePowered(x, y, z + 1, 3)) power = wire.getMaxCurrentStrength(world, x, y, z + 1, power);
-        if ((face == BlockFace.NORTH || face == BlockFace.SELF) && world.isBlockFacePowered(x - 1, y, z, 4)) power = wire.getMaxCurrentStrength(world, x - 1, y, z, power);
-        if ((face == BlockFace.SOUTH || face == BlockFace.SELF) && world.isBlockFacePowered(x + 1, y, z, 5)) power = wire.getMaxCurrentStrength(world, x + 1, y, z, power);
+        if ((face == BlockFace.DOWN || face == BlockFace.SELF) && world.isBlockProvidingPowerTo(x, y - 1, z, 0)) power = wire.getMaxCurrentStrength(world, x, y - 1, z, power);
+        if ((face == BlockFace.UP || face == BlockFace.SELF) && world.isBlockProvidingPowerTo(x, y + 1, z, 1)) power = wire.getMaxCurrentStrength(world, x, y + 1, z, power);
+        if ((face == BlockFace.EAST || face == BlockFace.SELF) && world.isBlockProvidingPowerTo(x, y, z - 1, 2)) power = wire.getMaxCurrentStrength(world, x, y, z - 1, power);
+        if ((face == BlockFace.WEST || face == BlockFace.SELF) && world.isBlockProvidingPowerTo(x, y, z + 1, 3)) power = wire.getMaxCurrentStrength(world, x, y, z + 1, power);
+        if ((face == BlockFace.NORTH || face == BlockFace.SELF) && world.isBlockProvidingPowerTo(x - 1, y, z, 4)) power = wire.getMaxCurrentStrength(world, x - 1, y, z, power);
+        if ((face == BlockFace.SOUTH || face == BlockFace.SELF) && world.isBlockProvidingPowerTo(x + 1, y, z, 5)) power = wire.getMaxCurrentStrength(world, x + 1, y, z, power);
         return power > 0 ? power : (face == BlockFace.SELF ? isBlockIndirectlyPowered() : isBlockFaceIndirectlyPowered(face)) ? 15 : 0;
     }
 
@@ -368,9 +368,9 @@ public class CraftBlock implements Block {
         if (block != null) {
             byte data = getData();
             // based on nms.Block.dropNaturally
-            int count = block.getDropCount(0, chunk.getHandle().world.random);
+            int count = block.getDropCount(0, chunk.getHandle().world.rand);
             for (int i = 0; i < count; ++i) {
-                int item = block.getDropType(data, chunk.getHandle().world.random, 0);
+                int item = block.getDropType(data, chunk.getHandle().world.rand, 0);
                 if (item > 0) {
                     drops.add(new ItemStack(item, 1, (short) net.minecraft.server.Block.getDropData(block, data)));
                 }

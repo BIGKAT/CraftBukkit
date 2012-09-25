@@ -71,7 +71,7 @@ public class CraftWorld implements World {
     }
 
     public int getBlockTypeIdAt(int x, int y, int z) {
-        return world.getTypeId(x, y, z);
+        return world.getBlockId(x, y, z);
     }
 
     public int getHighestBlockYAt(int x, int z) {
@@ -212,9 +212,9 @@ public class CraftWorld implements World {
         // This flags 65 blocks distributed across all the sections of the chunk, so that everything is sent, including biomes
         int height = getMaxHeight() / 16;
         for (int idx = 0; idx < 64; idx++) {
-            world.notify(px + (idx / height), ((idx % height) * 16), pz);
+            world.markBlockNeedsUpdate(px + (idx / height), ((idx % height) * 16), pz);
         }
-        world.notify(px + 15, (height * 16) - 1, pz + 15);
+        world.markBlockNeedsUpdate(px + 15, (height * 16) - 1, pz + 15);
 
         return true;
     }
@@ -283,7 +283,7 @@ public class CraftWorld implements World {
         Validate.isTrue(item.getTypeId() != 0, "Cannot drop AIR.");
         CraftItemStack clone = new CraftItemStack(item);
         EntityItem entity = new EntityItem(world, loc.getX(), loc.getY(), loc.getZ(), clone.getHandle());
-        entity.pickupDelay = 10;
+        entity.delayBeforeCanPickup = 10;
         world.addEntity(entity);
         // TODO this is inconsistent with how Entity.getBukkitEntity() works.
         // However, this entity is not at the moment backed by a server entity class so it may be left.
@@ -291,9 +291,9 @@ public class CraftWorld implements World {
     }
 
     public org.bukkit.entity.Item dropItemNaturally(Location loc, ItemStack item) {
-        double xs = world.random.nextFloat() * 0.7F + (1.0F - 0.7F) * 0.5D;
-        double ys = world.random.nextFloat() * 0.7F + (1.0F - 0.7F) * 0.5D;
-        double zs = world.random.nextFloat() * 0.7F + (1.0F - 0.7F) * 0.5D;
+        double xs = world.rand.nextFloat() * 0.7F + (1.0F - 0.7F) * 0.5D;
+        double ys = world.rand.nextFloat() * 0.7F + (1.0F - 0.7F) * 0.5D;
+        double zs = world.rand.nextFloat() * 0.7F + (1.0F - 0.7F) * 0.5D;
         loc = loc.clone();
         loc.setX(loc.getX() + xs);
         loc.setY(loc.getY() + ys);
@@ -426,9 +426,9 @@ public class CraftWorld implements World {
         // Forces the client to update to the new time immediately
         for (Player p : getPlayers()) {
             CraftPlayer cp = (CraftPlayer) p;
-            if (cp.getHandle().netServerHandler == null) continue;
+            if (cp.getHandle().serverForThisPlayer == null) continue;
 
-            cp.getHandle().netServerHandler.sendPacket(new Packet4UpdateTime(cp.getHandle().getPlayerTime()));
+            cp.getHandle().serverForThisPlayer.sendPacketToPlayer(new Packet4UpdateTime(cp.getHandle().getPlayerTime()));
         }
     }
 
@@ -759,12 +759,12 @@ public class CraftWorld implements World {
         radius *= radius;
 
         for (Player player : getPlayers()) {
-            if (((CraftPlayer) player).getHandle().netServerHandler == null) continue;
+            if (((CraftPlayer) player).getHandle().serverForThisPlayer == null) continue;
             if (!location.getWorld().equals(player.getWorld())) continue;
 
             distance = (int) player.getLocation().distanceSquared(location);
             if (distance <= radius) {
-                ((CraftPlayer) player).getHandle().netServerHandler.sendPacket(packet);
+                ((CraftPlayer) player).getHandle().serverForThisPlayer.sendPacketToPlayer(packet);
             }
         }
     }
@@ -814,7 +814,7 @@ public class CraftWorld implements World {
             x = location.getBlockX();
             y = location.getBlockY();
             z = location.getBlockZ();
-            int type = world.getTypeId((int) x, (int) y, (int) z);
+            int type = world.getBlockId((int) x, (int) y, (int) z);
             int data = world.getData((int) x, (int) y, (int) z);
 
             entity = new EntityFallingBlock(world, x + 0.5, y + 0.5, z + 0.5, type, data);
@@ -920,7 +920,7 @@ public class CraftWorld implements World {
             }
 
             if (entity != null) {
-                entity.setLocation(x, y, z, pitch, yaw);
+                entity.setPositionAndRotation(x, y, z, pitch, yaw);
             }
         } else if (Painting.class.isAssignableFrom(clazz)) {
             Block block = getBlockAt(location);
@@ -966,7 +966,7 @@ public class CraftWorld implements World {
         } else if (Fish.class.isAssignableFrom(clazz)) {
             // this is not a fish, it's a bobber, and it's probably useless
             entity = new EntityFishingHook(world);
-            entity.setLocation(x, y, z, pitch, yaw);
+            entity.setPositionAndRotation(x, y, z, pitch, yaw);
         }
 
         if (entity != null) {

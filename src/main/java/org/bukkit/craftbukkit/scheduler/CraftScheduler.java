@@ -28,7 +28,7 @@ import org.bukkit.scheduler.BukkitWorker;
  * <li>{@link #head} to {@link #tail} act as a linked list/queue, with 1 consumer and infinite producers.
  *     Adding to the tail is atomic and very efficient; utility method is {@link #handle(CraftTask, long)} or {@link #addTask(CraftTask)}. </li>
  * <li>Changing the period on a task is delicate.
- *     Any future task needs to notify waiting threads.
+ *     Any future task needs to markBlockNeedsUpdate waiting threads.
  *     Async tasks must be synchronized to make sure that any thread that's finishing will remove itself from {@link #runners}.
  *     Another utility method is provided for this, {@link #cancelTask(CraftTask)}</li>
  * <li>{@link #runners} provides a moderately up-to-date view of active tasks.

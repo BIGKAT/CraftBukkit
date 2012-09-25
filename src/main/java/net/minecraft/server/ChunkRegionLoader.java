@@ -59,17 +59,17 @@ public class ChunkRegionLoader implements IAsyncChunkSaver, IChunkLoader {
         if (!nbttagcompound.hasKey("Level")) {
             System.out.println("Chunk file at " + i + "," + j + " is missing level data, skipping");
             return null;
-        } else if (!nbttagcompound.getCompound("Level").hasKey("Sections")) {
+        } else if (!nbttagcompound.getCompoundTag("Level").hasKey("Sections")) {
             System.out.println("Chunk file at " + i + "," + j + " is missing block data, skipping");
             return null;
         } else {
-            Chunk chunk = this.a(world, nbttagcompound.getCompound("Level"));
+            Chunk chunk = this.a(world, nbttagcompound.getCompoundTag("Level"));
 
             if (!chunk.a(i, j)) {
                 System.out.println("Chunk file at " + i + "," + j + " is in the wrong location; relocating. (Expected " + i + ", " + j + ", got " + chunk.x + ", " + chunk.z + ")");
-                nbttagcompound.getCompound("Level").setInt("xPos", i); // CraftBukkit - .getCompound("Level")
-                nbttagcompound.getCompound("Level").setInt("zPos", j); // CraftBukkit - .getCompound("Level")
-                chunk = this.a(world, nbttagcompound.getCompound("Level"));
+                nbttagcompound.getCompoundTag("Level").setInteger("xPos", i); // CraftBukkit - .getCompound("Level")
+                nbttagcompound.getCompoundTag("Level").setInteger("zPos", j); // CraftBukkit - .getCompound("Level")
+                chunk = this.a(world, nbttagcompound.getCompoundTag("Level"));
             }
 
             return chunk;
@@ -154,8 +154,8 @@ public class ChunkRegionLoader implements IAsyncChunkSaver, IChunkLoader {
     public void b() {}
 
     private void a(Chunk chunk, World world, NBTTagCompound nbttagcompound) {
-        nbttagcompound.setInt("xPos", chunk.x);
-        nbttagcompound.setInt("zPos", chunk.z);
+        nbttagcompound.setInteger("xPos", chunk.x);
+        nbttagcompound.setInteger("zPos", chunk.z);
         nbttagcompound.setLong("LastUpdate", world.getTime());
         nbttagcompound.setIntArray("HeightMap", chunk.heightMap);
         nbttagcompound.setBoolean("TerrainPopulated", chunk.done);
@@ -230,11 +230,11 @@ public class ChunkRegionLoader implements IAsyncChunkSaver, IChunkLoader {
                 NextTickListEntry nextticklistentry = (NextTickListEntry) iterator1.next();
                 NBTTagCompound nbttagcompound2 = new NBTTagCompound();
 
-                nbttagcompound2.setInt("i", nextticklistentry.d);
-                nbttagcompound2.setInt("x", nextticklistentry.a);
-                nbttagcompound2.setInt("y", nextticklistentry.b);
-                nbttagcompound2.setInt("z", nextticklistentry.c);
-                nbttagcompound2.setInt("t", (int) (nextticklistentry.e - k));
+                nbttagcompound2.setInteger("i", nextticklistentry.d);
+                nbttagcompound2.setInteger("x", nextticklistentry.a);
+                nbttagcompound2.setInteger("y", nextticklistentry.b);
+                nbttagcompound2.setInteger("z", nextticklistentry.c);
+                nbttagcompound2.setInteger("t", (int) (nextticklistentry.e - k));
                 nbttaglist3.add(nbttagcompound2);
             }
 
@@ -243,8 +243,8 @@ public class ChunkRegionLoader implements IAsyncChunkSaver, IChunkLoader {
     }
 
     private Chunk a(World world, NBTTagCompound nbttagcompound) {
-        int i = nbttagcompound.getInt("xPos");
-        int j = nbttagcompound.getInt("zPos");
+        int i = nbttagcompound.getInteger("xPos");
+        int j = nbttagcompound.getInteger("zPos");
         Chunk chunk = new Chunk(world, i, j);
 
         chunk.heightMap = nbttagcompound.getIntArray("HeightMap");
@@ -309,7 +309,7 @@ public class ChunkRegionLoader implements IAsyncChunkSaver, IChunkLoader {
                 for (int j1 = 0; j1 < nbttaglist3.size(); ++j1) {
                     NBTTagCompound nbttagcompound4 = (NBTTagCompound) nbttaglist3.get(j1);
 
-                    world.b(nbttagcompound4.getInt("x"), nbttagcompound4.getInt("y"), nbttagcompound4.getInt("z"), nbttagcompound4.getInt("i"), nbttagcompound4.getInt("t"));
+                    world.b(nbttagcompound4.getInteger("x"), nbttagcompound4.getInteger("y"), nbttagcompound4.getInteger("z"), nbttagcompound4.getInteger("i"), nbttagcompound4.getInteger("t"));
                 }
             }
         }

@@ -31,13 +31,13 @@ public abstract class PathfinderGoalTarget extends PathfinderGoal {
 
         if (entityliving == null) {
             return false;
-        } else if (!entityliving.isAlive()) {
+        } else if (!entityliving.isEntityAlive()) {
             return false;
         } else if (this.d.e(entityliving) > (double) (this.e * this.e)) {
             return false;
         } else {
             if (this.f) {
-                if (this.d.at().canSee(entityliving)) {
+                if (this.d.getEntitySenses().canSee(entityliving)) {
                     this.g = 0;
                 } else if (++this.g > 60) {
                     return false;
@@ -63,7 +63,7 @@ public abstract class PathfinderGoalTarget extends PathfinderGoal {
             return false;
         } else if (entityliving == this.d) {
             return false;
-        } else if (!entityliving.isAlive()) {
+        } else if (!entityliving.isEntityAlive()) {
             return false;
         } else if (entityliving.boundingBox.e > this.d.boundingBox.b && entityliving.boundingBox.b < this.d.boundingBox.e) {
             if (!this.d.a(entityliving.getClass())) {
@@ -77,13 +77,13 @@ public abstract class PathfinderGoalTarget extends PathfinderGoal {
                     if (entityliving == ((EntityTameableAnimal) this.d).getOwner()) {
                         return false;
                     }
-                } else if (entityliving instanceof EntityHuman && !flag && ((EntityHuman) entityliving).abilities.isInvulnerable) {
+                } else if (entityliving instanceof EntityHuman && !flag && ((EntityHuman) entityliving).capabilities.isInvulnerable) {
                     return false;
                 }
 
-                if (!this.d.d(MathHelper.floor(entityliving.locX), MathHelper.floor(entityliving.locY), MathHelper.floor(entityliving.locZ))) {
+                if (!this.d.d(MathHelper.floor(entityliving.posX), MathHelper.floor(entityliving.posY), MathHelper.floor(entityliving.posZ))) {
                     return false;
-                } else if (this.f && !this.d.at().canSee(entityliving)) {
+                } else if (this.f && !this.d.getEntitySenses().canSee(entityliving)) {
                     return false;
                 } else {
                     if (this.a) {
@@ -145,8 +145,8 @@ public abstract class PathfinderGoalTarget extends PathfinderGoal {
             if (pathpoint == null) {
                 return false;
             } else {
-                int i = pathpoint.a - MathHelper.floor(entityliving.locX);
-                int j = pathpoint.c - MathHelper.floor(entityliving.locZ);
+                int i = pathpoint.a - MathHelper.floor(entityliving.posX);
+                int j = pathpoint.c - MathHelper.floor(entityliving.posZ);
 
                 return (double) (i * i + j * j) <= 2.25D;
             }

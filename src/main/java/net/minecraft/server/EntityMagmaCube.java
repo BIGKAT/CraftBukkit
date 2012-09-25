@@ -10,11 +10,11 @@ public class EntityMagmaCube extends EntitySlime {
     }
 
     public boolean canSpawn() {
-        return this.world.difficulty > 0 && this.world.b(this.boundingBox) && this.world.getCubes(this, this.boundingBox).isEmpty() && !this.world.containsLiquid(this.boundingBox);
+        return this.worldObj.difficulty > 0 && this.worldObj.b(this.boundingBox) && this.worldObj.getCubes(this, this.boundingBox).isEmpty() && !this.worldObj.containsLiquid(this.boundingBox);
     }
 
     public int aO() {
-        return this.getSize() * 3;
+        return this.getSlimeSize() * 3;
     }
 
     public float c(float f) {
@@ -26,7 +26,7 @@ public class EntityMagmaCube extends EntitySlime {
     }
 
     protected EntitySlime j() {
-        return new EntityMagmaCube(this.world);
+        return new EntityMagmaCube(this.worldObj);
     }
 
     protected int getLootId() {
@@ -38,7 +38,7 @@ public class EntityMagmaCube extends EntitySlime {
         java.util.List<org.bukkit.inventory.ItemStack> loot = new java.util.ArrayList<org.bukkit.inventory.ItemStack>();
         int j = this.getLootId();
 
-        if (j > 0 && this.getSize() > 1) {
+        if (j > 0 && this.getSlimeSize() > 1) {
             int k = this.random.nextInt(4) - 2;
 
             if (i > 0) {
@@ -67,7 +67,7 @@ public class EntityMagmaCube extends EntitySlime {
     }
 
     protected void aZ() {
-        this.motY = (double) (0.42F + (float) this.getSize() * 0.1F);
+        this.motionY = (double) (0.42F + (float) this.getSlimeSize() * 0.1F);
         this.al = true;
     }
 
@@ -90,7 +90,7 @@ public class EntityMagmaCube extends EntitySlime {
     }
 
     protected String o() {
-        return this.getSize() > 1 ? "mob.magmacube.big" : "mob.magmacube.small";
+        return this.getSlimeSize() > 1 ? "mob.magmacube.big" : "mob.magmacube.small";
     }
 
     public boolean J() {

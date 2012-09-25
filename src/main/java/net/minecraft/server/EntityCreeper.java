@@ -52,12 +52,12 @@ public class EntityCreeper extends EntityMonster {
     }
 
     public void h_() {
-        if (this.isAlive()) {
+        if (this.isEntityAlive()) {
             this.e = this.fuseTicks;
             int i = this.p();
 
             if (i > 0 && this.fuseTicks == 0) {
-                this.world.makeSound(this, "random.fuse", 1.0F, 0.5F);
+                this.worldObj.makeSound(this, "random.fuse", 1.0F, 0.5F);
             }
 
             this.fuseTicks += i;
@@ -67,15 +67,15 @@ public class EntityCreeper extends EntityMonster {
 
             if (this.fuseTicks >= 30) {
                 this.fuseTicks = 30;
-                if (!this.world.isStatic) {
+                if (!this.worldObj.isStatic) {
                     // CraftBukkit start
                     float radius = this.isPowered() ? 6.0F : 3.0F;
 
                     ExplosionPrimeEvent event = new ExplosionPrimeEvent(this.getBukkitEntity(), radius, false);
-                    this.world.getServer().getPluginManager().callEvent(event);
+                    this.worldObj.getServer().getPluginManager().callEvent(event);
                     if (!event.isCancelled()) {
-                        this.world.createExplosion(this, this.locX, this.locY, this.locZ, event.getRadius(), event.getFire());
-                        this.die();
+                        this.worldObj.createExplosion(this, this.posX, this.posY, this.posZ, event.getRadius(), event.getFire());
+                        this.setDead();
                     } else {
                         this.fuseTicks = 0;
                     }

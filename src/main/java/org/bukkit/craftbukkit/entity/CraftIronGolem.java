@@ -21,11 +21,11 @@ public class CraftIronGolem extends CraftGolem implements IronGolem {
     }
 
     public boolean isPlayerCreated() {
-        return getHandle().q();
+        return getHandle().getBit1Flag();
     }
 
     public void setPlayerCreated(boolean playerCreated) {
-        getHandle().f(playerCreated);
+        getHandle().setBit1FlagTo(playerCreated);
     }
 
     @Override

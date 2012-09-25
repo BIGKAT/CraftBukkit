@@ -89,7 +89,7 @@ public class WorldNBTStorage implements IDataManager, PlayerFileData {
         if (file1.exists()) {
             try {
                 nbttagcompound = NBTCompressedStreamTools.a((InputStream) (new FileInputStream(file1)));
-                nbttagcompound1 = nbttagcompound.getCompound("Data");
+                nbttagcompound1 = nbttagcompound.getCompoundTag("Data");
                 return new WorldData(nbttagcompound1);
             } catch (Exception exception) {
                 exception.printStackTrace();
@@ -100,7 +100,7 @@ public class WorldNBTStorage implements IDataManager, PlayerFileData {
         if (file1.exists()) {
             try {
                 nbttagcompound = NBTCompressedStreamTools.a((InputStream) (new FileInputStream(file1)));
-                nbttagcompound1 = nbttagcompound.getCompound("Data");
+                nbttagcompound1 = nbttagcompound.getCompoundTag("Data");
                 return new WorldData(nbttagcompound1);
             } catch (Exception exception1) {
                 exception1.printStackTrace();
@@ -175,8 +175,8 @@ public class WorldNBTStorage implements IDataManager, PlayerFileData {
             NBTTagCompound nbttagcompound = new NBTTagCompound();
 
             entityhuman.d(nbttagcompound);
-            File file1 = new File(this.playerDir, entityhuman.name + ".dat.tmp");
-            File file2 = new File(this.playerDir, entityhuman.name + ".dat");
+            File file1 = new File(this.playerDir, entityhuman.username + ".dat.tmp");
+            File file2 = new File(this.playerDir, entityhuman.username + ".dat");
 
             NBTCompressedStreamTools.a(nbttagcompound, (OutputStream) (new FileOutputStream(file1)));
             if (file2.exists()) {
@@ -185,18 +185,18 @@ public class WorldNBTStorage implements IDataManager, PlayerFileData {
 
             file1.renameTo(file2);
         } catch (Exception exception) {
-            log.warning("Failed to save player data for " + entityhuman.name);
+            log.warning("Failed to save player data for " + entityhuman.username);
         }
     }
 
     public void load(EntityHuman entityhuman) {
-        NBTTagCompound nbttagcompound = this.getPlayerData(entityhuman.name);
+        NBTTagCompound nbttagcompound = this.getPlayerData(entityhuman.username);
 
         if (nbttagcompound != null) {
             // CraftBukkit start
             if (entityhuman instanceof EntityPlayer) {
                 CraftPlayer player = (CraftPlayer) entityhuman.bukkitEntity;
-                player.setFirstPlayed(new File(playerDir, entityhuman.name + ".dat").lastModified());
+                player.setFirstPlayed(new File(playerDir, entityhuman.username + ".dat").lastModified());
             }
             // CraftBukkit end
             entityhuman.e(nbttagcompound);

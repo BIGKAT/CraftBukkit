@@ -125,7 +125,7 @@ public class CraftBlockState implements BlockState {
             }
 
             block.setData(getRawData());
-            world.getHandle().notify(x, y, z);
+            world.getHandle().markBlockNeedsUpdate(x, y, z);
         }
 
         return true;

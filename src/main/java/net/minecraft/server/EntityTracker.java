@@ -86,14 +86,14 @@ public class EntityTracker {
             i = this.d;
         }
 
-        if (this.trackedEntities.b(entity.id)) {
+        if (this.trackedEntities.b(entity.entityId)) {
             // CraftBukkit - removed exception throw as tracking an already tracked entity theoretically shouldn't cause any issues.
             // throw new IllegalStateException("Entity is already tracked!");
         } else {
             EntityTrackerEntry entitytrackerentry = new EntityTrackerEntry(entity, i, j, flag);
 
             this.b.add(entitytrackerentry);
-            this.trackedEntities.a(entity.id, entitytrackerentry);
+            this.trackedEntities.a(entity.entityId, entitytrackerentry);
             entitytrackerentry.scanPlayers(this.world.players);
         }
     }
@@ -111,7 +111,7 @@ public class EntityTracker {
             }
         }
 
-        EntityTrackerEntry entitytrackerentry1 = (EntityTrackerEntry) this.trackedEntities.d(entity.id);
+        EntityTrackerEntry entitytrackerentry1 = (EntityTrackerEntry) this.trackedEntities.d(entity.entityId);
 
         if (entitytrackerentry1 != null) {
             this.b.remove(entitytrackerentry1);
@@ -152,7 +152,7 @@ public class EntityTracker {
 
     // CraftBukkit - synchronized
     public synchronized void a(Entity entity, Packet packet) {
-        EntityTrackerEntry entitytrackerentry = (EntityTrackerEntry) this.trackedEntities.get(entity.id);
+        EntityTrackerEntry entitytrackerentry = (EntityTrackerEntry) this.trackedEntities.get(entity.entityId);
 
         if (entitytrackerentry != null) {
             entitytrackerentry.broadcast(packet);
@@ -161,7 +161,7 @@ public class EntityTracker {
 
     // CraftBukkit - synchronized
     public synchronized void sendPacketToEntity(Entity entity, Packet packet) {
-        EntityTrackerEntry entitytrackerentry = (EntityTrackerEntry) this.trackedEntities.get(entity.id);
+        EntityTrackerEntry entitytrackerentry = (EntityTrackerEntry) this.trackedEntities.get(entity.entityId);
 
         if (entitytrackerentry != null) {
             entitytrackerentry.broadcastIncludingSelf(packet);

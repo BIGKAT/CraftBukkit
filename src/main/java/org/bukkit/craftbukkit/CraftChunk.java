@@ -192,7 +192,7 @@ public class CraftChunk implements Chunk {
 
                 /* Get block data nibbles */
                 sectionBlockData[i] = new byte[2048];
-                System.arraycopy(cs[i].getMetadataArray().data, 0, sectionBlockData[i], 0, 2048); // Should be getData
+                System.arraycopy(cs[i].getMetadataArray().data, 0, sectionBlockData[i], 0, 2048); // Should be getBlockMetadata
                 sectionSkyLights[i] = new byte[2048];
                 System.arraycopy(cs[i].getSkylightArray().data, 0, sectionSkyLights[i], 0, 2048); // Should be getSkyLight
                 sectionEmitLights[i] = new byte[2048];

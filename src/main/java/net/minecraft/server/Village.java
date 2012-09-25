@@ -35,7 +35,7 @@ public class Village {
 
         int j = this.population / 16;
 
-        if (this.j < j && this.doors.size() > 20 && this.world.random.nextInt(7000) == 0) {
+        if (this.j < j && this.doors.size() > 20 && this.world.rand.nextInt(7000) == 0) {
             Vec3D vec3d = this.a(MathHelper.d((float) this.center.x), MathHelper.d((float) this.center.y), MathHelper.d((float) this.center.z), 2, 4, 2);
 
             if (vec3d != null) {
@@ -50,9 +50,9 @@ public class Village {
 
     private Vec3D a(int i, int j, int k, int l, int i1, int j1) {
         for (int k1 = 0; k1 < 10; ++k1) {
-            int l1 = i + this.world.random.nextInt(16) - 8;
-            int i2 = j + this.world.random.nextInt(6) - 3;
-            int j2 = k + this.world.random.nextInt(16) - 8;
+            int l1 = i + this.world.rand.nextInt(16) - 8;
+            int i2 = j + this.world.rand.nextInt(6) - 3;
+            int j2 = k + this.world.rand.nextInt(16) - 8;
 
             if (this.a(l1, i2, j2) && this.b(l1, i2, j2, l, i1, j1)) {
                 return Vec3D.a().create((double) l1, (double) i2, (double) j2);
@@ -239,7 +239,7 @@ public class Village {
         while (iterator.hasNext()) {
             VillageAggressor villageaggressor = (VillageAggressor) iterator.next();
 
-            if (!villageaggressor.a.isAlive() || Math.abs(this.time - villageaggressor.b) > 300) {
+            if (!villageaggressor.a.isEntityAlive() || Math.abs(this.time - villageaggressor.b) > 300) {
                 iterator.remove();
             }
         }
@@ -247,7 +247,7 @@ public class Village {
 
     private void k() {
         boolean flag = false;
-        boolean flag1 = this.world.random.nextInt(50) == 0;
+        boolean flag1 = this.world.rand.nextInt(50) == 0;
         Iterator iterator = this.doors.iterator();
 
         while (iterator.hasNext()) {
@@ -273,7 +273,7 @@ public class Village {
     }
 
     private boolean isDoor(int i, int j, int k) {
-        int l = this.world.getTypeId(i, j, k);
+        int l = this.world.getBlockId(i, j, k);
 
         return l <= 0 ? false : l == Block.WOODEN_DOOR.blockID;
     }

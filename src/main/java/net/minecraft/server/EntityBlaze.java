@@ -40,7 +40,7 @@ public class EntityBlaze extends EntityMonster {
     }
 
     public void d() {
-        if (!this.world.isStatic) {
+        if (!this.worldObj.isStatic) {
             if (this.G()) {
                 this.damageEntity(DamageSource.DROWN, 1);
             }
@@ -51,21 +51,21 @@ public class EntityBlaze extends EntityMonster {
                 this.d = 0.5F + (float) this.random.nextGaussian() * 3.0F;
             }
 
-            if (this.m() != null && this.m().locY + (double) this.m().getHeadHeight() > this.locY + (double) this.getHeadHeight() + (double) this.d) {
-                this.motY += (0.30000001192092896D - this.motY) * 0.30000001192092896D;
+            if (this.m() != null && this.m().posY + (double) this.m().getHeadHeight() > this.posY + (double) this.getHeadHeight() + (double) this.d) {
+                this.motionY += (0.30000001192092896D - this.motionY) * 0.30000001192092896D;
             }
         }
 
         if (this.random.nextInt(24) == 0) {
-            this.world.makeSound(this.locX + 0.5D, this.locY + 0.5D, this.locZ + 0.5D, "fire.fire", 1.0F + this.random.nextFloat(), this.random.nextFloat() * 0.7F + 0.3F);
+            this.worldObj.makeSound(this.posX + 0.5D, this.posY + 0.5D, this.posZ + 0.5D, "fire.fire", 1.0F + this.random.nextFloat(), this.random.nextFloat() * 0.7F + 0.3F);
         }
 
-        if (!this.onGround && this.motY < 0.0D) {
-            this.motY *= 0.6D;
+        if (!this.onGround && this.motionY < 0.0D) {
+            this.motionY *= 0.6D;
         }
 
         for (int i = 0; i < 2; ++i) {
-            this.world.a("largesmoke", this.locX + (this.random.nextDouble() - 0.5D) * (double) this.width, this.locY + this.random.nextDouble() * (double) this.length, this.locZ + (this.random.nextDouble() - 0.5D) * (double) this.width, 0.0D, 0.0D, 0.0D);
+            this.worldObj.a("largesmoke", this.posX + (this.random.nextDouble() - 0.5D) * (double) this.width, this.posY + this.random.nextDouble() * (double) this.length, this.posZ + (this.random.nextDouble() - 0.5D) * (double) this.width, 0.0D, 0.0D, 0.0D);
         }
 
         super.d();
@@ -76,9 +76,9 @@ public class EntityBlaze extends EntityMonster {
             this.attackTicks = 20;
             this.k(entity);
         } else if (f < 30.0F) {
-            double d0 = entity.locX - this.locX;
-            double d1 = entity.boundingBox.b + (double) (entity.length / 2.0F) - (this.locY + (double) (this.length / 2.0F));
-            double d2 = entity.locZ - this.locZ;
+            double d0 = entity.posX - this.posX;
+            double d1 = entity.boundingBox.b + (double) (entity.length / 2.0F) - (this.posY + (double) (this.length / 2.0F));
+            double d2 = entity.posZ - this.posZ;
 
             if (this.attackTicks == 0) {
                 ++this.g;
@@ -96,18 +96,18 @@ public class EntityBlaze extends EntityMonster {
                 if (this.g > 1) {
                     float f1 = MathHelper.c(f) * 0.5F;
 
-                    this.world.a((EntityHuman) null, 1009, (int) this.locX, (int) this.locY, (int) this.locZ, 0);
+                    this.worldObj.a((EntityHuman) null, 1009, (int) this.posX, (int) this.posY, (int) this.posZ, 0);
 
                     for (int i = 0; i < 1; ++i) {
-                        EntitySmallFireball entitysmallfireball = new EntitySmallFireball(this.world, this, d0 + this.random.nextGaussian() * (double) f1, d1, d2 + this.random.nextGaussian() * (double) f1);
+                        EntitySmallFireball entitysmallfireball = new EntitySmallFireball(this.worldObj, this, d0 + this.random.nextGaussian() * (double) f1, d1, d2 + this.random.nextGaussian() * (double) f1);
 
-                        entitysmallfireball.locY = this.locY + (double) (this.length / 2.0F) + 0.5D;
-                        this.world.addEntity(entitysmallfireball);
+                        entitysmallfireball.posY = this.posY + (double) (this.length / 2.0F) + 0.5D;
+                        this.worldObj.addEntity(entitysmallfireball);
                     }
                 }
             }
 
-            this.yaw = (float) (Math.atan2(d2, d0) * 180.0D / 3.1415927410125732D) - 90.0F;
+            this.rotationYaw = (float) (Math.atan2(d2, d0) * 180.0D / 3.1415927410125732D) - 90.0F;
             this.b = true;
         }
     }

@@ -12,7 +12,7 @@ public class ItemMinecart extends Item {
     }
 
     public boolean interactWith(ItemStack itemstack, EntityHuman entityhuman, World world, int i, int j, int k, int l, float f, float f1, float f2) {
-        int i1 = world.getTypeId(i, j, k);
+        int i1 = world.getBlockId(i, j, k);
 
         if (BlockMinecartTrack.d(i1)) {
             if (!world.isStatic) {

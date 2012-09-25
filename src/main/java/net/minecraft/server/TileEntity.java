@@ -37,9 +37,9 @@ public class TileEntity {
     }
 
     public void a(NBTTagCompound nbttagcompound) {
-        this.x = nbttagcompound.getInt("x");
-        this.y = nbttagcompound.getInt("y");
-        this.z = nbttagcompound.getInt("z");
+        this.x = nbttagcompound.getInteger("x");
+        this.y = nbttagcompound.getInteger("y");
+        this.z = nbttagcompound.getInteger("z");
     }
 
     public void b(NBTTagCompound nbttagcompound) {
@@ -49,9 +49,9 @@ public class TileEntity {
             throw new RuntimeException(this.getClass() + " is missing a mapping! This is a bug!");
         } else {
             nbttagcompound.setString("id", s);
-            nbttagcompound.setInt("x", this.x);
-            nbttagcompound.setInt("y", this.y);
-            nbttagcompound.setInt("z", this.z);
+            nbttagcompound.setInteger("x", this.x);
+            nbttagcompound.setInteger("y", this.y);
+            nbttagcompound.setInteger("z", this.z);
         }
     }
 
@@ -87,7 +87,7 @@ public class TileEntity {
         return this.p;
     }
 
-    public void update() {
+    public void onInventoryChanged() {
         if (this.world != null) {
             this.p = this.world.getData(this.x, this.y, this.z);
             this.world.b(this.x, this.y, this.z, this);

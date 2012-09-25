@@ -49,11 +49,11 @@ public class ContainerFurnace extends Container {
         }
     }
 
-    public void addSlotListener(ICrafting icrafting) {
-        super.addSlotListener(icrafting);
-        icrafting.setContainerData(this, 0, this.furnace.cookTime);
-        icrafting.setContainerData(this, 1, this.furnace.burnTime);
-        icrafting.setContainerData(this, 2, this.furnace.ticksForCurrentFuel);
+    public void addCraftingToCrafters(ICrafting icrafting) {
+        super.addCraftingToCrafters(icrafting);
+        icrafting.updateCraftingInventoryInfo(this, 0, this.furnace.furnaceCookTime);
+        icrafting.updateCraftingInventoryInfo(this, 1, this.furnace.furnaceBurnTime);
+        icrafting.updateCraftingInventoryInfo(this, 2, this.furnace.ticksForCurrentFuel);
     }
 
     public void b() {
@@ -63,21 +63,21 @@ public class ContainerFurnace extends Container {
         while (iterator.hasNext()) {
             ICrafting icrafting = (ICrafting) iterator.next();
 
-            if (this.f != this.furnace.cookTime) {
-                icrafting.setContainerData(this, 0, this.furnace.cookTime);
+            if (this.f != this.furnace.furnaceCookTime) {
+                icrafting.updateCraftingInventoryInfo(this, 0, this.furnace.furnaceCookTime);
             }
 
-            if (this.g != this.furnace.burnTime) {
-                icrafting.setContainerData(this, 1, this.furnace.burnTime);
+            if (this.g != this.furnace.furnaceBurnTime) {
+                icrafting.updateCraftingInventoryInfo(this, 1, this.furnace.furnaceBurnTime);
             }
 
             if (this.h != this.furnace.ticksForCurrentFuel) {
-                icrafting.setContainerData(this, 2, this.furnace.ticksForCurrentFuel);
+                icrafting.updateCraftingInventoryInfo(this, 2, this.furnace.ticksForCurrentFuel);
             }
         }
 
-        this.f = this.furnace.cookTime;
-        this.g = this.furnace.burnTime;
+        this.f = this.furnace.furnaceCookTime;
+        this.g = this.furnace.furnaceBurnTime;
         this.h = this.furnace.ticksForCurrentFuel;
     }
 

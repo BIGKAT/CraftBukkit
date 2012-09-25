@@ -16,7 +16,7 @@ public class EntitySlime extends EntityLiving implements IMonster {
 
         this.height = 0.0F;
         this.jumpDelay = this.random.nextInt(20) + 10;
-        this.setSize(i);
+        this.setSlimeSize(i);
     }
 
     protected void a() {
@@ -24,32 +24,32 @@ public class EntitySlime extends EntityLiving implements IMonster {
         this.datawatcher.a(16, new Byte((byte) 1));
     }
 
-    public void setSize(int i) {
+    public void setSlimeSize(int i) {
         this.datawatcher.watch(16, new Byte((byte) i));
         this.a(0.6F * (float) i, 0.6F * (float) i);
-        this.setPosition(this.locX, this.locY, this.locZ);
+        this.setPosition(this.posX, this.posY, this.posZ);
         this.setHealth(this.getMaxHealth());
         this.aV = i;
     }
 
     public int getMaxHealth() {
-        int i = this.getSize();
+        int i = this.getSlimeSize();
 
         return i * i;
     }
 
-    public int getSize() {
+    public int getSlimeSize() {
         return this.datawatcher.getByte(16);
     }
 
     public void b(NBTTagCompound nbttagcompound) {
         super.b(nbttagcompound);
-        nbttagcompound.setInt("Size", this.getSize() - 1);
+        nbttagcompound.setInteger("Size", this.getSlimeSize() - 1);
     }
 
     public void a(NBTTagCompound nbttagcompound) {
         super.a(nbttagcompound);
-        this.setSize(nbttagcompound.getInt("Size") + 1);
+        this.setSlimeSize(nbttagcompound.getInteger("Size") + 1);
     }
 
     protected String i() {
@@ -61,8 +61,8 @@ public class EntitySlime extends EntityLiving implements IMonster {
     }
 
     public void h_() {
-        if (!this.world.isStatic && this.world.difficulty == 0 && this.getSize() > 0) {
-            this.dead = true;
+        if (!this.worldObj.isStatic && this.worldObj.difficulty == 0 && this.getSlimeSize() > 0) {
+            this.isDead = true;
         }
 
         this.b += (this.a - this.b) * 0.5F;
@@ -71,7 +71,7 @@ public class EntitySlime extends EntityLiving implements IMonster {
 
         super.h_();
         if (this.onGround && !flag) {
-            int i = this.getSize();
+            int i = this.getSlimeSize();
 
             for (int j = 0; j < i * 8; ++j) {
                 float f = this.random.nextFloat() * 3.1415927F * 2.0F;
@@ -79,11 +79,11 @@ public class EntitySlime extends EntityLiving implements IMonster {
                 float f2 = MathHelper.sin(f) * (float) i * 0.5F * f1;
                 float f3 = MathHelper.cos(f) * (float) i * 0.5F * f1;
 
-                this.world.a(this.i(), this.locX + (double) f2, this.boundingBox.b, this.locZ + (double) f3, 0.0D, 0.0D, 0.0D);
+                this.worldObj.a(this.i(), this.posX + (double) f2, this.boundingBox.b, this.posZ + (double) f3, 0.0D, 0.0D, 0.0D);
             }
 
             if (this.p()) {
-                this.world.makeSound(this, this.o(), this.aP(), ((this.random.nextFloat() - this.random.nextFloat()) * 0.2F + 1.0F) / 0.8F);
+                this.worldObj.makeSound(this, this.o(), this.aP(), ((this.random.nextFloat() - this.random.nextFloat()) * 0.2F + 1.0F) / 0.8F);
             }
 
             this.a = -0.5F;
@@ -96,7 +96,7 @@ public class EntitySlime extends EntityLiving implements IMonster {
 
     protected void be() {
         this.bb();
-        EntityHuman entityhuman = this.world.findNearbyVulnerablePlayer(this, 16.0D); // CraftBukkit TODO: EntityTargetEvent
+        EntityHuman entityhuman = this.worldObj.findNearbyVulnerablePlayer(this, 16.0D); // CraftBukkit TODO: EntityTargetEvent
 
         if (entityhuman != null) {
             this.a(entityhuman, 10.0F, 20.0F);
@@ -110,11 +110,11 @@ public class EntitySlime extends EntityLiving implements IMonster {
 
             this.bu = true;
             if (this.r()) {
-                this.world.makeSound(this, this.o(), this.aP(), ((this.random.nextFloat() - this.random.nextFloat()) * 0.2F + 1.0F) * 0.8F);
+                this.worldObj.makeSound(this, this.o(), this.aP(), ((this.random.nextFloat() - this.random.nextFloat()) * 0.2F + 1.0F) * 0.8F);
             }
 
             this.br = 1.0F - this.random.nextFloat() * 2.0F;
-            this.bs = (float) (1 * this.getSize());
+            this.bs = (float) (1 * this.getSlimeSize());
         } else {
             this.bu = false;
             if (this.onGround) {
@@ -132,23 +132,23 @@ public class EntitySlime extends EntityLiving implements IMonster {
     }
 
     protected EntitySlime j() {
-        return new EntitySlime(this.world);
+        return new EntitySlime(this.worldObj);
     }
 
-    public void die() {
-        int i = this.getSize();
+    public void setDead() {
+        int i = this.getSlimeSize();
 
-        if (!this.world.isStatic && i > 1 && this.getHealth() <= 0) {
+        if (!this.worldObj.isStatic && i > 1 && this.getHealth() <= 0) {
             int j = 2 + this.random.nextInt(3);
 
             // CraftBukkit start
             SlimeSplitEvent event = new SlimeSplitEvent((org.bukkit.entity.Slime) this.getBukkitEntity(), j);
-            this.world.getServer().getPluginManager().callEvent(event);
+            this.worldObj.getServer().getPluginManager().callEvent(event);
 
             if (!event.isCancelled() && event.getCount() > 0) {
                 j = event.getCount();
             } else {
-                super.die();
+                super.setDead();
                 return;
             }
             // CraftBukkit end
@@ -158,31 +158,31 @@ public class EntitySlime extends EntityLiving implements IMonster {
                 float f1 = ((float) (k / 2) - 0.5F) * (float) i / 4.0F;
                 EntitySlime entityslime = this.j();
 
-                entityslime.setSize(i / 2);
-                entityslime.setPositionRotation(this.locX + (double) f, this.locY + 0.5D, this.locZ + (double) f1, this.random.nextFloat() * 360.0F, 0.0F);
-                this.world.addEntity(entityslime, org.bukkit.event.entity.CreatureSpawnEvent.SpawnReason.SLIME_SPLIT); // CraftBukkit - SpawnReason
+                entityslime.setSlimeSize(i / 2);
+                entityslime.setPositionRotation(this.posX + (double) f, this.posY + 0.5D, this.posZ + (double) f1, this.random.nextFloat() * 360.0F, 0.0F);
+                this.worldObj.addEntity(entityslime, org.bukkit.event.entity.CreatureSpawnEvent.SpawnReason.SLIME_SPLIT); // CraftBukkit - SpawnReason
             }
         }
 
-        super.die();
+        super.setDead();
     }
 
     public void b_(EntityHuman entityhuman) {
         if (this.m()) {
-            int i = this.getSize();
+            int i = this.getSlimeSize();
 
             if (this.l(entityhuman) && this.e(entityhuman) < 0.6D * (double) i * 0.6D * (double) i && entityhuman.damageEntity(DamageSource.mobAttack(this), this.n())) {
-                this.world.makeSound(this, "mob.slimeattack", 1.0F, (this.random.nextFloat() - this.random.nextFloat()) * 0.2F + 1.0F);
+                this.worldObj.makeSound(this, "mob.slimeattack", 1.0F, (this.random.nextFloat() - this.random.nextFloat()) * 0.2F + 1.0F);
             }
         }
     }
 
     protected boolean m() {
-        return this.getSize() > 1;
+        return this.getSlimeSize() > 1;
     }
 
     protected int n() {
-        return this.getSize();
+        return this.getSlimeSize();
     }
 
     protected String aR() {
@@ -194,17 +194,17 @@ public class EntitySlime extends EntityLiving implements IMonster {
     }
 
     protected int getLootId() {
-        return this.getSize() == 1 ? Item.SLIME_BALL.id : 0;
+        return this.getSlimeSize() == 1 ? Item.SLIME_BALL.id : 0;
     }
 
     public boolean canSpawn() {
-        Chunk chunk = this.world.getChunkAtWorldCoords(MathHelper.floor(this.locX), MathHelper.floor(this.locZ));
+        Chunk chunk = this.worldObj.getChunkAtWorldCoords(MathHelper.floor(this.posX), MathHelper.floor(this.posZ));
 
-        return this.world.getWorldData().getType() == WorldType.FLAT && this.random.nextInt(4) != 1 ? false : ((this.getSize() == 1 || this.world.difficulty > 0) && this.random.nextInt(10) == 0 && chunk.a(987234911L).nextInt(10) == 0 && this.locY < 40.0D ? super.canSpawn() : false);
+        return this.worldObj.getWorldData().getType() == WorldType.FLAT && this.random.nextInt(4) != 1 ? false : ((this.getSlimeSize() == 1 || this.worldObj.difficulty > 0) && this.random.nextInt(10) == 0 && chunk.a(987234911L).nextInt(10) == 0 && this.posY < 40.0D ? super.canSpawn() : false);
     }
 
     protected float aP() {
-        return 0.4F * (float) this.getSize();
+        return 0.4F * (float) this.getSlimeSize();
     }
 
     public int bf() {
@@ -212,10 +212,10 @@ public class EntitySlime extends EntityLiving implements IMonster {
     }
 
     protected boolean r() {
-        return this.getSize() > 1;
+        return this.getSlimeSize() > 1;
     }
 
     protected boolean p() {
-        return this.getSize() > 2;
+        return this.getSlimeSize() > 2;
     }
 }

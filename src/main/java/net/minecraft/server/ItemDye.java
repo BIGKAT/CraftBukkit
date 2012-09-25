@@ -31,12 +31,12 @@ public class ItemDye extends Item {
             int j1;
 
             if (itemstack.getData() == 15) {
-                i1 = world.getTypeId(i, j, k);
+                i1 = world.getBlockId(i, j, k);
                 if (i1 == Block.SAPLING.blockID) {
                     if (!world.isStatic) {
                         // CraftBukkit start
                         Player player = (entityhuman instanceof EntityPlayer) ? (Player) entityhuman.getBukkitEntity() : null;
-                        ((BlockSapling) Block.SAPLING).grow(world, i, j, k, world.random, true, player, itemstack);
+                        ((BlockSapling) Block.SAPLING).grow(world, i, j, k, world.rand, true, player, itemstack);
                         //--itemstack.count; - called later if the bonemeal attempt was succesful
                         // CraftBukkit end
                     }
@@ -48,7 +48,7 @@ public class ItemDye extends Item {
                     // CraftBukkit start
                     if (!world.isStatic) {
                         Player player = (entityhuman instanceof EntityPlayer) ? (Player) entityhuman.getBukkitEntity() : null;
-                        ((BlockMushroom) Block.blocksList[i1]).grow(world, i, j, k, world.random, true, player, itemstack);
+                        ((BlockMushroom) Block.blocksList[i1]).grow(world, i, j, k, world.rand, true, player, itemstack);
                         //--itemstack.count; - called later if the bonemeal attempt was succesful
                         // CraftBukkit end
                     }
@@ -84,7 +84,7 @@ public class ItemDye extends Item {
 
                 if (i1 == Block.COCOA.blockID) {
                     if (!world.isStatic) {
-                        world.setData(i, j, k, 8 | BlockDirectional.d(world.getData(i, j, k)));
+                        world.setBlockMetadataWithNotify(i, j, k, 8 | BlockDirectional.d(world.getData(i, j, k)));
                         --itemstack.count;
                     }
 
@@ -105,22 +105,22 @@ public class ItemDye extends Item {
                                 k1 += d.nextInt(3) - 1;
                                 l1 += (d.nextInt(3) - 1) * d.nextInt(3) / 2;
                                 i2 += d.nextInt(3) - 1;
-                                if (world.getTypeId(k1, l1 - 1, i2) != Block.GRASS.blockID || world.s(k1, l1, i2)) {
+                                if (world.getBlockId(k1, l1 - 1, i2) != Block.GRASS.blockID || world.s(k1, l1, i2)) {
                                     continue label135;
                                 }
                             }
 
-                            if (world.getTypeId(k1, l1, i2) == 0) {
+                            if (world.getBlockId(k1, l1, i2) == 0) {
                                 if (d.nextInt(10) != 0) {
                                     if (Block.LONG_GRASS.d(world, k1, l1, i2)) {
-                                        world.setTypeIdAndData(k1, l1, i2, Block.LONG_GRASS.blockID, 1);
+                                        world.setBlockAndMetadataWithNotify(k1, l1, i2, Block.LONG_GRASS.blockID, 1);
                                     }
                                 } else if (d.nextInt(3) != 0) {
                                     if (Block.YELLOW_FLOWER.d(world, k1, l1, i2)) {
-                                        world.setTypeId(k1, l1, i2, Block.YELLOW_FLOWER.blockID);
+                                        world.setBlockWithNotify(k1, l1, i2, Block.YELLOW_FLOWER.blockID);
                                     }
                                 } else if (Block.RED_ROSE.d(world, k1, l1, i2)) {
-                                    world.setTypeId(k1, l1, i2, Block.RED_ROSE.blockID);
+                                    world.setBlockWithNotify(k1, l1, i2, Block.RED_ROSE.blockID);
                                 }
                             }
                         }
@@ -129,7 +129,7 @@ public class ItemDye extends Item {
                     return true;
                 }
             } else if (itemstack.getData() == 3) {
-                i1 = world.getTypeId(i, j, k);
+                i1 = world.getBlockId(i, j, k);
                 j1 = world.getData(i, j, k);
                 if (i1 == Block.LOG.blockID && BlockLog.e(j1) == 3) {
                     if (l == 0) {
@@ -157,12 +157,12 @@ public class ItemDye extends Item {
                     }
 
                     if (world.isEmpty(i, j, k)) {
-                        world.setTypeId(i, j, k, Block.COCOA.blockID);
-                        if (world.getTypeId(i, j, k) == Block.COCOA.blockID) {
+                        world.setBlockWithNotify(i, j, k, Block.COCOA.blockID);
+                        if (world.getBlockId(i, j, k) == Block.COCOA.blockID) {
                             Block.blocksList[Block.COCOA.blockID].postPlace(world, i, j, k, l, f, f1, f2);
                         }
 
-                        if (!entityhuman.abilities.canInstantlyBuild) {
+                        if (!entityhuman.capabilities.canInstantlyBuild) {
                             --itemstack.count;
                         }
                     }
@@ -180,11 +180,11 @@ public class ItemDye extends Item {
             EntitySheep entitysheep = (EntitySheep) entityliving;
             int i = BlockCloth.e_(itemstack.getData());
 
-            if (!entitysheep.isSheared() && entitysheep.getColor() != i) {
+            if (!entitysheep.getSheared() && entitysheep.getFleeceColor() != i) {
                 // CraftBukkit start
                 byte bColor = (byte) i;
                 SheepDyeWoolEvent event = new SheepDyeWoolEvent((org.bukkit.entity.Sheep) entitysheep.getBukkitEntity(), org.bukkit.DyeColor.getByData(bColor));
-                entitysheep.world.getServer().getPluginManager().callEvent(event);
+                entitysheep.worldObj.getServer().getPluginManager().callEvent(event);
 
                 if (event.isCancelled()) {
                     return false;

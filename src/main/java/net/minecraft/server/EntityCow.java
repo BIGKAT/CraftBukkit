@@ -97,6 +97,6 @@ public class EntityCow extends EntityAnimal {
     }
 
     public EntityAnimal createChild(EntityAnimal entityanimal) {
-        return new EntityCow(this.world);
+        return new EntityCow(this.worldObj);
     }
 }

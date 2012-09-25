@@ -521,7 +521,7 @@ public abstract class MinecraftServer implements Runnable, IMojangStatistics, IC
             String message = String.format(event.getFormat(), event.getPlayer().getDisplayName(), event.getMessage());
             console.sendMessage(message);
             if (((org.bukkit.craftbukkit.util.LazyPlayerSet) event.getRecipients()).isLazy()) {
-                for (Object player : getServerConfigurationManager().players) {
+                for (Object player : getServerConfigurationManager().playerEntityList) {
                     ((EntityPlayer) player).sendMessage(message);
                 }
             } else {
@@ -533,9 +533,9 @@ public abstract class MinecraftServer implements Runnable, IMojangStatistics, IC
 
         // Send timeupdates to everyone, it will get the right time from the world the player is in.
         if (this.ticks % 20 == 0) {
-            for (int i = 0; i < this.getServerConfigurationManager().players.size(); ++i) {
-                EntityPlayer entityplayer = (EntityPlayer) this.getServerConfigurationManager().players.get(i);
-                entityplayer.netServerHandler.sendPacket(new Packet4UpdateTime(entityplayer.getPlayerTime())); // Add support for per player time
+            for (int i = 0; i < this.getServerConfigurationManager().playerEntityList.size(); ++i) {
+                EntityPlayer entityplayer = (EntityPlayer) this.getServerConfigurationManager().playerEntityList.get(i);
+                entityplayer.serverForThisPlayer.sendPacketToPlayer(new Packet4UpdateTime(entityplayer.getPlayerTime())); // Add support for per player time
             }
         }
 

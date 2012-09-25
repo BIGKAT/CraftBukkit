@@ -22,7 +22,7 @@ public class PathfinderGoalMeleeAttack extends PathfinderGoal {
     public PathfinderGoalMeleeAttack(EntityLiving entityliving, float f, boolean flag) {
         this.d = 0;
         this.b = entityliving;
-        this.a = entityliving.world;
+        this.a = entityliving.worldObj;
         this.e = f;
         this.f = flag;
         this.a(3);
@@ -45,7 +45,7 @@ public class PathfinderGoalMeleeAttack extends PathfinderGoal {
     public boolean b() {
         EntityLiving entityliving = this.b.az();
 
-        return entityliving == null ? false : (!this.c.isAlive() ? false : (!this.f ? !this.b.getNavigation().f() : this.b.d(MathHelper.floor(this.c.locX), MathHelper.floor(this.c.locY), MathHelper.floor(this.c.locZ))));
+        return entityliving == null ? false : (!this.c.isEntityAlive() ? false : (!this.f ? !this.b.getNavigation().f() : this.b.d(MathHelper.floor(this.c.posX), MathHelper.floor(this.c.posY), MathHelper.floor(this.c.posZ))));
     }
 
     public void e() {
@@ -55,7 +55,7 @@ public class PathfinderGoalMeleeAttack extends PathfinderGoal {
 
     public void c() {
         // CraftBukkit start
-        EntityTargetEvent.TargetReason reason = this.c.isAlive() ? EntityTargetEvent.TargetReason.FORGOT_TARGET : EntityTargetEvent.TargetReason.TARGET_DIED;
+        EntityTargetEvent.TargetReason reason = this.c.isEntityAlive() ? EntityTargetEvent.TargetReason.FORGOT_TARGET : EntityTargetEvent.TargetReason.TARGET_DIED;
         org.bukkit.craftbukkit.event.CraftEventFactory.callEntityTargetEvent(b, null, reason);
         // CraftBukkit end
 
@@ -65,7 +65,7 @@ public class PathfinderGoalMeleeAttack extends PathfinderGoal {
 
     public void d() {
         this.b.getControllerLook().a(this.c, 30.0F, 30.0F);
-        if ((this.f || this.b.at().canSee(this.c)) && --this.i <= 0) {
+        if ((this.f || this.b.getEntitySenses().canSee(this.c)) && --this.i <= 0) {
             this.i = 4 + this.b.au().nextInt(7);
             this.b.getNavigation().a(this.c, this.e);
         }
@@ -73,7 +73,7 @@ public class PathfinderGoalMeleeAttack extends PathfinderGoal {
         this.d = Math.max(this.d - 1, 0);
         double d0 = (double) (this.b.width * 2.0F * this.b.width * 2.0F);
 
-        if (this.b.e(this.c.locX, this.c.boundingBox.b, this.c.locZ) <= d0) {
+        if (this.b.e(this.c.posX, this.c.boundingBox.b, this.c.posZ) <= d0) {
             if (this.d <= 0) {
                 this.d = 20;
                 this.b.k(this.c);

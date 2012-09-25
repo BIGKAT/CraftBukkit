@@ -13,11 +13,11 @@ public class CraftSlime extends CraftLivingEntity implements Slime {
     }
 
     public int getSize() {
-        return getHandle().getSize();
+        return getHandle().getSlimeSize();
     }
 
     public void setSize(int size) {
-        getHandle().setSize(size);
+        getHandle().setSlimeSize(size);
     }
 
     @Override

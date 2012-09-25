@@ -38,7 +38,7 @@ public class CraftTameableAnimal extends CraftAnimals implements Tameable, Creat
     public void setOwner(AnimalTamer tamer) {
         if (tamer != null) {
             setTamed(true);
-            getHandle().setPathEntity(null);
+            getHandle().setPathToEntity(null);
             setOwnerName(tamer.getName());
         } else {
             setTamed(false);
@@ -63,7 +63,7 @@ public class CraftTameableAnimal extends CraftAnimals implements Tameable, Creat
 
     public void setSitting(boolean sitting) {
         getHandle().setSitting(sitting);
-        getHandle().setPathEntity(null);
+        getHandle().setPathToEntity(null);
     }
 
     @Override

@@ -81,8 +81,8 @@ public class TileEntityPiston extends TileEntity {
             this.g = this.f = 1.0F;
             this.world.q(this.x, this.y, this.z);
             this.j();
-            if (this.world.getTypeId(this.x, this.y, this.z) == Block.PISTON_MOVING.blockID) {
-                this.world.setTypeIdAndData(this.x, this.y, this.z, this.a, this.b);
+            if (this.world.getBlockId(this.x, this.y, this.z) == Block.PISTON_MOVING.blockID) {
+                this.world.setBlockAndMetadataWithNotify(this.x, this.y, this.z, this.a, this.b);
             }
         }
     }
@@ -95,8 +95,8 @@ public class TileEntityPiston extends TileEntity {
             this.a(1.0F, 0.25F);
             this.world.q(this.x, this.y, this.z);
             this.j();
-            if (this.world.getTypeId(this.x, this.y, this.z) == Block.PISTON_MOVING.blockID) {
-                this.world.setTypeIdAndData(this.x, this.y, this.z, this.a, this.b);
+            if (this.world.getBlockId(this.x, this.y, this.z) == Block.PISTON_MOVING.blockID) {
+                this.world.setBlockAndMetadataWithNotify(this.x, this.y, this.z, this.a, this.b);
             }
         } else {
             this.f += 0.5F;
@@ -112,18 +112,18 @@ public class TileEntityPiston extends TileEntity {
 
     public void a(NBTTagCompound nbttagcompound) {
         super.a(nbttagcompound);
-        this.a = nbttagcompound.getInt("blockId");
-        this.b = nbttagcompound.getInt("blockData");
-        this.c = nbttagcompound.getInt("facing");
+        this.a = nbttagcompound.getInteger("blockId");
+        this.b = nbttagcompound.getInteger("blockData");
+        this.c = nbttagcompound.getInteger("facing");
         this.g = this.f = nbttagcompound.getFloat("progress");
         this.d = nbttagcompound.getBoolean("extending");
     }
 
     public void b(NBTTagCompound nbttagcompound) {
         super.b(nbttagcompound);
-        nbttagcompound.setInt("blockId", this.a);
-        nbttagcompound.setInt("blockData", this.b);
-        nbttagcompound.setInt("facing", this.c);
+        nbttagcompound.setInteger("blockId", this.a);
+        nbttagcompound.setInteger("blockData", this.b);
+        nbttagcompound.setInteger("facing", this.c);
         nbttagcompound.setFloat("progress", this.g);
         nbttagcompound.setBoolean("extending", this.d);
     }

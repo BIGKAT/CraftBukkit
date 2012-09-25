@@ -20,9 +20,9 @@ public class ItemBucket extends Item {
 
     public ItemStack a(ItemStack itemstack, World world, EntityHuman entityhuman) {
         float f = 1.0F;
-        double d0 = entityhuman.lastX + (entityhuman.locX - entityhuman.lastX) * (double) f;
-        double d1 = entityhuman.lastY + (entityhuman.locY - entityhuman.lastY) * (double) f + 1.62D - (double) entityhuman.height;
-        double d2 = entityhuman.lastZ + (entityhuman.locZ - entityhuman.lastZ) * (double) f;
+        double d0 = entityhuman.lastX + (entityhuman.posX - entityhuman.lastX) * (double) f;
+        double d1 = entityhuman.lastY + (entityhuman.posY - entityhuman.lastY) * (double) f + 1.62D - (double) entityhuman.height;
+        double d2 = entityhuman.lastZ + (entityhuman.posZ - entityhuman.lastZ) * (double) f;
         boolean flag = this.a == 0;
         MovingObjectPosition movingobjectposition = this.a(world, entityhuman, flag);
 
@@ -51,8 +51,8 @@ public class ItemBucket extends Item {
                             return itemstack;
                         }
                         // CraftBukkit end
-                        world.setTypeId(i, j, k, 0);
-                        if (entityhuman.abilities.canInstantlyBuild) {
+                        world.setBlockWithNotify(i, j, k, 0);
+                        if (entityhuman.capabilities.canInstantlyBuild) {
                             return itemstack;
                         }
 
@@ -76,8 +76,8 @@ public class ItemBucket extends Item {
                             return itemstack;
                         }
                         // CraftBukkit end
-                        world.setTypeId(i, j, k, 0);
-                        if (entityhuman.abilities.canInstantlyBuild) {
+                        world.setBlockWithNotify(i, j, k, 0);
+                        if (entityhuman.capabilities.canInstantlyBuild) {
                             return itemstack;
                         }
 
@@ -143,7 +143,7 @@ public class ItemBucket extends Item {
                     }
                     // CraftBukkit end
 
-                    if (this.a(world, d0, d1, d2, i, j, k) && !entityhuman.abilities.canInstantlyBuild) {
+                    if (this.a(world, d0, d1, d2, i, j, k) && !entityhuman.capabilities.canInstantlyBuild) {
                         return CraftItemStack.createNMSItemStack(event.getItemStack()); // CraftBukkit
                     }
                 }
@@ -171,13 +171,13 @@ public class ItemBucket extends Item {
             return false;
         } else {
             if (world.worldProvider.d && this.a == Block.WATER.blockID) {
-                world.makeSound(d0 + 0.5D, d1 + 0.5D, d2 + 0.5D, "random.fizz", 0.5F, 2.6F + (world.random.nextFloat() - world.random.nextFloat()) * 0.8F);
+                world.makeSound(d0 + 0.5D, d1 + 0.5D, d2 + 0.5D, "random.fizz", 0.5F, 2.6F + (world.rand.nextFloat() - world.rand.nextFloat()) * 0.8F);
 
                 for (int l = 0; l < 8; ++l) {
                     world.a("largesmoke", (double) i + Math.random(), (double) j + Math.random(), (double) k + Math.random(), 0.0D, 0.0D, 0.0D);
                 }
             } else {
-                world.setTypeIdAndData(i, j, k, this.a, 0);
+                world.setBlockAndMetadataWithNotify(i, j, k, this.a, 0);
             }
 
             return true;

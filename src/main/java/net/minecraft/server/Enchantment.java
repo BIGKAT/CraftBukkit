@@ -25,15 +25,15 @@ public abstract class Enchantment {
     public static final Enchantment ARROW_KNOCKBACK = new EnchantmentArrowKnockback(49, 2);
     public static final Enchantment ARROW_FIRE = new EnchantmentFlameArrows(50, 2);
     public static final Enchantment ARROW_INFINITE = new EnchantmentInfiniteArrows(51, 1);
-    public final int id;
+    public final int effectId;
     private final int weight;
-    public EnchantmentSlotType slot;
+    public EnchantmentSlotType type;
     protected String name;
 
     protected Enchantment(int i, int j, EnchantmentSlotType enchantmentslottype) {
-        this.id = i;
+        this.effectId = i;
         this.weight = j;
-        this.slot = enchantmentslottype;
+        this.type = enchantmentslottype;
         if (byId[i] != null) {
             throw new IllegalArgumentException("Duplicate enchantment id!");
         } else {
@@ -47,7 +47,7 @@ public abstract class Enchantment {
         return this.weight;
     }
 
-    public int getStartLevel() {
+    public int getMinLevel() {
         return 1;
     }
 

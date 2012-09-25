@@ -46,11 +46,11 @@ public class ItemSign extends Item {
                 CraftBlockState blockState = CraftBlockState.getBlockState(world, i, j, k); // CraftBukkit
 
                 if (l == 1) {
-                    int i1 = MathHelper.floor((double) ((entityhuman.yaw + 180.0F) * 16.0F / 360.0F) + 0.5D) & 15;
+                    int i1 = MathHelper.floor((double) ((entityhuman.rotationYaw + 180.0F) * 16.0F / 360.0F) + 0.5D) & 15;
 
-                    world.setTypeIdAndData(i, j, k, Block.SIGN_POST.blockID, i1);
+                    world.setBlockAndMetadataWithNotify(i, j, k, Block.SIGN_POST.blockID, i1);
                 } else {
-                    world.setTypeIdAndData(i, j, k, Block.WALL_SIGN.blockID, l);
+                    world.setBlockAndMetadataWithNotify(i, j, k, Block.WALL_SIGN.blockID, l);
                 }
 
                 // CraftBukkit start - sign

@@ -6,8 +6,8 @@ import org.bukkit.event.entity.CreatureSpawnEvent.SpawnReason; // CraftBukkit
 
 public class TileEntityMobSpawner extends TileEntity {
 
-    public int spawnDelay = -1;
-    public String mobName = "Pig"; // CraftBukkit - private -> public
+    public int delay = -1;
+    public String mobID = "Pig"; // CraftBukkit - private -> public
     private NBTTagCompound spawnData = null;
     public double b;
     public double c = 0.0D;
@@ -16,11 +16,11 @@ public class TileEntityMobSpawner extends TileEntity {
     private int spawnCount = 4;
 
     public TileEntityMobSpawner() {
-        this.spawnDelay = 20;
+        this.delay = 20;
     }
 
     public void a(String s) {
-        this.mobName = s;
+        this.mobID = s;
     }
 
     public boolean b() {
@@ -30,26 +30,26 @@ public class TileEntityMobSpawner extends TileEntity {
     public void g() {
         if (this.b()) {
             if (this.world.isStatic) {
-                double d0 = (double) ((float) this.x + this.world.random.nextFloat());
-                double d1 = (double) ((float) this.y + this.world.random.nextFloat());
-                double d2 = (double) ((float) this.z + this.world.random.nextFloat());
+                double d0 = (double) ((float) this.x + this.world.rand.nextFloat());
+                double d1 = (double) ((float) this.y + this.world.rand.nextFloat());
+                double d2 = (double) ((float) this.z + this.world.rand.nextFloat());
 
                 this.world.a("smoke", d0, d1, d2, 0.0D, 0.0D, 0.0D);
                 this.world.a("flame", d0, d1, d2, 0.0D, 0.0D, 0.0D);
                 this.c = this.b % 360.0D;
                 this.b += 4.545454502105713D;
             } else {
-                if (this.spawnDelay == -1) {
+                if (this.delay == -1) {
                     this.f();
                 }
 
-                if (this.spawnDelay > 0) {
-                    --this.spawnDelay;
+                if (this.delay > 0) {
+                    --this.delay;
                     return;
                 }
 
                 for (int i = 0; i < this.spawnCount; ++i) {
-                    Entity entity = EntityTypes.createEntityByName(this.mobName, this.world);
+                    Entity entity = EntityTypes.createEntityByName(this.mobID, this.world);
 
                     if (entity == null) {
                         return;
@@ -63,12 +63,12 @@ public class TileEntityMobSpawner extends TileEntity {
                     }
 
                     if (entity != null) {
-                        double d3 = (double) this.x + (this.world.random.nextDouble() - this.world.random.nextDouble()) * 4.0D;
-                        double d4 = (double) (this.y + this.world.random.nextInt(3) - 1);
-                        double d5 = (double) this.z + (this.world.random.nextDouble() - this.world.random.nextDouble()) * 4.0D;
+                        double d3 = (double) this.x + (this.world.rand.nextDouble() - this.world.rand.nextDouble()) * 4.0D;
+                        double d4 = (double) (this.y + this.world.rand.nextInt(3) - 1);
+                        double d5 = (double) this.z + (this.world.rand.nextDouble() - this.world.rand.nextDouble()) * 4.0D;
                         EntityLiving entityliving = entity instanceof EntityLiving ? (EntityLiving) entity : null;
 
-                        entity.setPositionRotation(d3, d4, d5, this.world.random.nextFloat() * 360.0F, 0.0F);
+                        entity.setPositionRotation(d3, d4, d5, this.world.rand.nextFloat() * 360.0F, 0.0F);
                         if (entityliving == null || entityliving.canSpawn()) {
                             this.a(entity);
                             this.world.addEntity(entity, SpawnReason.SPAWNER); // CraftBukkit
@@ -105,15 +105,15 @@ public class TileEntityMobSpawner extends TileEntity {
     }
 
     private void f() {
-        this.spawnDelay = this.minSpawnDelay + this.world.random.nextInt(this.maxSpawnDelay - this.minSpawnDelay);
+        this.delay = this.minSpawnDelay + this.world.rand.nextInt(this.maxSpawnDelay - this.minSpawnDelay);
     }
 
     public void a(NBTTagCompound nbttagcompound) {
         super.a(nbttagcompound);
-        this.mobName = nbttagcompound.getString("EntityId");
-        this.spawnDelay = nbttagcompound.getShort("Delay");
+        this.mobID = nbttagcompound.getString("EntityId");
+        this.delay = nbttagcompound.getShort("Delay");
         if (nbttagcompound.hasKey("SpawnData")) {
-            this.spawnData = nbttagcompound.getCompound("SpawnData");
+            this.spawnData = nbttagcompound.getCompoundTag("SpawnData");
         } else {
             this.spawnData = null;
         }
@@ -127,13 +127,13 @@ public class TileEntityMobSpawner extends TileEntity {
 
     public void b(NBTTagCompound nbttagcompound) {
         super.b(nbttagcompound);
-        nbttagcompound.setString("EntityId", this.mobName);
-        nbttagcompound.setShort("Delay", (short) this.spawnDelay);
+        nbttagcompound.setString("EntityId", this.mobID);
+        nbttagcompound.setShort("Delay", (short) this.delay);
         nbttagcompound.setShort("MinSpawnDelay", (short) this.minSpawnDelay);
         nbttagcompound.setShort("MaxSpawnDelay", (short) this.maxSpawnDelay);
         nbttagcompound.setShort("SpawnCount", (short) this.spawnCount);
         if (this.spawnData != null) {
-            nbttagcompound.setCompound("SpawnData", this.spawnData);
+            nbttagcompound.setCompoundTag("SpawnData", this.spawnData);
         }
     }
 

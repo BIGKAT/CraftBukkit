@@ -357,12 +357,12 @@ public class Block {
 
     public void dropBlockAsItemWithChance(World world, int i, int j, int k, int l, float f, int i1) {
         if (!world.isStatic) {
-            int j1 = this.getDropCount(i1, world.random);
+            int j1 = this.getDropCount(i1, world.rand);
 
             for (int k1 = 0; k1 < j1; ++k1) {
                 // CraftBukkit - <= to < to allow for plugins to completely disable block drops from explosions
-                if (world.random.nextFloat() < f) {
-                    int l1 = this.getDropType(l, world.random, i1);
+                if (world.rand.nextFloat() < f) {
+                    int l1 = this.getDropType(l, world.rand, i1);
 
                     if (l1 > 0) {
                         this.a(world, i, j, k, new ItemStack(l1, 1, this.getDropData(l)));
@@ -375,12 +375,12 @@ public class Block {
     protected void a(World world, int i, int j, int k, ItemStack itemstack) {
         if (!world.isStatic) {
             float f = 0.7F;
-            double d0 = (double) (world.random.nextFloat() * f) + (double) (1.0F - f) * 0.5D;
-            double d1 = (double) (world.random.nextFloat() * f) + (double) (1.0F - f) * 0.5D;
-            double d2 = (double) (world.random.nextFloat() * f) + (double) (1.0F - f) * 0.5D;
+            double d0 = (double) (world.rand.nextFloat() * f) + (double) (1.0F - f) * 0.5D;
+            double d1 = (double) (world.rand.nextFloat() * f) + (double) (1.0F - f) * 0.5D;
+            double d2 = (double) (world.rand.nextFloat() * f) + (double) (1.0F - f) * 0.5D;
             EntityItem entityitem = new EntityItem(world, (double) i + d0, (double) j + d1, (double) k + d2, itemstack);
 
-            entityitem.pickupDelay = 10;
+            entityitem.delayBeforeCanPickup = 10;
             world.addEntity(entityitem);
         }
     }
@@ -517,7 +517,7 @@ public class Block {
     }
 
     public boolean canPlace(World world, int i, int j, int k) {
-        int l = world.getTypeId(i, j, k);
+        int l = world.getBlockId(i, j, k);
 
         return l == 0 || blocksList[l].blockMaterial.isReplaceable();
     }

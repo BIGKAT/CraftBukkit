@@ -46,13 +46,13 @@ public class EntitySkeleton extends EntityMonster {
     }
 
     public void d() {
-        if (this.world.s() && !this.world.isStatic) {
+        if (this.worldObj.s() && !this.worldObj.isStatic) {
             float f = this.c(1.0F);
 
-            if (f > 0.5F && this.world.j(MathHelper.floor(this.locX), MathHelper.floor(this.locY), MathHelper.floor(this.locZ)) && this.random.nextFloat() * 30.0F < (f - 0.4F) * 2.0F) {
+            if (f > 0.5F && this.worldObj.j(MathHelper.floor(this.posX), MathHelper.floor(this.posY), MathHelper.floor(this.posZ)) && this.random.nextFloat() * 30.0F < (f - 0.4F) * 2.0F) {
                 // CraftBukkit start
                 EntityCombustEvent event = new EntityCombustEvent(this.getBukkitEntity(), 8);
-                this.world.getServer().getPluginManager().callEvent(event);
+                this.worldObj.getServer().getPluginManager().callEvent(event);
 
                 if (!event.isCancelled()) {
                     this.setOnFire(event.getDuration());
@@ -68,8 +68,8 @@ public class EntitySkeleton extends EntityMonster {
         super.die(damagesource);
         if (damagesource.f() instanceof EntityArrow && damagesource.getEntity() instanceof EntityHuman) {
             EntityHuman entityhuman = (EntityHuman) damagesource.getEntity();
-            double d0 = entityhuman.locX - this.locX;
-            double d1 = entityhuman.locZ - this.locZ;
+            double d0 = entityhuman.posX - this.posX;
+            double d1 = entityhuman.posZ - this.posZ;
 
             if (d0 * d0 + d1 * d1 >= 2500.0D) {
                 entityhuman.a((Statistic) AchievementList.v);

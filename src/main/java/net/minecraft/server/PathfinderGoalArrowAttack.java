@@ -15,7 +15,7 @@ public class PathfinderGoalArrowAttack extends PathfinderGoal {
 
     public PathfinderGoalArrowAttack(EntityLiving entityliving, float f, int i, int j) {
         this.b = entityliving;
-        this.a = entityliving.world;
+        this.a = entityliving.worldObj;
         this.e = f;
         this.g = i;
         this.h = j;
@@ -39,7 +39,7 @@ public class PathfinderGoalArrowAttack extends PathfinderGoal {
 
     public void c() {
         // CraftBukkit start
-        EntityTargetEvent.TargetReason reason = this.c.isAlive() ? EntityTargetEvent.TargetReason.FORGOT_TARGET : EntityTargetEvent.TargetReason.TARGET_DIED;
+        EntityTargetEvent.TargetReason reason = this.c.isEntityAlive() ? EntityTargetEvent.TargetReason.FORGOT_TARGET : EntityTargetEvent.TargetReason.TARGET_DIED;
         org.bukkit.craftbukkit.event.CraftEventFactory.callEntityTargetEvent(b, null, reason);
         // CraftBukkit end
         this.c = null;
@@ -47,8 +47,8 @@ public class PathfinderGoalArrowAttack extends PathfinderGoal {
 
     public void d() {
         double d0 = 100.0D;
-        double d1 = this.b.e(this.c.locX, this.c.boundingBox.b, this.c.locZ);
-        boolean flag = this.b.at().canSee(this.c);
+        double d1 = this.b.e(this.c.posX, this.c.boundingBox.b, this.c.posZ);
+        boolean flag = this.b.getEntitySenses().canSee(this.c);
 
         if (flag) {
             ++this.f;
@@ -80,9 +80,9 @@ public class PathfinderGoalArrowAttack extends PathfinderGoal {
             this.a.addEntity(entityarrow);
         } else if (this.g == 2) {
             EntitySnowball entitysnowball = new EntitySnowball(this.a, this.b);
-            double d0 = this.c.locX - this.b.locX;
-            double d1 = this.c.locY + (double) this.c.getHeadHeight() - 1.100000023841858D - entitysnowball.locY;
-            double d2 = this.c.locZ - this.b.locZ;
+            double d0 = this.c.posX - this.b.posX;
+            double d1 = this.c.posY + (double) this.c.getHeadHeight() - 1.100000023841858D - entitysnowball.posY;
+            double d2 = this.c.posZ - this.b.posZ;
             float f = MathHelper.sqrt(d0 * d0 + d2 * d2) * 0.2F;
 
             entitysnowball.c(d0, d1 + (double) f, d2, 1.6F, 12.0F);

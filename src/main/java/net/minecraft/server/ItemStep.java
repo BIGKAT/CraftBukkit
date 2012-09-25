@@ -31,7 +31,7 @@ public class ItemStep extends ItemBlock {
         } else if (!entityhuman.e(i, j, k)) {
             return false;
         } else {
-            int i1 = world.getTypeId(i, j, k);
+            int i1 = world.getBlockId(i, j, k);
             int j1 = world.getData(i, j, k);
             int k1 = j1 & 7;
             boolean flag = (j1 & 8) != 0;
@@ -69,12 +69,12 @@ public class ItemStep extends ItemBlock {
             ++i;
         }
 
-        int i1 = world.getTypeId(i, j, k);
+        int i1 = world.getBlockId(i, j, k);
         int j1 = world.getData(i, j, k);
         int k1 = j1 & 7;
 
         if (i1 == this.b.blockID && k1 == itemstack.getData()) {
-            if (world.b(this.c.e(world, i, j, k)) && world.setTypeIdAndData(i, j, k, this.c.blockID, k1)) {
+            if (world.b(this.c.e(world, i, j, k)) && world.setBlockAndMetadataWithNotify(i, j, k, this.c.blockID, k1)) {
                 world.makeSound((double) ((float) i + 0.5F), (double) ((float) j + 0.5F), (double) ((float) k + 0.5F), this.c.stepSound.getName(), (this.c.stepSound.getVolume1() + 1.0F) / 2.0F, this.c.stepSound.getVolume2() * 0.8F);
                 --itemstack.count;
             }

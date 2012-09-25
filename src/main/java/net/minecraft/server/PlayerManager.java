@@ -90,11 +90,11 @@ public class PlayerManager {
     }
 
     public void addPlayer(EntityPlayer entityplayer) {
-        int i = (int) entityplayer.locX >> 4;
-        int j = (int) entityplayer.locZ >> 4;
+        int i = (int) entityplayer.posX >> 4;
+        int j = (int) entityplayer.posZ >> 4;
 
-        entityplayer.d = entityplayer.locX;
-        entityplayer.e = entityplayer.locZ;
+        entityplayer.d = entityplayer.posX;
+        entityplayer.e = entityplayer.posZ;
 
         for (int k = i - this.e; k <= i + this.e; ++k) {
             for (int l = j - this.e; l <= j + this.e; ++l) {
@@ -110,8 +110,8 @@ public class PlayerManager {
         ArrayList arraylist = new ArrayList(entityplayer.chunkCoordIntPairQueue);
         int i = 0;
         int j = this.e;
-        int k = (int) entityplayer.locX >> 4;
-        int l = (int) entityplayer.locZ >> 4;
+        int k = (int) entityplayer.posX >> 4;
+        int l = (int) entityplayer.posZ >> 4;
         int i1 = 0;
         int j1 = 0;
         ChunkCoordIntPair chunkcoordintpair = PlayerInstance.a(this.a(k, l, true));
@@ -175,10 +175,10 @@ public class PlayerManager {
     }
 
     public void movePlayer(EntityPlayer entityplayer) {
-        int i = (int) entityplayer.locX >> 4;
-        int j = (int) entityplayer.locZ >> 4;
-        double d0 = entityplayer.d - entityplayer.locX;
-        double d1 = entityplayer.e - entityplayer.locZ;
+        int i = (int) entityplayer.posX >> 4;
+        int j = (int) entityplayer.posZ >> 4;
+        double d0 = entityplayer.d - entityplayer.posX;
+        double d1 = entityplayer.e - entityplayer.posZ;
         double d2 = d0 * d0 + d1 * d1;
 
         if (d2 >= 64.0D) {
@@ -206,8 +206,8 @@ public class PlayerManager {
                 }
 
                 this.b(entityplayer);
-                entityplayer.d = entityplayer.locX;
-                entityplayer.e = entityplayer.locZ;
+                entityplayer.d = entityplayer.posX;
+                entityplayer.e = entityplayer.posZ;
 
                 // CraftBukkit start - send nearest chunks first
                 if (i1 > 1 || i1 < -1 || j1 > 1 || j1 < -1) {

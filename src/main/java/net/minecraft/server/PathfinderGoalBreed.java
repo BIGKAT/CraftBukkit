@@ -14,7 +14,7 @@ public class PathfinderGoalBreed extends PathfinderGoal {
 
     public PathfinderGoalBreed(EntityAnimal entityanimal, float f) {
         this.d = entityanimal;
-        this.a = entityanimal.world;
+        this.a = entityanimal.worldObj;
         this.c = f;
         this.a(3);
     }
@@ -29,7 +29,7 @@ public class PathfinderGoalBreed extends PathfinderGoal {
     }
 
     public boolean b() {
-        return this.e.isAlive() && this.e.s() && this.b < 60;
+        return this.e.isEntityAlive() && this.e.s() && this.b < 60;
     }
 
     public void c() {
@@ -68,12 +68,12 @@ public class PathfinderGoalBreed extends PathfinderGoal {
         EntityAnimal entityanimal = this.d.createChild(this.e);
 
         if (entityanimal != null) {
-            this.d.setAge(6000);
-            this.e.setAge(6000);
+            this.d.setGrowingAge(6000);
+            this.e.setGrowingAge(6000);
             this.d.t();
             this.e.t();
-            entityanimal.setAge(-24000);
-            entityanimal.setPositionRotation(this.d.locX, this.d.locY, this.d.locZ, 0.0F, 0.0F);
+            entityanimal.setGrowingAge(-24000);
+            entityanimal.setPositionRotation(this.d.posX, this.d.posY, this.d.posZ, 0.0F, 0.0F);
             this.a.addEntity(entityanimal, org.bukkit.event.entity.CreatureSpawnEvent.SpawnReason.BREEDING); // CraftBukkit - added SpawnReason
             Random random = this.d.au();
 
@@ -82,7 +82,7 @@ public class PathfinderGoalBreed extends PathfinderGoal {
                 double d1 = random.nextGaussian() * 0.02D;
                 double d2 = random.nextGaussian() * 0.02D;
 
-                this.a.a("heart", this.d.locX + (double) (random.nextFloat() * this.d.width * 2.0F) - (double) this.d.width, this.d.locY + 0.5D + (double) (random.nextFloat() * this.d.length), this.d.locZ + (double) (random.nextFloat() * this.d.width * 2.0F) - (double) this.d.width, d0, d1, d2);
+                this.a.a("heart", this.d.posX + (double) (random.nextFloat() * this.d.width * 2.0F) - (double) this.d.width, this.d.posY + 0.5D + (double) (random.nextFloat() * this.d.length), this.d.posZ + (double) (random.nextFloat() * this.d.width * 2.0F) - (double) this.d.width, d0, d1, d2);
             }
         }
     }

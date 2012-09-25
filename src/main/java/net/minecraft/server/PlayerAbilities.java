@@ -27,7 +27,7 @@ public class PlayerAbilities {
 
     public void b(NBTTagCompound nbttagcompound) {
         if (nbttagcompound.hasKey("abilities")) {
-            NBTTagCompound nbttagcompound1 = nbttagcompound.getCompound("abilities");
+            NBTTagCompound nbttagcompound1 = nbttagcompound.getCompoundTag("abilities");
 
             this.isInvulnerable = nbttagcompound1.getBoolean("invulnerable");
             this.isFlying = nbttagcompound1.getBoolean("flying");

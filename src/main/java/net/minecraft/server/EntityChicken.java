@@ -53,13 +53,13 @@ public class EntityChicken extends EntityAnimal {
         }
 
         this.i = (float) ((double) this.i * 0.9D);
-        if (!this.onGround && this.motY < 0.0D) {
-            this.motY *= 0.6D;
+        if (!this.onGround && this.motionY < 0.0D) {
+            this.motionY *= 0.6D;
         }
 
         this.e += this.i * 2.0F;
-        if (!this.isBaby() && !this.world.isStatic && --this.j <= 0) {
-            this.world.makeSound(this, "mob.chickenplop", 1.0F, (this.random.nextFloat() - this.random.nextFloat()) * 0.2F + 1.0F);
+        if (!this.isBaby() && !this.worldObj.isStatic && --this.j <= 0) {
+            this.worldObj.makeSound(this, "mob.chickenplop", 1.0F, (this.random.nextFloat() - this.random.nextFloat()) * 0.2F + 1.0F);
             this.b(Item.EGG.id, 1);
             this.j = this.random.nextInt(6000) + 6000;
         }
@@ -103,6 +103,6 @@ public class EntityChicken extends EntityAnimal {
     }
 
     public EntityAnimal createChild(EntityAnimal entityanimal) {
-        return new EntityChicken(this.world);
+        return new EntityChicken(this.worldObj);
     }
 }

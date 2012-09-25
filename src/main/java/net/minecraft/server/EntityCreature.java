@@ -7,8 +7,8 @@ import org.bukkit.event.entity.EntityTargetEvent;
 
 public abstract class EntityCreature extends EntityLiving {
 
-    public PathEntity pathEntity; // CraftBukkit - public
-    public Entity target; // CraftBukkit - public
+    public PathEntity pathToEntity; // CraftBukkit - public
+    public Entity entityToAttack; // CraftBukkit - public
     protected boolean b = false;
     protected int c = 0;
 
@@ -29,51 +29,51 @@ public abstract class EntityCreature extends EntityLiving {
         this.b = this.i();
         float f = 16.0F;
 
-        if (this.target == null) {
+        if (this.entityToAttack == null) {
             // CraftBukkit start
             Entity target = this.findTarget();
             if (target != null) {
                 EntityTargetEvent event = new EntityTargetEvent(this.getBukkitEntity(), target.getBukkitEntity(), EntityTargetEvent.TargetReason.CLOSEST_PLAYER);
-                this.world.getServer().getPluginManager().callEvent(event);
+                this.worldObj.getServer().getPluginManager().callEvent(event);
 
                 if (!event.isCancelled()) {
                     if (event.getTarget() == null) {
-                        this.target = null;
+                        this.entityToAttack = null;
                     } else {
-                        this.target = ((CraftEntity) event.getTarget()).getHandle();
+                        this.entityToAttack = ((CraftEntity) event.getTarget()).getHandle();
                     }
                 }
             }
             // CraftBukkit end
 
-            if (this.target != null) {
-                this.pathEntity = this.world.findPath(this, this.target, f, true, false, false, true);
+            if (this.entityToAttack != null) {
+                this.pathToEntity = this.worldObj.getPathEntityToEntity(this, this.entityToAttack, f, true, false, false, true);
             }
-        } else if (this.target.isAlive()) {
-            float f1 = this.target.d((Entity) this);
+        } else if (this.entityToAttack.isEntityAlive()) {
+            float f1 = this.entityToAttack.d((Entity) this);
 
-            if (this.l(this.target)) {
-                this.a(this.target, f1);
+            if (this.l(this.entityToAttack)) {
+                this.a(this.entityToAttack, f1);
             }
         } else {
             // CraftBukkit start
             EntityTargetEvent event = new EntityTargetEvent(this.getBukkitEntity(), null, EntityTargetEvent.TargetReason.TARGET_DIED);
-            this.world.getServer().getPluginManager().callEvent(event);
+            this.worldObj.getServer().getPluginManager().callEvent(event);
 
             if (!event.isCancelled()) {
                 if (event.getTarget() == null) {
-                    this.target = null;
+                    this.entityToAttack = null;
                 } else {
-                    this.target = ((CraftEntity) event.getTarget()).getHandle();
+                    this.entityToAttack = ((CraftEntity) event.getTarget()).getHandle();
                 }
             }
             // CraftBukkit end
         }
 
         // this.world.methodProfiler.b(); // CraftBukkit - not in production code
-        if (!this.b && this.target != null && (this.pathEntity == null || this.random.nextInt(20) == 0)) {
-            this.pathEntity = this.world.findPath(this, this.target, f, true, false, false, true);
-        } else if (!this.b && (this.pathEntity == null && this.random.nextInt(180) == 0 || this.random.nextInt(120) == 0 || this.c > 0) && this.bq < 100) {
+        if (!this.b && this.entityToAttack != null && (this.pathToEntity == null || this.random.nextInt(20) == 0)) {
+            this.pathToEntity = this.worldObj.getPathEntityToEntity(this, this.entityToAttack, f, true, false, false, true);
+        } else if (!this.b && (this.pathToEntity == null && this.random.nextInt(180) == 0 || this.random.nextInt(120) == 0 || this.c > 0) && this.bq < 100) {
             this.j();
         }
 
@@ -81,30 +81,30 @@ public abstract class EntityCreature extends EntityLiving {
         boolean flag = this.H();
         boolean flag1 = this.J();
 
-        this.pitch = 0.0F;
-        if (this.pathEntity != null && this.random.nextInt(100) != 0) {
+        this.rotationPitch = 0.0F;
+        if (this.pathToEntity != null && this.random.nextInt(100) != 0) {
             // this.world.methodProfiler.a("followpath"); // CraftBukkit - not in production code
-            Vec3D vec3d = this.pathEntity.a((Entity) this);
+            Vec3D vec3d = this.pathToEntity.a((Entity) this);
             double d0 = (double) (this.width * 2.0F);
 
-            while (vec3d != null && vec3d.d(this.locX, vec3d.b, this.locZ) < d0 * d0) {
-                this.pathEntity.a();
-                if (this.pathEntity.b()) {
+            while (vec3d != null && vec3d.d(this.posX, vec3d.b, this.posZ) < d0 * d0) {
+                this.pathToEntity.a();
+                if (this.pathToEntity.b()) {
                     vec3d = null;
-                    this.pathEntity = null;
+                    this.pathToEntity = null;
                 } else {
-                    vec3d = this.pathEntity.a((Entity) this);
+                    vec3d = this.pathToEntity.a((Entity) this);
                 }
             }
 
             this.bu = false;
             if (vec3d != null) {
-                double d1 = vec3d.a - this.locX;
-                double d2 = vec3d.c - this.locZ;
+                double d1 = vec3d.a - this.posX;
+                double d2 = vec3d.c - this.posZ;
                 double d3 = vec3d.b - (double) i;
                 // CraftBukkit - Math -> TrigMath
                 float f2 = (float) (org.bukkit.craftbukkit.TrigMath.atan2(d2, d1) * 180.0D / 3.1415927410125732D) - 90.0F;
-                float f3 = MathHelper.g(f2 - this.yaw);
+                float f3 = MathHelper.g(f2 - this.rotationYaw);
 
                 this.bs = this.bw;
                 if (f3 > 30.0F) {
@@ -115,14 +115,14 @@ public abstract class EntityCreature extends EntityLiving {
                     f3 = -30.0F;
                 }
 
-                this.yaw += f3;
-                if (this.b && this.target != null) {
-                    double d4 = this.target.locX - this.locX;
-                    double d5 = this.target.locZ - this.locZ;
-                    float f4 = this.yaw;
+                this.rotationYaw += f3;
+                if (this.b && this.entityToAttack != null) {
+                    double d4 = this.entityToAttack.posX - this.posX;
+                    double d5 = this.entityToAttack.posZ - this.posZ;
+                    float f4 = this.rotationYaw;
 
-                    this.yaw = (float) (Math.atan2(d5, d4) * 180.0D / 3.1415927410125732D) - 90.0F;
-                    f3 = (f4 - this.yaw + 90.0F) * 3.1415927F / 180.0F;
+                    this.rotationYaw = (float) (Math.atan2(d5, d4) * 180.0D / 3.1415927410125732D) - 90.0F;
+                    f3 = (f4 - this.rotationYaw + 90.0F) * 3.1415927F / 180.0F;
                     this.br = -MathHelper.sin(f3) * this.bs * 1.0F;
                     this.bs = MathHelper.cos(f3) * this.bs * 1.0F;
                 }
@@ -132,8 +132,8 @@ public abstract class EntityCreature extends EntityLiving {
                 }
             }
 
-            if (this.target != null) {
-                this.a(this.target, 30.0F, 30.0F);
+            if (this.entityToAttack != null) {
+                this.a(this.entityToAttack, 30.0F, 30.0F);
             }
 
             if (this.positionChanged && !this.l()) {
@@ -147,7 +147,7 @@ public abstract class EntityCreature extends EntityLiving {
             // this.world.methodProfiler.b(); // CraftBukkit - not in production code
         } else {
             super.be();
-            this.pathEntity = null;
+            this.pathToEntity = null;
         }
     }
 
@@ -160,9 +160,9 @@ public abstract class EntityCreature extends EntityLiving {
         float f = -99999.0F;
 
         for (int l = 0; l < 10; ++l) {
-            int i1 = MathHelper.floor(this.locX + (double) this.random.nextInt(13) - 6.0D);
-            int j1 = MathHelper.floor(this.locY + (double) this.random.nextInt(7) - 3.0D);
-            int k1 = MathHelper.floor(this.locZ + (double) this.random.nextInt(13) - 6.0D);
+            int i1 = MathHelper.floor(this.posX + (double) this.random.nextInt(13) - 6.0D);
+            int j1 = MathHelper.floor(this.posY + (double) this.random.nextInt(7) - 3.0D);
+            int k1 = MathHelper.floor(this.posZ + (double) this.random.nextInt(13) - 6.0D);
             float f1 = this.a(i1, j1, k1);
 
             if (f1 > f) {
@@ -175,7 +175,7 @@ public abstract class EntityCreature extends EntityLiving {
         }
 
         if (flag) {
-            this.pathEntity = this.world.a(this, i, j, k, 10.0F, true, false, false, true);
+            this.pathToEntity = this.worldObj.a(this, i, j, k, 10.0F, true, false, false, true);
         }
 
         // this.world.methodProfiler.b(); // CraftBukkit - not in production code
@@ -192,27 +192,27 @@ public abstract class EntityCreature extends EntityLiving {
     }
 
     public boolean canSpawn() {
-        int i = MathHelper.floor(this.locX);
+        int i = MathHelper.floor(this.posX);
         int j = MathHelper.floor(this.boundingBox.b);
-        int k = MathHelper.floor(this.locZ);
+        int k = MathHelper.floor(this.posZ);
 
         return super.canSpawn() && this.a(i, j, k) >= 0.0F;
     }
 
     public boolean l() {
-        return this.pathEntity != null;
+        return this.pathToEntity != null;
     }
 
     public void setPathEntity(PathEntity pathentity) {
-        this.pathEntity = pathentity;
+        this.pathToEntity = pathentity;
     }
 
     public Entity m() {
-        return this.target;
+        return this.entityToAttack;
     }
 
     public void setTarget(Entity entity) {
-        this.target = entity;
+        this.entityToAttack = entity;
     }
 
     protected float bs() {

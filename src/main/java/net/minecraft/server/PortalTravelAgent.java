@@ -25,9 +25,9 @@ public class PortalTravelAgent {
                 this.b(world, entity);
             }
         } else {
-            int i = MathHelper.floor(entity.locX);
-            int j = MathHelper.floor(entity.locY) - 1;
-            int k = MathHelper.floor(entity.locZ);
+            int i = MathHelper.floor(entity.posX);
+            int j = MathHelper.floor(entity.posY) - 1;
+            int k = MathHelper.floor(entity.posZ);
             byte b0 = 1;
             byte b1 = 0;
 
@@ -39,13 +39,13 @@ public class PortalTravelAgent {
                         int i2 = k + i1 * b1 - l * b0;
                         boolean flag = j1 < 0;
 
-                        world.setTypeId(k1, l1, i2, flag ? Block.obsidian.blockID : 0);
+                        world.setBlockWithNotify(k1, l1, i2, flag ? Block.obsidian.blockID : 0);
                     }
                 }
             }
 
-            entity.setPositionRotation((double) i, (double) j, (double) k, entity.yaw, 0.0F);
-            entity.motX = entity.motY = entity.motZ = 0.0D;
+            entity.setPositionRotation((double) i, (double) j, (double) k, entity.rotationYaw, 0.0F);
+            entity.motionX = entity.motionY = entity.motionZ = 0.0D;
         }
     }
 
@@ -55,24 +55,24 @@ public class PortalTravelAgent {
         int i = 0;
         int j = 0;
         int k = 0;
-        int l = MathHelper.floor(entity.locX);
-        int i1 = MathHelper.floor(entity.locZ);
+        int l = MathHelper.floor(entity.posX);
+        int i1 = MathHelper.floor(entity.posZ);
 
         double d1;
 
         for (int j1 = l - short1; j1 <= l + short1; ++j1) {
-            double d2 = (double) j1 + 0.5D - entity.locX;
+            double d2 = (double) j1 + 0.5D - entity.posX;
 
             for (int k1 = i1 - short1; k1 <= i1 + short1; ++k1) {
-                double d3 = (double) k1 + 0.5D - entity.locZ;
+                double d3 = (double) k1 + 0.5D - entity.posZ;
 
                 for (int l1 = world.L() - 1; l1 >= 0; --l1) {
-                    if (world.getTypeId(j1, l1, k1) == Block.portal.blockID) {
-                        while (world.getTypeId(j1, l1 - 1, k1) == Block.portal.blockID) {
+                    if (world.getBlockId(j1, l1, k1) == Block.portal.blockID) {
+                        while (world.getBlockId(j1, l1 - 1, k1) == Block.portal.blockID) {
                             --l1;
                         }
 
-                        d1 = (double) l1 + 0.5D - entity.locY;
+                        d1 = (double) l1 + 0.5D - entity.posY;
                         double d4 = d2 * d2 + d1 * d1 + d3 * d3;
 
                         if (d0 < 0.0D || d4 < d0) {
@@ -91,24 +91,24 @@ public class PortalTravelAgent {
             double d6 = (double) j + 0.5D;
 
             d1 = (double) k + 0.5D;
-            if (world.getTypeId(i - 1, j, k) == Block.portal.blockID) {
+            if (world.getBlockId(i - 1, j, k) == Block.portal.blockID) {
                 d5 -= 0.5D;
             }
 
-            if (world.getTypeId(i + 1, j, k) == Block.portal.blockID) {
+            if (world.getBlockId(i + 1, j, k) == Block.portal.blockID) {
                 d5 += 0.5D;
             }
 
-            if (world.getTypeId(i, j, k - 1) == Block.portal.blockID) {
+            if (world.getBlockId(i, j, k - 1) == Block.portal.blockID) {
                 d1 -= 0.5D;
             }
 
-            if (world.getTypeId(i, j, k + 1) == Block.portal.blockID) {
+            if (world.getBlockId(i, j, k + 1) == Block.portal.blockID) {
                 d1 += 0.5D;
             }
 
-            entity.setPositionRotation(d5, d6, d1, entity.yaw, 0.0F);
-            entity.motX = entity.motY = entity.motZ = 0.0D;
+            entity.setPositionRotation(d5, d6, d1, entity.rotationYaw, 0.0F);
+            entity.motionX = entity.motionY = entity.motionZ = 0.0D;
             return true;
         } else {
             return false;
@@ -118,9 +118,9 @@ public class PortalTravelAgent {
     public boolean c(World world, Entity entity) {
         byte b0 = 16;
         double d0 = -1.0D;
-        int i = MathHelper.floor(entity.locX);
-        int j = MathHelper.floor(entity.locY);
-        int k = MathHelper.floor(entity.locZ);
+        int i = MathHelper.floor(entity.posX);
+        int j = MathHelper.floor(entity.posY);
+        int k = MathHelper.floor(entity.posZ);
         int l = i;
         int i1 = j;
         int j1 = k;
@@ -144,10 +144,10 @@ public class PortalTravelAgent {
         double d4;
 
         for (i2 = i - b0; i2 <= i + b0; ++i2) {
-            d1 = (double) i2 + 0.5D - entity.locX;
+            d1 = (double) i2 + 0.5D - entity.posX;
 
             for (j2 = k - b0; j2 <= k + b0; ++j2) {
-                d2 = (double) j2 + 0.5D - entity.locZ;
+                d2 = (double) j2 + 0.5D - entity.posZ;
 
                 label274:
                 for (l2 = world.L() - 1; l2 >= 0; --l2) {
@@ -178,7 +178,7 @@ public class PortalTravelAgent {
                                 }
                             }
 
-                            d3 = (double) l2 + 0.5D - entity.locY;
+                            d3 = (double) l2 + 0.5D - entity.posY;
                             d4 = d1 * d1 + d3 * d3 + d2 * d2;
                             if (d0 < 0.0D || d4 < d0) {
                                 d0 = d4;
@@ -195,10 +195,10 @@ public class PortalTravelAgent {
 
         if (d0 < 0.0D) {
             for (i2 = i - b0; i2 <= i + b0; ++i2) {
-                d1 = (double) i2 + 0.5D - entity.locX;
+                d1 = (double) i2 + 0.5D - entity.posX;
 
                 for (j2 = k - b0; j2 <= k + b0; ++j2) {
-                    d2 = (double) j2 + 0.5D - entity.locZ;
+                    d2 = (double) j2 + 0.5D - entity.posZ;
 
                     label222:
                     for (l2 = world.L() - 1; l2 >= 0; --l2) {
@@ -222,7 +222,7 @@ public class PortalTravelAgent {
                                     }
                                 }
 
-                                d3 = (double) l2 + 0.5D - entity.locY;
+                                d3 = (double) l2 + 0.5D - entity.posY;
                                 d4 = d1 * d1 + d3 * d3 + d2 * d2;
                                 if (d0 < 0.0D || d4 < d0) {
                                     d0 = d4;
@@ -270,7 +270,7 @@ public class PortalTravelAgent {
                         l3 = j5 + j3;
                         k3 = j2 + (k2 - 1) * l5 - l2 * k5;
                         flag = j3 < 0;
-                        world.setTypeId(i3, l3, k3, flag ? Block.obsidian.blockID : 0);
+                        world.setBlockWithNotify(i3, l3, k3, flag ? Block.obsidian.blockID : 0);
                     }
                 }
             }
@@ -285,7 +285,7 @@ public class PortalTravelAgent {
                     l3 = j5 + j3;
                     k3 = j2 + (k2 - 1) * l5;
                     flag = k2 == 0 || k2 == 3 || j3 == -1 || j3 == 3;
-                    world.setTypeId(i3, l3, k3, flag ? Block.obsidian.blockID : Block.portal.blockID);
+                    world.setBlockWithNotify(i3, l3, k3, flag ? Block.obsidian.blockID : Block.portal.blockID);
                 }
             }
 
@@ -296,7 +296,7 @@ public class PortalTravelAgent {
                     i3 = i5 + (k2 - 1) * k5;
                     l3 = j5 + j3;
                     k3 = j2 + (k2 - 1) * l5;
-                    world.applyPhysics(i3, l3, k3, world.getTypeId(i3, l3, k3));
+                    world.applyPhysics(i3, l3, k3, world.getBlockId(i3, l3, k3));
                 }
             }
         }

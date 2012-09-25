@@ -12,7 +12,7 @@ public class ItemRedstone extends Item {
     public boolean interactWith(ItemStack itemstack, EntityHuman entityhuman, World world, int i, int j, int k, int l, float f, float f1, float f2) {
         int clickedX = i, clickedY = j, clickedZ = k; // CraftBukkit
 
-        if (world.getTypeId(i, j, k) != Block.SNOW.blockID) {
+        if (world.getBlockId(i, j, k) != Block.SNOW.blockID) {
             if (l == 0) {
                 --j;
             }
@@ -50,7 +50,7 @@ public class ItemRedstone extends Item {
                 CraftBlockState blockState = CraftBlockState.getBlockState(world, i, j, k);
 
                 world.suppressPhysics = true;
-                world.setRawTypeId(i, j, k, Block.redstoneWire.blockID); // We update after the event
+                world.setBlock(i, j, k, Block.redstoneWire.blockID); // We update after the event
 
                 org.bukkit.event.block.BlockPlaceEvent event = org.bukkit.craftbukkit.event.CraftEventFactory.callBlockPlaceEvent(world, entityhuman, blockState, clickedX, clickedY, clickedZ);
                 blockState.update(true);
@@ -62,7 +62,7 @@ public class ItemRedstone extends Item {
                 // CraftBukkit end
 
                 --itemstack.count;
-                world.setTypeId(i, j, k, Block.redstoneWire.blockID);
+                world.setBlockWithNotify(i, j, k, Block.redstoneWire.blockID);
             }
 
             return true;

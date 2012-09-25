@@ -140,22 +140,22 @@ public abstract class CraftEntity implements org.bukkit.entity.Entity {
     }
 
     public Location getLocation() {
-        return new Location(getWorld(), entity.locX, entity.locY, entity.locZ, entity.yaw, entity.pitch);
+        return new Location(getWorld(), entity.posX, entity.posY, entity.posZ, entity.rotationYaw, entity.rotationPitch);
     }
 
     public Vector getVelocity() {
-        return new Vector(entity.motX, entity.motY, entity.motZ);
+        return new Vector(entity.motionX, entity.motionY, entity.motionZ);
     }
 
     public void setVelocity(Vector vel) {
-        entity.motX = vel.getX();
-        entity.motY = vel.getY();
-        entity.motZ = vel.getZ();
+        entity.motionX = vel.getX();
+        entity.motionY = vel.getY();
+        entity.motionZ = vel.getZ();
         entity.velocityChanged = true;
     }
 
     public World getWorld() {
-        return ((WorldServer) entity.world).getWorld();
+        return ((WorldServer) entity.worldObj).getWorld();
     }
 
     public boolean teleport(Location location) {
@@ -163,8 +163,8 @@ public abstract class CraftEntity implements org.bukkit.entity.Entity {
     }
 
     public boolean teleport(Location location, TeleportCause cause) {
-        entity.world = ((CraftWorld) location.getWorld()).getHandle();
-        entity.setLocation(location.getX(), location.getY(), location.getZ(), location.getYaw(), location.getPitch());
+        entity.worldObj = ((CraftWorld) location.getWorld()).getHandle();
+        entity.setPositionAndRotation(location.getX(), location.getY(), location.getZ(), location.getYaw(), location.getPitch());
         // entity.setLocation() throws no event, and so cannot be cancelled
         return true;
     }
@@ -179,7 +179,7 @@ public abstract class CraftEntity implements org.bukkit.entity.Entity {
 
     public List<org.bukkit.entity.Entity> getNearbyEntities(double x, double y, double z) {
         @SuppressWarnings("unchecked")
-        List<Entity> notchEntityList = entity.world.getEntities(entity, entity.boundingBox.grow(x, y, z));
+        List<Entity> notchEntityList = entity.worldObj.getEntities(entity, entity.boundingBox.grow(x, y, z));
         List<org.bukkit.entity.Entity> bukkitEntityList = new java.util.ArrayList<org.bukkit.entity.Entity>(notchEntityList.size());
 
         for (Entity e : notchEntityList) {
@@ -189,31 +189,31 @@ public abstract class CraftEntity implements org.bukkit.entity.Entity {
     }
 
     public int getEntityId() {
-        return entity.id;
+        return entity.entityId;
     }
 
     public int getFireTicks() {
-        return entity.fireTicks;
+        return entity.fire;
     }
 
     public int getMaxFireTicks() {
-        return entity.maxFireTicks;
+        return entity.fireResistance;
     }
 
     public void setFireTicks(int ticks) {
-        entity.fireTicks = ticks;
+        entity.fire = ticks;
     }
 
     public void remove() {
-        entity.dead = true;
+        entity.isDead = true;
     }
 
     public boolean isDead() {
-        return !entity.isAlive();
+        return !entity.isEntityAlive();
     }
 
     public boolean isValid() {
-        return entity.isAlive() && entity.valid;
+        return entity.isEntityAlive() && entity.valid;
     }
 
     public Server getServer() {
@@ -229,7 +229,7 @@ public abstract class CraftEntity implements org.bukkit.entity.Entity {
     }
 
     public org.bukkit.entity.Entity getPassenger() {
-        return isEmpty() ? null : (CraftEntity) getHandle().passenger.getBukkitEntity();
+        return isEmpty() ? null : (CraftEntity) getHandle().riddenByEntity.getBukkitEntity();
     }
 
     public boolean setPassenger(org.bukkit.entity.Entity passenger) {
@@ -242,15 +242,15 @@ public abstract class CraftEntity implements org.bukkit.entity.Entity {
     }
 
     public boolean isEmpty() {
-        return getHandle().passenger == null;
+        return getHandle().riddenByEntity == null;
     }
 
     public boolean eject() {
-        if (getHandle().passenger == null) {
+        if (getHandle().riddenByEntity == null) {
             return false;
         }
 
-        getHandle().passenger.setPassengerOf(null);
+        getHandle().riddenByEntity.setPassengerOf(null);
         return true;
     }
 
@@ -275,14 +275,14 @@ public abstract class CraftEntity implements org.bukkit.entity.Entity {
     }
 
     public int getTicksLived() {
-        return getHandle().ticksLived;
+        return getHandle().ticksExisted;
     }
 
     public void setTicksLived(int value) {
         if (value <= 0) {
             throw new IllegalArgumentException("Age must be at least 1 tick");
         }
-        getHandle().ticksLived = value;
+        getHandle().ticksExisted = value;
     }
 
     public Entity getHandle() {
@@ -290,7 +290,7 @@ public abstract class CraftEntity implements org.bukkit.entity.Entity {
     }
 
     public void playEffect(EntityEffect type) {
-        this.getHandle().world.broadcastEntityEffect(getHandle(), type.getData());
+        this.getHandle().worldObj.setEntityState(getHandle(), type.getData());
     }
 
     public void setHandle(final Entity entity) {
@@ -338,11 +338,11 @@ public abstract class CraftEntity implements org.bukkit.entity.Entity {
     }
 
     public boolean isInsideVehicle() {
-        return getHandle().vehicle != null;
+        return getHandle().ridingEntity != null;
     }
 
     public boolean leaveVehicle() {
-        if (getHandle().vehicle == null) {
+        if (getHandle().ridingEntity == null) {
             return false;
         }
 
@@ -351,10 +351,10 @@ public abstract class CraftEntity implements org.bukkit.entity.Entity {
     }
 
     public org.bukkit.entity.Entity getVehicle() {
-        if (getHandle().vehicle == null) {
+        if (getHandle().ridingEntity == null) {
             return null;
         }
 
-        return getHandle().vehicle.getBukkitEntity();
+        return getHandle().ridingEntity.getBukkitEntity();
     }
 }

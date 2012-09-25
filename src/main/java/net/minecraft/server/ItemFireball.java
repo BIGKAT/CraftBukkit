@@ -43,7 +43,7 @@ public class ItemFireball extends Item {
             if (!entityhuman.e(i, j, k)) {
                 return false;
             } else {
-                int i1 = world.getTypeId(i, j, k);
+                int i1 = world.getBlockId(i, j, k);
 
                 if (i1 == 0) {
                     // CraftBukkit start
@@ -54,7 +54,7 @@ public class ItemFireball extends Item {
                     world.getServer().getPluginManager().callEvent(eventIgnite);
 
                     if (eventIgnite.isCancelled()) {
-                        if (!entityhuman.abilities.canInstantlyBuild) {
+                        if (!entityhuman.capabilities.canInstantlyBuild) {
                             --itemstack.count;
                         }
                         return false;
@@ -62,10 +62,10 @@ public class ItemFireball extends Item {
                     // CraftBukkit end
 
                     world.makeSound((double) i + 0.5D, (double) j + 0.5D, (double) k + 0.5D, "fire.ignite", 1.0F, d.nextFloat() * 0.4F + 0.8F);
-                    world.setTypeId(i, j, k, Block.FIRE.blockID);
+                    world.setBlockWithNotify(i, j, k, Block.FIRE.blockID);
                 }
 
-                if (!entityhuman.abilities.canInstantlyBuild) {
+                if (!entityhuman.capabilities.canInstantlyBuild) {
                     --itemstack.count;
                 }
 

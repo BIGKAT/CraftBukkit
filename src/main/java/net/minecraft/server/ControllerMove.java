@@ -11,9 +11,9 @@ public class ControllerMove {
 
     public ControllerMove(EntityLiving entityliving) {
         this.a = entityliving;
-        this.b = entityliving.locX;
-        this.c = entityliving.locY;
-        this.d = entityliving.locZ;
+        this.b = entityliving.posX;
+        this.c = entityliving.posY;
+        this.d = entityliving.posZ;
     }
 
     public boolean a() {
@@ -37,8 +37,8 @@ public class ControllerMove {
         if (this.f) {
             this.f = false;
             int i = MathHelper.floor(this.a.boundingBox.b + 0.5D);
-            double d0 = this.b - this.a.locX;
-            double d1 = this.d - this.a.locZ;
+            double d0 = this.b - this.a.posX;
+            double d1 = this.d - this.a.posZ;
             double d2 = this.c - (double) i;
             double d3 = d0 * d0 + d2 * d2 + d1 * d1;
 
@@ -46,7 +46,7 @@ public class ControllerMove {
                 // CraftBukkit - Math -> TrigMath
                 float f = (float) (org.bukkit.craftbukkit.TrigMath.atan2(d1, d0) * 180.0D / 3.1415927410125732D) - 90.0F;
 
-                this.a.yaw = this.a(this.a.yaw, f, 30.0F);
+                this.a.rotationYaw = this.a(this.a.rotationYaw, f, 30.0F);
                 this.a.e(this.e);
                 if (d2 > 0.0D && d0 * d0 + d1 * d1 < 1.0D) {
                     this.a.getControllerJump().a();

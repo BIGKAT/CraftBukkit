@@ -12,11 +12,11 @@ public class CraftPig extends CraftAnimals implements Pig {
     }
 
     public boolean hasSaddle() {
-        return getHandle().hasSaddle();
+        return getHandle().getSaddled();
     }
 
     public void setSaddle(boolean saddled) {
-        getHandle().setSaddle(saddled);
+        getHandle().setSaddled(saddled);
     }
 
     public EntityPig getHandle() {

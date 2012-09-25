@@ -55,13 +55,13 @@ public class TileEntityBrewingStand extends TileEntity implements IInventory {
             --this.brewTime;
             if (this.brewTime == 0) {
                 this.r();
-                this.update();
+                this.onInventoryChanged();
             } else if (!this.k()) {
                 this.brewTime = 0;
-                this.update();
+                this.onInventoryChanged();
             } else if (this.d != this.items[3].id) {
                 this.brewTime = 0;
-                this.update();
+                this.onInventoryChanged();
             }
         } else if (this.k()) {
             this.brewTime = 400;
@@ -72,7 +72,7 @@ public class TileEntityBrewingStand extends TileEntity implements IInventory {
 
         if (i != this.c) {
             this.c = i;
-            this.world.setData(this.x, this.y, this.z, i);
+            this.world.setBlockMetadataWithNotify(this.x, this.y, this.z, i);
         }
 
         super.g();

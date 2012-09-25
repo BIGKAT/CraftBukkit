@@ -47,8 +47,8 @@ public class ContainerMerchant extends Container {
         return this.f;
     }
 
-    public void addSlotListener(ICrafting icrafting) {
-        super.addSlotListener(icrafting);
+    public void addCraftingToCrafters(ICrafting icrafting) {
+        super.addCraftingToCrafters(icrafting);
     }
 
     public void b() {
