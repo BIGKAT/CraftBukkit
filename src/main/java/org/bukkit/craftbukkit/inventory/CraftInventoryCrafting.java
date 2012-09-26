@@ -27,7 +27,7 @@ public class CraftInventoryCrafting extends CraftInventory implements CraftingIn
 
     @Override
     public int getSize() {
-        return getResultInventory().getSize() + getMatrixInventory().getSize();
+        return getResultInventory().getInventoryStackLimit() + getMatrixInventory().getInventoryStackLimit();
     }
 
     @Override
@@ -66,21 +66,21 @@ public class CraftInventoryCrafting extends CraftInventory implements CraftingIn
 
     @Override
     public CraftItemStack getItem(int index) {
-        if (index < getResultInventory().getSize()) {
-            net.minecraft.src.ItemStack item = getResultInventory().getItem(index);
+        if (index < getResultInventory().getInventoryStackLimit()) {
+            net.minecraft.src.ItemStack item = getResultInventory().getStackInSlot(index);
             return item == null ? null : new CraftItemStack(item);
         } else {
-            net.minecraft.src.ItemStack item = getMatrixInventory().getItem(index - getResultInventory().getSize());
+            net.minecraft.src.ItemStack item = getMatrixInventory().getStackInSlot(index - getResultInventory().getInventoryStackLimit());
             return item == null ? null : new CraftItemStack(item);
         }
     }
 
     @Override
     public void setItem(int index, ItemStack item) {
-        if (index < getResultInventory().getSize()) {
-            getResultInventory().setItem(index, (item == null ? null : CraftItemStack.createNMSItemStack(item)));
+        if (index < getResultInventory().getInventoryStackLimit()) {
+            getResultInventory().setInventorySlotContents(index, (item == null ? null : CraftItemStack.createNMSItemStack(item)));
         } else {
-            getMatrixInventory().setItem((index - getResultInventory().getSize()), (item == null ? null : CraftItemStack.createNMSItemStack(item)));
+            getMatrixInventory().setInventorySlotContents((index - getResultInventory().getInventoryStackLimit()), (item == null ? null : CraftItemStack.createNMSItemStack(item)));
         }
     }
 
@@ -96,7 +96,7 @@ public class CraftInventoryCrafting extends CraftInventory implements CraftingIn
     }
 
     public ItemStack getResult() {
-        net.minecraft.src.ItemStack item = getResultInventory().getItem(0);
+        net.minecraft.src.ItemStack item = getResultInventory().getStackInSlot(0);
         if(item != null) return new CraftItemStack(item);
         return null;
     }

@@ -29,7 +29,7 @@ public class CraftOfflinePlayer implements OfflinePlayer, ConfigurationSerializa
     protected CraftOfflinePlayer(CraftServer server, String name) {
         this.server = server;
         this.name = name;
-        this.storage = (SaveHandler) (server.console.worlds.get(0).getDataManager());
+        this.storage = (SaveHandler) (server.console.worldServers[0].getSaveHandler());
     }
 
     public boolean isOnline() {
@@ -59,29 +59,29 @@ public class CraftOfflinePlayer implements OfflinePlayer, ConfigurationSerializa
     }
 
     public boolean isBanned() {
-        return server.getHandle().getNameBans().isBanned(name.toLowerCase());
+        return server.getHandle().getBannedPlayers().isBanned(name.toLowerCase());
     }
 
     public void setBanned(boolean value) {
         if (value) {
             BanEntry entry = new BanEntry(name.toLowerCase());
-            server.getHandle().getNameBans().put(entry);
+            server.getHandle().getBannedPlayers().put(entry);
         } else {
-            server.getHandle().getNameBans().remove(name.toLowerCase());
+            server.getHandle().getBannedPlayers().remove(name.toLowerCase());
         }
 
-        server.getHandle().getNameBans().saveToFileWithHeader();
+        server.getHandle().getBannedPlayers().saveToFileWithHeader();
     }
 
     public boolean isWhitelisted() {
-        return server.getHandle().getWhitelisted().contains(name.toLowerCase());
+        return server.getHandle().getWhiteListedPlayers().contains(name.toLowerCase());
     }
 
     public void setWhitelisted(boolean value) {
         if (value) {
-            server.getHandle().addWhitelist(name.toLowerCase());
+            server.getHandle().addToWhiteList(name.toLowerCase());
         } else {
-            server.getHandle().removeWhitelist(name.toLowerCase());
+            server.getHandle().removeFromWhitelist(name.toLowerCase());
         }
     }
 
@@ -103,10 +103,10 @@ public class CraftOfflinePlayer implements OfflinePlayer, ConfigurationSerializa
     }
 
     public Player getPlayer() {
-        for (Object obj : server.getHandle().players) {
+        for (Object obj : server.getHandle().playerEntityList) {
             EntityPlayerMP player = (EntityPlayerMP) obj;
             if (player.username.equalsIgnoreCase(getName())) {
-                return (player.serverForThisPlayer != null) ? player.serverForThisPlayer.getPlayer() : null;
+                return (player.playerNetServerHandler != null) ? player.playerNetServerHandler.getPlayer() : null;
             }
         }
 

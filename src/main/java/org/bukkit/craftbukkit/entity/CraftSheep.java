@@ -17,7 +17,7 @@ public class CraftSheep extends CraftAnimals implements Sheep {
     }
 
     public void setColor(DyeColor color) {
-        getHandle().setColor(color.getData());
+        getHandle().setFleeceColor(color.getData());
     }
 
     public boolean isSheared() {

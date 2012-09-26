@@ -126,6 +126,6 @@ public class CraftEnchantment extends Enchantment {
             return false;
         }
         CraftEnchantment ench = (CraftEnchantment) other;
-        return !target.a(ench.target);
+        return !target.canApplyTogether(ench.target);
     }
 }

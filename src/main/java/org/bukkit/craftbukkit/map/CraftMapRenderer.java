@@ -32,8 +32,8 @@ public class CraftMapRenderer extends MapRenderer {
         while (cursors.size() > 0) {
             cursors.removeCursor(cursors.getCursor(0));
         }
-        for (int i = 0; i < worldMap.decorations.size(); ++i) {
-			MapCoord decoration = (MapCoord) worldMap.decorations.get(i);
+        for (int i = 0; i < worldMap.playersVisibleOnMap.size(); ++i) {
+			MapCoord decoration = (MapCoord) worldMap.playersVisibleOnMap.get(i);
             cursors.addCursor(decoration.centerX, decoration.centerZ, (byte) (decoration.iconRotation & 15), (byte) (decoration.iconSize));
         }
     }

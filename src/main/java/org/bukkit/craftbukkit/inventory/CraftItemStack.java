@@ -16,9 +16,9 @@ public class CraftItemStack extends ItemStack {
 
     public CraftItemStack(net.minecraft.src.ItemStack item) {
         super(
-            item != null ? item.id: 0,
-            item != null ? item.count : 0,
-            (short)(item != null ? item.getData() : 0)
+            item != null ? item.itemID: 0,
+            item != null ? item.stackSize : 0,
+            (short)(item != null ? item.getItemDamage() : 0)
         );
         this.item = item;
     }
@@ -68,14 +68,14 @@ public class CraftItemStack extends ItemStack {
 
     @Override
     public Material getType() {
-        super.setTypeId(item != null ? item.id : 0); // sync, needed?
+        super.setTypeId(item != null ? item.itemID : 0); // sync, needed?
         return super.getType();
     }
 
     @Override
     public int getTypeId() {
-        super.setTypeId(item != null ? item.id : 0); // sync, needed?
-        return item != null ? item.id : 0;
+        super.setTypeId(item != null ? item.itemID : 0); // sync, needed?
+        return item != null ? item.itemID : 0;
     }
 
     @Override
@@ -91,16 +91,16 @@ public class CraftItemStack extends ItemStack {
                 super.setAmount(1);
                 super.setDurability((short) 0);
             } else {
-                item.id = type;
-                super.setTypeId(item.id);
+                item.itemID = type;
+                super.setTypeId(item.itemID);
             }
         }
     }
 
     @Override
     public int getAmount() {
-        super.setAmount(item != null ? item.count : 0); // sync, needed?
-        return (item != null ? item.count : 0);
+        super.setAmount(item != null ? item.stackSize : 0); // sync, needed?
+        return (item != null ? item.stackSize : 0);
     }
 
     @Override
@@ -111,7 +111,7 @@ public class CraftItemStack extends ItemStack {
             item = null;
         } else {
             super.setAmount(amount);
-            item.count = amount;
+            item.stackSize = amount;
         }
     }
 
@@ -120,15 +120,15 @@ public class CraftItemStack extends ItemStack {
         // Ignore damage if item is null
         if (item != null) {
             super.setDurability(durability);
-            item.setData(durability);
+            item.setItemDamage(durability);
         }
     }
 
     @Override
     public short getDurability() {
         if (item != null) {
-            super.setDurability((short) item.getData()); // sync, needed?
-            return (short) item.getData();
+            super.setDurability((short) item.getItemDamage()); // sync, needed?
+            return (short) item.getItemDamage();
         } else {
             return -1;
         }
@@ -170,7 +170,7 @@ public class CraftItemStack extends ItemStack {
     @Override
     public Map<Enchantment, Integer> getEnchantments() {
         Map<Enchantment, Integer> result = new HashMap<Enchantment, Integer>();
-        NBTTagList list = (item == null) ? null : item.getEnchantments();
+        NBTTagList list = (item == null) ? null : item.getEnchantmentTagList();
 
         if (list == null) {
             return result;
@@ -189,11 +189,11 @@ public class CraftItemStack extends ItemStack {
     private void rebuildEnchantments(Map<Enchantment, Integer> enchantments) {
         if (item == null) return;
 
-        NBTTagCompound tag = item.tag;
+        NBTTagCompound tag = item.stackTagCompound;
         NBTTagList list = new NBTTagList("ench");
 
         if (tag == null) {
-            tag = item.tag = new NBTTagCompound();
+            tag = item.stackTagCompound = new NBTTagCompound();
         }
 
         for (Map.Entry<Enchantment, Integer> entry : enchantments.entrySet()) {
@@ -208,7 +208,7 @@ public class CraftItemStack extends ItemStack {
         if (enchantments.isEmpty()) {
             tag.remove("ench");
         } else {
-            tag.set("ench", list);
+            tag.setTag("ench", list);
         }
     }
 
@@ -220,7 +220,7 @@ public class CraftItemStack extends ItemStack {
     public CraftItemStack clone() {
         CraftItemStack itemStack = (CraftItemStack) super.clone();
         if (this.item != null) {
-            itemStack.item = this.item.cloneItemStack();
+            itemStack.item = this.item.copy();
         }
         return itemStack;
     }

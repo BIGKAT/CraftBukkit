@@ -41,7 +41,7 @@ public class CraftNoteBlock extends CraftBlockState implements NoteBlock {
 
         synchronized (block) {
             if (block.getType() == Material.NOTE_BLOCK) {
-                note.play(world.getHandle(), getX(), getY(), getZ());
+                note.triggerNote(world.getHandle(), getX(), getY(), getZ());
                 return true;
             } else {
                 return false;

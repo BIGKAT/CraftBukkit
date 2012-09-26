@@ -14,7 +14,7 @@ public class CraftCreeper extends CraftMonster implements Creeper {
     }
 
     public boolean isPowered() {
-        return getHandle().isPowered();
+        return getHandle().getPowered();
     }
 
     public void setPowered(boolean powered) {

@@ -20,6 +20,6 @@ public class CraftFurnaceRecipe extends FurnaceRecipe implements CraftRecipe {
     public void addToCraftingManager() {
         ItemStack result = this.getResult();
         ItemStack input = this.getInput();
-        FurnaceRecipes.getInstance().registerRecipe(input.getTypeId(), CraftItemStack.createNMSItemStack(result), 0.1f);
+        FurnaceRecipes.smelting().addSmelting(input.getTypeId(), CraftItemStack.createNMSItemStack(result), 0.1f);
     }
 }

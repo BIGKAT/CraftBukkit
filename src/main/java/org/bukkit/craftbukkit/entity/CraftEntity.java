@@ -75,7 +75,7 @@ public abstract class CraftEntity implements org.bukkit.entity.Entity {
                 // Water Animals
                 else if (entity instanceof EntityWaterMob) {
                     if (entity instanceof net.minecraft.src.EntitySquid) { return new CraftSquid(server, (net.minecraft.src.EntitySquid) entity); }
-                    else { return new CraftWaterMob(server, (EntityWaterAnimal) entity); }
+                    else { return new CraftWaterMob(server, (EntityWaterMob) entity); }
                 }
                 else if (entity instanceof EntityGolem) {
                     if (entity instanceof net.minecraft.src.EntitySnowman) { return new CraftSnowman(server, (net.minecraft.src.EntitySnowman) entity); }
@@ -107,7 +107,7 @@ public abstract class CraftEntity implements org.bukkit.entity.Entity {
         else if (entity instanceof EntityXPOrb) { return new CraftExperienceOrb(server, (EntityXPOrb) entity); }
         else if (entity instanceof EntityArrow) { return new CraftArrow(server, (EntityArrow) entity); }
         else if (entity instanceof EntityBoat) { return new CraftBoat(server, (EntityBoat) entity); }
-        else if (entity instanceof EntityProjectile) {
+        else if (entity instanceof EntityThrowable) {
             if (entity instanceof EntityEgg) { return new CraftEgg(server, (EntityEgg) entity); }
             else if (entity instanceof EntitySnowball) { return new CraftSnowball(server, (EntitySnowball) entity); }
             else if (entity instanceof net.minecraft.src.EntityPotion) { return new CraftThrownPotion(server, (net.minecraft.src.EntityPotion) entity); }
@@ -119,9 +119,9 @@ public abstract class CraftEntity implements org.bukkit.entity.Entity {
             if (entity instanceof net.minecraft.src.EntitySmallFireball) { return new CraftSmallFireball(server, (net.minecraft.src.EntitySmallFireball) entity); }
             else { return new CraftFireball(server, (EntityFireball) entity); }
         }
-        else if (entity instanceof EntityEnderSignal) { return new CraftEnderSignal(server, (EntityEnderSignal) entity); }
+        else if (entity instanceof EntityEnderEye) { return new CraftEnderSignal(server, (EntityEnderEye) entity); }
         else if (entity instanceof EntityEnderCrystal) { return new CraftEnderCrystal(server, (EntityEnderCrystal) entity); }
-        else if (entity instanceof EntityFishingHook) { return new CraftFish(server, (EntityFishingHook) entity); }
+        else if (entity instanceof EntityFishHook) { return new CraftFish(server, (EntityFishHook) entity); }
         else if (entity instanceof net.minecraft.src.EntityItem) { return new CraftItem(server, (net.minecraft.src.EntityItem) entity); }
         else if (entity instanceof EntityWeatherEffect) {
             if (entity instanceof EntityLightningBolt) { return new CraftLightningStrike(server, (EntityLightningBolt) entity); }
@@ -179,7 +179,7 @@ public abstract class CraftEntity implements org.bukkit.entity.Entity {
 
     public List<org.bukkit.entity.Entity> getNearbyEntities(double x, double y, double z) {
         @SuppressWarnings("unchecked")
-        List<Entity> notchEntityList = entity.worldObj.getEntities(entity, entity.boundingBox.grow(x, y, z));
+        List<Entity> notchEntityList = entity.worldObj.getEntitiesWithinAABBExcludingEntity(entity, entity.boundingBox.expand(x, y, z));
         List<org.bukkit.entity.Entity> bukkitEntityList = new java.util.ArrayList<org.bukkit.entity.Entity>(notchEntityList.size());
 
         for (Entity e : notchEntityList) {
@@ -234,7 +234,7 @@ public abstract class CraftEntity implements org.bukkit.entity.Entity {
 
     public boolean setPassenger(org.bukkit.entity.Entity passenger) {
         if (passenger instanceof CraftEntity) {
-            ((CraftEntity) passenger).getHandle().setPassengerOf(getHandle());
+            ((CraftEntity) passenger).getHandle().mountEntity(getHandle());
             return true;
         } else {
             return false;
@@ -250,7 +250,7 @@ public abstract class CraftEntity implements org.bukkit.entity.Entity {
             return false;
         }
 
-        getHandle().riddenByEntity.setPassengerOf(null);
+        getHandle().riddenByEntity.mountEntity(null);
         return true;
     }
 
@@ -346,7 +346,7 @@ public abstract class CraftEntity implements org.bukkit.entity.Entity {
             return false;
         }
 
-        getHandle().setPassengerOf(null);
+        getHandle().mountEntity(null);
         return true;
     }
 

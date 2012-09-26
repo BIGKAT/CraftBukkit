@@ -2,7 +2,7 @@ package org.bukkit.craftbukkit.entity;
 
 import net.minecraft.src.Entity;
 import net.minecraft.src.EntityLiving;
-import net.minecraft.src.EntityProjectile;
+import net.minecraft.src.EntityThrowable;
 import org.bukkit.craftbukkit.CraftServer;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Projectile;
@@ -13,8 +13,8 @@ public abstract class CraftProjectile extends AbstractProjectile implements Proj
     }
 
     public LivingEntity getShooter() {
-        if (getHandle().shootingEntity instanceof EntityLiving) {
-            return (LivingEntity) getHandle().shootingEntity.getBukkitEntity();
+        if (getHandle().thrower instanceof EntityLiving) {
+            return (LivingEntity) getHandle().thrower.getBukkitEntity();
         }
 
         return null;
@@ -22,13 +22,13 @@ public abstract class CraftProjectile extends AbstractProjectile implements Proj
 
     public void setShooter(LivingEntity shooter) {
         if (shooter instanceof CraftLivingEntity) {
-            getHandle().shootingEntity = (EntityLiving) ((CraftLivingEntity) shooter).entity;
+            getHandle().thrower = (EntityLiving) ((CraftLivingEntity) shooter).entity;
         }
     }
 
     @Override
-    public EntityProjectile getHandle() {
-        return (EntityProjectile) entity;
+    public EntityThrowable getHandle() {
+        return (EntityThrowable) entity;
     }
 
     @Override

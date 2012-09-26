@@ -32,9 +32,9 @@ public class CraftChunk implements Chunk {
             this.weakChunk = new WeakReference<net.minecraft.src.Chunk>(chunk);
         }
 
-        worldServer = (WorldServer) getHandle().world;
-        x = getHandle().x;
-        z = getHandle().z;
+        worldServer = (WorldServer) getHandle().worldObj;
+        x = getHandle().xPosition;
+        z = getHandle().zPosition;
     }
 
     public World getWorld() {
@@ -49,7 +49,7 @@ public class CraftChunk implements Chunk {
         net.minecraft.src.Chunk c = weakChunk.get();
 
         if (c == null) {
-            c = worldServer.getChunkAt(x, z);
+            c = worldServer.getChunkFromChunkCoords(x, z);
 
             if (!(c instanceof EmptyChunk)) {
                 weakChunk = new WeakReference<net.minecraft.src.Chunk>(c);
@@ -114,7 +114,7 @@ public class CraftChunk implements Chunk {
             }
 
             ChunkPosition position = (ChunkPosition) obj;
-            entities[index++] = worldServer.getWorld().getBlockAt(position.x + (chunk.x << 4), position.y, position.z + (chunk.z << 4)).getState();
+            entities[index++] = worldServer.getWorld().getBlockAt(position.x + (chunk.xPosition << 4), position.y, position.z + (chunk.zPosition << 4)).getState();
         }
         return entities;
     }
@@ -212,7 +212,7 @@ public class CraftChunk implements Chunk {
         double[] biomeRain = null;
 
         if (includeBiome || includeBiomeTempRain) {
-            WorldChunkManager wcm = chunk.world.getWorldChunkManager();
+            WorldChunkManager wcm = chunk.worldObj.getWorldChunkManager();
 
             if (includeBiome) {
                 biome = new BiomeGenBase[256];
@@ -253,7 +253,7 @@ public class CraftChunk implements Chunk {
             if (includeBiome) {
                 biome = new BiomeGenBase[256];
                 for (int i = 0; i < 256; i++) {
-                    biome[i] = world.getHandle().getBiome((x << 4) + (i & 0xF), (z << 4) + (i >> 4));
+                    biome[i] = world.getHandle().getBiomeGenForCoords((x << 4) + (i & 0xF), (z << 4) + (i >> 4));
                 }
             }
 

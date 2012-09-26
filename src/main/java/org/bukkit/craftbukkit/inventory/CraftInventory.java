@@ -33,15 +33,15 @@ public class CraftInventory implements Inventory {
     }
 
     public int getSize() {
-        return getInventory().getSize();
+        return getInventory().getSizeInventory();
     }
 
     public String getName() {
-        return getInventory().getName();
+        return getInventory().getInvName();
     }
 
     public ItemStack getItem(int index) {
-        net.minecraft.src.ItemStack item = getInventory().getItem(index);
+        net.minecraft.src.ItemStack item = getInventory().getStackInSlot(index);
         return item == null ? null : new CraftItemStack(item);
     }
 
@@ -73,7 +73,7 @@ public class CraftInventory implements Inventory {
     }
 
     public void setItem(int index, ItemStack item) {
-        getInventory().setItem(index, ((item == null || item.getTypeId() == 0) ? null : CraftItemStack.createNMSItemStack(item)));
+        getInventory().setInventorySlotContents(index, ((item == null || item.getTypeId() == 0) ? null : CraftItemStack.createNMSItemStack(item)));
     }
 
     public boolean contains(int materialId) {
@@ -343,7 +343,7 @@ public class CraftInventory implements Inventory {
     }
 
     private int getMaxItemStack() {
-        return getInventory().getMaxStackSize();
+        return getInventory().getInventoryStackLimit();
     }
 
     public void remove(int materialId) {
@@ -394,12 +394,12 @@ public class CraftInventory implements Inventory {
     }
 
     public String getTitle() {
-        return inventory.getName();
+        return inventory.getInvName();
     }
 
     public InventoryType getType() {
         if (inventory instanceof InventoryCrafting) {
-            return inventory.getSize() >= 9 ? InventoryType.WORKBENCH : InventoryType.CRAFTING;
+            return inventory.getSizeInventory() >= 9 ? InventoryType.WORKBENCH : InventoryType.CRAFTING;
         } else if (inventory instanceof InventoryPlayer) {
             return InventoryType.PLAYER;
         } else if (inventory instanceof TileEntityDispenser) {
@@ -426,7 +426,7 @@ public class CraftInventory implements Inventory {
     }
 
     public int getMaxStackSize() {
-        return inventory.getMaxStackSize();
+        return inventory.getInventoryStackLimit();
     }
 
     public void setMaxStackSize(int size) {

@@ -21,7 +21,7 @@ public class CraftInventoryPlayer extends CraftInventory implements org.bukkit.i
     }
 
     public ItemStack getItemInHand() {
-        return new CraftItemStack(getInventory().getItemInHand());
+        return new CraftItemStack(getInventory().getCurrentItem());
     }
 
     public void setItemInHand(ItemStack stack) {
@@ -29,7 +29,7 @@ public class CraftInventoryPlayer extends CraftInventory implements org.bukkit.i
     }
 
     public int getHeldItemSlot() {
-        return getInventory().itemInHandIndex;
+        return getInventory().currentItem;
     }
 
     public ItemStack getHelmet() {

@@ -62,12 +62,12 @@ public class CraftInventoryCustom extends CraftInventory {
             ItemStack stack = this.getItem(i);
             ItemStack result;
             if (stack == null) return null;
-            if (stack.count <= j) {
+            if (stack.stackSize <= j) {
                 this.setItem(i, null);
                 result = stack;
             } else {
-                result = new ItemStack(stack.id, j, stack.getData(), stack.getEnchantments());
-                stack.count -= j;
+                result = new ItemStack(stack.itemID, j, stack.getItemDamage(), stack.getEnchantmentTagList());
+                stack.stackSize -= j;
             }
             this.update();
             return result;
@@ -77,20 +77,20 @@ public class CraftInventoryCustom extends CraftInventory {
             ItemStack stack = this.getItem(i);
             ItemStack result;
             if (stack == null) return null;
-            if (stack.count <= 1) {
+            if (stack.stackSize <= 1) {
                 this.setItem(i, null);
                 result = stack;
             } else {
-                result = new ItemStack(stack.id, 1, stack.getData(), stack.getEnchantments());
-                stack.count -= 1;
+                result = new ItemStack(stack.itemID, 1, stack.getItemDamage(), stack.getEnchantmentTagList());
+                stack.stackSize -= 1;
             }
             return result;
         }
 
         public void setItem(int i, ItemStack itemstack) {
             items[i] = itemstack;
-            if (itemstack != null && this.getMaxStackSize() > 0 && itemstack.count > this.getMaxStackSize()) {
-                itemstack.count = this.getMaxStackSize();
+            if (itemstack != null && this.getMaxStackSize() > 0 && itemstack.stackSize > this.getMaxStackSize()) {
+                itemstack.stackSize = this.getMaxStackSize();
             }
         }
 
