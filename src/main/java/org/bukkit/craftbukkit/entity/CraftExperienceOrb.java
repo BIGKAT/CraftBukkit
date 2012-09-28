@@ -12,7 +12,7 @@ public class CraftExperienceOrb extends CraftEntity implements ExperienceOrb {
     }
 
     public int getExperience() {
-        return getHandle().xpValue;
+        return getHandle().getXpValue();
     }
 
     public void setExperience(int value) {

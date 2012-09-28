@@ -6,8 +6,8 @@ import static org.junit.Assert.assertThat;
 
 import java.util.List;
 
-import net.minecraft.server.AchievementList;
-import net.minecraft.server.Statistic;
+import net.minecraft.src.AchievementList;
+import net.minecraft.src.StatBase;
 
 import org.bukkit.support.Util;
 import org.junit.Test;
@@ -20,10 +20,10 @@ public class AchievementTest {
     public void verifyMapping() throws IllegalArgumentException, SecurityException, IllegalAccessException, NoSuchFieldException {
         List<Achievement> achievements = Lists.newArrayList(Achievement.values());
 
-        for (net.minecraft.server.Achievement statistic : (List<net.minecraft.server.Achievement>) AchievementList.e) {
+        for (net.minecraft.src.Achievement statistic : (List<net.minecraft.src.Achievement>) AchievementList.e) {
             int id = statistic.e;
 
-            String name = Util.getInternalState(Statistic.class, statistic, "a");
+            String name = Util.getInternalState(StatBase.class, statistic, "a");
             String message = String.format("org.bukkit.Achievement is missing id: %d named: '%s'", id - Achievement.STATISTIC_OFFSET, name);
 
             Achievement subject = Achievement.getById(id);

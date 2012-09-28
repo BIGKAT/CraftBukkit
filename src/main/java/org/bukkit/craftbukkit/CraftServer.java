@@ -6,6 +6,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -17,30 +18,43 @@ import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import com.avaje.ebean.config.DataSourceConfig;
+import com.avaje.ebean.config.ServerConfig;
+import com.avaje.ebean.config.dbplatform.SQLitePlatform;
+import com.avaje.ebeaninternal.server.lib.sql.TransactionIsolation;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.MapMaker;
+
+import jline.console.ConsoleReader;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.src.BanEntry;
 import net.minecraft.src.ChunkCoordinates;
 import net.minecraft.src.CraftingManager;
 import net.minecraft.src.DedicatedServer;
 import net.minecraft.src.Enchantment;
+import net.minecraft.src.Entity;
 import net.minecraft.src.EntityPlayerMP;
 import net.minecraft.src.EntityTracker;
 import net.minecraft.src.EnumGameType;
-import net.minecraft.src.ExceptionWorldConflict;
+import net.minecraft.src.FurnaceRecipes;
+import net.minecraft.src.Item;
 import net.minecraft.src.MapData;
 import net.minecraft.src.MapStorage;
+import net.minecraft.src.MinecraftException;
 import net.minecraft.src.Potion;
-import net.minecraft.src.FurnaceRecipes;
-import net.minecraft.src.IProgressUpdate;
-import net.minecraft.src.Item;
-import net.minecraft.server.MinecraftServer;
 import net.minecraft.src.PropertyManager;
 import net.minecraft.src.SaveHandler;
 import net.minecraft.src.ServerCommand;
 import net.minecraft.src.ServerConfigurationManager;
+import net.minecraft.src.World;
 import net.minecraft.src.WorldManager;
 import net.minecraft.src.WorldServer;
 import net.minecraft.src.WorldSettings;
 import net.minecraft.src.WorldType;
+import org.apache.commons.lang.Validate;
+import org.yaml.snakeyaml.Yaml;
+import org.yaml.snakeyaml.constructor.SafeConstructor;
+import org.yaml.snakeyaml.error.MarkedYAMLException;
 
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -48,7 +62,6 @@ import org.bukkit.GameMode;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.Server;
 import org.bukkit.Warning.WarningState;
-import org.bukkit.World;
 import org.bukkit.World.Environment;
 import org.bukkit.WorldCreator;
 import org.bukkit.command.Command;
@@ -60,6 +73,8 @@ import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.configuration.serialization.ConfigurationSerialization;
 import org.bukkit.conversations.Conversable;
+import org.bukkit.craftbukkit.entity.CraftEntity;
+import org.bukkit.craftbukkit.generator.NormalChunkGenerator;
 import org.bukkit.craftbukkit.help.SimpleHelpMap;
 import org.bukkit.craftbukkit.inventory.CraftFurnaceRecipe;
 import org.bukkit.craftbukkit.inventory.CraftInventoryCustom;
@@ -86,9 +101,9 @@ import org.bukkit.event.world.WorldUnloadEvent;
 import org.bukkit.generator.ChunkGenerator;
 import org.bukkit.help.HelpMap;
 import org.bukkit.inventory.FurnaceRecipe;
-import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.Recipe;
 import org.bukkit.inventory.ShapedRecipe;
 import org.bukkit.inventory.ShapelessRecipe;
@@ -102,24 +117,10 @@ import org.bukkit.plugin.SimplePluginManager;
 import org.bukkit.plugin.SimpleServicesManager;
 import org.bukkit.plugin.java.JavaPluginLoader;
 import org.bukkit.plugin.messaging.Messenger;
-import org.bukkit.potion.PotionEffectType;
 import org.bukkit.plugin.messaging.StandardMessenger;
+import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scheduler.BukkitWorker;
 import org.bukkit.util.permissions.DefaultPermissions;
-
-import org.yaml.snakeyaml.Yaml;
-import org.yaml.snakeyaml.constructor.SafeConstructor;
-import org.yaml.snakeyaml.error.MarkedYAMLException;
-
-import org.apache.commons.lang.Validate;
-import com.avaje.ebean.config.DataSourceConfig;
-import com.avaje.ebean.config.ServerConfig;
-import com.avaje.ebean.config.dbplatform.SQLitePlatform;
-import com.avaje.ebeaninternal.server.lib.sql.TransactionIsolation;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.MapMaker;
-
-import jline.console.ConsoleReader;
 
 public final class CraftServer implements Server {
     private final String serverName = "CraftBukkit";
@@ -133,7 +134,7 @@ public final class CraftServer implements Server {
     private final PluginManager pluginManager = new SimplePluginManager(this, commandMap);
     protected final MinecraftServer console;
     protected final ServerConfigurationManager server;
-    private final Map<String, World> worlds = new LinkedHashMap<String, World>();
+    private final Map<String, org.bukkit.World> worlds = new LinkedHashMap<String, org.bukkit.World>();
     private YamlConfiguration configuration;
     private final Yaml yaml = new Yaml(new SafeConstructor());
     private final Map<String, OfflinePlayer> offlinePlayers = new MapMaker().softValues().makeMap();
@@ -146,24 +147,31 @@ public final class CraftServer implements Server {
     private int waterAnimalSpawn = -1;
     private File container;
     private WarningState warningState = WarningState.DEFAULT;
+	private HashMap<Entity, org.bukkit.entity.Entity> entities = new HashMap<Entity, org.bukkit.entity.Entity>();
+	private HashMap<World, org.bukkit.World> worldsByObject = new HashMap<World, org.bukkit.World>();
 
     static {
         ConfigurationSerialization.registerClass(CraftOfflinePlayer.class);
     }
 
+	public static CraftServer getInstance()  {
+		Server server = Bukkit.getServer();
+		return server instanceof CraftServer ? (CraftServer) server : null;
+	}
+
     public CraftServer(MinecraftServer console, ServerConfigurationManager server) {
         this.console = console;
-        this.server = (ServerConfigurationManager) server;
+        this.server = server;
         this.serverVersion = CraftServer.class.getPackage().getImplementationVersion();
 
         Bukkit.setServer(this);
 
         // Register all the Enchantments and PotionTypes now so we can stop new registration immediately after
-        Enchantment.DAMAGE_ALL.getClass();
+        Enchantment.protection.getClass();
         org.bukkit.enchantments.Enchantment.stopAcceptingRegistrations();
 
         org.bukkit.potion.Potion.setPotionBrewer(new CraftPotionBrewer());
-        Potion.BLINDNESS.getClass();
+        Potion.blindness.getClass();
         PotionEffectType.stopAcceptingRegistrations();
         // Ugly hack :(
 
@@ -276,7 +284,7 @@ public final class CraftServer implements Server {
     }
 
     public String getVersion() {
-        return serverVersion + " (MC: " + console.getVersion() + ")";
+        return serverVersion + " (MC: " + console.getMinecraftVersion() + ")";
     }
 
     public String getBukkitVersion() {
@@ -285,7 +293,7 @@ public final class CraftServer implements Server {
 
     @SuppressWarnings("unchecked")
     public Player[] getOnlinePlayers() {
-        List<EntityPlayerMP> online = server.players;
+        List<EntityPlayerMP> online = server.playerEntityList;
         Player[] players = new Player[online.size()];
 
         for (int i = 0; i < players.length; i++) {
@@ -308,7 +316,9 @@ public final class CraftServer implements Server {
                     found = player;
                     delta = curDelta;
                 }
-                if (curDelta == 0) break;
+				if (curDelta == 0) {
+					break;
+				}
             }
         }
         return found;
@@ -346,7 +356,7 @@ public final class CraftServer implements Server {
                 matchedPlayers.add(iterPlayer);
                 break;
             }
-            if (iterPlayerName.toLowerCase().indexOf(partialName.toLowerCase()) != -1) {
+            if (iterPlayerName.toLowerCase().contains(partialName.toLowerCase())) {
                 // Partial match
                 matchedPlayers.add(iterPlayer);
             }
@@ -460,8 +470,8 @@ public final class CraftServer implements Server {
         return servicesManager;
     }
 
-    public List<World> getWorlds() {
-        return new ArrayList<World>(worlds.values());
+    public List<org.bukkit.World> getWorlds() {
+        return new ArrayList<org.bukkit.World>(worlds.values());
     }
 
     public ServerConfigurationManager getHandle() {
@@ -497,23 +507,23 @@ public final class CraftServer implements Server {
 
         ((DedicatedServer) console).propertyManager = config;
 
-        boolean animals = config.getBoolean("spawn-animals", console.getSpawnAnimals());
-        boolean monsters = config.getBoolean("spawn-monsters", console.worlds.get(0).difficulty > 0);
-        int difficulty = config.getInt("difficulty", console.worlds.get(0).difficulty);
+        boolean animals = config.getOrSetBoolProperty("spawn-animals", console.getCanSpawnAnimals());
+        boolean monsters = config.getOrSetBoolProperty("spawn-monsters", console.worlds.get(0).difficultySetting > 0);
+        int difficulty = config.getOrSetIntProperty("difficulty", console.worlds.get(0).difficultySetting);
 
-        console.setOnlineMode(config.getBoolean("online-mode", console.getOnlineMode()));
-        console.setSpawnAnimals(config.getBoolean("spawn-animals", console.getSpawnAnimals()));
-        console.setPvP(config.getBoolean("pvp", console.getPvP()));
-        console.setAllowFlight(config.getBoolean("allow-flight", console.getAllowFlight()));
-        console.setMotd(config.getString("motd", console.getMotd()));
+        console.setOnlineMode(config.getOrSetBoolProperty("online-mode", console.isServerInOnlineMode()));
+        console.setSpawnAnimals(config.getOrSetBoolProperty("spawn-animals", console.getCanSpawnAnimals()));
+        console.setAllowPvp(config.getOrSetBoolProperty("pvp", console.isPVPEnabled()));
+        console.setAllowFlight(config.getOrSetBoolProperty("allow-flight", console.isFlightAllowed()));
+        console.setMOTD(config.getOrSetProperty("motd", console.getMOTD()));
         monsterSpawn = configuration.getInt("spawn-limits.monsters");
         animalSpawn = configuration.getInt("spawn-limits.animals");
         waterAnimalSpawn = configuration.getInt("spawn-limits.water-animals");
         warningState = WarningState.value(configuration.getString("settings.deprecated-verbose"));
 
         for (WorldServer world : console.worlds) {
-            world.difficulty = difficulty;
-            world.setSpawnFlags(monsters, animals);
+            world.difficultySetting = difficulty;
+            world.setAllowedSpawnTypes(monsters, animals);
             if (this.getTicksPerAnimalSpawns() < 0) {
                 world.ticksPerAnimalSpawns = 400;
             } else {
@@ -609,26 +619,26 @@ public final class CraftServer implements Server {
 
     @Override
     public String toString() {
-        return "CraftServer{" + "serverName=" + serverName + ",serverVersion=" + serverVersion + ",minecraftVersion=" + console.getVersion() + '}';
+        return "CraftServer{" + "serverName=" + serverName + ",serverVersion=" + serverVersion + ",minecraftVersion=" + console.getMinecraftVersion() + '}';
     }
 
-    public World createWorld(String name, World.Environment environment) {
+    public org.bukkit.World createWorld(String name, org.bukkit.World.Environment environment) {
         return WorldCreator.name(name).environment(environment).createWorld();
     }
 
-    public World createWorld(String name, World.Environment environment, long seed) {
+    public org.bukkit.World createWorld(String name, org.bukkit.World.Environment environment, long seed) {
         return WorldCreator.name(name).environment(environment).seed(seed).createWorld();
     }
 
-    public World createWorld(String name, Environment environment, ChunkGenerator generator) {
+    public org.bukkit.World createWorld(String name, Environment environment, ChunkGenerator generator) {
         return WorldCreator.name(name).environment(environment).generator(generator).createWorld();
     }
 
-    public World createWorld(String name, Environment environment, long seed, ChunkGenerator generator) {
+    public org.bukkit.World createWorld(String name, Environment environment, long seed, ChunkGenerator generator) {
         return WorldCreator.name(name).environment(environment).seed(seed).generator(generator).createWorld();
     }
 
-    public World createWorld(WorldCreator creator) {
+    public org.bukkit.World createWorld(WorldCreator creator) {
         if (creator == null) {
             throw new IllegalArgumentException("Creator may not be null");
         }
@@ -636,7 +646,7 @@ public final class CraftServer implements Server {
         String name = creator.name();
         ChunkGenerator generator = creator.generator();
         File folder = new File(getWorldContainer(), name);
-        World world = getWorld(name);
+		org.bukkit.World world = getWorld(name);
         WorldType type = WorldType.parseWorldType(creator.type().getName());
         boolean generateStructures = creator.generateStructures();
 
@@ -671,28 +681,30 @@ public final class CraftServer implements Server {
         } while(used);
         boolean hardcore = false;
 
-        WorldServer internal = new WorldServer(console, new SaveHandler(getWorldContainer(), name, true), name, dimension, new WorldSettings(creator.seed(), EnumGameType.getByID(getDefaultGameMode().getValue()), generateStructures, hardcore, type), console.methodProfiler, creator.environment(), generator);
+        WorldServer internal = new WorldServer(console, new SaveHandler(getWorldContainer(), name, true), name, dimension, new WorldSettings(creator.seed(), EnumGameType.getByID(getDefaultGameMode().getValue()), generateStructures, hardcore, type), console.theProfiler, creator.environment(), generator);
+		CraftServer.addWorld(internal);
+		world = CraftServer.getBukkitWorld(internal);
 
         if (!(worlds.containsKey(name.toLowerCase()))) {
             return null;
         }
 
-        internal.worldMaps = console.worlds.get(0).worldMaps;
+        internal.mapStorage = console.worlds.get(0).mapStorage;
 
-        internal.tracker = new EntityTracker(internal); // CraftBukkit
-        internal.addIWorldAccess(new WorldManager(console, internal));
-        internal.difficulty = 1;
-        internal.setSpawnFlags(true, true);
+        internal.theEntityTracker = new EntityTracker(internal); // CraftBukkit
+        internal.addWorldAccess(new WorldManager(console, internal));
+        internal.difficultySetting = 1;
+        internal.setAllowedSpawnTypes(true, true);
         console.worlds.add(internal);
 
         if (generator != null) {
-            internal.getWorld().getPopulators().addAll(generator.getDefaultPopulators(internal.getWorld()));
+            world.getPopulators().addAll(generator.getDefaultPopulators(world));
         }
 
-        pluginManager.callEvent(new WorldInitEvent(internal.getWorld()));
+        pluginManager.callEvent(new WorldInitEvent(world));
         System.out.print("Preparing start region for level " + (console.worlds.size() - 1) + " (Seed: " + internal.getSeed() + ")");
 
-        if (internal.getWorld().getKeepSpawnInMemory()) {
+        if (world.getKeepSpawnInMemory()) {
             short short1 = 196;
             long i = System.currentTimeMillis();
             for (int j = -short1; j <= short1; j += 16) {
@@ -711,24 +723,24 @@ public final class CraftServer implements Server {
                         i = l;
                     }
 
-                    ChunkCoordinates chunkcoordinates = internal.getSpawn();
-                    internal.chunkProviderServer.getChunkAt(chunkcoordinates.posX + j >> 4, chunkcoordinates.posZ + k >> 4);
+                    ChunkCoordinates chunkcoordinates = internal.getSpawnPoint();
+                    internal.theChunkProviderServer.loadChunk(chunkcoordinates.posX + j >> 4, chunkcoordinates.posZ + k >> 4);
 
-                    while (internal.updateLights()) {
+                    while (internal.updatingLighting()) {
                         ;
                     }
                 }
             }
         }
-        pluginManager.callEvent(new WorldLoadEvent(internal.getWorld()));
-        return internal.getWorld();
+        pluginManager.callEvent(new WorldLoadEvent(world));
+        return world;
     }
 
     public boolean unloadWorld(String name, boolean save) {
         return unloadWorld(getWorld(name), save);
     }
 
-    public boolean unloadWorld(World world, boolean save) {
+    public boolean unloadWorld(org.bukkit.World world, boolean save) {
         if (world == null) {
             return false;
         }
@@ -743,11 +755,11 @@ public final class CraftServer implements Server {
             return false;
         }
 
-        if (handle.players.size() > 0) {
+        if (handle.playerEntities.size() > 0) {
             return false;
         }
 
-        WorldUnloadEvent e = new WorldUnloadEvent(handle.getWorld());
+        WorldUnloadEvent e = new WorldUnloadEvent(CraftServer.getBukkitWorld(handle));
         pluginManager.callEvent(e);
 
         if (e.isCancelled()) {
@@ -756,14 +768,13 @@ public final class CraftServer implements Server {
 
         if (save) {
             try {
-                handle.save(true, (IProgressUpdate) null);
-                handle.saveLevel();
-                WorldSaveEvent event = new WorldSaveEvent(handle.getWorld());
+                handle.saveAllChunks(true, null);
+                handle.flush();
+                WorldSaveEvent event = new WorldSaveEvent(CraftServer.getBukkitWorld(handle));
                 getPluginManager().callEvent(event);
-            } catch (ExceptionWorldConflict ex) {
-                getLogger().log(Level.SEVERE, null, ex);
-            }
-        }
+            } catch (MinecraftException ex) {
+			}
+		}
 
         worlds.remove(world.getName().toLowerCase());
         console.worlds.remove(console.worlds.indexOf(handle));
@@ -775,12 +786,12 @@ public final class CraftServer implements Server {
         return console;
     }
 
-    public World getWorld(String name) {
+    public org.bukkit.World getWorld(String name) {
         return worlds.get(name.toLowerCase());
     }
 
-    public World getWorld(UUID uid) {
-        for (World world : worlds.values()) {
+    public org.bukkit.World getWorld(UUID uid) {
+        for (org.bukkit.World world : worlds.values()) {
             if (world.getUID().equals(uid)) {
                 return world;
             }
@@ -788,7 +799,7 @@ public final class CraftServer implements Server {
         return null;
     }
 
-    public void addWorld(World world) {
+    public void addWorld(org.bukkit.World world) {
         // Check if a World already exists with the UID.
         if (getWorld(world.getUID()) != null) {
             System.out.println("World " + world.getName() + " is a duplicate of another world and has been prevented from loading. Please delete the uid.dat file from " + world.getName() + "'s world directory if you want to be able to load the duplicate world.");
@@ -798,7 +809,7 @@ public final class CraftServer implements Server {
     }
 
     public Logger getLogger() {
-        return MinecraftServer.log;
+        return MinecraftServer.logger;
     }
 
     public ConsoleReader getReader() {
@@ -816,7 +827,7 @@ public final class CraftServer implements Server {
     }
 
     public void savePlayers() {
-        server.savePlayers();
+        server.saveAllPlayerData();
     }
 
     public void configureDbConfig(ServerConfig config) {
@@ -851,7 +862,7 @@ public final class CraftServer implements Server {
             }
         }
         toAdd.addToCraftingManager();
-        CraftingManager.getInstance().sort();
+//        CraftingManager.getInstance().sort();
         return true;
     }
 
@@ -876,13 +887,13 @@ public final class CraftServer implements Server {
     }
 
     public void clearRecipes() {
-        CraftingManager.getInstance().recipes.clear();
-        FurnaceRecipes.getInstance().recipes.clear();
+        CraftingManager.getInstance().getRecipeList().clear();
+        FurnaceRecipes.smelting().getSmeltingList().clear();
     }
 
     public void resetRecipes() {
-        CraftingManager.getInstance().recipes = new CraftingManager().recipes;
-        FurnaceRecipes.getInstance().recipes = new FurnaceRecipes().recipes;
+//        CraftingManager.getInstance().recipes = new CraftingManager().recipes;
+//        FurnaceRecipes.getInstance().recipes = new FurnaceRecipes().recipes;
     }
 
     public Map<String, String[]> getCommandAliases() {
@@ -891,7 +902,7 @@ public final class CraftServer implements Server {
 
         if (section != null) {
             for (String key : section.getKeys(false)) {
-                List<String> commands = null;
+                List<String> commands;
 
                 if (section.isList(key)) {
                     commands = section.getStringList(key);
@@ -899,7 +910,7 @@ public final class CraftServer implements Server {
                     commands = ImmutableList.<String>of(section.getString(key));
                 }
 
-                result.put(key, commands.toArray(new String[0]));
+                result.put(key, commands.toArray(new String[commands.size()]));
             }
         }
 
@@ -916,11 +927,11 @@ public final class CraftServer implements Server {
     }
 
     public boolean getOnlineMode() {
-        return console.getOnlineMode();
+        return console.isServerInOnlineMode();
     }
 
     public boolean getAllowFlight() {
-        return console.getAllowFlight();
+        return console.isFlightAllowed();
     }
 
     public boolean useExactLoginLocation() {
@@ -957,7 +968,7 @@ public final class CraftServer implements Server {
     }
 
     public CraftMapView getMap(short id) {
-        MapStorage collection = console.worlds.get(0).worldMaps;
+        MapStorage collection = console.worlds.get(0).mapStorage;
         MapData worldmap = (MapData) collection.loadData(MapData.class, "map_" + id);
         if (worldmap == null) {
             return null;
@@ -965,14 +976,14 @@ public final class CraftServer implements Server {
         return worldmap.mapView;
     }
 
-    public CraftMapView createMap(World world) {
+    public CraftMapView createMap(org.bukkit.World world) {
         net.minecraft.src.ItemStack stack = new net.minecraft.src.ItemStack(Item.map, 1, -1);
-        MapData worldmap = Item.map.getSavedMap(stack, ((CraftWorld) world).getHandle());
+        MapData worldmap = Item.map.getMapData(stack, ((CraftWorld) world).getHandle());
         return worldmap.mapView;
     }
 
     public void shutdown() {
-        console.safeShutdown();
+        console.setServerStopping();
     }
 
     public int broadcast(String message, String permission) {
@@ -1010,24 +1021,24 @@ public final class CraftServer implements Server {
 
     @SuppressWarnings("unchecked")
     public Set<String> getIPBans() {
-        return server.getIPBans().getBannedList().keySet();
+        return server.getBannedIPs().getBannedList().keySet();
     }
 
     public void banIP(String address) {
         BanEntry entry = new BanEntry(address);
-        server.getIPBans().put(entry);
-        server.getIPBans().saveToFileWithHeader();
+        server.getBannedIPs().put(entry);
+        server.getBannedIPs().saveToFileWithHeader();
     }
 
     public void unbanIP(String address) {
-        server.getIPBans().remove(address);
-        server.getIPBans().saveToFileWithHeader();
+        server.getBannedIPs().remove(address);
+        server.getBannedIPs().saveToFileWithHeader();
     }
 
     public Set<OfflinePlayer> getBannedPlayers() {
         Set<OfflinePlayer> result = new HashSet<OfflinePlayer>();
 
-        for (Object name : server.getNameBans().getBannedList().keySet()) {
+        for (Object name : server.getBannedPlayers().getBannedList().keySet()) {
             result.add(getOfflinePlayer((String) name));
         }
 
@@ -1035,14 +1046,14 @@ public final class CraftServer implements Server {
     }
 
     public void setWhitelist(boolean value) {
-        server.hasWhitelist = value;
+        server.setWhiteListEnabled(value);
         console.getPropertyManager().a("white-list", value);
     }
 
     public Set<OfflinePlayer> getWhitelistedPlayers() {
         Set<OfflinePlayer> result = new LinkedHashSet<OfflinePlayer>();
 
-        for (Object name : server.getWhitelisted()) {
+        for (Object name : server.getNamesWhiteList()) {
             if (((String)name).length() == 0 || ((String)name).startsWith("#")) {
                 continue;
             }
@@ -1055,7 +1066,7 @@ public final class CraftServer implements Server {
     public Set<OfflinePlayer> getOperators() {
         Set<OfflinePlayer> result = new HashSet<OfflinePlayer>();
 
-        for (Object name : server.getOPs()) {
+        for (Object name : server.getNamesWhiteList()) {
             result.add(getOfflinePlayer((String) name));
         }
 
@@ -1063,11 +1074,11 @@ public final class CraftServer implements Server {
     }
 
     public void reloadWhitelist() {
-        server.reloadWhitelist();
+        server.loadWhiteList();
     }
 
     public GameMode getDefaultGameMode() {
-        return GameMode.getByValue(console.worlds.get(0).getWorldData().getGameType().getID());
+        return GameMode.getByValue(console.worlds.get(0).getWorldInfo().getGameType().getID());
     }
 
     public void setDefaultGameMode(GameMode mode) {
@@ -1075,8 +1086,8 @@ public final class CraftServer implements Server {
             throw new IllegalArgumentException("Mode cannot be null");
         }
 
-        for (World world : getWorlds()) {
-            ((CraftWorld) world).getHandle().worldData.setGameType(EnumGameType.getByID(mode.getValue()));
+        for (org.bukkit.World world : getWorlds()) {
+            ((CraftWorld) world).getHandle().getWorldInfo().setGameType(EnumGameType.getByID(mode.getValue()));
         }
     }
 
@@ -1098,8 +1109,8 @@ public final class CraftServer implements Server {
 
     public void detectListNameConflict(EntityPlayerMP entityPlayer) {
         // Collisions will make for invisible people
-        for (int i = 0; i < getHandle().players.size(); ++i) {
-            EntityPlayerMP testEntityPlayer = (EntityPlayerMP) getHandle().players.get(i);
+        for (int i = 0; i < getHandle().playerEntityList.size(); ++i) {
+            EntityPlayerMP testEntityPlayer = (EntityPlayerMP) getHandle().playerEntityList.get(i);
 
             // We have a problem!
             if (testEntityPlayer != entityPlayer && testEntityPlayer.listName.equals(entityPlayer.listName)) {
@@ -1118,8 +1129,8 @@ public final class CraftServer implements Server {
     }
 
     public File getWorldContainer() {
-        if (this.getServer().universe != null) {
-            return this.getServer().universe;
+        if (this.getServer().anvilFile != null) {
+            return this.getServer().anvilFile;
         }
 
         if (container == null) {
@@ -1130,8 +1141,8 @@ public final class CraftServer implements Server {
     }
 
     public OfflinePlayer[] getOfflinePlayers() {
-        SaveHandler storage = (SaveHandler) console.worlds.get(0).getDataManager();
-        String[] files = storage.getPlayerDir().list(new DatFileFilter());
+        SaveHandler storage = (SaveHandler) console.worlds.get(0).getSaveHandler();
+        String[] files = storage.playersDirectory.list(new DatFileFilter());
         Set<OfflinePlayer> players = new HashSet<OfflinePlayer>();
 
         for (int i = 0; i < files.length; i++) {
@@ -1214,10 +1225,51 @@ public final class CraftServer implements Server {
     }
 
     public String getMotd() {
-        return console.getMotd();
+        return console.getMOTD();
     }
 
     public WarningState getWarningState() {
         return warningState;
     }
+
+	public static void addEntity(Entity entity) {
+		CraftServer server = getInstance();
+		if (server == null) return;
+		if (server.entities.containsKey(entity)) return;
+		entities.put(entity, CraftEntity.getEntity(server, entity));
+	}
+
+	public static void removeEntity(Entity entity) {
+		CraftServer server = getInstance();
+		if (server == null) return;
+		server.entities.remove(entity);
+	}
+
+	public static org.bukkit.entity.Entity getBukkitEntity(Entity entity) {
+		CraftServer server = getInstance();
+		if (server == null) return null;
+		return server.entities.get(entity);
+	}
+	public static void addWorld(World world) {
+		CraftServer server = getInstance();
+		if (server == null) return;
+		if (server.worldsByObject.containsKey(world)) return;
+		if (world instanceof WorldServer) {
+			org.bukkit.World bWorld = new CraftWorld((WorldServer) world, new NormalChunkGenerator(world, world.getSeed()), Environment.NORMAL);
+			server.worldsByObject.put(world, bWorld);
+			server.addWorld(bWorld);
+		}
+	}
+
+	public static void removeWorld(World world) {
+		CraftServer server = getInstance();
+		if (server == null) return;
+		server.worldsByObject.remove(world);
+	}
+
+	public static org.bukkit.World getBukkitWorld(World world) {
+		CraftServer server = getInstance();
+		if (server == null) return null;
+		return server.worldsByObject.get(world);
+	}
 }

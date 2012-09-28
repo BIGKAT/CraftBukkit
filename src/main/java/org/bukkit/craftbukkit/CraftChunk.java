@@ -38,7 +38,7 @@ public class CraftChunk implements Chunk {
     }
 
     public World getWorld() {
-        return worldServer.getWorld();
+        return CraftServer.getBukkitWorld(worldServer);
     }
 
     public CraftWorld getCraftWorld() {
@@ -96,7 +96,7 @@ public class CraftChunk implements Chunk {
                     continue;
                 }
 
-                entities[index++] = ((net.minecraft.src.Entity) obj).getBukkitEntity();
+                entities[index++] = CraftServer.getBukkitEntity((net.minecraft.src.Entity) obj);
             }
         }
 
@@ -114,7 +114,7 @@ public class CraftChunk implements Chunk {
             }
 
             ChunkPosition position = (ChunkPosition) obj;
-            entities[index++] = worldServer.getWorld().getBlockAt(position.x + (chunk.xPosition << 4), position.y, position.z + (chunk.zPosition << 4)).getState();
+            entities[index++] = CraftServer.getBukkitWorld(worldServer).getBlockAt(position.x + (chunk.xPosition << 4), position.y, position.z + (chunk.zPosition << 4)).getState();
         }
         return entities;
     }

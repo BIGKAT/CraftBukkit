@@ -27,10 +27,10 @@ public class MaterialTest extends AbstractTestingBase {
         for (Item item : Item.itemsList) {
             if (item == null) continue;
 
-            int id = item.id;
-            String name = item.getName();
-            int maxStackSize = item.getMaxStackSize();
-            int maxDurability = item.getMaxDurability();
+            int id = item.shiftedIndex;
+            String name = item.getItemName();
+            int maxStackSize = item.getItemStackLimit();
+            int maxDurability = item.getMaxDamage();
 
             Material material = materials.remove(id);
 
@@ -55,8 +55,8 @@ public class MaterialTest extends AbstractTestingBase {
             if (item == null) continue;
             if (!(item instanceof ItemFood)) continue;
 
-            int id = item.id;
-            String name = item.getName();
+            int id = item.shiftedIndex;
+            String name = item.getItemName();
 
             Material material = materials.remove(id);
 

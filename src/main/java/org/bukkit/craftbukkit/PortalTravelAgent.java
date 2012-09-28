@@ -94,7 +94,7 @@ public class PortalTravelAgent implements TravelAgent {
             for (int k1 = i1 - this.searchRadius; k1 <= i1 + this.searchRadius; ++k1) {
                 double d3 = (double) k1 + 0.5D - location.getZ();
 
-                for (int l1 = world.L() - 1; l1 >= 0; --l1) {
+                for (int l1 = world.getActualHeight() - 1; l1 >= 0; --l1) {
                     if (world.getBlockId(j1, l1, k1) == Block.portal.blockID) {
                         while (world.getBlockId(j1, l1 - 1, k1) == Block.portal.blockID) {
                             --l1;
@@ -201,9 +201,9 @@ public class PortalTravelAgent implements TravelAgent {
                 d2 = (double) j2 + 0.5D - location.getZ();
 
                 label271:
-                for (l2 = world.L() - 1; l2 >= 0; --l2) {
-                    if (world.isEmpty(i2, l2, j2)) {
-                        while (l2 > 0 && world.isEmpty(i2, l2 - 1, j2)) {
+                for (l2 = world.getActualHeight() - 1; l2 >= 0; --l2) {
+                    if (world.isAirBlock(i2, l2, j2)) {
+                        while (l2 > 0 && world.isAirBlock(i2, l2 - 1, j2)) {
                             --l2;
                         }
 
@@ -222,7 +222,7 @@ public class PortalTravelAgent implements TravelAgent {
                                         k4 = l2 + j4;
                                         int l4 = j2 + (k3 - 1) * i3 - l3 * j3;
 
-                                        if (j4 < 0 && !world.getMaterial(i4, k4, l4).isSolid() || j4 >= 0 && !world.isEmpty(i4, k4, l4)) {
+                                        if (j4 < 0 && !world.getBlockMaterial(i4, k4, l4).isSolid() || j4 >= 0 && !world.isAirBlock(i4, k4, l4)) {
                                             continue label271;
                                         }
                                     }
@@ -252,9 +252,9 @@ public class PortalTravelAgent implements TravelAgent {
                     d2 = (double) j2 + 0.5D - location.getZ();
 
                     label219:
-                    for (l2 = world.L() - 1; l2 >= 0; --l2) {
-                        if (world.isEmpty(i2, l2, j2)) {
-                            while (l2 > 0 && world.isEmpty(i2, l2 - 1, j2)) {
+                    for (l2 = world.getActualHeight() - 1; l2 >= 0; --l2) {
+                        if (world.isAirBlock(i2, l2, j2)) {
+                            while (l2 > 0 && world.isAirBlock(i2, l2 - 1, j2)) {
                                 --l2;
                             }
 
@@ -267,7 +267,7 @@ public class PortalTravelAgent implements TravelAgent {
                                         j4 = i2 + (l3 - 1) * j3;
                                         i4 = l2 + k3;
                                         k4 = j2 + (l3 - 1) * i3;
-                                        if (k3 < 0 && !world.getMaterial(j4, i4, k4).isSolid() || k3 >= 0 && !world.isEmpty(j4, i4, k4)) {
+                                        if (k3 < 0 && !world.getBlockMaterial(j4, i4, k4).isSolid() || k3 >= 0 && !world.isAirBlock(j4, i4, k4)) {
                                             continue label219;
                                         }
                                     }
@@ -306,15 +306,15 @@ public class PortalTravelAgent implements TravelAgent {
         // CraftBukkit start - portal create event
         java.util.ArrayList<org.bukkit.block.Block> blocks = new java.util.ArrayList<org.bukkit.block.Block>();
         // Find out what blocks the portal is going to modify, duplicated from below
-        CraftWorld craftWorld = world.getWorld();
+        CraftWorld craftWorld = (CraftWorld) CraftServer.getBukkitWorld(world);
 
         if (d0 < 0.0D) {
             if (i1 < 70) {
                 i1 = 70;
             }
 
-            if (i1 > world.L() - 10) {
-                i1 = world.L() - 10;
+            if (i1 > world.getActualHeight() - 10) {
+                i1 = world.getActualHeight() - 10;
             }
 
             j5 = i1;
@@ -380,7 +380,7 @@ public class PortalTravelAgent implements TravelAgent {
         }
 
         for (l2 = 0; l2 < 4; ++l2) {
-            world.suppressPhysics = true;
+            world.editingBlocks = true;
 
             for (k2 = 0; k2 < 4; ++k2) {
                 for (j3 = -1; j3 < 4; ++j3) {
@@ -392,14 +392,14 @@ public class PortalTravelAgent implements TravelAgent {
                 }
             }
 
-            world.suppressPhysics = false;
+            world.editingBlocks = false;
 
             for (k2 = 0; k2 < 4; ++k2) {
                 for (j3 = -1; j3 < 4; ++j3) {
                     i3 = i5 + (k2 - 1) * k5;
                     l3 = j5 + j3;
                     k3 = j2 + (k2 - 1) * l5;
-                    world.applyPhysics(i3, l3, k3, world.getBlockId(i3, l3, k3));
+                    world.notifyBlockChange(i3, l3, k3, world.getBlockId(i3, l3, k3));
                 }
             }
         }

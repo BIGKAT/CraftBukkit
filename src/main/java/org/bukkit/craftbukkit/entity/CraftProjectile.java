@@ -14,7 +14,7 @@ public abstract class CraftProjectile extends AbstractProjectile implements Proj
 
     public LivingEntity getShooter() {
         if (getHandle().thrower instanceof EntityLiving) {
-            return (LivingEntity) getHandle().thrower.getBukkitEntity();
+            return (LivingEntity) CraftServer.getBukkitEntity(getHandle().thrower);
         }
 
         return null;

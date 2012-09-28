@@ -32,7 +32,7 @@ public class CraftFireball extends AbstractProjectile implements Fireball {
 
     public LivingEntity getShooter() {
         if (getHandle().shootingEntity != null) {
-            return (LivingEntity) getHandle().shootingEntity.getBukkitEntity();
+            return (LivingEntity) CraftServer.getBukkitEntity(getHandle().shootingEntity);
         }
 
         return null;
@@ -49,7 +49,7 @@ public class CraftFireball extends AbstractProjectile implements Fireball {
     }
 
     public void setDirection(Vector direction) {
-        getHandle().setDirection(direction.getX(), direction.getY(), direction.getZ());
+        getHandle().setVelocity(direction.getX(), direction.getY(), direction.getZ());
     }
 
     @Override

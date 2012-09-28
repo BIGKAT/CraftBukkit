@@ -7,6 +7,7 @@ import net.minecraft.src.World;
 
 import org.bukkit.BlockChangeDelegate;
 import org.bukkit.block.BlockState;
+import org.bukkit.craftbukkit.CraftServer;
 import org.bukkit.craftbukkit.CraftWorld;
 import org.bukkit.material.MaterialData;
 
@@ -15,7 +16,7 @@ public class StructureGrowDelegate implements BlockChangeDelegate {
     private final List<BlockState> blocks = new ArrayList<BlockState>();
 
     public StructureGrowDelegate(World world) {
-        this.world = world.getWorld();
+        this.world = (CraftWorld) CraftServer.getBukkitWorld(world);
     }
 
     public boolean setRawTypeId(int x, int y, int z, int type) {

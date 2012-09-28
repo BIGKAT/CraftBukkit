@@ -59,18 +59,18 @@ public final class ChunkCompressionThread implements Runnable {
     }
 
     private void handleMapChunkBulk(Packet56MapChunks packet) {
-        if (packet.buffer != null) {
+        if (packet.field_73587_e != null) {
             return;
         }
 
-        int dataSize = packet.buildBuffer.length;
+        int dataSize = packet.field_73591_h.length;
         if (deflateBuffer.length < dataSize + 100) {
             deflateBuffer = new byte[dataSize + 100];
         }
 
         deflater.reset();
         deflater.setLevel(dataSize < REDUCED_DEFLATE_THRESHOLD ? DEFLATE_LEVEL_PARTS : DEFLATE_LEVEL_CHUNKS);
-        deflater.setInput(packet.buildBuffer);
+        deflater.setInput(packet.field_73591_h);
         deflater.finish();
         int size = deflater.deflate(deflateBuffer);
         if (size == 0) {
@@ -78,25 +78,25 @@ public final class ChunkCompressionThread implements Runnable {
         }
 
         // copy compressed data to packet
-        packet.buffer = new byte[size];
-        packet.size = size;
-        System.arraycopy(deflateBuffer, 0, packet.buffer, 0, size);
+        packet.field_73587_e = new byte[size];
+        packet.field_73585_g = size;
+        System.arraycopy(deflateBuffer, 0, packet.field_73587_e, 0, size);
     }
 
     private void handleMapChunk(Packet51MapChunk packet) {
         // If 'packet.buffer' is set then this packet has already been compressed.
-        if (packet.buffer != null) {
+        if (packet.chunkData != null) {
             return;
         }
 
-        int dataSize = packet.inflatedBuffer.length;
+        int dataSize = packet.field_73596_g.length;
         if (deflateBuffer.length < dataSize + 100) {
             deflateBuffer = new byte[dataSize + 100];
         }
 
         deflater.reset();
         deflater.setLevel(dataSize < REDUCED_DEFLATE_THRESHOLD ? DEFLATE_LEVEL_PARTS : DEFLATE_LEVEL_CHUNKS);
-        deflater.setInput(packet.inflatedBuffer);
+        deflater.setInput(packet.field_73596_g);
         deflater.finish();
         int size = deflater.deflate(deflateBuffer);
         if (size == 0) {
@@ -104,9 +104,9 @@ public final class ChunkCompressionThread implements Runnable {
         }
 
         // copy compressed data to packet
-        packet.buffer = new byte[size];
-        packet.size = size;
-        System.arraycopy(deflateBuffer, 0, packet.buffer, 0, size);
+        packet.chunkData = new byte[size];
+        packet.tempLength = size;
+        System.arraycopy(deflateBuffer, 0, packet.chunkData, 0, size);
     }
 
     private void sendToNetworkQueue(QueuedPacket queuedPacket) {

@@ -21,7 +21,7 @@ public class CraftCreatureSpawner extends CraftBlockState implements CreatureSpa
 
     @Deprecated
     public CreatureType getCreatureType() {
-        return CreatureType.fromName(spawner.mobID);
+        return CreatureType.fromName(spawner.getMobID());
     }
 
     public EntityType getSpawnedType() {

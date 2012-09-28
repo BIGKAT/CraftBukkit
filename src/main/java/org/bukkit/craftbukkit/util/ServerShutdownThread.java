@@ -13,12 +13,13 @@ public class ServerShutdownThread extends Thread {
     @Override
     public void run() {
         try {
-            server.stop();
-        } catch (ExceptionWorldConflict ex) {
-            ex.printStackTrace();
+            server.stopServer();
+//        } catch (ExceptionWorldConflict ex) {
+//            ex.printStackTrace();
         } finally {
             try {
-                server.reader.getTerminal().restore();
+				// TODO: CB added code in MinecraftServer
+                // server.reader.getTerminal().restore();
             } catch (Exception e) {
             }
         }

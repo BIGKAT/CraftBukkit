@@ -76,16 +76,16 @@ public class CraftHumanEntity extends CraftLivingEntity implements HumanEntity {
         net.minecraft.src.ItemStack stack = CraftItemStack.createNMSItemStack(item);
         getHandle().inventory.setItemStack(stack);
         if (this instanceof CraftPlayer) {
-            ((EntityPlayerMP) getHandle()).updateCraftingInventorySlot(); // Send set slot for cursor
+            ((EntityPlayerMP) getHandle()).sendInventoryToPlayer(); // Send set slot for cursor
         }
     }
 
     public boolean isSleeping() {
-        return getHandle().sleeping;
+        return getHandle().isPlayerSleeping();
     }
 
     public int getSleepTicks() {
-        return getHandle().sleepTicks;
+        return getHandle().getSleepTimer();
     }
 
     public boolean isOp() {
@@ -194,7 +194,7 @@ public class CraftHumanEntity extends CraftLivingEntity implements HumanEntity {
             break;
         case FURNACE:
             if (craftinv.getInventory() instanceof TileEntityFurnace) {
-                getHandle().DisplayGUIFurnace((TileEntityFurnace) craftinv.getInventory());
+                getHandle().displayGUIFurnace((TileEntityFurnace) craftinv.getInventory());
             } else {
                 openCustomInventory(inventory, player, 2);
             }
@@ -275,9 +275,9 @@ public class CraftHumanEntity extends CraftLivingEntity implements HumanEntity {
     public void openInventory(InventoryView inventory) {
         if (!(getHandle() instanceof EntityPlayerMP)) return; // TODO: NPC support?
         if (((EntityPlayerMP) getHandle()).serverForThisPlayer == null) return;
-        if (getHandle().craftingInventory != getHandle().defaultContainer) {
+        if (getHandle().craftingInventory != getHandle().inventorySlots) {
             // fire INVENTORY_CLOSE if one already open
-            ((EntityPlayerMP)getHandle()).serverForThisPlayer.handleContainerClose(new Packet101CloseWindow(getHandle().craftingInventory.windowId));
+            ((EntityPlayerMP)getHandle()).serverForThisPlayer.handleCloseWindow(new Packet101CloseWindow(getHandle().craftingInventory.windowId));
         }
         EntityPlayerMP player = (EntityPlayerMP) getHandle();
         Container container;

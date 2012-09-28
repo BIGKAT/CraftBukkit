@@ -129,8 +129,8 @@ public abstract class CraftEntity implements org.bukkit.entity.Entity {
         }
         else if (entity instanceof net.minecraft.src.EntityMinecart) {
             net.minecraft.src.EntityMinecart mc = (net.minecraft.src.EntityMinecart) entity;
-            if (mc.type == CraftMinecart.Type.StorageMinecart.getId()) { return new CraftStorageMinecart(server, mc); }
-            else if (mc.type == CraftMinecart.Type.PoweredMinecart.getId()) { return new CraftPoweredMinecart(server, mc); }
+            if (mc.minecartType == CraftMinecart.Type.StorageMinecart.getId()) { return new CraftStorageMinecart(server, mc); }
+            else if (mc.minecartType == CraftMinecart.Type.PoweredMinecart.getId()) { return new CraftPoweredMinecart(server, mc); }
             else { return new CraftMinecart(server, mc); }
         }
         else if (entity instanceof net.minecraft.src.EntityPainting) { return new CraftPainting(server, (net.minecraft.src.EntityPainting) entity); }
@@ -155,7 +155,7 @@ public abstract class CraftEntity implements org.bukkit.entity.Entity {
     }
 
     public World getWorld() {
-        return entity.worldObj.getWorld();
+        return CraftServer.getBukkitWorld(entity.worldObj);
     }
 
     public boolean teleport(Location location) {
@@ -179,11 +179,11 @@ public abstract class CraftEntity implements org.bukkit.entity.Entity {
 
     public List<org.bukkit.entity.Entity> getNearbyEntities(double x, double y, double z) {
         @SuppressWarnings("unchecked")
-        List<Entity> notchEntityList = entity.worldObj.getEntitiesWithinAABBExcludingEntity(entity, entity.boundingBox.expand(x, y, z));
+        List<Entity> notchEntityList = entity.worldObj.getEntitiesWithinAABBExcludingEntity(entity, entity.boundingBox.grow(x, y, z));
         List<org.bukkit.entity.Entity> bukkitEntityList = new java.util.ArrayList<org.bukkit.entity.Entity>(notchEntityList.size());
 
         for (Entity e : notchEntityList) {
-            bukkitEntityList.add(e.getBukkitEntity());
+            bukkitEntityList.add(CraftServer.getBukkitEntity(e));
         }
         return bukkitEntityList;
     }
@@ -229,7 +229,7 @@ public abstract class CraftEntity implements org.bukkit.entity.Entity {
     }
 
     public org.bukkit.entity.Entity getPassenger() {
-        return isEmpty() ? null : (CraftEntity) getHandle().riddenByEntity.getBukkitEntity();
+        return isEmpty() ? null : (CraftEntity) CraftServer.getBukkitEntity(getHandle().riddenByEntity);
     }
 
     public boolean setPassenger(org.bukkit.entity.Entity passenger) {
@@ -355,6 +355,6 @@ public abstract class CraftEntity implements org.bukkit.entity.Entity {
             return null;
         }
 
-        return getHandle().ridingEntity.getBukkitEntity();
+        return CraftServer.getBukkitEntity(getHandle().ridingEntity);
     }
 }

@@ -15,7 +15,7 @@ public class CraftArrow extends AbstractProjectile implements Arrow {
 
     public LivingEntity getShooter() {
         if (getHandle().shootingEntity != null) {
-            return (LivingEntity) getHandle().shootingEntity.getBukkitEntity();
+            return (LivingEntity) CraftServer.getBukkitEntity(getHandle().shootingEntity);
         }
 
         return null;

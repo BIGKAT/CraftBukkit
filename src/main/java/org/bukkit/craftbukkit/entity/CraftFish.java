@@ -15,7 +15,7 @@ public class CraftFish extends AbstractProjectile implements Fish {
 
     public LivingEntity getShooter() {
         if (getHandle().angler != null) {
-            return (LivingEntity) getHandle().angler.getBukkitEntity();
+            return (LivingEntity) CraftServer.getBukkitEntity(getHandle().angler);
         }
 
         return null;

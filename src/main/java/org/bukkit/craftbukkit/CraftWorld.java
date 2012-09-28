@@ -103,7 +103,7 @@ public class CraftWorld implements World {
     }
 
     public Chunk getChunkAt(int x, int z) {
-        return this.world.theChunkProviderServer.getChunkAt(x, z).bukkitChunk;
+        return this.world.theChunkProviderServer.loadChunk(x, z).bukkitChunk;
     }
 
     public Chunk getChunkAt(Block block) {
@@ -115,7 +115,7 @@ public class CraftWorld implements World {
     }
 
     public Chunk[] getLoadedChunks() {
-        Object[] chunks = world.theChunkProviderServer.loadedChunks.values().toArray();
+        Object[] chunks = world.theChunkProviderServer.loadedChunks.toArray();
         org.bukkit.Chunk[] craftChunks = new CraftChunk[chunks.length];
 
         for (int i = 0; i < chunks.length; i++) {
@@ -186,10 +186,10 @@ public class CraftWorld implements World {
 
         net.minecraft.src.Chunk chunk = null;
 
-        if (world.chunkProviderServer.chunkProvider == null) {
-            chunk = world.chunkProviderServer.emptyChunk;
+        if (world.theChunkProviderServer.currentChunkProvider == null) {
+            chunk = world.theChunkProviderServer.defaultEmptyChunk;
         } else {
-            chunk = world.chunkProviderServer.chunkProvider.provideChunk(x, z);
+            chunk = world.theChunkProviderServer.currentChunkProvider.provideChunk(x, z);
         }
 
         chunkLoadPostProcess(chunk, x, z);
@@ -226,14 +226,14 @@ public class CraftWorld implements World {
     public boolean loadChunk(int x, int z, boolean generate) {
         if (generate) {
             // Use the default variant of loadChunk when generate == true.
-            return world.chunkProviderServer.getChunkAt(x, z) != null;
+            return world.theChunkProviderServer.loadChunk(x, z) != null;
         }
 
-        world.chunkProviderServer.unloadQueue.remove(x, z);
-        net.minecraft.src.Chunk chunk = world.chunkProviderServer.chunks.get(x, z);
+        world.theChunkProviderServer.unloadChunksIfNotNearSpawn(x, z);
+        net.minecraft.src.Chunk chunk = (net.minecraft.src.Chunk) world.theChunkProviderServer.loadedChunkHashMap.getValueByKey(ChunkCoordIntPair.chunkXZ2Int(x, z));
 
         if (chunk == null) {
-            chunk = world.chunkProviderServer.loadChunk(x, z);
+            chunk = world.theChunkProviderServer.loadChunk(x, z);
 
             chunkLoadPostProcess(chunk, x, z);
         }
@@ -243,7 +243,7 @@ public class CraftWorld implements World {
     @SuppressWarnings("unchecked")
     private void chunkLoadPostProcess(net.minecraft.src.Chunk chunk, int x, int z) {
         if (chunk != null) {
-            world.theChunkProviderServer.chunks.put(x, z, chunk);
+            world.theChunkProviderServer.loadedChunkHashMap.add(ChunkCoordIntPair.chunkXZ2Int(x, z), chunk);
 
             chunk.onChunkLoad();
 
@@ -251,15 +251,15 @@ public class CraftWorld implements World {
                 world.theChunkProviderServer.populate(world.theChunkProviderServer, x, z);
             }
 
-            if (world.theChunkProviderServer.chunkExists(x - 1, z) && !world.theChunkProviderServer.provideChunk(x - 1, z).done && world.theChunkProviderServer.chunkExists(x - 1, z + 1) && world.theChunkProviderServer.chunkExists(x, z + 1) && world.theChunkProviderServer.chunkExists(x - 1, z)) {
+            if (world.theChunkProviderServer.chunkExists(x - 1, z) && !world.theChunkProviderServer.provideChunk(x - 1, z).isChunkLoaded && world.theChunkProviderServer.chunkExists(x - 1, z + 1) && world.theChunkProviderServer.chunkExists(x, z + 1) && world.theChunkProviderServer.chunkExists(x - 1, z)) {
                 world.theChunkProviderServer.populate(world.theChunkProviderServer, x - 1, z);
             }
 
-            if (world.theChunkProviderServer.chunkExists(x, z - 1) && !world.theChunkProviderServer.provideChunk(x, z - 1).done && world.theChunkProviderServer.chunkExists(x + 1, z - 1) && world.theChunkProviderServer.chunkExists(x, z - 1) && world.theChunkProviderServer.chunkExists(x + 1, z)) {
+            if (world.theChunkProviderServer.chunkExists(x, z - 1) && !world.theChunkProviderServer.provideChunk(x, z - 1).isChunkLoaded && world.theChunkProviderServer.chunkExists(x + 1, z - 1) && world.theChunkProviderServer.chunkExists(x, z - 1) && world.theChunkProviderServer.chunkExists(x + 1, z)) {
                 world.theChunkProviderServer.populate(world.theChunkProviderServer, x, z - 1);
             }
 
-            if (world.theChunkProviderServer.chunkExists(x - 1, z - 1) && !world.theChunkProviderServer.provideChunk(x - 1, z - 1).done && world.theChunkProviderServer.chunkExists(x - 1, z - 1) && world.theChunkProviderServer.chunkExists(x, z - 1) && world.theChunkProviderServer.chunkExists(x - 1, z)) {
+            if (world.theChunkProviderServer.chunkExists(x - 1, z - 1) && !world.theChunkProviderServer.provideChunk(x - 1, z - 1).isChunkLoaded && world.theChunkProviderServer.chunkExists(x - 1, z - 1) && world.theChunkProviderServer.chunkExists(x, z - 1) && world.theChunkProviderServer.chunkExists(x - 1, z)) {
                 world.theChunkProviderServer.populate(world.theChunkProviderServer, x - 1, z - 1);
             }
         }
@@ -287,7 +287,7 @@ public class CraftWorld implements World {
         world.spawnEntityInWorld(entity);
         // TODO this is inconsistent with how Entity.getBukkitEntity() works.
         // However, this entity is not at the moment backed by a server entity class so it may be left.
-        return new CraftItem(world.getServer(), entity);
+        return new CraftItem(CraftServer.getInstance(), entity);
     }
 
     public org.bukkit.entity.Item dropItemNaturally(Location loc, ItemStack item) {
@@ -303,10 +303,10 @@ public class CraftWorld implements World {
 
     public Arrow spawnArrow(Location loc, Vector velocity, float speed, float spread) {
         EntityArrow arrow = new EntityArrow(world);
-        arrow.setPositionRotation(loc.getX(), loc.getY(), loc.getZ(), 0, 0);
-        world.addEntity(arrow);
-        arrow.shoot(velocity.getX(), velocity.getY(), velocity.getZ(), speed, spread);
-        return (Arrow) arrow.getBukkitEntity();
+        arrow.setPositionAndRotation(loc.getX(), loc.getY(), loc.getZ(), 0, 0);
+        world.spawnEntityInWorld(arrow);
+        arrow.setArrowHeading(velocity.getX(), velocity.getY(), velocity.getZ(), speed, spread);
+        return (Arrow) CraftServer.getBukkitEntity(arrow);
     }
 
     @Deprecated
@@ -326,7 +326,7 @@ public class CraftWorld implements World {
 
     public LightningStrike strikeLightning(Location loc) {
         EntityLightningBolt lightning = new EntityLightningBolt(world, loc.getX(), loc.getY(), loc.getZ());
-        world.strikeLightning(lightning);
+        world.addWeatherEffect(lightning);
         return new CraftLightningStrike(server, lightning);
     }
 
@@ -965,13 +965,13 @@ public class CraftWorld implements World {
             // what is this, I don't even
         } else if (Fish.class.isAssignableFrom(clazz)) {
             // this is not a fish, it's a bobber, and it's probably useless
-            entity = new EntityFishingHook(world);
+            entity = new EntityFishHook(world);
             entity.setPositionAndRotation(x, y, z, pitch, yaw);
         }
 
         if (entity != null) {
             world.addEntity(entity, reason);
-            return (T) entity.getBukkitEntity();
+            return (T) CraftServer.getBukkitEntity(entity);
         }
 
         throw new IllegalArgumentException("Cannot spawn an entity for " + clazz.getName());
@@ -1018,7 +1018,7 @@ public class CraftWorld implements World {
                     loadChunk(chunkCoordX + x, chunkCoordZ + z);
                 } else {
                     if (isChunkLoaded(chunkCoordX + x, chunkCoordZ + z)) {
-                        if (this.getHandle().getChunkAt(chunkCoordX + x, chunkCoordZ + z) instanceof EmptyChunk) {
+                        if (this.getHandle().getChunkFromChunkCoords(chunkCoordX + x, chunkCoordZ + z) instanceof EmptyChunk) {
                             unloadChunk(chunkCoordX + x, chunkCoordZ + z, false);
                         } else {
                             unloadChunk(chunkCoordX + x, chunkCoordZ + z);
@@ -1049,7 +1049,7 @@ public class CraftWorld implements World {
     }
 
     public File getWorldFolder() {
-        return ((SaveHandler) world.getDataManager()).getDirectory();
+        return ((SaveHandler) world.getSaveHandler()).getSaveDirectory();
     }
 
     public void explodeBlock(Block block, float yield) {
@@ -1088,11 +1088,11 @@ public class CraftWorld implements World {
     }
 
     public org.bukkit.WorldType getWorldType() {
-        return org.bukkit.WorldType.getByName(world.getWorldData().getGameType().name());
+        return org.bukkit.WorldType.getByName(world.getWorldInfo().getGameType().name());
     }
 
     public boolean canGenerateStructures() {
-        return world.getWorldData().isMapFeaturesEnabled();
+        return world.getWorldInfo().isMapFeaturesEnabled();
     }
 
     public long getTicksPerAnimalSpawns() {
@@ -1170,6 +1170,6 @@ public class CraftWorld implements World {
         double y = loc.getY();
         double z = loc.getZ();
 
-        getHandle().makeSound(x, y, z, sound.getSound(), volume, pitch);
+        getHandle().playSound(x, y, z, sound.getSound(), volume, pitch);
     }
 }

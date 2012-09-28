@@ -34,10 +34,10 @@ public class CraftBrewingStand extends CraftBlockState implements BrewingStand {
     }
 
     public int getBrewingTime() {
-        return brewingStand.brewTime;
+        return brewingStand.getBrewTime();
     }
 
     public void setBrewingTime(int brewTime) {
-        brewingStand.brewTime = brewTime;
+        brewingStand.setBrewTime(brewTime);
     }
 }

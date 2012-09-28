@@ -15,6 +15,7 @@ import net.minecraft.src.MapGenStronghold;
 import net.minecraft.src.WorldServer;
 
 import org.bukkit.block.Biome;
+import org.bukkit.craftbukkit.CraftServer;
 import org.bukkit.generator.BlockPopulator;
 import org.bukkit.generator.ChunkGenerator;
 import org.bukkit.craftbukkit.block.CraftBlock;
@@ -59,7 +60,7 @@ public class CustomChunkGenerator extends InternalChunkGenerator {
         world.getWorldChunkManager().getBiomesForGeneration(biomegrid.biome, x << 4, z << 4, 16, 16);
 
         // Try extended block method (1.2+)
-        short[][] xbtypes = generator.generateExtBlockSections(this.world.getWorld(), this.random, x, z, biomegrid);
+        short[][] xbtypes = generator.generateExtBlockSections(CraftServer.getBukkitWorld(this.world), this.random, x, z, biomegrid);
         if (xbtypes != null) {
             chunk = new Chunk(this.world, x, z);
 
@@ -72,7 +73,7 @@ public class CustomChunkGenerator extends InternalChunkGenerator {
                     continue;
                 }
                 byte[] secBlkID = new byte[4096]; // Allocate blk ID bytes
-                byte[] secExtBlkID = (byte[]) null; // Delay getting extended ID nibbles
+                byte[] secExtBlkID = null; // Delay getting extended ID nibbles
                 short[] bdata = xbtypes[sec];
                 // Loop through data, 2 blocks at a time
                 for (int i = 0, j = 0; i < bdata.length; i += 2, j++) {
@@ -95,7 +96,7 @@ public class CustomChunkGenerator extends InternalChunkGenerator {
             }
         }
         else { // Else check for byte-per-block section data
-            byte[][] btypes = generator.generateBlockSections(this.world.getWorld(), this.random, x, z, biomegrid);
+            byte[][] btypes = generator.generateBlockSections(CraftServer.getBukkitWorld(this.world), this.random, x, z, biomegrid);
 
             if (btypes != null) {
                 chunk = new Chunk(this.world, x, z);
@@ -112,7 +113,7 @@ public class CustomChunkGenerator extends InternalChunkGenerator {
             }
             else { // Else, fall back to pre 1.2 method
                 @SuppressWarnings("deprecation")
-                byte[] types = generator.generate(this.world.getWorld(), this.random, x, z);
+                byte[] types = generator.generate(CraftServer.getBukkitWorld(this.world), this.random, x, z);
                 int ydim = types.length / 256;
                 int scnt = ydim / 16;
 
@@ -124,7 +125,7 @@ public class CustomChunkGenerator extends InternalChunkGenerator {
                 // Loop through sections
                 for (int sec = 0; sec < scnt; sec++) {
                     ExtendedBlockStorage cs = null; // Add sections when needed
-                    byte[] csbytes = (byte[]) null;
+                    byte[] csbytes = null;
 
                     for (int cy = 0; cy < 16; cy++) {
                         int cyoff = cy | (sec << 4);
@@ -158,7 +159,7 @@ public class CustomChunkGenerator extends InternalChunkGenerator {
             biomeIndex[i] = (byte) (biomegrid.biome[i].biomeID & 0xFF);
         }
         // Initialize lighting
-        chunk.initLighting();
+        chunk.generateSkylightMap();
 
         return chunk;
     }
@@ -207,7 +208,7 @@ public class CustomChunkGenerator extends InternalChunkGenerator {
     }
 
     public List<?> getMobsFor(EnumCreatureType type, int x, int y, int z) {
-        BiomeGenBase biomebase = world.getBiome(x, z);
+        BiomeGenBase biomebase = world.getBiomeGenForCoords(x, z);
 
         return biomebase == null ? null : biomebase.getSpawnableList(type);
     }

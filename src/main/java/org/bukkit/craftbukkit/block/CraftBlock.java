@@ -372,7 +372,7 @@ public class CraftBlock implements Block {
             for (int i = 0; i < count; ++i) {
                 int item = block.idDropped(data, chunk.getHandle().worldObj.rand, 0);
                 if (item > 0) {
-                    drops.add(new ItemStack(item, 1, (short) net.minecraft.src.Block.damageDropped(data)));
+                    drops.add(new ItemStack(item, 1, (short) block.damageDropped(data)));
                 }
             }
         }

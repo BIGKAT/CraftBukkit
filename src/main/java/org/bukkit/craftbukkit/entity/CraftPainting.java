@@ -34,7 +34,7 @@ public class CraftPainting extends CraftEntity implements Painting {
         EnumArt newArt = CraftArt.BukkitToNotch(art);
         painting.art = newArt;
         painting.setDirection(painting.direction);
-        if (!force && !painting.survives()) {
+        if (!force && !painting.onValidSurface()) {
             // Revert painting since it doesn't fit
             painting.art = oldArt;
             painting.setDirection(painting.direction);
@@ -74,7 +74,7 @@ public class CraftPainting extends CraftEntity implements Painting {
             getHandle().setDirection(3);
             break;
         }
-        if (!force && !painting.survives()) {
+        if (!force && !painting.onValidSurface()) {
             // Revert painting since it doesn't fit
             painting.xPosition = x;
             painting.yPosition = y;
@@ -110,7 +110,7 @@ public class CraftPainting extends CraftEntity implements Painting {
         painting.setDirection(getHandle().direction);
         getHandle().setDead();
         getHandle().velocityChanged = true; // because this occurs when the painting is broken, so it might be important
-        world.addEntity(painting);
+        world.spawnEntityInWorld(painting);
         this.entity = painting;
     }
 

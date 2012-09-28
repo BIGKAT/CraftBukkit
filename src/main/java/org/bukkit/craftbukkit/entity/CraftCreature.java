@@ -14,19 +14,19 @@ public class CraftCreature extends CraftLivingEntity implements Creature {
     public void setTarget(LivingEntity target) {
         EntityCreature entity = getHandle();
         if (target == null) {
-            entity.entityToAttack = null;
+            entity.setTarget(null);
         } else if (target instanceof CraftLivingEntity) {
             EntityLiving victim = ((CraftLivingEntity) target).getHandle();
-            entity.entityToAttack = victim;
-            entity.pathToEntity = entity.worldObj.getPathEntityToEntity(entity, entity.entityToAttack, 16.0F, true, false, false, true);
+            entity.setTarget(victim);
+            entity.setPathToEntity(entity.worldObj.getPathEntityToEntity(entity, entity.getEntityToAttack(), 16.0F, true, false, false, true));
         }
     }
 
     public CraftLivingEntity getTarget() {
-        if (getHandle().entityToAttack == null) return null;
-        if (!(getHandle().entityToAttack instanceof EntityLiving)) return null;
+        if (getHandle().getEntityToAttack() == null) return null;
+        if (!(getHandle().getEntityToAttack() instanceof EntityLiving)) return null;
 
-        return (CraftLivingEntity) getHandle().entityToAttack.getBukkitEntity();
+        return (CraftLivingEntity) CraftServer.getBukkitEntity(getHandle().getEntityToAttack());
     }
 
     @Override

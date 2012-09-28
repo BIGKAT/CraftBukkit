@@ -210,7 +210,7 @@ public class CraftLivingEntity extends CraftEntity implements LivingEntity {
     }
 
     public Player getKiller() {
-        return getHandle().getLastAttackingEntity() == null ? null : (Player) getHandle().getLastAttackingEntity().getBukkitEntity();
+        return getHandle().getLastAttackingEntity() == null ? null : (Player) CraftServer.getBukkitEntity(getHandle().getLastAttackingEntity());
     }
 
     public boolean addPotionEffect(PotionEffect effect) {
@@ -241,7 +241,7 @@ public class CraftLivingEntity extends CraftEntity implements LivingEntity {
     }
 
     public void removePotionEffect(PotionEffectType type) {
-        getHandle().activePotionsMap.remove(type.getId());
+        getHandle().removePotionEffect(type.getId());
         getHandle().potionsNeedUpdate = true;
         if (getHandle() instanceof EntityPlayerMP) {
 			if (((EntityPlayerMP) getHandle()).serverForThisPlayer == null) {
@@ -253,7 +253,7 @@ public class CraftLivingEntity extends CraftEntity implements LivingEntity {
 
     public Collection<PotionEffect> getActivePotionEffects() {
         List<PotionEffect> effects = new ArrayList<PotionEffect>();
-        for (Object raw : getHandle().activePotionsMap.values()) {
+        for (Object raw : getHandle().getActivePotionEffects()) {
 			if (!(raw instanceof net.minecraft.src.PotionEffect)) {
 				continue;
 			}
@@ -293,7 +293,7 @@ public class CraftLivingEntity extends CraftEntity implements LivingEntity {
         Validate.notNull(launch, "Projectile not supported");
 
         world.joinEntityInSurroundings(launch);
-        return (T) launch.getBukkitEntity();
+        return (T) CraftServer.getBukkitEntity(launch);
     }
 
     public EntityType getType() {

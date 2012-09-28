@@ -10,7 +10,7 @@ public class PotionTest {
     @BeforeClass
     public static void setUp() {
         org.bukkit.potion.Potion.setPotionBrewer(new CraftPotionBrewer());
-        net.minecraft.src.Potion.BLINDNESS.getClass();
+        net.minecraft.src.Potion.blindness.getClass();
         PotionEffectType.stopAcceptingRegistrations();
     }
 
