@@ -27,6 +27,7 @@ import com.google.common.collect.MapMaker;
 
 import jline.console.ConsoleReader;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.src.AnvilSaveConverter;
 import net.minecraft.src.BanEntry;
 import net.minecraft.src.ChunkCoordinates;
 import net.minecraft.src.CraftingManager;
@@ -297,7 +298,7 @@ public final class CraftServer implements Server {
         Player[] players = new Player[online.size()];
 
         for (int i = 0; i < players.length; i++) {
-            players[i] = online.get(i).serverForThisPlayer.getPlayer();
+            players[i] = online.get(i).playerNetServerHandler.getPlayer();
         }
 
         return players;
@@ -341,7 +342,7 @@ public final class CraftServer implements Server {
     }
 
     public Player getPlayer(final EntityPlayerMP entity) {
-        return entity.serverForThisPlayer.getPlayer();
+        return entity.playerNetServerHandler.getPlayer();
     }
 
     public List<Player> matchPlayer(String partialName) {
@@ -1129,8 +1130,8 @@ public final class CraftServer implements Server {
     }
 
     public File getWorldContainer() {
-        if (this.getServer().anvilFile != null) {
-            return this.getServer().anvilFile;
+        if (((AnvilSaveConverter)this.getServer().getActiveAnvilConverter()).savesDirectory != null) {
+            return ((AnvilSaveConverter)this.getServer().getActiveAnvilConverter()).savesDirectory;
         }
 
         if (container == null) {

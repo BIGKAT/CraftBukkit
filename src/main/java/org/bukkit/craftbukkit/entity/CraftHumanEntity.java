@@ -224,7 +224,7 @@ public class CraftHumanEntity extends CraftLivingEntity implements HumanEntity {
     }
 
     private void openCustomInventory(Inventory inventory, EntityPlayerMP player, int windowType) {
-        if (player.serverForThisPlayer == null) return;
+        if (player.playerNetServerHandler == null) return;
         Container container = new CraftContainer(inventory, this, player.incrementWindowID());
 
         container = CraftEventFactory.callInventoryOpenEvent(player, container);
@@ -233,7 +233,7 @@ public class CraftHumanEntity extends CraftLivingEntity implements HumanEntity {
         String title = container.getBukkitView().getTitle();
         int size = container.getBukkitView().getTopInventory().getSize();
 
-        player.serverForThisPlayer.sendPacketToPlayer(new Packet100OpenWindow(container.windowId, windowType, title, size));
+        player.playerNetServerHandler.sendPacketToPlayer(new Packet100OpenWindow(container.windowId, windowType, title, size));
         getHandle().craftingInventory = container;
         getHandle().craftingInventory.addCraftingToCrafters(player);
     }
@@ -274,10 +274,10 @@ public class CraftHumanEntity extends CraftLivingEntity implements HumanEntity {
 
     public void openInventory(InventoryView inventory) {
         if (!(getHandle() instanceof EntityPlayerMP)) return; // TODO: NPC support?
-        if (((EntityPlayerMP) getHandle()).serverForThisPlayer == null) return;
+        if (((EntityPlayerMP) getHandle()).playerNetServerHandler == null) return;
         if (getHandle().craftingInventory != getHandle().inventorySlots) {
             // fire INVENTORY_CLOSE if one already open
-            ((EntityPlayerMP)getHandle()).serverForThisPlayer.handleCloseWindow(new Packet101CloseWindow(getHandle().craftingInventory.windowId));
+            ((EntityPlayerMP)getHandle()).playerNetServerHandler.handleCloseWindow(new Packet101CloseWindow(getHandle().craftingInventory.windowId));
         }
         EntityPlayerMP player = (EntityPlayerMP) getHandle();
         Container container;
@@ -298,7 +298,7 @@ public class CraftHumanEntity extends CraftLivingEntity implements HumanEntity {
         int windowType = CraftContainer.getNotchInventoryType(type);
         String title = inventory.getTitle();
         int size = inventory.getTopInventory().getSize();
-        player.serverForThisPlayer.sendPacketToPlayer(new Packet100OpenWindow(container.windowId, windowType, title, size));
+        player.playerNetServerHandler.sendPacketToPlayer(new Packet100OpenWindow(container.windowId, windowType, title, size));
         player.craftingInventory = container;
         player.craftingInventory.addCraftingToCrafters(player);
     }

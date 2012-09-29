@@ -426,9 +426,9 @@ public class CraftWorld implements World {
         // Forces the client to update to the new time immediately
         for (Player p : getPlayers()) {
             CraftPlayer cp = (CraftPlayer) p;
-            if (cp.getHandle().serverForThisPlayer == null) continue;
+            if (cp.getHandle().playerNetServerHandler == null) continue;
 
-            cp.getHandle().serverForThisPlayer.sendPacketToPlayer(new Packet4UpdateTime(cp.getHandle().getPlayerTime()));
+            cp.getHandle().playerNetServerHandler.sendPacketToPlayer(new Packet4UpdateTime(cp.getHandle().getPlayerTime()));
         }
     }
 
@@ -518,7 +518,7 @@ public class CraftWorld implements World {
     public List<Entity> getEntities() {
         List<Entity> list = new ArrayList<Entity>();
 
-        for (Object o : world.entityList) {
+        for (Object o : world.loadedEntityList) {
             if (o instanceof net.minecraft.src.Entity) {
                 net.minecraft.src.Entity mcEnt = (net.minecraft.src.Entity) o;
                 Entity bukkitEntity = mcEnt.getBukkitEntity();
@@ -536,7 +536,7 @@ public class CraftWorld implements World {
     public List<LivingEntity> getLivingEntities() {
         List<LivingEntity> list = new ArrayList<LivingEntity>();
 
-        for (Object o : world.entityList) {
+        for (Object o : world.loadedEntityList) {
             if (o instanceof net.minecraft.src.Entity) {
                 net.minecraft.src.Entity mcEnt = (net.minecraft.src.Entity) o;
                 Entity bukkitEntity = mcEnt.getBukkitEntity();
@@ -561,7 +561,7 @@ public class CraftWorld implements World {
     public <T extends Entity> Collection<T> getEntitiesByClass(Class<T> clazz) {
         Collection<T> list = new ArrayList<T>();
 
-        for (Object entity: world.entityList) {
+        for (Object entity: world.loadedEntityList) {
             if (entity instanceof net.minecraft.src.Entity) {
                 Entity bukkitEntity = ((net.minecraft.src.Entity) entity).getBukkitEntity();
 
@@ -583,7 +583,7 @@ public class CraftWorld implements World {
     public Collection<Entity> getEntitiesByClasses(Class<?>... classes) {
         Collection<Entity> list = new ArrayList<Entity>();
 
-        for (Object entity: world.entityList) {
+        for (Object entity: world.loadedEntityList) {
             if (entity instanceof net.minecraft.src.Entity) {
                 Entity bukkitEntity = ((net.minecraft.src.Entity) entity).getBukkitEntity();
 
@@ -608,7 +608,7 @@ public class CraftWorld implements World {
     public List<Player> getPlayers() {
         List<Player> list = new ArrayList<Player>();
 
-        for (Object o : world.entityList) {
+        for (Object o : world.loadedEntityList) {
             if (o instanceof net.minecraft.src.Entity) {
                 net.minecraft.src.Entity mcEnt = (net.minecraft.src.Entity) o;
                 Entity bukkitEntity = mcEnt.getBukkitEntity();
@@ -759,12 +759,12 @@ public class CraftWorld implements World {
         radius *= radius;
 
         for (Player player : getPlayers()) {
-            if (((CraftPlayer) player).getHandle().serverForThisPlayer == null) continue;
+            if (((CraftPlayer) player).getHandle().playerNetServerHandler == null) continue;
             if (!location.getWorld().equals(player.getWorld())) continue;
 
             distance = (int) player.getLocation().distanceSquared(location);
             if (distance <= radius) {
-                ((CraftPlayer) player).getHandle().serverForThisPlayer.sendPacketToPlayer(packet);
+                ((CraftPlayer) player).getHandle().playerNetServerHandler.sendPacketToPlayer(packet);
             }
         }
     }
