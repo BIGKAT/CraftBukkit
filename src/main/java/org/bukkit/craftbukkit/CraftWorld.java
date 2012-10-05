@@ -103,7 +103,7 @@ public class CraftWorld implements World {
     }
 
     public Chunk getChunkAt(int x, int z) {
-        return this.world.theChunkProviderServer.loadChunk(x, z).bukkitChunk;
+        return CraftServer.getBukkitChunk(this.world.theChunkProviderServer.loadChunk(x, z));
     }
 
     public Chunk getChunkAt(Block block) {
@@ -120,7 +120,7 @@ public class CraftWorld implements World {
 
         for (int i = 0; i < chunks.length; i++) {
             net.minecraft.src.Chunk chunk = (net.minecraft.src.Chunk) chunks[i];
-            craftChunks[i] = chunk.bukkitChunk;
+            craftChunks[i] = CraftServer.getBukkitChunk(chunk);
         }
 
         return craftChunks;
@@ -162,15 +162,15 @@ public class CraftWorld implements World {
         }
 
         net.minecraft.src.Chunk chunk = world.theChunkProviderServer.provideChunk(x, z);
-        if (chunk.mustSave) {   // If chunk had previously been queued to save, must do save to avoid loss of that data
+        if (chunk.isModified) {   // If chunk had previously been queued to save, must do save to avoid loss of that data
             save = true;
         }
 
         chunk.onChunkUnload(); // Always remove entities - even if discarding, need to get them out of world table
 
         if (save && !(chunk instanceof EmptyChunk)) {
-            world.theChunkProviderServer.saveChunk(chunk);
-            world.theChunkProviderServer.saveChunkNOP(chunk);
+            world.theChunkProviderServer.safeSaveChunk(chunk);
+            world.theChunkProviderServer.safeSaveExtraChunkData(chunk);
         }
 
         world.theChunkProviderServer.chunksToUnload.remove(x, z);
@@ -182,7 +182,7 @@ public class CraftWorld implements World {
     public boolean regenerateChunk(int x, int z) {
         unloadChunk(x, z, false, false);
 
-        world.chunkProviderServer.unloadQueue.remove(x, z);
+        world.theChunkProviderServer.chunksToUnload.remove(x, z);
 
         net.minecraft.src.Chunk chunk = null;
 

@@ -5,21 +5,21 @@ import java.util.Arrays;
 
 import net.minecraft.src.BiomeGenBase;
 import net.minecraft.src.ChunkPosition;
-import net.minecraft.src.ExtendedBlockStorage;
 import net.minecraft.src.EmptyChunk;
+import net.minecraft.src.ExtendedBlockStorage;
 import net.minecraft.src.WorldChunkManager;
 import net.minecraft.src.WorldServer;
 
 import org.bukkit.Chunk;
+import org.bukkit.ChunkSnapshot;
 import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockState;
 import org.bukkit.craftbukkit.block.CraftBlock;
 import org.bukkit.entity.Entity;
-import org.bukkit.ChunkSnapshot;
 
 public class CraftChunk implements Chunk {
-    private WeakReference<net.minecraft.src.Chunk> weakChunk;
+	private WeakReference<net.minecraft.src.Chunk> weakChunk;
     private WorldServer worldServer;
     private int x;
     private int z;
@@ -38,7 +38,7 @@ public class CraftChunk implements Chunk {
     }
 
     public World getWorld() {
-        return CraftServer.getBukkitWorld(worldServer);
+        return CraftServer.getInstance().getBukkitWorld(worldServer);
     }
 
     public CraftWorld getCraftWorld() {
@@ -96,7 +96,7 @@ public class CraftChunk implements Chunk {
                     continue;
                 }
 
-                entities[index++] = CraftServer.getBukkitEntity((net.minecraft.src.Entity) obj);
+                entities[index++] = CraftServer.getInstance().getBukkitEntity((net.minecraft.src.Entity) obj);
             }
         }
 
@@ -114,7 +114,7 @@ public class CraftChunk implements Chunk {
             }
 
             ChunkPosition position = (ChunkPosition) obj;
-            entities[index++] = CraftServer.getBukkitWorld(worldServer).getBlockAt(position.x + (chunk.xPosition << 4), position.y, position.z + (chunk.zPosition << 4)).getState();
+            entities[index++] = CraftServer.getInstance().getBukkitWorld(worldServer).getBlockAt(position.x + (chunk.xPosition << 4), position.y, position.z + (chunk.zPosition << 4)).getState();
         }
         return entities;
     }
