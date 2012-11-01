@@ -21,6 +21,7 @@ public abstract class CraftEntity implements org.bukkit.entity.Entity {
     protected final CraftServer server;
     protected Entity entity;
     private EntityDamageEvent lastDamageEvent;
+	private boolean valid;
 
     public CraftEntity(final CraftServer server, final Entity entity) {
         this.server = server;
@@ -179,7 +180,7 @@ public abstract class CraftEntity implements org.bukkit.entity.Entity {
 
     public List<org.bukkit.entity.Entity> getNearbyEntities(double x, double y, double z) {
         @SuppressWarnings("unchecked")
-        List<Entity> notchEntityList = entity.worldObj.getEntitiesWithinAABBExcludingEntity(entity, entity.boundingBox.grow(x, y, z));
+        List<Entity> notchEntityList = entity.worldObj.getEntitiesWithinAABBExcludingEntity(entity, entity.boundingBox.expand(x, y, z));
         List<org.bukkit.entity.Entity> bukkitEntityList = new java.util.ArrayList<org.bukkit.entity.Entity>(notchEntityList.size());
 
         for (Entity e : notchEntityList) {
@@ -213,7 +214,7 @@ public abstract class CraftEntity implements org.bukkit.entity.Entity {
     }
 
     public boolean isValid() {
-        return entity.isEntityAlive() && entity.valid;
+        return entity.isEntityAlive() && valid;
     }
 
     public Server getServer() {
@@ -271,7 +272,7 @@ public abstract class CraftEntity implements org.bukkit.entity.Entity {
     }
 
     public UUID getUniqueId() {
-        return getHandle().uniqueId;
+        return getHandle().getPersistentID();
     }
 
     public int getTicksLived() {

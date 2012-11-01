@@ -140,7 +140,7 @@ public class Main {
                     useConsole = false;
                 }
 
-                MinecraftServer.main(options);
+//                MinecraftServer.main(options);
             } catch (Throwable t) {
                 t.printStackTrace();
             }

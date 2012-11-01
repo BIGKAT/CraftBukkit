@@ -22,7 +22,6 @@ import org.apache.commons.lang.NotImplementedException;
 import org.bukkit.*;
 import org.bukkit.Achievement;
 import org.bukkit.Material;
-import org.bukkit.Statistic;
 import org.bukkit.World;
 import org.bukkit.configuration.serialization.DelegateDeserialization;
 import org.bukkit.conversations.Conversation;
@@ -56,6 +55,18 @@ public class CraftPlayer extends CraftHumanEntity implements Player {
     private Set<String> channels = new HashSet<String>();
     private Map<String, Player> hiddenPlayers = new MapMaker().softValues().makeMap();
     private int hash = 0;
+	private boolean relativeTime;
+	private long timeOffset;
+	private String displayName;
+	private String listName;
+	private Location compassTarget;
+	private boolean fauxSleeping;
+	private String spawnWorld;
+	private boolean keepLevel;
+	private int expToDrop;
+	private int newLevel;
+	private int newTotalExp;
+	private int newExp;
 
     public CraftPlayer(CraftServer server, EntityPlayerMP entity) {
         super(server, entity);
@@ -94,7 +105,7 @@ public class CraftPlayer extends CraftHumanEntity implements Player {
     public InetSocketAddress getAddress() {
         if (getHandle().playerNetServerHandler == null) return null;
 
-        SocketAddress addr = getHandle().playerNetServerHandler.theNetworkManager.getSocketAddress();
+        SocketAddress addr = getHandle().playerNetServerHandler.netManager.getSocketAddress();
         if (addr instanceof InetSocketAddress) {
             return (InetSocketAddress) addr;
         } else {
@@ -139,19 +150,19 @@ public class CraftPlayer extends CraftHumanEntity implements Player {
     }
 
     public String getDisplayName() {
-        return getHandle().displayName;
+        return displayName;
     }
 
     public void setDisplayName(final String name) {
-        getHandle().displayName = name;
+        displayName = name;
     }
 
     public String getPlayerListName() {
-        return getHandle().listName;
+        return listName;
     }
 
     public void setPlayerListName(String name) {
-        String oldName = getHandle().listName;
+        String oldName = listName;
 
         if (name == null) {
             name = getName();
@@ -167,12 +178,12 @@ public class CraftPlayer extends CraftHumanEntity implements Player {
 
         // Collisions will make for invisible people
         for (int i = 0; i < server.getHandle().playerEntityList.size(); ++i) {
-            if (((EntityPlayerMP) server.getHandle().playerEntityList.get(i)).listName.equals(name)) {
+            if (CraftServer.getBukkitPlayer(((EntityPlayerMP) server.getHandle().playerEntityList.get(i))).listName.equals(name)) {
                 throw new IllegalArgumentException(name + " is already assigned as a player list name for someone");
             }
         }
 
-        getHandle().listName = name;
+        listName = name;
 
         // Change the name on the client side
         Packet201PlayerInfo oldpacket = new Packet201PlayerInfo(oldName, false, 9999);
@@ -222,7 +233,7 @@ public class CraftPlayer extends CraftHumanEntity implements Player {
     }
 
     public Location getCompassTarget() {
-        return getHandle().compassTarget;
+        return compassTarget;
     }
 
     public void chat(String msg) {
@@ -288,8 +299,8 @@ public class CraftPlayer extends CraftHumanEntity implements Player {
 
         Packet53BlockChange packet = new Packet53BlockChange(loc.getBlockX(), loc.getBlockY(), loc.getBlockZ(), ((CraftWorld) loc.getWorld()).getHandle());
 
-        packet.material = material;
-        packet.data = data;
+        packet.type = material;
+        packet.metadata = data;
         getHandle().playerNetServerHandler.sendPacketToPlayer(packet);
     }
 
@@ -374,7 +385,7 @@ public class CraftPlayer extends CraftHumanEntity implements Player {
             if (getHandle().craftingInventory != getHandle().inventorySlots){
                 getHandle().closeScreen();
             }
-            server.getHandle().transferPlayerToDimension(entity, toWorld.dimension, true, to);
+            server.getHandle().transferPlayerToDimension(entity, toWorld.provider.dimensionId, true, to);
         }
         return true;
     }
@@ -408,12 +419,12 @@ public class CraftPlayer extends CraftHumanEntity implements Player {
     }
 
     public void setSleepingIgnored(boolean isSleeping) {
-        getHandle().fauxSleeping = isSleeping;
-        ((CraftWorld) getWorld()).getHandle().checkSleepStatus();
+        fauxSleeping = isSleeping;
+        ((CraftWorld) getWorld()).getHandle().updateAllPlayersSleepingFlag();
     }
 
     public boolean isSleepingIgnored() {
-        return getHandle().fauxSleeping;
+        return fauxSleeping;
     }
 
     public void awardAchievement(Achievement achievement) {
@@ -461,20 +472,26 @@ public class CraftPlayer extends CraftHumanEntity implements Player {
     }
 
     public void setPlayerTime(long time, boolean relative) {
-        getHandle().timeOffset = time;
-        getHandle().relativeTime = relative;
+        timeOffset = time;
+        relativeTime = relative;
     }
 
     public long getPlayerTimeOffset() {
-        return getHandle().timeOffset;
+        return timeOffset;
     }
 
     public long getPlayerTime() {
-        return getHandle().getPlayerTime();
+        if (this.relativeTime) {
+            // Adds timeOffset to the current server time.
+            return getHandle().worldObj.getWorldTime() + this.timeOffset;
+        } else {
+            // Adds timeOffset to the beginning of this day.
+            return getHandle().worldObj.getWorldTime() - (getHandle().worldObj.getWorldTime() % 24000) + this.timeOffset;
+        }
     }
 
     public boolean isPlayerTimeRelative() {
-        return getHandle().relativeTime;
+        return relativeTime;
     }
 
     public void resetPlayerTime() {
@@ -497,7 +514,7 @@ public class CraftPlayer extends CraftHumanEntity implements Player {
     }
 
     public boolean isWhitelisted() {
-        return server.getHandle().getIPWhiteList().contains(getName().toLowerCase());
+        return server.getHandle().getWhiteListedPlayers().contains(getName().toLowerCase());
     }
 
     public void setWhitelisted(boolean value) {
@@ -588,7 +605,7 @@ public class CraftPlayer extends CraftHumanEntity implements Player {
     }
 
     public Location getBedSpawnLocation() {
-        World world = getServer().getWorld(getHandle().spawnWorld);
+        World world = getServer().getWorld(spawnWorld);
         if ((world != null) && (getHandle().getSpawnChunk() != null)) {
             return new Location(world, getHandle().getSpawnChunk().posX, getHandle().getSpawnChunk().posY, getHandle().getSpawnChunk().posZ);
         }
@@ -597,7 +614,7 @@ public class CraftPlayer extends CraftHumanEntity implements Player {
 
     public void setBedSpawnLocation(Location location) {
         getHandle().setSpawnChunk(new ChunkCoordinates(location.getBlockX(), location.getBlockY(), location.getBlockZ()));
-        getHandle().spawnWorld = location.getWorld().getName();
+        spawnWorld = location.getWorld().getName();
     }
 
     public void hidePlayer(Player player) {
@@ -702,11 +719,11 @@ public class CraftPlayer extends CraftHumanEntity implements Player {
 
             if (data.hasKey("newExp")) {
                 EntityPlayerMP handle = getHandle();
-                handle.newExp = data.getInteger("newExp");
-                handle.newTotalExp = data.getInteger("newTotalExp");
-                handle.newLevel = data.getInteger("newLevel");
-                handle.expToDrop = data.getInteger("expToDrop");
-                handle.keepLevel = data.getBoolean("keepLevel");
+                newExp = data.getInteger("newExp");
+                newTotalExp = data.getInteger("newTotalExp");
+                newLevel = data.getInteger("newLevel");
+                expToDrop = data.getInteger("expToDrop");
+                keepLevel = data.getBoolean("keepLevel");
             }
         }
     }
@@ -718,11 +735,11 @@ public class CraftPlayer extends CraftHumanEntity implements Player {
 
         net.minecraft.src.NBTTagCompound data = nbttagcompound.getCompoundTag("bukkit");
         EntityPlayerMP handle = getHandle();
-        data.setInteger("newExp", handle.newExp);
-        data.setInteger("newTotalExp", handle.newTotalExp);
-        data.setInteger("newLevel", handle.newLevel);
-        data.setInteger("expToDrop", handle.expToDrop);
-        data.setBoolean("keepLevel", handle.keepLevel);
+        data.setInteger("newExp", newExp);
+        data.setInteger("newTotalExp", newTotalExp);
+        data.setInteger("newLevel", newLevel);
+        data.setInteger("expToDrop", expToDrop);
+        data.setBoolean("keepLevel", keepLevel);
         data.setLong("firstPlayed", getFirstPlayed());
         data.setLong("lastPlayed", System.currentTimeMillis());
     }
@@ -909,4 +926,14 @@ public class CraftPlayer extends CraftHumanEntity implements Player {
             }
         }
     }
+
+	public long getPlayerSpecificTime(World world) {
+        if (this.relativeTime) {
+            // Adds timeOffset to the current server time.
+            return world.getTime() + this.timeOffset;
+        } else {
+            // Adds timeOffset to the beginning of this day.
+            return world.getTime() - (world.getTime() % 24000) + this.timeOffset;
+        }
+	}
 }

@@ -106,7 +106,7 @@ public class CraftOfflinePlayer implements OfflinePlayer, ConfigurationSerializa
         for (Object obj : server.getHandle().playerEntityList) {
             EntityPlayerMP player = (EntityPlayerMP) obj;
             if (player.username.equalsIgnoreCase(getName())) {
-                return (player.playerNetServerHandler != null) ? player.playerNetServerHandler.getPlayer() : null;
+                return CraftServer.getBukkitPlayer(player);
             }
         }
 
@@ -153,7 +153,7 @@ public class CraftOfflinePlayer implements OfflinePlayer, ConfigurationSerializa
     }
 
     private File getDataFile() {
-        return new File(storage.getPlayerDir(), name + ".dat");
+        return new File(storage.playersDirectory, name + ".dat");
     }
 
     public long getFirstPlayed() {

@@ -6,7 +6,9 @@ import org.bukkit.craftbukkit.CraftServer;
 import org.bukkit.entity.Ageable;
 
 public class CraftAgeable extends CraftCreature implements Ageable {
-    public CraftAgeable(CraftServer server, EntityAgeable entity) {
+    private boolean ageLocked;
+
+	public CraftAgeable(CraftServer server, EntityAgeable entity) {
         super(server, entity);
     }
 
@@ -19,11 +21,11 @@ public class CraftAgeable extends CraftCreature implements Ageable {
     }
 
     public void setAgeLock(boolean lock) {
-        getHandle().ageLocked = lock;
+        ageLocked = lock;
     }
 
     public boolean getAgeLock() {
-        return getHandle().ageLocked;
+        return ageLocked;
     }
 
     public void setBaby() {
@@ -54,12 +56,12 @@ public class CraftAgeable extends CraftCreature implements Ageable {
             setAge(6000);
         }
     }
-    
+
     @Override
     public EntityAgeable getHandle() {
         return (EntityAgeable) entity;
     }
-    
+
     @Override
     public String toString() {
         return "CraftAgeable";
