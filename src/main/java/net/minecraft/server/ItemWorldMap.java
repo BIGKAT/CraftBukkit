@@ -70,7 +70,7 @@ public class ItemWorldMap extends ItemWorldMapBase {
                             byte b0 = 0;
                             byte b1 = 0;
                             byte b2 = 0;
-                            int[] aint = new int[256];
+                            int[] aint = new int[Block.byId.length];
                             Chunk chunk = world.getChunkAtWorldCoords(i3, j3);
                             if (chunk.isEmpty()) continue; // CraftBukkit - fixes maps erasing themselves on low chunk visibility.
                             int k3 = i3 & 15;
@@ -144,7 +144,7 @@ public class ItemWorldMap extends ItemWorldMapBase {
                             l4 = 0;
                             j4 = 0;
 
-                            for (k4 = 0; k4 < 256; ++k4) {
+                            for (k4 = 0; k4 < Block.byId.length; ++k4) {
                                 if (aint[k4] > l4) {
                                     j4 = k4;
                                     l4 = aint[k4];

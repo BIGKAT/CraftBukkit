@@ -1,6 +1,6 @@
 package net.minecraft.server;
 
-public interface CraftingRecipe {
+public interface CraftingRecipe extends net.minecraft.src.IRecipe {
 
     boolean a(InventoryCrafting inventorycrafting);
 

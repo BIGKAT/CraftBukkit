@@ -5,7 +5,9 @@ import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -24,6 +26,11 @@ import org.bukkit.event.server.ServerCommandEvent;
 import org.bukkit.event.server.RemoteServerCommandEvent;
 import org.bukkit.event.world.WorldSaveEvent;
 // CraftBukkit end
+
+import cpw.mods.fml.common.FMLCommonHandler;
+import cpw.mods.fml.server.FMLBukkitHandler;
+import forge.DimensionManager;
+import forge.EnumHelper;
 
 public class MinecraftServer implements Runnable, ICommandListener, IMinecraftServer {
 
@@ -115,6 +122,7 @@ public class MinecraftServer implements Runnable, ICommandListener, IMinecraftSe
         // CraftBukkit end
 
         log.info("Starting minecraft server version 1.2.5");
+        FMLBukkitHandler.instance().onPreLoad(this);
         if (Runtime.getRuntime().maxMemory() / 1024L / 1024L < 512L) {
             log.warning("**** NOT ENOUGH RAM!");
             log.warning("To start the server with more ram, launch it as \"java -Xmx1024M -Xms1024M -jar minecraft_server.jar\"");
@@ -155,6 +163,7 @@ public class MinecraftServer implements Runnable, ICommandListener, IMinecraftSe
             log.warning("To change this, set \"online-mode\" to \"true\" in the server.properties file."); // CraftBukkit - type. Seriously. :D
         }
 
+        FMLBukkitHandler.instance().onLoadComplete();
         this.serverConfigurationManager = new ServerConfigurationManager(this);
         // CraftBukkit - removed trackers
         long i = System.nanoTime();
@@ -229,39 +238,34 @@ public class MinecraftServer implements Runnable, ICommandListener, IMinecraftSe
         log.info("Default game type: " + j);
         // CraftBukkit start (+ removed worldsettings and servernbtmanager)
         boolean generateStructures = this.propertyManager.getBoolean("generate-structures", true);
-        int worldCount = 3;
 
-        for (int k = 0; k < worldCount; ++k) {
+        Integer[] dimensions = DimensionManager.getIDs();
+        Arrays.sort(dimensions, new Comparator<Integer>() {
+        	@Override
+        	public int compare(Integer o1, Integer o2) {
+        		return Math.abs(o1) - Math.abs(o2);
+        	}
+        });
+        for (int k = 0; k < dimensions.length; k++) {
             WorldServer world;
-            int dimension = 0;
-
-            if (k == 1) {
-                if (this.propertyManager.getBoolean("allow-nether", true)) {
-                    dimension = -1;
-                } else {
-                    continue;
-                }
+            int dimension = dimensions[k];
+            if (dimension == -1 && !this.propertyManager.getBoolean("allow-nether", true)) {
+                continue;
+            } else if (dimension == 1 && !this.server.getAllowEnd()) {
+            	continue;
             }
 
-            if (k == 2) {
-                // CraftBukkit - (+ don't do this in server.properties, do it in bukkit.yml)
-                if (this.server.getAllowEnd()) {
-                    dimension = 1;
-                } else {
-                    continue;
-                }
-            }
-
-            String worldType = Environment.getEnvironment(dimension).toString().toLowerCase();
+            Environment env = Environment.getEnvironment(dimension);
+            String worldType = env.toString().toLowerCase();
             String name = (dimension == 0) ? s : s + "_" + worldType;
 
             org.bukkit.generator.ChunkGenerator gen = this.server.getGenerator(name);
             WorldSettings settings = new WorldSettings(i, j, generateStructures, false, worldtype);
 
             if (k == 0) {
-                world = new WorldServer(this, new ServerNBTManager(server.getWorldContainer(), s, true), s, dimension, settings, org.bukkit.World.Environment.getEnvironment(dimension), gen); // CraftBukkit
+                world = new WorldServer(this, new ServerNBTManager(server.getWorldContainer(), s, true), s, dimension, settings, env, gen); // CraftBukkit
             } else {
-                String dim = "DIM" + dimension;
+                String dim = DimensionManager.getProvider(dimension).getSaveFolder();
 
                 File newWorld = new File(new File(name), dim);
                 File oldWorld = new File(new File(s), dim);
@@ -294,7 +298,7 @@ public class MinecraftServer implements Runnable, ICommandListener, IMinecraftSe
                     convertable.convert(name, new ConvertProgressUpdater(this));
                 }
 
-                world = new SecondaryWorldServer(this, new ServerNBTManager(server.getWorldContainer(), name, true), name, dimension, settings, this.worlds.get(0), org.bukkit.World.Environment.getEnvironment(dimension), gen); // CraftBukkit
+                world = new SecondaryWorldServer(this, new ServerNBTManager(server.getWorldContainer(), name, true), name, dimension, settings, this.worlds.get(0), env, gen); // CraftBukkit
             }
 
             if (gen != null) {
@@ -424,6 +428,8 @@ public class MinecraftServer implements Runnable, ICommandListener, IMinecraftSe
             if (this.init()) {
                 long i = System.currentTimeMillis();
 
+                FMLBukkitHandler.instance().onWorldLoadTick();
+
                 for (long j = 0L; this.isRunning; Thread.sleep(1L)) {
                     long k = System.currentTimeMillis();
                     long l = k - i;
@@ -495,6 +501,8 @@ public class MinecraftServer implements Runnable, ICommandListener, IMinecraftSe
     }
 
     private void w() {
+    	FMLCommonHandler.instance().rescheduleTicks();
+    	FMLBukkitHandler.instance().onServerPreTick();
         long i = System.nanoTime();
         ArrayList arraylist = new ArrayList();
         Iterator iterator = trackerList.keySet().iterator();
@@ -543,6 +551,7 @@ public class MinecraftServer implements Runnable, ICommandListener, IMinecraftSe
                 }
                 // CraftBukkit end */
 
+            	FMLBukkitHandler.instance().onPreWorldTick(worldserver);
                 worldserver.doTick();
 
                 while (true) {
@@ -551,6 +560,7 @@ public class MinecraftServer implements Runnable, ICommandListener, IMinecraftSe
                         break;
                     }
                 }
+            	FMLBukkitHandler.instance().onPostWorldTick(worldserver);
             }
 
             // this.g[k][this.ticks % 100] = System.nanoTime() - l; // CraftBukkit
@@ -584,6 +594,7 @@ public class MinecraftServer implements Runnable, ICommandListener, IMinecraftSe
         this.G = Packet.l;
         this.x[this.ticks % 100] = Packet.m - this.H;
         this.H = Packet.m;
+    	FMLBukkitHandler.instance().onServerPostTick();
     }
 
     public void issueCommand(String s, ICommandListener icommandlistener) {
@@ -773,7 +784,7 @@ public class MinecraftServer implements Runnable, ICommandListener, IMinecraftSe
     }
 
     public String getServerModName() {
-        return "craftbukkit"; // CraftBukkit - cb > vanilla!
+        return "craftbukkit+forge"; // CraftBukkit - cb > vanilla!
     }
 
     public static boolean isRunning(MinecraftServer minecraftserver) {

@@ -6,7 +6,10 @@ import java.util.List;
 // CraftBukkit start
 import org.bukkit.event.weather.LightningStrikeEvent;
 
-public class WorldServer extends World implements org.bukkit.BlockChangeDelegate {
+import forge.ForgeHooks;
+import forge.bukkit.BukkitForgeHooks.ForgeBlockChangeDelegate;
+
+public class WorldServer extends World implements ForgeBlockChangeDelegate {
     // CraftBukkit end
 
     public ChunkProviderServer chunkProviderServer;
@@ -24,6 +27,8 @@ public class WorldServer extends World implements org.bukkit.BlockChangeDelegate
         }
 
         this.dimension = i;
+        ForgeHooks.onWorldLoad(this);
+        forge.DimensionManager.setWorld(i, this);
         this.pvpMode = minecraftserver.pvpMode;
         this.manager = new PlayerManager(minecraftserver, this.dimension, minecraftserver.propertyManager.getInt("view-distance", 10));
     }
@@ -129,11 +134,26 @@ public class WorldServer extends World implements org.bukkit.BlockChangeDelegate
     public List getTileEntities(int i, int j, int k, int l, int i1, int j1) {
         ArrayList arraylist = new ArrayList();
 
-        for (int k1 = 0; k1 < this.tileEntityList.size(); ++k1) {
-            TileEntity tileentity = (TileEntity) this.tileEntityList.get(k1);
-
-            if (tileentity.x >= i && tileentity.y >= j && tileentity.z >= k && tileentity.x < l && tileentity.y < i1 && tileentity.z < j1) {
-                arraylist.add(tileentity);
+        for(int x = (i >> 4); x <= (l >> 4); x++)
+        {
+            for(int z = (k >> 4); z <= (j1 >> 4); z++)
+            {
+                Chunk chunk = getChunkAt(x, z);
+                if (chunk != null)
+                {
+                    for(Object obj : chunk.tileEntities.values())
+                    {
+                        TileEntity entity = (TileEntity)obj;
+                        if (!entity.l())
+                        {
+                            if (entity.x >= i && entity.y >= j && entity.z >= k &&
+                                entity.x <= l && entity.y <= i1 && entity.z <= j1)
+                            {
+                                arraylist.add(entity);
+                            }
+                        }
+                    }
+                }
             }
         }
 
@@ -255,4 +275,9 @@ public class WorldServer extends World implements org.bukkit.BlockChangeDelegate
             // CraftBukkit end
         }
     }
+
+	@Override
+	public World unwrap() {
+		return this;
+	}
 }

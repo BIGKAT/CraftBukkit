@@ -4,7 +4,7 @@
   <groupId>org.bukkit</groupId>
   <artifactId>craftbukkit</artifactId>
   <packaging>jar</packaging>
-  <version>1.2.5-R4.1-SNAPSHOT</version>
+  <version>1.2.5-R5.0-MCPC-SNAPSHOT</version>
   <name>CraftBukkit</name>
   <url>http://www.bukkit.org</url>
 
@@ -15,9 +15,9 @@
   </properties>
 
   <scm>
-    <connection>scm:git:git://github.com/Bukkit/CraftBukkit.git</connection>
-    <developerConnection>scm:git:ssh://git@github.com/Bukkit/CraftBukkit.git</developerConnection>
-    <url>https://github.com/Bukkit/CraftBukkit</url>
+    <connection>scm:git:git://github.com/MinecraftPortCentral/CraftBukkit.git</connection>
+    <developerConnection>scm:git:ssh://git@github.com/MinecraftPortCentral/CraftBukkit.git</developerConnection>
+    <url>https://github.com/MinecraftPortCentral/CraftBukkit</url>
   </scm>
 
   <distributionManagement>
@@ -51,7 +51,7 @@
     <dependency>
       <groupId>org.bukkit</groupId>
       <artifactId>bukkit</artifactId>
-      <version>1.2.5-R4.1-SNAPSHOT</version>
+      <version>1.2.5-R5.0</version>
       <type>jar</type>
       <scope>compile</scope>
     </dependency>
@@ -174,6 +174,112 @@
       </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-shade-plugin</artifactId>
+        <version>1.4</version>
+        <executions>
+          <execution>
+            <phase>package</phase>
+            <goals>
+              <goal>shade</goal>
+            </goals>
+            <configuration>
+              <artifactSet>
+                <excludes>
+                  <exclude>junit:junit</exclude>
+                </excludes>
+              </artifactSet>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-antrun-plugin</artifactId>
+        <version>1.7</version>
+        <executions>
+          <execution>
+            <id>compile</id>
+            <phase>generate-resources</phase>
+            <goals>
+            	<goal>run</goal>
+            </goals>
+            <configuration>
+              <target>
+              	<ant dir="src/FML" target="writeversion" />
+              </target>
+            </configuration>
+          </execution>
+          <execution>
+            <id>package</id>
+            <phase>package</phase>
+            <goals>
+            	<goal>run</goal>
+            </goals>
+            <configuration>
+              <target>
+              	<property name="maven.project.finalName" value="${project.build.finalName}"/>
+              	<property name="maven.project.dir" value="${project.build.directory}"/>
+              	<ant dir="mcpxform" target="create-mcp-version" />
+              </target>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>build-helper-maven-plugin</artifactId>
+        <version>1.7</version>
+        <executions>
+          <execution>
+            <id>add-source</id>
+            <phase>generate-sources</phase>
+            <goals>
+              <goal>add-source</goal>
+            </goals>
+            <configuration>
+              <sources>
+                <source>src/FML/common</source>
+                <source>src/FML/bukkit</source>
+              </sources>
+            </configuration>
+          </execution>
+          <execution>
+            <id>add-resource</id>
+            <phase>generate-resources</phase>
+            <goals>
+              <goal>add-resource</goal>
+            </goals>
+            <configuration>
+              <resources>
+                <resource>
+                  <directory>src/FML</directory>
+                  <includes>
+                    <include>fmlversion.properties</include>
+                  </includes>
+                </resource>
+              </resources>
+            </configuration>
+          </execution>
+          <execution>
+            <id>attach-artifacts</id>
+            <phase>package</phase>
+            <goals>
+              <goal>attach-artifact</goal>
+            </goals>
+            <configuration>
+              <artifacts>
+                <artifact>
+                  <file>${project.build.directory}/mcp-bukkit-toolkit-${BUILD_NUMBER}.zip</file>
+                  <type>zip</type>
+                  <classifier>optional</classifier>
+                </artifact>
+              </artifacts>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-jar-plugin</artifactId>
         <version>2.1</version>
         <configuration>
@@ -186,7 +292,7 @@
               <Specification-Title>Bukkit</Specification-Title>
               <Specification-Version>${api.version}</Specification-Version>
               <Specification-Vendor>Bukkit Team</Specification-Vendor>
-              <Sealed>true</Sealed>
+              <Sealed>false</Sealed>
             </manifestEntries>
             <manifestSections>
               <manifestSection>
@@ -213,31 +319,11 @@
        </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-shade-plugin</artifactId>
-        <version>1.4</version>
-        <executions>
-          <execution>
-            <phase>package</phase>
-            <goals>
-              <goal>shade</goal>
-            </goals>
-            <configuration>
-              <artifactSet>
-                <excludes>
-                  <exclude>junit:junit</exclude>
-                </excludes>
-              </artifactSet>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
         <version>2.0.2</version>
         <configuration>
-          <source>1.5</source>
-          <target>1.5</target>
+          <source>1.6</source>
+          <target>1.6</target>
         </configuration>
       </plugin>
       <plugin>
@@ -247,6 +333,25 @@
         <configuration>
           <workingDirectory>${basedir}/target/test-server</workingDirectory>
         </configuration>
+      </plugin>
+      <plugin>
+        <groupId>com.github.github</groupId>
+        <artifactId>downloads-maven-plugin</artifactId>
+        <version>0.4</version>
+        <configuration>
+          <description>${project.version} (${BUILD_NUMBER}) release of ${project.name}</description>
+          <suffix>-${BUILD_NUMBER}</suffix>
+          <override>true</override>
+          <includeAttached>true</includeAttached>
+        </configuration>
+		<executions>
+		  <execution>
+		    <goals>
+		      <goal>upload</goal>
+		    </goals>
+		    <phase>install</phase>
+		  </execution>
+		</executions>
       </plugin>
     </plugins>
     <pluginManagement>
@@ -273,6 +378,19 @@
                   <action>
                     <ignore></ignore>
                   </action>
+                </pluginExecution>
+                <pluginExecution>
+                	<pluginExecutionFilter>
+                		<groupId>org.apache.maven.plugins</groupId>
+                		<artifactId>maven-antrun-plugin</artifactId>
+                		<versionRange>[1.7,)</versionRange>
+                		<goals>
+                			<goal>run</goal>
+                		</goals>
+                	</pluginExecutionFilter>
+                	<action>
+                		<ignore></ignore>
+                	</action>
                 </pluginExecution>
               </pluginExecutions>
             </lifecycleMappingMetadata>

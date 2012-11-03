@@ -2,7 +2,7 @@ package net.minecraft.server;
 
 import org.bukkit.craftbukkit.block.CraftBlockState; // CraftBukkit
 
-public class ItemBlock extends Item {
+public class ItemBlock extends Item implements net.minecraft.src.ItemBlock {
 
     private int id;
 

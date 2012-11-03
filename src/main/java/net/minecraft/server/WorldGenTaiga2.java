@@ -46,7 +46,8 @@ public class WorldGenTaiga2 extends WorldGenerator implements BlockSapling.TreeG
                     for (int l2 = k - k2; l2 <= k + k2 && flag; ++l2) {
                         if (l1 >= 0 && l1 < 256) {
                             j2 = world.getTypeId(i2, l1, l2);
-                            if (j2 != 0 && j2 != Block.LEAVES.id) {
+                            Block bl = Block.byId[j2];
+                            if (j2 != 0 && bl != null && !bl.isLeaves(world, i2, l1, l2)) {
                                 flag = false;
                             }
                         } else {
@@ -77,8 +78,8 @@ public class WorldGenTaiga2 extends WorldGenerator implements BlockSapling.TreeG
 
                             for (int l3 = k - k2; l3 <= k + k2; ++l3) {
                                 int i4 = l3 - k;
-
-                                if ((Math.abs(k3) != k2 || Math.abs(i4) != k2 || k2 <= 0) && !Block.n[world.getTypeId(i3, j3, l3)]) {
+                                Block bl = Block.byId[world.getTypeId(i3, j3, l3)];
+                                if ((Math.abs(k3) != k2 || Math.abs(i4) != k2 || k2 <= 0) && (bl == null || bl.canBeReplacedByLeaves(world, i3, j3, l3))) {
                                     this.setTypeAndData(world, i3, j3, l3, Block.LEAVES.id, 1);
                                 }
                             }
@@ -100,7 +101,8 @@ public class WorldGenTaiga2 extends WorldGenerator implements BlockSapling.TreeG
 
                     for (j3 = 0; j3 < l - j2; ++j3) {
                         i3 = world.getTypeId(i, j + j3, k);
-                        if (i3 == 0 || i3 == Block.LEAVES.id) {
+                        Block bl = Block.byId[i3];
+                        if (i3 == 0 || bl == null || bl.isLeaves(world, i, j + j3, k)) {
                             this.setTypeAndData(world, i, j + j3, k, Block.LOG.id, 1);
                         }
                     }

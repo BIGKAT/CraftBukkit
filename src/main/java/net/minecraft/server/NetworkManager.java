@@ -10,6 +10,9 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import forge.ForgeHooks;
+import forge.MessageManager;
+
 public class NetworkManager {
 
     public static final Object a = new Object();
@@ -223,6 +226,8 @@ public class NetworkManager {
                 ;
             }
         }
+		ForgeHooks.onDisconnect(this, s, aobject);
+		MessageManager.getInstance().removeConnection(this);
     }
 
     public void b() {
@@ -307,5 +312,15 @@ public class NetworkManager {
 
     static Thread h(NetworkManager networkmanager) {
         return networkmanager.r;
+    }
+
+    /**
+     * Retrieves the current associated network handler.
+     * Added so modders don't have to use reflection.
+     * @return The current registered Network Handler
+     */
+    public NetHandler getNetHandler()
+    {
+        return packetListener;
     }
 }

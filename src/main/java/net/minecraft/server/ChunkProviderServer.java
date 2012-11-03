@@ -7,6 +7,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
+import forge.ForgeHooks;
+
 // CraftBukkit start
 import java.util.Random;
 
@@ -15,6 +17,8 @@ import org.bukkit.craftbukkit.util.LongHashset;
 import org.bukkit.craftbukkit.util.LongHashtable;
 import org.bukkit.event.world.ChunkUnloadEvent;
 // CraftBukkit end
+
+import cpw.mods.fml.server.FMLBukkitHandler;
 
 public class ChunkProviderServer implements IChunkProvider {
 
@@ -41,6 +45,10 @@ public class ChunkProviderServer implements IChunkProvider {
     }
 
     public void queueUnload(int i, int j) {
+        if (!ForgeHooks.canUnloadChunk(world.getChunkAt(i, j))) {
+            return;
+        }
+
         if (this.world.worldProvider.c()) {
             ChunkCoordinates chunkcoordinates = this.world.getSpawn();
             int k = i * 16 + 8 - chunkcoordinates.x;
@@ -172,6 +180,7 @@ public class ChunkProviderServer implements IChunkProvider {
             chunk.done = true;
             if (this.chunkProvider != null) {
                 this.chunkProvider.getChunkAt(ichunkprovider, i, j);
+                FMLBukkitHandler.instance().onChunkPopulate(ichunkprovider, i, j, world, this.chunkProvider);
 
                 // CraftBukkit start
                 BlockSand.instaFall = true;

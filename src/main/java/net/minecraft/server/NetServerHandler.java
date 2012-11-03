@@ -35,14 +35,18 @@ import org.bukkit.event.inventory.InventoryType.SlotType;
 import org.bukkit.event.player.PlayerToggleFlightEvent;
 import org.bukkit.inventory.CraftingInventory;
 import org.bukkit.inventory.InventoryView;
-// CraftBukkit end
+
+import cpw.mods.fml.server.FMLBukkitHandler;
+
+import forge.ForgeHooks;
+import forge.MessageManager;
 
 public class NetServerHandler extends NetHandler implements ICommandListener {
 
     public static Logger logger = Logger.getLogger("Minecraft");
     public NetworkManager networkManager;
     public boolean disconnected = false;
-    private MinecraftServer minecraftServer;
+	public MinecraftServer minecraftServer;
     public EntityPlayer player; // CraftBukkit - private -> public
     private int f;
     private int g;
@@ -339,7 +343,7 @@ public class NetServerHandler extends NetHandler implements ICommandListener {
                 double d7 = d3 - this.player.locZ;
                 double d8 = d4 * d4 + d6 * d6 + d7 * d7;
 
-                if (d8 > 100.0D && this.checkMovement) { // CraftBukkit - Added this.checkMovement condition to solve this check being triggered by teleports
+				if (d8 > 100.0D && this.checkMovement && this.server.getKickOnSpeedHack()) { // CraftBukkit - Added this.checkMovement condition to solve this check being triggered by teleports
                     logger.warning(this.player.name + " moved too quickly!");
                     this.disconnect("You moved too quickly :( (Hacking?)");
                     return;
@@ -499,8 +503,10 @@ public class NetServerHandler extends NetHandler implements ICommandListener {
                 double d1 = this.player.locY - ((double) j + 0.5D) + 1.5D;
                 double d2 = this.player.locZ - ((double) k + 0.5D);
                 double d3 = d0 * d0 + d1 * d1 + d2 * d2;
+				double dist = player.itemInWorldManager.getBlockReachDistance() + 1;
+				dist *= dist;
 
-                if (d3 > 36.0D) {
+				if (d3 > dist) {
                     return;
                 }
 
@@ -614,9 +620,12 @@ public class NetServerHandler extends NetHandler implements ICommandListener {
                 j1 = i1;
             }
 
+			double dist = player.itemInWorldManager.getBlockReachDistance() + 1;
+			dist *= dist;
+
             // CraftBukkit start - Check if we can actually do something over this large a distance
             Location eyeLoc = this.getPlayer().getEyeLocation();
-            if (Math.pow(eyeLoc.getX() - i, 2) + Math.pow(eyeLoc.getY() - j, 2) + Math.pow(eyeLoc.getZ() - k, 2) > PLACE_DISTANCE_SQUARED) {
+            if (Math.pow(eyeLoc.getX() - i, 2) + Math.pow(eyeLoc.getY() - j, 2) + Math.pow(eyeLoc.getZ() - k, 2) > Math.max(dist, PLACE_DISTANCE_SQUARED)) {
                 return;
             }
             flag1 = true; // spawn protection moved to ItemBlock!!!
@@ -701,6 +710,9 @@ public class NetServerHandler extends NetHandler implements ICommandListener {
 
     public void sendPacket(Packet packet) {
         // CraftBukkit start
+		if (packet==null) {
+			return;
+		}
         if (packet instanceof Packet6SpawnPosition) {
             Packet6SpawnPosition packet6 = (Packet6SpawnPosition) packet;
             this.player.compassTarget = new Location(this.getPlayer().getWorld(), packet6.x, packet6.y, packet6.z);
@@ -750,8 +762,12 @@ public class NetServerHandler extends NetHandler implements ICommandListener {
                 }
             }
 
-            // CraftBukkit start
-            this.chat(s);
+			if (FMLBukkitHandler.instance().handleChatPacket(packet3chat, player)) {
+
+			} else {
+		        // CraftBukkit start
+		        this.chat(s);
+			}
         }
     }
 
@@ -779,6 +795,10 @@ public class NetServerHandler extends NetHandler implements ICommandListener {
                     return true;
                 }
 
+				s = ForgeHooks.onServerChat(this.player, s);
+				if (s == null) {
+					return true;
+				}
                 s = String.format(event.getFormat(), event.getPlayer().getDisplayName(), event.getMessage());
                 minecraftServer.console.sendMessage(s);
                 for (Player recipient : event.getRecipients()) {
@@ -1293,14 +1313,21 @@ public class NetServerHandler extends NetHandler implements ICommandListener {
         // CraftBukkit end
     }
 
+	public EntityPlayer getPlayerEntity() {
+		return this.player;
+	}
+
     // CraftBukkit start
     @Override
     public void a(Packet250CustomPayload packet) {
+		FMLBukkitHandler.instance().handlePacket250(packet, player);
+		MessageManager inst = MessageManager.getInstance();
         if (packet.tag.equals("REGISTER")) {
             try {
                 String channels = new String(packet.data, "UTF8");
                 for (String channel : channels.split("\0")) {
                     getPlayer().addChannel(channel);
+					inst.addActiveChannel(networkManager, channel);
                 }
             } catch (UnsupportedEncodingException ex) {
                 Logger.getLogger(NetServerHandler.class.getName()).log(Level.SEVERE, "Could not parse REGISTER payload in plugin message packet", ex);
@@ -1310,13 +1337,42 @@ public class NetServerHandler extends NetHandler implements ICommandListener {
                 String channels = new String(packet.data, "UTF8");
                 for (String channel : channels.split("\0")) {
                     getPlayer().removeChannel(channel);
+					inst.removeActiveChannel(networkManager, channel);
                 }
             } catch (UnsupportedEncodingException ex) {
                 Logger.getLogger(NetServerHandler.class.getName()).log(Level.SEVERE, "Could not parse UNREGISTER payload in plugin message packet", ex);
             }
         } else {
+			inst.dispatchIncomingMessage(networkManager, packet.tag, packet.data);
             server.getMessenger().dispatchIncomingMessage(player.getBukkitEntity(), packet.tag, packet.data);
         }
     }
+
     // CraftBukkit end
+	@Override
+	public void a(Packet131ItemData par1Packet131MapData) {
+		ForgeHooks.onItemDataPacket(networkManager, par1Packet131MapData);
+	}
+
+	@Override
+	public void a(Packet132TileEntityData pkt) {
+		World world = this.getPlayerEntity().world;
+		if (world.isLoaded(pkt.a, pkt.b, pkt.c)) {
+			TileEntity te = world.getTileEntity(pkt.a, pkt.b, pkt.c);
+			if (te != null) {
+				te.onDataPacket(networkManager, pkt);
+			} else {
+				ModLoader.getLogger().log(Level.WARNING,String.format(
+										"Received a TileEntityData packet for a location that did not have a TileEntity: (%d, %d, %d) %d: %d, %d, %d",
+										pkt.a, pkt.b,
+										pkt.c, pkt.d,
+										pkt.e, pkt.f,
+										pkt.g));
+			}
+		}
+	}
+
+	public org.bukkit.craftbukkit.CraftServer getServer() {
+		return server;
+	}
 }

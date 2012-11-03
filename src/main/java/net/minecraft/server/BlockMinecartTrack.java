@@ -6,14 +6,27 @@ public class BlockMinecartTrack extends Block {
 
     private final boolean a;
 
+    //FORGE
+	/**
+	 * Forge: Moved render type to a field and a setter. This allows for a mod
+	 * to change the render type for vanilla rails, and any mod rails that
+	 * extend this class.
+	 */
+	private int renderType = 9;
+
+	public void setRenderType(int value) {
+		renderType = value;
+	}
+  
+	//FORGE
     public static final boolean g(World world, int i, int j, int k) {
         int l = world.getTypeId(i, j, k);
 
-        return l == Block.RAILS.id || l == Block.GOLDEN_RAIL.id || l == Block.DETECTOR_RAIL.id;
+        return Block.byId[l] instanceof BlockMinecartTrack;
     }
-
+    //FORGE
     public static final boolean d(int i) {
-        return i == Block.RAILS.id || i == Block.GOLDEN_RAIL.id || i == Block.DETECTOR_RAIL.id;
+        return Block.byId[i] instanceof BlockMinecartTrack;
     }
 
     protected BlockMinecartTrack(int i, int j, boolean flag) {
@@ -66,7 +79,8 @@ public class BlockMinecartTrack extends Block {
     }
 
     public int c() {
-        return 9;
+        //FORGE
+        return renderType;
     }
 
     public int a(Random random) {
@@ -74,7 +88,8 @@ public class BlockMinecartTrack extends Block {
     }
 
     public boolean canPlace(World world, int i, int j, int k) {
-        return world.e(i, j - 1, k);
+        //FORGE
+        return world.isBlockSolidOnSide(i, j - 1, k,1);
     }
 
     public void onPlace(World world, int i, int j, int k) {
@@ -96,24 +111,28 @@ public class BlockMinecartTrack extends Block {
             }
 
             boolean flag = false;
-
-            if (!world.e(i, j - 1, k)) {
+            //FORGE
+            if (!world.isBlockSolidOnSide(i, j - 1, k,1)) {
                 flag = true;
             }
 
-            if (j1 == 2 && !world.e(i + 1, j, k)) {
+            //FORGE
+            if (j1 == 2 && !world.isBlockSolidOnSide(i + 1, j, k,1)) {
                 flag = true;
             }
 
-            if (j1 == 3 && !world.e(i - 1, j, k)) {
+            //FORGE
+            if (j1 == 3 && !world.isBlockSolidOnSide(i - 1, j, k,1)) {
                 flag = true;
             }
 
-            if (j1 == 4 && !world.e(i, j, k - 1)) {
+            //FORGE
+            if (j1 == 4 && !world.isBlockSolidOnSide(i, j, k - 1,1)) {
                 flag = true;
             }
 
-            if (j1 == 5 && !world.e(i, j, k + 1)) {
+            //FORGE
+            if (j1 == 5 && !world.isBlockSolidOnSide(i, j, k + 1,1)) {
                 flag = true;
             }
 
@@ -259,7 +278,142 @@ public class BlockMinecartTrack extends Block {
         return 0;
     }
 
+    //FORGE
+    @Deprecated
     static boolean a(BlockMinecartTrack blockminecarttrack) {
         return blockminecarttrack.a;
+    }
+
+    //FORGE
+	/**
+	 * Return true if the rail can make corners. Used by placement logic.
+	 * 
+	 * @param world
+	 *            The world.
+	 * @param x
+	 *            The rail X coordinate.
+	 * @param y
+	 *            The rail Y coordinate.
+	 * @param z
+	 *            The rail Z coordinate.
+	 * @return True if the rail can make corners.
+	 */
+	public boolean isFlexibleRail(World world, int y, int x, int z) {
+		return !a;
+	}
+
+	/**
+	 * Returns true if the rail can make up and down slopes. Used by placement
+	 * logic.
+	 * 
+	 * @param world
+	 *            The world.
+	 * @param x
+	 *            The rail X coordinate.
+	 * @param y
+	 *            The rail Y coordinate.
+	 * @param z
+	 *            The rail Z coordinate.
+	 * @return True if the rail can make slopes.
+	 */
+	public boolean canMakeSlopes(World world, int x, int y, int z) {
+		return true;
+	}
+
+	/**
+	 * Return the rails metadata (without the power bit if the rail uses one).
+	 * Can be used to make the cart think the rail something other than it is,
+	 * for example when making diamond junctions or switches. The cart parameter
+	 * will often be null unless it it called from EntityMinecart.
+	 * 
+	 * Valid rail metadata is defined as follows: 0x0: flat track going
+	 * North-South 0x1: flat track going West-East 0x2: track ascending to the
+	 * East 0x3: track ascending to the West 0x4: track ascending to the North
+	 * 0x5: track ascending to the South 0x6: WestNorth corner (connecting East
+	 * and South) 0x7: EastNorth corner (connecting West and South) 0x8:
+	 * EastSouth corner (connecting West and North) 0x9: WestSouth corner
+	 * (connecting East and North)
+	 * 
+	 * All directions are Notch defined. In MC Beta 1.8.3 the Sun rises in the
+	 * North. In MC 1.0.0 the Sun rises in the East.
+	 * 
+	 * @param world
+	 *            The world.
+	 * @param cart
+	 *            The cart asking for the metadata, null if it is not called by
+	 *            EntityMinecart.
+	 * @param y
+	 *            The rail X coordinate.
+	 * @param x
+	 *            The rail Y coordinate.
+	 * @param z
+	 *            The rail Z coordinate.
+	 * @return The metadata.
+	 */
+	public int getBasicRailMetadata(IBlockAccess world, EntityMinecart cart,
+			int x, int y, int z) {
+		int meta = world.getData(x, y, z);
+		if (a) {
+			meta = meta & 7;
+		}
+		return meta;
+	}
+
+	/**
+	 * Returns the max speed of the rail at the specified position.
+	 * 
+	 * @param world
+	 *            The world.
+	 * @param cart
+	 *            The cart on the rail, may be null.
+	 * @param x
+	 *            The rail X coordinate.
+	 * @param y
+	 *            The rail Y coordinate.
+	 * @param z
+	 *            The rail Z coordinate.
+	 * @return The max speed of the current rail.
+	 */
+	public float getRailMaxSpeed(World world, EntityMinecart cart, int y,
+			int x, int z) {
+		return 0.4f;
+	}
+
+	/**
+	 * This function is called by any minecart that passes over this rail. It is
+	 * called once per update tick that the minecart is on the rail.
+	 * 
+	 * @param world
+	 *            The world.
+	 * @param cart
+	 *            The cart on the rail.
+	 * @param y
+	 *            The rail X coordinate.
+	 * @param x
+	 *            The rail Y coordinate.
+	 * @param z
+	 *            The rail Z coordinate.
+	 */
+	public void onMinecartPass(World world, EntityMinecart cart, int y, int x,
+			int z) {
+	}
+
+	/**
+	 * Return true if this rail uses the 4th bit as a power bit. Avoid using
+	 * this function when getBasicRailMetadata() can be used instead. The only
+	 * reason to use this function is if you wish to change the rails metadata.
+	 * 
+	 * @param world
+	 *            The world.
+	 * @param x
+	 *            The rail X coordinate.
+	 * @param y
+	 *            The rail Y coordinate.
+	 * @param z
+	 *            The rail Z coordinate.
+	 * @return True if the 4th bit is a power bit.
+	 */
+	public boolean hasPowerBit(World world, int x, int y, int z) {
+		return a;
     }
 }

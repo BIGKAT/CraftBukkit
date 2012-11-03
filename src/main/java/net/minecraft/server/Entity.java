@@ -1,5 +1,6 @@
 package net.minecraft.server;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
@@ -27,7 +28,7 @@ import org.bukkit.plugin.PluginManager;
 import org.bukkit.util.NumberConversions;
 // CraftBukkit end
 
-public abstract class Entity {
+public abstract class Entity implements net.minecraft.src.Entity {
     // CraftBukkit start -  size of entity for clipping calculations
     public enum EntitySize {
         SIZE_1,
@@ -147,6 +148,11 @@ public abstract class Entity {
     public UUID uniqueId = UUID.randomUUID(); // CraftBukkit
     public boolean valid = true; // CraftBukkit
 
+    /** Forge: Used to store custom data for each entity. */
+    private NBTTagCompound customEntityData;
+    protected boolean captureDrops = false;
+    protected ArrayList<EntityItem> capturedDrops = new ArrayList<EntityItem>();
+     
     public Entity(World world) {
         this.id = entityCount++;
         this.be = 1.0D;
@@ -188,6 +194,28 @@ public abstract class Entity {
 
     protected abstract void b();
 
+    /**
+     * Returns a NBTTagCompound that can be used to store custom data for this entity.
+     * It will be written, and read from disc, so it persists over world saves.
+     * @return A NBTTagCompound
+     */
+    public NBTTagCompound getEntityData()
+    {
+    	if (customEntityData == null)
+    	{
+    		customEntityData = new NBTTagCompound();
+    	}
+    	return customEntityData;
+    }
+    /**
+     * Used in model rendering to determine if the entity riding this entity should be in the 'sitting' position.
+     * @return false to prevent an entity that is mounted to this entity from displaying the 'sitting' animation.
+     */
+    public boolean shouldRiderSit()
+    {
+        return true;
+    }
+    
     public DataWatcher getDataWatcher() {
         return this.datawatcher;
     }
@@ -1054,6 +1082,9 @@ public abstract class Entity {
         nbttagcompound.setShort("Fire", (short) this.fireTicks);
         nbttagcompound.setShort("Air", (short) this.getAirTicks());
         nbttagcompound.setBoolean("OnGround", this.onGround);
+        if (customEntityData != null) {
+            nbttagcompound.setCompound("ForgeData", customEntityData);
+        }
         // CraftBukkit start
         nbttagcompound.setLong("WorldUUIDLeast", this.world.getUUID().getLeastSignificantBits());
         nbttagcompound.setLong("WorldUUIDMost", this.world.getUUID().getMostSignificantBits());
@@ -1095,6 +1126,10 @@ public abstract class Entity {
         this.setAirTicks(nbttagcompound.getShort("Air"));
         this.onGround = nbttagcompound.getBoolean("OnGround");
         this.setPosition(this.locX, this.locY, this.locZ);
+
+        if (nbttagcompound.hasKey("ForgeData")) {
+            customEntityData = nbttagcompound.getCompound("ForgeData");
+        }
 
         // CraftBukkit start
         long least = nbttagcompound.getLong("UUIDLeast");
@@ -1196,7 +1231,14 @@ public abstract class Entity {
         EntityItem entityitem = new EntityItem(this.world, this.locX, this.locY + (double) f, this.locZ, itemstack);
 
         entityitem.pickupDelay = 10;
-        this.world.addEntity(entityitem);
+        if (captureDrops)
+        {
+        	capturedDrops.add(entityitem);
+        }
+        else
+        {
+            this.world.addEntity(entityitem);
+        }
         return entityitem;
     }
 
@@ -1580,4 +1622,8 @@ public abstract class Entity {
     public boolean k_() {
         return true;
     }
+
+	public static int getNextId() {
+		return entityCount++;
+	}
 }

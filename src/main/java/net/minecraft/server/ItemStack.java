@@ -1,6 +1,6 @@
 package net.minecraft.server;
 
-public final class ItemStack {
+public final class ItemStack implements net.minecraft.src.ItemStack {
 
     public int count;
     public int b;

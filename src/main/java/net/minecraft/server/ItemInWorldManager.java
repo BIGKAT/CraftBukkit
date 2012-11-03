@@ -1,5 +1,7 @@
 package net.minecraft.server;
 
+import forge.ForgeHooks;
+
 // CraftBukkit start
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.craftbukkit.event.CraftEventFactory;
@@ -9,6 +11,8 @@ import org.bukkit.event.player.PlayerInteractEvent;
 // CraftBukkit end
 
 public class ItemInWorldManager {
+    /** Forge reach distance hook */
+    private double blockReachDistance = 5.0d;
 
     public World world;
     public EntityHuman player;
@@ -75,7 +79,7 @@ public class ItemInWorldManager {
 
             if (j != 0) {
                 Block block = Block.byId[j];
-                float f = block.getDamage(this.player) * (float) (i + 1);
+                float f = block.blockStrength(this.world, this.player, l, m, n) * (float)(i + 1);
 
                 if (f >= 1.0F) {
                     this.j = false;
@@ -129,7 +133,7 @@ public class ItemInWorldManager {
             }
 
             // Handle hitting a block
-            float toolDamage = Block.byId[i1].getDamage(this.player);
+            float toolDamage = Block.byId[i1].blockStrength(this.world, this.player, i, j, k);
             if (event.useItemInHand() == Event.Result.DENY) {
                 // If we 'insta destroyed' then the client needs to be informed.
                 if (toolDamage > 1.0f) {
@@ -168,7 +172,7 @@ public class ItemInWorldManager {
 
             if (i1 != 0) {
                 Block block = Block.byId[i1];
-                float f = block.getDamage(this.player) * (float) (l + 1);
+                float f = block.blockStrength(this.world, this.player, i, j, k) * (float) (l + 1);
 
                 if (f >= 0.7F) {
                     this.breakBlock(i, j, k);
@@ -192,7 +196,7 @@ public class ItemInWorldManager {
     public boolean b(int i, int j, int k) {
         Block block = Block.byId[this.world.getTypeId(i, j, k)];
         int l = this.world.getData(i, j, k);
-        boolean flag = this.world.setTypeId(i, j, k, 0);
+        boolean flag = (block != null && block.removeBlockByPlayer(this.world, this.player, i, j, k));
 
         if (block != null && flag) {
             block.postBreak(this.world, i, j, k, l);
@@ -202,6 +206,11 @@ public class ItemInWorldManager {
     }
 
     public boolean breakBlock(int i, int j, int k) {
+        ItemStack stack = this.player.U();
+        if (stack != null && stack.getItem().onBlockStartBreak(stack, i, j, k, this.player)) {
+            return false;
+        }
+
         // CraftBukkit start
         if (this.player instanceof EntityPlayer) {
             org.bukkit.block.Block block = this.world.getWorld().getBlockAt(i, j, k);
@@ -236,13 +245,14 @@ public class ItemInWorldManager {
             ((EntityPlayer) this.player).netServerHandler.sendPacket(new Packet53BlockChange(i, j, k, this.world));
         } else {
             ItemStack itemstack = this.player.U();
-            boolean flag1 = this.player.b(Block.byId[l]);
+            boolean flag1 = Block.byId[l].canHarvestBlock(this.player, i1);
 
             if (itemstack != null) {
                 itemstack.a(l, i, j, k, this.player);
                 if (itemstack.count == 0) {
                     itemstack.a(this.player);
                     this.player.V();
+                    ForgeHooks.onDestroyCurrentItem(this.player, itemstack);
                 }
             }
 
@@ -278,12 +288,20 @@ public class ItemInWorldManager {
 
     // CraftBukkit - TODO: Review this code, it changed in 1.8 but I'm not sure if we need to update or not
     public boolean interact(EntityHuman entityhuman, World world, ItemStack itemstack, int i, int j, int k, int l) {
+        // Forge: Reorder event to before onItemUseFirst.
+        PlayerInteractEvent event = CraftEventFactory.callPlayerInteractEvent(entityhuman, Action.RIGHT_CLICK_BLOCK, i, j, k, l, itemstack);
+
+        if (itemstack != null && event.useItemInHand() != Event.Result.DENY && event.useInteractedBlock() != Event.Result.DENY && itemstack.getItem().onItemUseFirst(itemstack, entityhuman, world, i, j, k, l))
+        {
+            return true;
+        }
+        // Forge end
+        
         int i1 = world.getTypeId(i, j, k);
 
         // CraftBukkit start - Interact
         boolean result = false;
         if (i1 > 0) {
-            PlayerInteractEvent event = CraftEventFactory.callPlayerInteractEvent(entityhuman, Action.RIGHT_CLICK_BLOCK, i, j, k, l, itemstack);
             if (event.useInteractedBlock() == Event.Result.DENY) {
                 // If we denied a door from opening, we need to send a correcting update to the client, as it already opened the door.
                 if (i1 == Block.WOODEN_DOOR.id) {
@@ -305,6 +323,8 @@ public class ItemInWorldManager {
                 if (this.isCreative()) {
                     itemstack.setData(j1);
                     itemstack.count = k1;
+                } else if (result && itemstack.count == 0) {
+                    ForgeHooks.onDestroyCurrentItem(entityhuman, itemstack);
                 }
             }
 
@@ -319,5 +339,14 @@ public class ItemInWorldManager {
 
     public void a(WorldServer worldserver) {
         this.world = worldserver;
+    }
+    
+    public double getBlockReachDistance()
+    {
+        return blockReachDistance;
+    }
+    public void setBlockReachDistance(double distance)
+    {
+        blockReachDistance = distance;
     }
 }

@@ -10,7 +10,9 @@ import org.bukkit.block.BlockState;
 import org.bukkit.craftbukkit.CraftWorld;
 import org.bukkit.material.MaterialData;
 
-public class StructureGrowDelegate implements BlockChangeDelegate {
+import forge.bukkit.BukkitForgeHooks.ForgeBlockChangeDelegate;
+
+public class StructureGrowDelegate implements ForgeBlockChangeDelegate {
     private final CraftWorld world;
     private final List<BlockState> blocks = new ArrayList<BlockState>();
 
@@ -53,4 +55,9 @@ public class StructureGrowDelegate implements BlockChangeDelegate {
     public boolean isEmpty(int x, int y, int z) {
         return world.getBlockAt(x, y, z).isEmpty();
     }
+
+	@Override
+	public World unwrap() {
+		return world.getHandle();
+	}
 }

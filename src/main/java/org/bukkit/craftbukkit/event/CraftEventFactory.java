@@ -68,7 +68,7 @@ public class CraftEventFactory {
 
         if (world.getHandle().dimension != 0) return true;
         if (spawnSize <= 0) return true;
-        if (player.isOp()) return true;
+        if (player != null && player.isOp()) return true;
 
         ChunkCoordinates chunkcoordinates = worldServer.getSpawn();
 
@@ -308,7 +308,7 @@ public class CraftEventFactory {
                 victim.a(((CraftItemStack) stack).getHandle(), 0.0f);
             }
             else {
-                world.dropItemNaturally(entity.getLocation(), stack);
+                victim.a((new CraftItemStack(stack)).getHandle(), 0.0f);
             }
         }
 

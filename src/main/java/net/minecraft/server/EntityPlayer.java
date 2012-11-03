@@ -5,6 +5,11 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
+import forge.IGuiHandler;
+import forge.MinecraftForge;
+import forge.NetworkMod;
+import forge.packets.PacketOpenGUI;
+
 // CraftBukkit start
 import org.bukkit.Bukkit;
 import org.bukkit.craftbukkit.CraftWorld;
@@ -729,4 +734,18 @@ public class EntityPlayer extends EntityHuman implements ICrafting {
         return (CraftPlayer) super.getBukkitEntity();
     }
     // CraftBukkit end
+
+    /* These functions are added to have compatibility with PlayerAPI. 
+     * If Divisor does not implement these functions, it is his fault, 
+     * these are specifically the functions he told me to use and would be guaranteed to be in PAPI.
+     */
+    public final void realGetNextWidowId()
+    {
+        nextContainerCounter();
+    }
+
+    public final int getCurrentWindowIdField()
+    {
+        return containerCounter;
+    }
 }

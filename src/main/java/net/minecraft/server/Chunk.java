@@ -14,6 +14,8 @@ import org.bukkit.Location;
 import org.bukkit.craftbukkit.util.UnsafeList;
 // CraftBukkit end
 
+import forge.ForgeHooks;
+
 public class Chunk {
 
     public static boolean a;
@@ -80,7 +82,9 @@ public class Chunk {
         for (int l = 0; l < 16; ++l) {
             for (int i1 = 0; i1 < 16; ++i1) {
                 for (int j1 = 0; j1 < k; ++j1) {
-                    byte b0 = abyte[l << 11 | i1 << 7 | j1];
+                    /* FORGE: The following change, a cast from unsigned byte to int,
+                     * fixes a vanilla bug when generating new chunks that contain a block ID > 127 */
+                    int b0 = abyte[l << 11 | i1 << 7 | j1] & 0xFF;
 
                     if (b0 != 0) {
                         int k1 = j1 >> 4;
@@ -96,6 +100,44 @@ public class Chunk {
         }
     }
 
+    /**
+     * Metadata sensitive Chunk constructor for use in new ChunkProviders that 
+     * use metadata sensitive blocks during generation.
+     * 
+     * @param world The world this chunk belongs to
+     * @param ids A ByteArray containing all the BlockID's to set this chunk to 
+     * @param metadata A ByteArray containing all the metadata to set this chunk to
+     * @param chunkX The chunk's X position
+     * @param chunkZ The Chunk's Z position
+     */
+    public Chunk(World world, byte[] ids, byte[] metadata, int chunkX, int chunkZ)
+    {
+        this(world, chunkX, chunkZ);
+        int height = ids.length / 256;
+        for (int x = 0; x < 16; ++x)
+        {
+            for (int z = 0; z < 16; ++z)
+            {
+                for (int y = 0; y < height; ++y)
+                {
+                    int index = x << 11 | z << 7 | y;
+                    int id    = ids[index] & 0xFF;
+                    int meta  = metadata[index] & 0x0F;
+                    if (id != 0)
+                    {
+                        int chunkY = y >> 4;
+                        if (sections[chunkY] == null)
+                        {
+                            sections[chunkY] = new ChunkSection(chunkY << 4);
+                        }
+                        sections[chunkY].a(x, y & 15, z, id);
+                        sections[chunkY].b(x, y & 15, z, meta);
+                    }
+                }
+            }
+        }
+    }
+    
     public boolean a(int i, int j) {
         return i == this.x && j == this.z;
     }
@@ -333,7 +375,7 @@ public class Chunk {
     }
 
     public int getTypeId(int i, int j, int k) {
-        if (j >> 4 >= this.sections.length) {
+        if (j >> 4 >= this.sections.length || j >> 4 < 0) {
             return 0;
         } else {
             ChunkSection chunksection = this.sections[j >> 4];
@@ -343,7 +385,7 @@ public class Chunk {
     }
 
     public int getData(int i, int j, int k) {
-        if (j >> 4 >= this.sections.length) {
+        if (j >> 4 >= this.sections.length || j >> 4 < 0) {
             return 0;
         } else {
             ChunkSection chunksection = this.sections[j >> 4];
@@ -369,6 +411,9 @@ public class Chunk {
         if (l1 == l && this.getData(i, j, k) == i1) {
             return false;
         } else {
+        	if (j >> 4 >= sections.length || j >> 4 < 0) {
+        		return false;
+        	}
             ChunkSection chunksection = this.sections[j >> 4];
             boolean flag = false;
 
@@ -385,10 +430,11 @@ public class Chunk {
             int i2 = this.x * 16 + i;
             int j2 = this.z * 16 + k;
 
-            if (l1 != 0) {
+            if (l1 != 0 && !this.world.suppressPhysics) {
                 if (!this.world.isStatic) {
                     Block.byId[l1].remove(this.world, i2, j, j2);
-                } else if (Block.byId[l1] instanceof BlockContainer && l1 != l) {
+                }
+                if (Block.byId[l1] != null && Block.byId[l1].hasTileEntity(getData(i, j, k))) {
                     this.world.q(i2, j, j2);
                 }
             }
@@ -413,26 +459,22 @@ public class Chunk {
 
                 TileEntity tileentity;
 
-                if (l != 0) {
+            if (l != 0 && !this.world.suppressPhysics) {
                     if (!this.world.isStatic) {
                         Block.byId[l].onPlace(this.world, i2, j, j2);
                     }
 
-                    if (Block.byId[l] instanceof BlockContainer) {
+                if (Block.byId[l] != null && Block.byId[l].hasTileEntity(i1)) {
                         tileentity = this.e(i, j, k);
                         if (tileentity == null) {
-                            tileentity = ((BlockContainer) Block.byId[l]).a_();
+                        tileentity = Block.byId[l].getTileEntity(i1);
                             this.world.setTileEntity(i2, j, j2, tileentity);
                         }
 
                         if (tileentity != null) {
                             tileentity.h();
+                        tileentity.p = i1;
                         }
-                    }
-                } else if (l1 > 0 && Block.byId[l1] instanceof BlockContainer) {
-                    tileentity = this.e(i, j, k);
-                    if (tileentity != null) {
-                        tileentity.h();
                     }
                 }
 
@@ -443,7 +485,7 @@ public class Chunk {
     }
 
     public boolean b(int i, int j, int k, int l) {
-        ChunkSection chunksection = this.sections[j >> 4];
+        ChunkSection chunksection = j >> 4 >=sections.length || j >> 4 < 0 ? null : this.sections[j >> 4];
 
         if (chunksection == null) {
             return false;
@@ -457,7 +499,7 @@ public class Chunk {
                 chunksection.b(i, j & 15, k, l);
                 int j1 = chunksection.a(i, j & 15, k);
 
-                if (j1 > 0 && Block.byId[j1] instanceof BlockContainer) {
+                if (j1 > 0 && Block.byId[j1] != null && Block.byId[j1].hasTileEntity(chunksection.b(i, j & 15, k))) {
                     TileEntity tileentity = this.e(i, j, k);
 
                     if (tileentity != null) {
@@ -472,13 +514,13 @@ public class Chunk {
     }
 
     public int getBrightness(EnumSkyBlock enumskyblock, int i, int j, int k) {
-        ChunkSection chunksection = this.sections[j >> 4];
+        ChunkSection chunksection = j >> 4 >=sections.length || j >> 4 < 0 ? null : this.sections[j >> 4];
 
         return chunksection == null ? enumskyblock.c : (enumskyblock == EnumSkyBlock.SKY ? chunksection.c(i, j & 15, k) : (enumskyblock == EnumSkyBlock.BLOCK ? chunksection.d(i, j & 15, k) : enumskyblock.c));
     }
 
     public void a(EnumSkyBlock enumskyblock, int i, int j, int k, int l) {
-        ChunkSection chunksection = this.sections[j >> 4];
+        ChunkSection chunksection = j >> 4 >=sections.length || j >> 4 < 0 ? null : this.sections[j >> 4];
 
         if (chunksection == null) {
             chunksection = this.sections[j >> 4] = new ChunkSection(j >> 4 << 4);
@@ -500,7 +542,7 @@ public class Chunk {
     }
 
     public int c(int i, int j, int k, int l) {
-        ChunkSection chunksection = this.sections[j >> 4];
+        ChunkSection chunksection = j >> 4 >=sections.length || j >> 4 < 0 ? null : this.sections[j >> 4];
 
         if (chunksection == null) {
             return !this.world.worldProvider.e && l < EnumSkyBlock.SKY.c ? EnumSkyBlock.SKY.c - l : 0;
@@ -576,27 +618,28 @@ public class Chunk {
         ChunkPosition chunkposition = new ChunkPosition(i, j, k);
         TileEntity tileentity = (TileEntity) this.tileEntities.get(chunkposition);
 
+        if (tileentity != null && tileentity.l()) {
+            tileEntities.remove(chunkposition);
+            tileentity = null;
+        }
+
         if (tileentity == null) {
             int l = this.getTypeId(i, j, k);
 
-            if (l <= 0 || !Block.byId[l].o()) {
+            int meta = getData(i, j, k);
+            if (l <= 0 || Block.byId[l] == null || !Block.byId[l].hasTileEntity(meta)) {
                 return null;
             }
 
             if (tileentity == null) {
-                tileentity = ((BlockContainer) Block.byId[l]).a_();
+                tileentity = Block.byId[l].getTileEntity(meta);
                 this.world.setTileEntity(this.x * 16 + i, j, this.z * 16 + k, tileentity);
             }
 
             tileentity = (TileEntity) this.tileEntities.get(chunkposition);
         }
 
-        if (tileentity != null && tileentity.l()) {
-            this.tileEntities.remove(chunkposition);
-            return null;
-        } else {
             return tileentity;
-        }
     }
 
     public void a(TileEntity tileentity) {
@@ -606,7 +649,7 @@ public class Chunk {
 
         this.a(i, j, k, tileentity);
         if (this.d) {
-            this.world.tileEntityList.add(tileentity);
+            this.world.addTileEntity(tileentity);
         }
     }
 
@@ -617,7 +660,12 @@ public class Chunk {
         tileentity.x = this.x * 16 + i;
         tileentity.y = j;
         tileentity.z = this.z * 16 + k;
-        if (this.getTypeId(i, j, k) != 0 && Block.byId[this.getTypeId(i, j, k)] instanceof BlockContainer) {
+        int id = this.getTypeId(i, j, k);
+        if (id > 0 && Block.byId[id] != null && Block.byId[id].hasTileEntity(getData(i, j, k))) {
+            TileEntity old = (TileEntity)this.tileEntities.get(chunkposition);
+            if (old != null) {
+                old.j();
+            }
             tileentity.m();
             this.tileEntities.put(chunkposition, tileentity);
         // CraftBukkit start
@@ -649,6 +697,7 @@ public class Chunk {
         for (int i = 0; i < this.entitySlices.length; ++i) {
             this.world.a(this.entitySlices[i]);
         }
+        ForgeHooks.onChunkLoad(world, this);
     }
 
     public void removeEntities() {
@@ -679,6 +728,7 @@ public class Chunk {
 
             this.world.b(this.entitySlices[i]);
         }
+        ForgeHooks.onChunkUnload(world, this);
     }
 
     public void e() {
@@ -686,8 +736,8 @@ public class Chunk {
     }
 
     public void a(Entity entity, AxisAlignedBB axisalignedbb, List list) {
-        int i = MathHelper.floor((axisalignedbb.b - 2.0D) / 16.0D);
-        int j = MathHelper.floor((axisalignedbb.e + 2.0D) / 16.0D);
+        int i = MathHelper.floor((axisalignedbb.b - World.MAX_ENTITY_RADIUS) / 16.0D);
+        int j = MathHelper.floor((axisalignedbb.e + World.MAX_ENTITY_RADIUS) / 16.0D);
 
         if (i < 0) {
             i = 0;
@@ -721,8 +771,8 @@ public class Chunk {
     }
 
     public void a(Class oclass, AxisAlignedBB axisalignedbb, List list) {
-        int i = MathHelper.floor((axisalignedbb.b - 2.0D) / 16.0D);
-        int j = MathHelper.floor((axisalignedbb.e + 2.0D) / 16.0D);
+        int i = MathHelper.floor((axisalignedbb.b - World.MAX_ENTITY_RADIUS) / 16.0D);
+        int j = MathHelper.floor((axisalignedbb.e + World.MAX_ENTITY_RADIUS) / 16.0D);
 
         if (i < 0) {
             i = 0;
@@ -929,6 +979,17 @@ public class Chunk {
 
                     this.world.v(i1, l1, j1);
                 }
+            }
+        }
+    }
+
+    /** FORGE: Used to remove only invalid TileEntities */
+    public void cleanChunkBlockTileEntity(int x, int y, int z)  {
+        ChunkPosition position = new ChunkPosition(x, y, z);
+        if (this.d) {
+            TileEntity entity = (TileEntity)tileEntities.get(position);
+            if (entity != null && entity.l()) {
+                tileEntities.remove(position);
             }
         }
     }

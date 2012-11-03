@@ -25,6 +25,7 @@ import net.minecraft.server.Enchantment;
 import net.minecraft.server.EntityPlayer;
 import net.minecraft.server.EntityTracker;
 import net.minecraft.server.FurnaceRecipes;
+import net.minecraft.server.ICommandListener;
 import net.minecraft.server.IProgressUpdate;
 import net.minecraft.server.IWorldAccess;
 import net.minecraft.server.Item;
@@ -121,6 +122,10 @@ import com.avaje.ebeaninternal.server.lib.sql.TransactionIsolation;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.MapMaker;
 
+import forge.DimensionManager;
+import forge.bukkit.ForgeCommandMap;
+import forge.bukkit.ForgePluginManager;
+
 import jline.console.ConsoleReader;
 
 public final class CraftServer implements Server {
@@ -129,10 +134,10 @@ public final class CraftServer implements Server {
     private final String bukkitVersion = Versioning.getBukkitVersion();
     private final ServicesManager servicesManager = new SimpleServicesManager();
     private final BukkitScheduler scheduler = new CraftScheduler();
-    private final SimpleCommandMap commandMap = new SimpleCommandMap(this);
+    private final ForgeCommandMap commandMap;
     private final SimpleHelpMap helpMap = new SimpleHelpMap(this);
     private final StandardMessenger messenger = new StandardMessenger();
-    private final PluginManager pluginManager = new SimplePluginManager(this, commandMap);
+    private final PluginManager pluginManager;
     protected final MinecraftServer console;
     protected final ServerConfigurationManager server;
     private final Map<String, World> worlds = new LinkedHashMap<String, World>();
@@ -152,6 +157,8 @@ public final class CraftServer implements Server {
     }
 
     public CraftServer(MinecraftServer console, ServerConfigurationManager server) {
+    	this.commandMap = new ForgeCommandMap(this, console);
+    	this.pluginManager = new ForgePluginManager(this, commandMap);
         this.console = console;
         this.server = server;
         this.serverVersion = CraftServer.class.getPackage().getImplementationVersion();
@@ -399,6 +406,21 @@ public final class CraftServer implements Server {
     public boolean getWarnOnOverload() {
         return this.configuration.getBoolean("settings.warn-on-overload");
     }
+
+    // MCPortCentral
+    public boolean getKickOnSpeedHack() {
+        return this.configuration.getBoolean("settings.kick-on-speedhack");
+    }
+
+    public String getOutdatedServerMessage() {
+        return this.configuration.getString("settings.outdated-server-message", "Outdated server!");
+    }
+
+    public String getOutdatedClientMessage() {
+        return this.configuration.getString("settings.outdated-client-message", "Outdated client!");
+    }
+
+    // END MCPortCentral
 
     public boolean getQueryPlugins() {
         return this.configuration.getBoolean("settings.query-plugins");
@@ -656,17 +678,13 @@ public final class CraftServer implements Server {
             converter.convert(name, new ConvertProgressUpdater(console));
         }
 
-        int dimension = 10 + console.worlds.size();
-        boolean used = false;
-        do {
-            for (WorldServer server : console.worlds) {
-                used = server.dimension == dimension;
-                if (used) {
-                    dimension++;
-                    break;
-                }
-            }
-        } while(used);
+        int dimension = 0;
+        for (net.minecraft.server.World w : DimensionManager.getWorlds())
+        {
+        	WorldServer ws = (WorldServer)w;
+        	dimension = Math.max(ws.dimension, dimension);
+        }
+        dimension++;
         boolean hardcore = false;
 
         WorldServer internal = new WorldServer(console, new ServerNBTManager(getWorldContainer(), name, true), name, dimension, new WorldSettings(creator.seed(), getDefaultGameMode().getValue(), generateStructures, hardcore, type), creator.environment(), generator);

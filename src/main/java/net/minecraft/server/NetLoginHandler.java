@@ -1,9 +1,17 @@
 package net.minecraft.server;
 
+import java.io.UnsupportedEncodingException;
 import java.net.Socket;
 import java.util.Iterator;
 import java.util.Random;
 import java.util.logging.Logger;
+
+import cpw.mods.fml.server.FMLBukkitHandler;
+
+import forge.ForgeHooks;
+import forge.ForgeHooksServer;
+import forge.MessageManager;
+import forge.packets.ForgePacket;
 
 public class NetLoginHandler extends NetHandler {
 
@@ -22,6 +30,7 @@ public class NetLoginHandler extends NetHandler {
         this.server = minecraftserver;
         this.networkManager = new NetworkManager(socket, s, this);
         this.networkManager.f = 0;
+        ForgeHooks.onConnect(networkManager);
     }
 
     // CraftBukkit start
@@ -57,7 +66,7 @@ public class NetLoginHandler extends NetHandler {
     public void a(Packet2Handshake packet2handshake) {
         // CraftBukkit start - 1.3 detection
         if (packet2handshake.a == null) {
-                disconnect("Outdated server!");
+                disconnect(this.server.server.getOutdatedServerMessage());
                 return;
         }
         // CraftBukkit end
@@ -79,9 +88,9 @@ public class NetLoginHandler extends NetHandler {
         this.g = packet1login.name;
         if (packet1login.a != 29) {
             if (packet1login.a > 29) {
-                this.disconnect("Outdated server!");
+                disconnect(this.server.server.getOutdatedServerMessage());
             } else {
-                this.disconnect("Outdated client!");
+                disconnect(this.server.server.getOutdatedClientMessage());
             }
         } else {
             if (!this.server.onlineMode) {
@@ -112,7 +121,7 @@ public class NetLoginHandler extends NetHandler {
 
             entityplayer.itemInWorldManager.b(worldserver.getWorldData().getGameType());
             NetServerHandler netserverhandler = new NetServerHandler(this.server, this.networkManager, entityplayer);
-
+/*
             // CraftBukkit start -- Don't send a higher than 60 MaxPlayer size, otherwise the PlayerInfo window won't render correctly.
             int maxPlayers = this.server.serverConfigurationManager.getMaxPlayers();
             if (maxPlayers > 60) {
@@ -128,7 +137,9 @@ public class NetLoginHandler extends NetHandler {
             // this.server.serverConfigurationManager.sendAll(new Packet3Chat("\u00A7e" + entityplayer.name + " joined the game.")); // CraftBukkit - message moved to join event
             this.server.serverConfigurationManager.c(entityplayer);
             netserverhandler.a(entityplayer.locX, entityplayer.locY, entityplayer.locZ, entityplayer.yaw, entityplayer.pitch);
+             */
             this.server.networkListenThread.a(netserverhandler);
+            /*
             netserverhandler.sendPacket(new Packet4UpdateTime(entityplayer.getPlayerTime())); // CraftBukkit - add support for player specific time
             Iterator iterator = entityplayer.getEffects().iterator();
 
@@ -139,6 +150,9 @@ public class NetLoginHandler extends NetHandler {
             }
 
             entityplayer.syncInventory();
+            */
+            ForgeHooksServer.handleLoginPacket(packet1login, netserverhandler, networkManager);
+            FMLBukkitHandler.instance().handleLogin(packet1login, networkManager);
         }
 
         this.c = true;

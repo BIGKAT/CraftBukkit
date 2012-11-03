@@ -23,6 +23,11 @@ public class CraftItemStack extends ItemStack {
         this.item = item;
     }
 
+    public CraftItemStack(CraftItemStack item) {
+        this((ItemStack)item);
+        this.item = item.item != null ? item.item.cloneItemStack() : null;
+    }
+
     public CraftItemStack(ItemStack item) {
         this(item.getTypeId(), item.getAmount(), item.getDurability());
         addUnsafeEnchantments(item.getEnchantments());
@@ -228,6 +233,9 @@ public class CraftItemStack extends ItemStack {
     public static net.minecraft.server.ItemStack createNMSItemStack(ItemStack original) {
         if (original == null || original.getTypeId() <= 0) {
             return null;
+        }
+        if (original instanceof CraftItemStack) {
+            return ((CraftItemStack)original).getHandle();
         }
         return new CraftItemStack(original).getHandle();
     }

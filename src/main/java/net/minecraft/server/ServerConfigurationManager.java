@@ -16,6 +16,7 @@ import java.util.logging.Logger;
 import java.util.LinkedHashSet;
 
 import org.bukkit.Location;
+import org.bukkit.World.Environment;
 import org.bukkit.craftbukkit.CraftServer;
 import org.bukkit.craftbukkit.CraftWorld;
 import org.bukkit.entity.Player;
@@ -27,7 +28,10 @@ import org.bukkit.event.player.PlayerLoginEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
 import org.bukkit.event.player.PlayerTeleportEvent.TeleportCause;
 import org.bukkit.Bukkit;
+
+import cpw.mods.fml.server.FMLBukkitHandler;
 // CraftBukkit end
+import forge.DimensionManager;
 
 public class ServerConfigurationManager {
 
@@ -306,7 +310,8 @@ public class ServerConfigurationManager {
         }
 
         // CraftBukkit start
-        byte actualDimension = (byte) (worldserver.getWorld().getEnvironment().getId());
+        // cpw: remove byte here- forge can have more than the 3 dimension numbers
+        int actualDimension = worldserver.getWorld().getEnvironment().getId();
         // Force the client to refresh their chunk cache.
         entityplayer1.netServerHandler.sendPacket(new Packet9Respawn((byte) (actualDimension >= 0 ? -1 : 0), (byte) worldserver.difficulty, worldserver.getWorldData().getType(), worldserver.getHeight(), entityplayer.itemInWorldManager.getGameMode()));
         entityplayer1.netServerHandler.sendPacket(new Packet9Respawn(actualDimension, (byte) worldserver.difficulty, worldserver.getWorldData().getType(), worldserver.getHeight(), entityplayer.itemInWorldManager.getGameMode()));
@@ -334,22 +339,16 @@ public class ServerConfigurationManager {
         // CraftBukkit start -- Replaced the standard handling of portals with a more customised method.
         int dimension = i;
         WorldServer fromWorld = this.server.getWorldServer(entityplayer.dimension);
-        WorldServer toWorld = null;
-        if (entityplayer.dimension < 10) {
-            for (WorldServer world : this.server.worlds) {
-                if (world.dimension == dimension) {
-                    toWorld = world;
-                }
-            }
-        }
+        WorldServer toWorld = (WorldServer) DimensionManager.getWorld(i);
 
         Location fromLocation = new Location(fromWorld.getWorld(), entityplayer.locX, entityplayer.locY, entityplayer.locZ, entityplayer.yaw, entityplayer.pitch);
         Location toLocation = null;
 
         if (toWorld != null) {
-            if (((dimension == -1) || (dimension == 0)) && ((entityplayer.dimension == -1) || (entityplayer.dimension == 0))) {
-                double blockRatio = dimension == 0 ? 8 : 0.125;
-
+            if (DimensionManager.getProvider(fromWorld.dimension)!=null && DimensionManager.getProvider(toWorld.dimension)!=null) {
+            	double fromScale = fromWorld.worldProvider.getMovementFactor();
+            	double toScale = toWorld.worldProvider.getMovementFactor();
+                double blockRatio = fromScale/toScale;
                 toLocation = toWorld == null ? null : new Location(toWorld.getWorld(), (entityplayer.locX * blockRatio), entityplayer.locY, (entityplayer.locZ * blockRatio), entityplayer.yaw, entityplayer.pitch);
             } else {
                 ChunkCoordinates coords = toWorld.getDimensionSpawn();
@@ -397,6 +396,7 @@ public class ServerConfigurationManager {
         toWorld = ((CraftWorld) finalLocation.getWorld()).getHandle();
         this.moveToWorld(entityplayer, toWorld.dimension, true, finalLocation);
         // CraftBukkit end
+        FMLBukkitHandler.instance().announceDimensionChange(entityplayer);
     }
 
     public void tick() {

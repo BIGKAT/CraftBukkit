@@ -1,7 +1,16 @@
 package net.minecraft.server;
 
+import java.util.EnumSet;
 import java.util.Iterator;
 import java.util.List;
+
+import forge.ArmorProperties;
+import forge.ForgeHooks;
+import forge.IGuiHandler;
+import forge.ISpecialArmor;
+import forge.MinecraftForge;
+import forge.NetworkMod;
+import forge.packets.PacketOpenGUI;
 
 // CraftBukkit start
 import org.bukkit.craftbukkit.entity.CraftItem;
@@ -12,6 +21,10 @@ import org.bukkit.event.player.PlayerBedEnterEvent;
 import org.bukkit.event.player.PlayerBedLeaveEvent;
 import org.bukkit.event.player.PlayerDropItemEvent;
 // CraftBukkit end
+
+import cpw.mods.fml.common.FMLCommonHandler;
+import cpw.mods.fml.common.TickType;
+import org.bukkit.craftbukkit.event.CraftEventFactory;
 
 public abstract class EntityHuman extends EntityLiving {
 
@@ -114,12 +127,14 @@ public abstract class EntityHuman extends EntityLiving {
     }
 
     public void F_() {
+    	FMLCommonHandler.instance().tickStart(EnumSet.of(TickType.PLAYER), this, this.world);
         if (this.d != null) {
             ItemStack itemstack = this.inventory.getItemInHand();
 
             if (itemstack != this.d) {
                 this.O();
             } else {
+                d.getItem().onUsingItemTick(d, this, e);
                 if (this.e <= 25 && this.e % 4 == 0) {
                     this.b(itemstack, 5);
                 }
@@ -213,6 +228,7 @@ public abstract class EntityHuman extends EntityLiving {
         if (!this.world.isStatic) {
             this.foodData.a(this);
         }
+    	FMLCommonHandler.instance().tickEnd(EnumSet.of(TickType.PLAYER), this, this.world);
     }
 
     protected void b(ItemStack itemstack, int i) {
@@ -389,7 +405,14 @@ public abstract class EntityHuman extends EntityLiving {
     }
 
     public EntityItem S() {
-        return this.a(this.inventory.splitStack(this.inventory.itemInHandIndex, 1), false);
+        ItemStack stack = inventory.getItemInHand();
+        if (stack == null) {
+            return null;
+        }
+        if (stack.getItem().onDroppedByPlayer(stack, this)) {
+	        return this.a(this.inventory.splitStack(this.inventory.itemInHandIndex, 1), false);
+        }
+        return null;
     }
 
     public EntityItem drop(ItemStack itemstack) {
@@ -449,8 +472,15 @@ public abstract class EntityHuman extends EntityLiving {
         this.world.addEntity(entityitem);
     }
 
+    @Deprecated
     public float a(Block block) {
-        float f = this.inventory.a(block);
+        return getCurrentPlayerStrVsBlock(block, 0);
+    }
+
+    public float getCurrentPlayerStrVsBlock(Block block, int meta) {
+        ItemStack stack = inventory.getItemInHand();
+        float f = (stack == null ? 1.0F : stack.getItem().getStrVsBlock(stack, block, meta));
+        //float f = this.inventory.a(block);
         float f1 = f;
         int i = EnchantmentManager.getDigSpeedEnchantmentLevel(this.inventory);
 
@@ -663,7 +693,12 @@ public abstract class EntityHuman extends EntityLiving {
             i = 1 + i >> 1;
         }
 
-        i = this.d(damagesource, i);
+        //i = this.d(damagesource, i);
+        i = ArmorProperties.ApplyArmor(this, inventory.armor, damagesource, i);
+        if (i <= 0) {
+            return;
+        }
+
         i = this.b(damagesource, i);
         this.c(damagesource.f());
         this.health -= i;
@@ -678,6 +713,10 @@ public abstract class EntityHuman extends EntityLiving {
     public void openBrewingStand(TileEntityBrewingStand tileentitybrewingstand) {}
 
     public void e(Entity entity) {
+        if (!ForgeHooks.onEntityInteract(this, entity, false))
+        {
+            return;
+        }
         if (!entity.b(this)) {
             ItemStack itemstack = this.U();
 
@@ -698,7 +737,9 @@ public abstract class EntityHuman extends EntityLiving {
     }
 
     public void V() {
+        ItemStack orig = inventory.getItemInHand();
         this.inventory.setItem(this.inventory.itemInHandIndex, (ItemStack) null);
+        ForgeHooks.onDestroyCurrentItem(this, orig);
     }
 
     public double W() {
@@ -713,6 +754,15 @@ public abstract class EntityHuman extends EntityLiving {
     }
 
     public void attack(Entity entity) {
+        if (!ForgeHooks.onEntityInteract(this, entity, true))
+        {
+            return;
+        }
+        ItemStack stack = this.inventory.getItemInHand();
+        if (stack != null && stack.getItem().onLeftClickEntity(stack, this, entity)) {
+            return;
+        }
+
         if (entity.k_()) {
             int i = this.inventory.a(entity);
 
@@ -830,6 +880,11 @@ public abstract class EntityHuman extends EntityLiving {
     }
 
     public EnumBedResult a(int i, int j, int k) {
+        EnumBedResult customSleep = ForgeHooks.sleepInBedAt(this, i, j, k);
+        if (customSleep != null) {
+            return customSleep;
+        }
+
         if (!this.world.isStatic) {
             if (this.isSleeping() || !this.isAlive()) {
                 return EnumBedResult.OTHER_PROBLEM;
@@ -875,6 +930,11 @@ public abstract class EntityHuman extends EntityLiving {
         if (this.world.isLoaded(i, j, k)) {
             int l = this.world.getData(i, j, k);
             int i1 = BlockBed.b(l);
+            Block block = Block.byId[world.getTypeId(i,j,k)];
+            if (block != null)
+            {
+            	i1 = block.getBedDirection(world, i, j, k);
+            }
             float f = 0.5F;
             float f1 = 0.5F;
 
@@ -941,9 +1001,10 @@ public abstract class EntityHuman extends EntityLiving {
         ChunkCoordinates chunkcoordinates = this.F;
         ChunkCoordinates chunkcoordinates1 = this.F;
 
-        if (chunkcoordinates != null && this.world.getTypeId(chunkcoordinates.x, chunkcoordinates.y, chunkcoordinates.z) == Block.BED.id) {
-            BlockBed.a(this.world, chunkcoordinates.x, chunkcoordinates.y, chunkcoordinates.z, false);
-            chunkcoordinates1 = BlockBed.f(this.world, chunkcoordinates.x, chunkcoordinates.y, chunkcoordinates.z, 0);
+        Block block = (chunkcoordinates == null ? null : Block.byId[world.getTypeId(chunkcoordinates.x, chunkcoordinates.y, chunkcoordinates.z)]);
+        if (chunkcoordinates != null && block != null && block.isBed(world, chunkcoordinates.x, chunkcoordinates.y, chunkcoordinates.z, this)) {
+        	block.setBedOccupied(this.world, chunkcoordinates.x, chunkcoordinates.y, chunkcoordinates.z, this, false);
+        	chunkcoordinates1 = block.getBedSpawnPosition(this.world, chunkcoordinates.x, chunkcoordinates.y, chunkcoordinates.z, this);
             if (chunkcoordinates1 == null) {
                 chunkcoordinates1 = new ChunkCoordinates(chunkcoordinates.x, chunkcoordinates.y + 1, chunkcoordinates.z);
             }
@@ -984,7 +1045,9 @@ public abstract class EntityHuman extends EntityLiving {
     }
 
     private boolean G() {
-        return this.world.getTypeId(this.F.x, this.F.y, this.F.z) == Block.BED.id;
+    	ChunkCoordinates c = F;
+    	int blockID = world.getTypeId(c.x, c.y, c.z);
+    	return Block.byId[blockID] != null && Block.byId[blockID].isBed(world, c.x, c.y, c.z, this);
     }
 
     public static ChunkCoordinates getBed(World world, ChunkCoordinates chunkcoordinates) {
@@ -994,11 +1057,12 @@ public abstract class EntityHuman extends EntityLiving {
         ichunkprovider.getChunkAt(chunkcoordinates.x + 3 >> 4, chunkcoordinates.z - 3 >> 4);
         ichunkprovider.getChunkAt(chunkcoordinates.x - 3 >> 4, chunkcoordinates.z + 3 >> 4);
         ichunkprovider.getChunkAt(chunkcoordinates.x + 3 >> 4, chunkcoordinates.z + 3 >> 4);
-        if (world.getTypeId(chunkcoordinates.x, chunkcoordinates.y, chunkcoordinates.z) != Block.BED.id) {
+        ChunkCoordinates c = chunkcoordinates;
+        Block block = Block.byId[world.getTypeId(c.x, c.y, c.z)];
+        if (block == null || !block.isBed(world, c.x, c.y, c.z, null)) {
             return null;
         } else {
-            ChunkCoordinates chunkcoordinates1 = BlockBed.f(world, chunkcoordinates.x, chunkcoordinates.y, chunkcoordinates.z, 0);
-
+        	ChunkCoordinates chunkcoordinates1 = block.getBedSpawnPosition(world, c.x, c.y, c.z, null);
             return chunkcoordinates1;
         }
     }
@@ -1242,4 +1306,45 @@ public abstract class EntityHuman extends EntityLiving {
     }
 
     public void updateAbilities() {}
+    /**
+     * Opens a Gui for the player.
+     *
+     * @param mod The mod associated with the gui
+     * @param ID The ID number for the Gui
+     * @param world The World
+     * @param X X Position
+     * @param Y Y Position
+     * @param Z Z Position
+     */
+    public void openGui(BaseMod mod, int ID, World world, int x, int y, int z)
+    {
+        if (!(this instanceof EntityPlayer))
+        {
+            return;
+        }
+        EntityPlayer player = (EntityPlayer)this;
+        if (!(mod instanceof NetworkMod))
+        {
+            return;
+        }
+        IGuiHandler handler = MinecraftForge.getGuiHandler(mod);
+        if (handler != null)
+        {
+            Container container = (Container) handler.getGuiElement(ID, player, world, x, y, z);
+            if (container != null)
+            {
+                container = CraftEventFactory.callInventoryOpenEvent(player, container);
+                if (container != null)
+                {
+                    player.realGetNextWidowId();
+                    player.H();
+                    PacketOpenGUI pkt = new PacketOpenGUI(player.getCurrentWindowIdField(), MinecraftForge.getModID((NetworkMod)mod), ID, x, y, z);
+                    player.netServerHandler.sendPacket(pkt.getPacket());
+                    activeContainer = container;
+                    activeContainer.windowId = player.getCurrentWindowIdField();
+                    activeContainer.addSlotListener(player);
+                }
+            }
+        }
+    }
 }

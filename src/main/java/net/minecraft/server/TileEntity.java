@@ -1,13 +1,15 @@
 package net.minecraft.server;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 // CraftBukkit start
 import org.bukkit.inventory.InventoryHolder;
 // CraftBukkit end
 
-public class TileEntity {
+public class TileEntity implements net.minecraft.src.TileEntity {
 
     private static Map a = new HashMap();
     private static Map b = new HashMap();
@@ -18,6 +20,7 @@ public class TileEntity {
     protected boolean o;
     public int p = -1;
     public Block q;
+	private List<org.bukkit.entity.HumanEntity> transaction=new ArrayList<org.bukkit.entity.HumanEntity>(2);
 
     public TileEntity() {}
 
@@ -132,4 +135,44 @@ public class TileEntity {
         return null;
     }
     // CraftBukkit end
+
+	public void onOpen(org.bukkit.craftbukkit.entity.CraftHumanEntity who) {
+		transaction.add(who);
+	}
+
+	public void onClose(org.bukkit.craftbukkit.entity.CraftHumanEntity who) {
+		transaction.remove(who);
+	}
+
+	public List<org.bukkit.entity.HumanEntity> getViewers() {
+		return transaction;
+	}
+
+	public static void addNewTileEntityMapping(Class<? extends TileEntity> tileEntityClass, String id) {
+		a(tileEntityClass,id);
+	}
+
+	/**
+     * Determines if this TileEntity requires update calls.
+     * @return True if you want updateEntity() to be called, false if not
+     */
+    public boolean canUpdate()
+    {
+        return true;
+    }
+    /**
+     * Called when you receive a TileEntityData packet for the location this
+     * TileEntity is currently in. On the client, the NetworkManager will always
+     * be the remote server. On the server, it will be whomever is responsible for 
+     * sending the packet.
+     * 
+     * @param net The NetworkManager the packet originated from 
+     * @param pkt The data packet
+     */
+    public void onDataPacket(NetworkManager net, Packet132TileEntityData pkt){}
+    
+    /**
+     * Called when the chunk this TileEntity is on is Unloaded.
+     */
+    public void onChunkUnload(){}
 }

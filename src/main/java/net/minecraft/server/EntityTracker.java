@@ -5,6 +5,8 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 
+import forge.ForgeHooksServer;
+
 public class EntityTracker {
 
     private Set a = new HashSet();
@@ -21,6 +23,9 @@ public class EntityTracker {
 
     // CraftBukkit - synchronized
     public synchronized void track(Entity entity) {
+    	if (ForgeHooksServer.OnTrackEntity(this, entity)) {
+    		return;
+    	}
         if (entity instanceof EntityPlayer) {
             this.addEntity(entity, 512, 2);
             EntityPlayer entityplayer = (EntityPlayer) entity;
