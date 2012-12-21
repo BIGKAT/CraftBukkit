@@ -1,8 +1,12 @@
 package net.minecraft.server;
 
+import cpw.mods.fml.common.FMLLog;
+import cpw.mods.fml.common.Side;
+import cpw.mods.fml.common.asm.SideOnly;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Callable;
+import java.util.logging.Level;
 
 import org.bukkit.inventory.InventoryHolder; // CraftBukkit
 
@@ -20,7 +24,7 @@ public class TileEntity {
 
     public TileEntity() {}
 
-    private static void a(Class oclass, String s) {
+    public static void a(Class oclass, String s) {
         if (a.containsKey(s)) {
             throw new IllegalArgumentException("Duplicate id: " + s);
         } else {
@@ -29,6 +33,52 @@ public class TileEntity {
         }
     }
 
+    // Forge start
+    /**
+     * Determines if this TileEntity requires update calls.
+     * @return True if you want updateEntity() to be called, false if not
+     */
+    public boolean canUpdate()
+    {
+        return true;
+    }
+
+    /**
+     * Called when you receive a TileEntityData packet for the location this
+     * TileEntity is currently in. On the client, the NetworkManager will always
+     * be the remote server. On the server, it will be whomever is responsible for 
+     * sending the packet.
+     * 
+     * @param net The NetworkManager the packet originated from 
+     * @param pkt The data packet
+     */
+    public void onDataPacket(INetworkManager net, Packet132TileEntityData pkt) {}
+
+    /**
+     * Called when the chunk this TileEntity is on is Unloaded.
+     */
+    public void onChunkUnload() {}
+
+    /**
+     * Called from Chunk.setBlockIDWithMetadata, determines if this tile entity should be re-created when the ID, or Metadata changes.
+     * Use with caution as this will leave straggler TileEntities, or create conflicts with other TileEntities if not used properly.
+     * 
+     * @param oldID The old ID of the block
+     * @param newID The new ID of the block (May be the same)
+     * @param oldMeta The old metadata of the block
+     * @param newMeta The new metadata of the block (May be the same)
+     * @param world Current world 
+     * @param x X Postion
+     * @param y Y Position
+     * @param z Z Position
+     * @return True to remove the old tile entity, false to keep it in tact {and create a new one if the new values specify to}
+     */
+    public boolean shouldRefresh(int oldID, int newID, int oldMeta, int newMeta, World world, int x, int y, int z)
+    {
+        return true;
+    }
+    // Forge end
+    
     public void b(World world) {
         this.world = world;
     }
@@ -60,9 +110,10 @@ public class TileEntity {
 
     public static TileEntity c(NBTTagCompound nbttagcompound) {
         TileEntity tileentity = null;
+        Class oclass = null; // Forge
 
         try {
-            Class oclass = (Class) a.get(nbttagcompound.getString("id"));
+            oclass = (Class) a.get(nbttagcompound.getString("id")); // Forge
 
             if (oclass != null) {
                 tileentity = (TileEntity) oclass.newInstance();
@@ -72,7 +123,17 @@ public class TileEntity {
         }
 
         if (tileentity != null) {
+        	// Forge start
+            try {
             tileentity.a(nbttagcompound);
+            }
+            catch (Exception e) {
+                FMLLog.log(Level.SEVERE, e,
+                        "A TileEntity %s(%s) has thrown an exception during loading, its state cannot be restored. Report this to the mod author",
+                        nbttagcompound.getString("id"), oclass.getName());
+                tileentity = null;
+            }
+            // Forge end
         } else {
             System.out.println("Skipping TileEntity with id " + nbttagcompound.getString("id"));
         }
@@ -128,7 +189,7 @@ public class TileEntity {
 
     public void a(CrashReportSystemDetails crashreportsystemdetails) {
         crashreportsystemdetails.a("Name", (Callable) (new CrashReportTileEntityName(this)));
-        CrashReportSystemDetails.a(crashreportsystemdetails, this.x, this.y, this.z, this.q.id, this.p);
+        CrashReportSystemDetails.a(crashreportsystemdetails, this.x, this.y, this.z, this.q != null ? this.q.id : 0, this.p); // Forge
     }
 
     static Map t() {

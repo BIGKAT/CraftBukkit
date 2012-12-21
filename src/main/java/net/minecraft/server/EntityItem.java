@@ -1,7 +1,12 @@
 package net.minecraft.server;
 
+import cpw.mods.fml.common.registry.GameRegistry;
 import java.util.Iterator;
 
+import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.event.Event.Result;
+import net.minecraftforge.event.entity.item.ItemExpireEvent;
+import net.minecraftforge.event.entity.player.EntityItemPickupEvent;
 import org.bukkit.event.player.PlayerPickupItemEvent; // CraftBukkit
 
 public class EntityItem extends Entity {
@@ -12,6 +17,10 @@ public class EntityItem extends Entity {
     private int e = 5;
     public float d = (float) (Math.random() * 3.141592653589793D * 2.0D);
     private int lastTick = (int) (System.currentTimeMillis() / 50); // CraftBukkit
+    /**
+     * The maximum age of this EntityItem.  The item is expired once this is reached.
+     */
+    public int lifespan = 6000; // Forge
 
     public EntityItem(World world, double d0, double d1, double d2, ItemStack itemstack) {
         super(world);
@@ -33,6 +42,7 @@ public class EntityItem extends Entity {
         this.motX = (double) ((float) (Math.random() * 0.20000000298023224D - 0.10000000149011612D));
         this.motY = 0.20000000298023224D;
         this.motZ = (double) ((float) (Math.random() * 0.20000000298023224D - 0.10000000149011612D));
+        this.lifespan = itemstack.getItem() == null ? 6000 : itemstack.getItem().getEntityLifespan(itemstack, world); // Forge
     }
 
     protected boolean f_() {
@@ -96,15 +106,30 @@ public class EntityItem extends Entity {
         }
         } // Spigot
         ++this.age;
-        if (!this.world.isStatic && this.age >= 6000) {
-            // CraftBukkit start
-            if (org.bukkit.craftbukkit.event.CraftEventFactory.callItemDespawnEvent(this).isCancelled()) {
-                this.age = 0;
-                return;
+        // Forge start
+        if (!this.world.isStatic && this.age >= this.lifespan) {
+        	
+            ItemExpireEvent event = new ItemExpireEvent(this, this.itemStack.getItem() == null ? 6000 : this.itemStack.getItem().getEntityLifespan(this.itemStack, this.world));
+
+            if (MinecraftForge.EVENT_BUS.post(event))
+            {
+                this.lifespan += event.extraLife;
             }
-            // CraftBukkit end
-            this.die();
+            else
+            {
+	            // CraftBukkit start
+	            if (org.bukkit.craftbukkit.event.CraftEventFactory.callItemDespawnEvent(this).isCancelled()) {
+	                this.age = 0;
+	            }
+	            else
+	            	this.die();
+	         // CraftBukkit end
+            }
+            // Forge end
         }
+        
+        if (this.itemStack == null || this.itemStack.count <= 0)
+            this.die();
     }
 
     private void d() {
@@ -128,25 +153,25 @@ public class EntityItem extends Entity {
             } else if (entityitem.itemStack.hasTag() && !entityitem.itemStack.getTag().equals(this.itemStack.getTag())) {
                 return false;
             } else if (entityitem.itemStack.getItem().l() && entityitem.itemStack.getData() != this.itemStack.getData()) {
-                return false;
-            } else if (entityitem.itemStack.count < this.itemStack.count) {
-                return entityitem.a(this);
-            } else if (entityitem.itemStack.count + this.itemStack.count > entityitem.itemStack.getMaxStackSize()) {
-                return false;
-            // CraftBukkit start - don't merge items with enchantments
-            } else if (entityitem.itemStack.hasEnchantments() || this.itemStack.hasEnchantments()) {
-                return false;
-                // CraftBukkit end
+                    return false;
+                } else if (entityitem.itemStack.count < this.itemStack.count) {
+                    return entityitem.a(this);
+                } else if (entityitem.itemStack.count + this.itemStack.count > entityitem.itemStack.getMaxStackSize()) {
+                    return false;
+                // CraftBukkit start - don't merge items with enchantments
+                } else if (entityitem.itemStack.hasEnchantments() || this.itemStack.hasEnchantments()) {
+                    return false;
+                    // CraftBukkit end
+                } else {
+                    entityitem.itemStack.count += this.itemStack.count;
+                    entityitem.pickupDelay = Math.max(entityitem.pickupDelay, this.pickupDelay);
+                    entityitem.age = Math.min(entityitem.age, this.age);
+                    this.die();
+                    return true;
+                }
             } else {
-                entityitem.itemStack.count += this.itemStack.count;
-                entityitem.pickupDelay = Math.max(entityitem.pickupDelay, this.pickupDelay);
-                entityitem.age = Math.min(entityitem.age, this.age);
-                this.die();
-                return true;
+                return false;
             }
-        } else {
-            return false;
-        }
     }
 
     public void c() {
@@ -165,19 +190,20 @@ public class EntityItem extends Entity {
         if (this.isInvulnerable()) {
             return false;
         } else {
-            this.K();
-            this.e -= i;
-            if (this.e <= 0) {
-                this.die();
-            }
-
-            return false;
+        this.K();
+        this.e -= i;
+        if (this.e <= 0) {
+            this.die();
         }
+
+        return false;
+    }
     }
 
     public void b(NBTTagCompound nbttagcompound) {
         nbttagcompound.setShort("Health", (short) ((byte) this.e));
         nbttagcompound.setShort("Age", (short) this.age);
+        nbttagcompound.setInt("Lifespan", this.lifespan); // Forge
         if (this.itemStack != null) {
             nbttagcompound.setCompound("Item", this.itemStack.save(new NBTTagCompound()));
         }
@@ -186,16 +212,31 @@ public class EntityItem extends Entity {
     public void a(NBTTagCompound nbttagcompound) {
         this.e = nbttagcompound.getShort("Health") & 255;
         this.age = nbttagcompound.getShort("Age");
+        
         NBTTagCompound nbttagcompound1 = nbttagcompound.getCompound("Item");
-
         this.itemStack = ItemStack.a(nbttagcompound1);
-        if (this.itemStack == null) {
+        if (this.itemStack == null || this.itemStack.count <= 0) { // Forge start
             this.die();
         }
+        if (nbttagcompound1.hasKey("Lifespan"))
+        {
+        	lifespan = nbttagcompound1.getInt("Lifespan");
+        }
+        // Forge end
     }
 
     public void c_(EntityHuman entityhuman) {
-        if ((!this.world.isStatic) && (this.itemStack != null)) { // CraftBukkit - nullcheck
+        if ((!this.world.isStatic) && (this.itemStack != null)) // CraftBukkit - nullcheck
+        { 
+        	// Forge start
+            if (this.pickupDelay > 0)
+                return;
+            
+            EntityItemPickupEvent var2 = new EntityItemPickupEvent(entityhuman, this);
+            if (MinecraftForge.EVENT_BUS.post(var2))
+                return;
+            // Forge end
+
             int i = this.itemStack.count;
 
             // CraftBukkit start
@@ -205,7 +246,6 @@ public class EntityItem extends Entity {
             if (this.pickupDelay <= 0 && canHold > 0) {
                 this.itemStack.count = canHold;
                 PlayerPickupItemEvent event = new PlayerPickupItemEvent((org.bukkit.entity.Player) entityhuman.getBukkitEntity(), (org.bukkit.entity.Item) this.getBukkitEntity(), remaining);
-                event.setCancelled(!entityhuman.canPickUpLoot);
                 this.world.getServer().getPluginManager().callEvent(event);
                 this.itemStack.count = canHold + remaining;
 
@@ -218,7 +258,7 @@ public class EntityItem extends Entity {
             }
             // CraftBukkit end
 
-            if (this.pickupDelay == 0 && entityhuman.inventory.pickup(this.itemStack)) {
+            if (this.pickupDelay <= 0 && (var2.getResult() == Result.ALLOW || i <= 0 || entityhuman.inventory.pickup(this.itemStack))) { // Forge
                 if (this.itemStack.id == Block.LOG.id) {
                     entityhuman.a((Statistic) AchievementList.g);
                 }
@@ -235,6 +275,7 @@ public class EntityItem extends Entity {
                     entityhuman.a((Statistic) AchievementList.z);
                 }
 
+                GameRegistry.onPickupNotification(entityhuman, this);
                 this.makeSound("random.pop", 0.2F, ((this.random.nextFloat() - this.random.nextFloat()) * 0.7F + 1.0F) * 2.0F);
                 entityhuman.receive(this, i);
                 if (this.itemStack.count <= 0) {

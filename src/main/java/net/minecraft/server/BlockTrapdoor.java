@@ -1,9 +1,13 @@
 package net.minecraft.server;
 
 import org.bukkit.event.block.BlockRedstoneEvent; // CraftBukkit
+import net.minecraftforge.common.ForgeDirection;
 
 public class BlockTrapdoor extends Block {
-
+	
+	/** Set this to allow trapdoors to remain free-floating */
+    public static boolean disableValidation = false; // Forge
+    
     protected BlockTrapdoor(int i, Material material) {
         super(i, material);
         this.textureId = 84;
@@ -123,7 +127,7 @@ public class BlockTrapdoor extends Block {
                 --j1;
             }
 
-            if (!j(world.getTypeId(j1, j, k1))) {
+            if (!j(world.getTypeId(j1, j, k1)) && !world.isBlockSolidOnSide(j1, j, k1, ForgeDirection.getOrientation((i1 & 3) + 2))) { // Forge
                 world.setTypeId(i, j, k, 0);
                 this.c(world, i, j, k, i1, 0);
             }
@@ -178,29 +182,48 @@ public class BlockTrapdoor extends Block {
         return j1;
     }
 
-    public boolean canPlace(World world, int i, int j, int k, int l) {
-        if (l == 0) {
+    /**
+     * checks to see if you can place this block can be placed on that side of a block: BlockLever overrides
+     */
+    public boolean canPlace(World var1, int var2, int var3, int var4, int var5)
+    {
+    	// Forge start
+        if (disableValidation)
+        {
+            return true;
+        }
+        // Forge end
+        else if (var5 == 0)
+        {
             return false;
-        } else if (l == 1) {
+        }
+        else if (var5 == 1)
+        {
             return false;
-        } else {
-            if (l == 2) {
-                ++k;
+        }
+        else
+        {
+            if (var5 == 2)
+            {
+                ++var4;
             }
 
-            if (l == 3) {
-                --k;
+            if (var5 == 3)
+            {
+                --var4;
             }
 
-            if (l == 4) {
-                ++i;
+            if (var5 == 4)
+            {
+                ++var2;
             }
 
-            if (l == 5) {
-                --i;
+            if (var5 == 5)
+            {
+                --var2;
             }
 
-            return j(world.getTypeId(i, j, k));
+            return j(var1.getTypeId(var2, var3, var4)) || var1.isBlockSolidOnSide(var2, var3, var4, ForgeDirection.UP);
         }
     }
 
@@ -208,13 +231,24 @@ public class BlockTrapdoor extends Block {
         return (i & 4) != 0;
     }
 
-    private static boolean j(int i) {
-        if (i <= 0) {
+    /**
+     * Checks if the block ID is a valid support block for the trap door to connect with. If it is not the trapdoor is
+     * dropped into the world.
+     */
+    private static boolean j(int var0)
+    {
+        if (disableValidation)
+        {
+            return true;
+        }
+        else if (var0 <= 0)
+        {
             return false;
-        } else {
-            Block block = Block.byId[i];
-
-            return block != null && block.material.k() && block.b() || block == Block.GLOWSTONE || block instanceof BlockStepAbstract || block instanceof BlockStairs;
+        }
+        else
+        {
+            Block var1 = Block.byId[var0];
+            return var1 != null && var1.material.k() && var1.b() || var1 == Block.GLOWSTONE;
         }
     }
 }

@@ -12,7 +12,8 @@ import org.bukkit.craftbukkit.inventory.CraftShapelessRecipe;
 public class ShapelessRecipes implements IRecipe {
 
     private final ItemStack result;
-    private final List ingredients;
+    // Forge
+    public final List ingredients;
 
     public ShapelessRecipes(ItemStack itemstack, List list) {
         this.result = itemstack;

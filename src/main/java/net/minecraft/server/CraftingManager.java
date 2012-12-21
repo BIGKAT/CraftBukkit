@@ -242,7 +242,7 @@ public class CraftingManager {
             }
         }
 
-        if (i == 2 && itemstack.id == itemstack1.id && itemstack.count == 1 && itemstack1.count == 1 && Item.byId[itemstack.id].n()) {
+        if (i == 2 && itemstack.id == itemstack1.id && itemstack.count == 1 && itemstack1.count == 1 && Item.byId[itemstack.id].isRepairable()) { // Forge
             Item item = Item.byId[itemstack.id];
             int k = item.getMaxDurability() - itemstack.i();
             int l = item.getMaxDurability() - itemstack1.i();

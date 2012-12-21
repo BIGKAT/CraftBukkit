@@ -48,6 +48,11 @@ import net.minecraft.server.WorldNBTStorage;
 import net.minecraft.server.WorldServer;
 import net.minecraft.server.WorldSettings;
 import net.minecraft.server.WorldType;
+import net.minecraftforge.common.DimensionManager;
+import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.event.world.WorldEvent;
+import net.minecraftforge.event.world.WorldEvent.Load;
+import net.minecraftforge.event.world.WorldEvent.Unload;
 
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -134,7 +139,7 @@ import com.google.common.collect.MapMaker;
 import jline.console.ConsoleReader;
 
 public final class CraftServer implements Server {
-    private final String serverName = "CraftBukkit";
+    private static final String serverName = net.minecraft.server.MinecraftServer.isReobfuscated ? "CraftBukkit-CPCM" : "CraftBukkit-MCPC";
     private final String serverVersion;
     private final String bukkitVersion = Versioning.getBukkitVersion();
     private final ServicesManager servicesManager = new SimpleServicesManager();
@@ -729,6 +734,8 @@ public final class CraftServer implements Server {
 
         WorldServer internal = new WorldServer(console, new ServerNBTManager(getWorldContainer(), name, true), name, dimension, new WorldSettings(creator.seed(), EnumGamemode.a(getDefaultGameMode().getValue()), generateStructures, hardcore, type), console.methodProfiler, creator.environment(), generator);
 
+        // MCPC
+        DimensionManager.registerDimension(dimension, internal.worldProvider.dimension);
         if (!(worlds.containsKey(name.toLowerCase()))) {
             return null;
         }
@@ -773,6 +780,7 @@ public final class CraftServer implements Server {
             }
         }
         pluginManager.callEvent(new WorldLoadEvent(internal.getWorld()));
+        MinecraftForge.EVENT_BUS.post(new WorldEvent.Load(internal));
         return internal.getWorld();
     }
 
@@ -816,9 +824,11 @@ public final class CraftServer implements Server {
                 getLogger().log(Level.SEVERE, null, ex);
             }
         }
+        DimensionManager.unloadWorld(handle.dimension);
 
         worlds.remove(world.getName().toLowerCase());
         console.worlds.remove(console.worlds.indexOf(handle));
+        MinecraftForge.EVENT_BUS.post(new WorldEvent.Unload(handle));
 
         return true;
     }

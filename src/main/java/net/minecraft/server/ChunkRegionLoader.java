@@ -10,12 +10,16 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
+import java.io.IOException;
+import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.event.world.ChunkDataEvent.Load;
+import net.minecraftforge.event.world.ChunkDataEvent.Save;
 
 public class ChunkRegionLoader implements IAsyncChunkSaver, IChunkLoader {
 
     private java.util.LinkedHashMap<ChunkCoordIntPair, PendingChunkToSave> pendingSaves = new java.util.LinkedHashMap<ChunkCoordIntPair, PendingChunkToSave>(); // Spigot
     private Object c = new Object();
-    private final File d;
+    public final File d;
 
     public ChunkRegionLoader(File file1) {
         this.d = file1;
@@ -80,7 +84,12 @@ public class ChunkRegionLoader implements IAsyncChunkSaver, IChunkLoader {
                 return null;
             }
 
-            nbttagcompound = NBTCompressedStreamTools.a((DataInput) datainputstream);
+            try {
+				nbttagcompound = NBTCompressedStreamTools.a((DataInput) datainputstream);
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
         }
 
         return this.a(world, i, j, nbttagcompound);
@@ -102,11 +111,12 @@ public class ChunkRegionLoader implements IAsyncChunkSaver, IChunkLoader {
                 nbttagcompound.getCompound("Level").setInt("zPos", j); // CraftBukkit - .getCompound("Level")
                 chunk = this.a(world, nbttagcompound.getCompound("Level"));
             }
-
+            
             // CraftBukkit start
             Object[] data = new Object[2];
             data[0] = chunk;
             data[1] = nbttagcompound;
+            MinecraftForge.EVENT_BUS.post(new Load(chunk, nbttagcompound));
             return data;
             // CraftBukkit end
         }
@@ -114,11 +124,11 @@ public class ChunkRegionLoader implements IAsyncChunkSaver, IChunkLoader {
 
     public void a(World world, Chunk chunk) {
         // CraftBukkit start - "handle" exception
-        try {
+    	try {
             world.D();
         } catch (ExceptionWorldConflict ex) {
             ex.printStackTrace();
-        }
+		}
         // CraftBukkit end
 
         try {
@@ -128,6 +138,7 @@ public class ChunkRegionLoader implements IAsyncChunkSaver, IChunkLoader {
             nbttagcompound.set("Level", nbttagcompound1);
             this.a(chunk, world, nbttagcompound1);
             this.a(chunk.l(), nbttagcompound);
+            MinecraftForge.EVENT_BUS.post(new Save(chunk, nbttagcompound));
         } catch (Exception exception) {
             exception.printStackTrace();
         }

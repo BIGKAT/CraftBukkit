@@ -139,7 +139,8 @@ public final class ItemStack {
     }
 
     public void setData(int i) {
-        this.damage = (this.id > 0) && (this.id < 256) && (this.id != Block.ANVIL.id) ? Item.byId[this.id].filterData(i) : i; // CraftBukkit
+    	// MCPC - IC2 uses block ID's under 256 so we must allow them to past through
+        this.damage = (this.id > 0) && (this.id < 256) && (this.id != Block.ANVIL.id) && (Item.byId[this.id] != null) ? Item.byId[this.id].filterData(i) : i; // CraftBukkit
     }
 
     public int k() {

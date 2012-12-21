@@ -1,5 +1,7 @@
 package net.minecraft.server;
 
+import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.Callable;
@@ -26,6 +28,9 @@ import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.plugin.PluginManager;
 // CraftBukkit end
+
+import cpw.mods.fml.common.Side;
+import cpw.mods.fml.common.asm.SideOnly;
 
 public abstract class Entity {
 
@@ -107,6 +112,10 @@ public abstract class Entity {
     public UUID uniqueId = UUID.randomUUID(); // CraftBukkit
     public boolean valid = false; // CraftBukkit
 
+    /** Forge: Used to store custom data for each entity. */
+    private NBTTagCompound customEntityData; // Forge
+    public boolean captureDrops = false; // Forge
+    public ArrayList<EntityItem> capturedDrops = new ArrayList<EntityItem>(); // Forge
     public Entity(World world) {
         this.id = entityCount++;
         this.l = 1.0D;
@@ -145,7 +154,7 @@ public abstract class Entity {
         this.world = world;
         this.setPosition(0.0D, 0.0D, 0.0D);
         if (world != null) {
-            this.dimension = world.worldProvider.dimension;
+            this.dimension = world.worldProvider.dimension; // TODO: should be provider?
         }
 
         this.datawatcher.a(0, Byte.valueOf((byte) 0));
@@ -345,7 +354,7 @@ public abstract class Entity {
 
         if (!this.world.isStatic) {
             this.a(0, this.fireTicks > 0);
-            this.a(2, this.vehicle != null);
+            this.a(2, this.vehicle != null && vehicle.shouldRiderSit()); // Forge
         }
 
         this.justCreated = false;
@@ -1096,6 +1105,7 @@ public abstract class Entity {
             nbttagcompound.setLong("UUIDMost", this.uniqueId.getMostSignificantBits());
             nbttagcompound.setInt("Bukkit.updateLevel", CURRENT_LEVEL);
             // CraftBukkit end
+            if (this.customEntityData != null) nbttagcompound.setCompound("ForgeData", this.customEntityData);
             this.b(nbttagcompound);
         } catch (Throwable throwable) {
             CrashReport crashreport = CrashReport.a(throwable, "Saving entity NBT");
@@ -1153,6 +1163,11 @@ public abstract class Entity {
             // CraftBukkit end
 
             this.b(this.yaw, this.pitch);
+        // Forge start
+        if (nbttagcompound.hasKey("ForgeData")) {
+            this.customEntityData = nbttagcompound.getCompound("ForgeData");
+        }
+        // Forge end
             this.a(nbttagcompound);
 
             // CraftBukkit start - exempt Vehicles from notch's sanity check
@@ -1251,7 +1266,13 @@ public abstract class Entity {
         EntityItem entityitem = new EntityItem(this.world, this.locX, this.locY + (double) f, this.locZ, itemstack);
 
         entityitem.pickupDelay = 10;
+        // Forge start
+        if (this.captureDrops) {
+            this.capturedDrops.add(entityitem);
+        } else {
         this.world.addEntity(entityitem);
+        }
+        // Forge end
         return entityitem;
     }
 
@@ -1500,7 +1521,11 @@ public abstract class Entity {
     }
 
     public boolean ag() {
-        return this.vehicle != null || this.e(2);
+        return isRiding();
+    }
+
+    public boolean isRiding() {
+        return this.vehicle != null && this.vehicle.shouldRiderSit() || this.e(2); // Forge
     }
 
     public boolean isSneaking() {
@@ -1755,7 +1780,7 @@ public abstract class Entity {
     }
 
     public float a(Explosion explosion, Block block, int i, int j, int k) {
-        return block.a(this);
+        return var2.getExplosionResistance(this, this.world, i, j, k, this.locX, this.locY + (double) this.getHeadHeight(), this.locZ); // Forge
     }
 
     public int as() {
@@ -1778,4 +1803,75 @@ public abstract class Entity {
         crashreportsystemdetails.a("Block location", CrashReportSystemDetails.a(MathHelper.floor(this.locX), MathHelper.floor(this.locY), MathHelper.floor(this.locZ)));
         crashreportsystemdetails.a("Momentum", String.format("%.2f, %.2f, %.2f", new Object[] { Double.valueOf(this.motX), Double.valueOf(this.motY), Double.valueOf(this.motZ)}));
     }
+
+    /* ================================== Forge Start =====================================*/
+    /**
+     * Returns a NBTTagCompound that can be used to store custom data for this entity.
+     * It will be written, and read from disc, so it persists over world saves.
+     * @return A NBTTagCompound
+     */
+    public NBTTagCompound getEntityData()
+    {
+        if (this.customEntityData == null)
+        {
+            this.customEntityData = new NBTTagCompound();
+        }
+
+        return this.customEntityData;
+    }
+
+    /**
+     * Used in model rendering to determine if the entity riding this entity should be in the 'sitting' position.
+     * @return false to prevent an entity that is mounted to this entity from displaying the 'sitting' animation.
+     */
+    public boolean shouldRiderSit()
+    {
+        return true;
+    }
+
+    /**
+     * Called when a user uses the creative pick block button on this entity.
+     *
+     * @param target The full target the player is looking at
+     * @return A ItemStack to add to the player's inventory, Null if nothing should be added.
+     */
+    public ItemStack getPickedResult(MovingObjectPosition target)
+    {
+        if (this instanceof EntityPainting)
+        {
+            return new ItemStack(Item.PAINTING);
+        }
+        else if (this instanceof EntityMinecart)
+        {
+            return ((EntityMinecart)this).getCartItem();
+        }
+        else if (this instanceof EntityBoat)
+        {
+            return new ItemStack(Item.BOAT);
+        }
+        else if (this instanceof EntityItemFrame)
+        {
+            ItemStack var3 = ((EntityItemFrame)this).i();
+            return var3 == null ? new ItemStack(Item.ITEM_FRAME) : var3.cloneItemStack();
+        }
+        else
+        {
+            int var2 = EntityTypes.a(this);
+            return var2 > 0 && EntityTypes.a.containsKey(Integer.valueOf(var2)) ? new ItemStack(Item.MONSTER_EGG, 1, var2) : null;
+        }
+    }
+    
+    public UUID getPersistentID()
+    {
+        return this.uniqueId;
+    }
+
+    public synchronized void generatePersistentID()
+    {
+        if (this.uniqueId == null)
+        {
+            this.uniqueId = UUID.randomUUID();
+        }
+    }
+    /* ================================== Forge End =====================================*/
 }

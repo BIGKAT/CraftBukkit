@@ -1,5 +1,8 @@
 package net.minecraft.server;
 
+import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.event.Event.Result;
+import net.minecraftforge.event.entity.player.FillBucketEvent;
 // CraftBukkit start
 import org.bukkit.craftbukkit.event.CraftEventFactory;
 import org.bukkit.craftbukkit.inventory.CraftItemStack;
@@ -29,6 +32,36 @@ public class ItemBucket extends Item {
         if (movingobjectposition == null) {
             return itemstack;
         } else {
+        	// Forge start
+        	FillBucketEvent var13 = new FillBucketEvent(entityhuman, itemstack, world, movingobjectposition);
+
+            if (MinecraftForge.EVENT_BUS.post(var13))
+            {
+                return itemstack;
+            }
+            else if (var13.getResult() == Result.ALLOW)
+            {
+                if (entityhuman.abilities.canInstantlyBuild)
+                {
+                    return itemstack;
+                }
+                else if (--itemstack.count <= 0)
+                {
+                    return var13.result;
+                }
+                else
+                {
+                    if (!entityhuman.inventory.pickup(var13.result))
+                    {
+                    	entityhuman.drop(var13.result);
+                    }
+
+                    return itemstack;
+                }               
+            }
+            // Forge end
+            else
+            {
             if (movingobjectposition.type == EnumMovingObjectType.TILE) {
                 int i = movingobjectposition.b;
                 int j = movingobjectposition.c;

@@ -34,6 +34,7 @@ public class WorldGenHugeMushroom extends WorldGenerator implements BlockSapling
         // CraftBukkit end
         int l = random.nextInt(2);
 
+        World w = world instanceof World ? (World) world : null;
         if (this.a >= 0) {
             l = this.a;
         }
@@ -58,7 +59,8 @@ public class WorldGenHugeMushroom extends WorldGenerator implements BlockSapling
                     for (l1 = k - b0; l1 <= k + b0 && flag; ++l1) {
                         if (j1 >= 0 && j1 < 256) {
                             i2 = world.getTypeId(k1, j1, l1);
-                            if (i2 != 0 && i2 != Block.LEAVES.id) {
+                            Block block = Block.byId[i2];
+                            if (i2 != 0 && block != null && !block.isLeaves(w, k1, j1, l1))
                                 flag = false;
                             }
                         } else {
@@ -162,7 +164,8 @@ public class WorldGenHugeMushroom extends WorldGenerator implements BlockSapling
                                     l2 = 0;
                                 }
 
-                                if ((l2 != 0 || j >= j + i1 - 1) && !Block.q[world.getTypeId(i2, k1, k2)]) {
+                                Block block = Block.byId[world.getTypeId(i2, k1, k2)];
+                                 if ((l2 != 0 || j >= j + i1 - 1) && (block == null || block.canBeReplacedByLeaves(w, i2, k1, k2))) {
                                     // CraftBukkit start
                                     if (event == null) {
                                        this.setTypeAndData(world, i2, k1, k2, Block.BIG_MUSHROOM_1.id + l, l2);
@@ -180,7 +183,8 @@ public class WorldGenHugeMushroom extends WorldGenerator implements BlockSapling
 
                     for (k1 = 0; k1 < i1; ++k1) {
                         l1 = world.getTypeId(i, j + k1, k);
-                        if (!Block.q[l1]) {
+                        block = Block.byId[l1];
+                        if (block == null || block.canBeReplacedByLeaves(w, i, j + k1, k)) {
                             // CraftBukkit start
                             if (event == null) {
                                 this.setTypeAndData(world, i, j + k1, k, Block.BIG_MUSHROOM_1.id + l, 10);

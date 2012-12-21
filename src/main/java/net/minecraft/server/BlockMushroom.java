@@ -1,7 +1,7 @@
 package net.minecraft.server;
 
 import java.util.Random;
-
+import net.minecraftforge.common.ForgeDirection;
 // CraftBukkit start
 import java.util.ArrayList;
 
@@ -85,12 +85,22 @@ public class BlockMushroom extends BlockFlower {
         return Block.q[i];
     }
 
-    public boolean d(World world, int i, int j, int k) {
-        if (j >= 0 && j < 256) {
-            int l = world.getTypeId(i, j - 1, k);
-
-            return l == Block.MYCEL.id || world.l(i, j, k) < 13 && this.d_(l);
-        } else {
+    /**
+     * Can this block stay at this position.  Similar to canPlaceBlockAt except gets checked often with plants.
+     */
+    public boolean d(World world, int var2, int var3, int var4)
+    {
+        if (var3 >= 0 && var3 < 256)
+        {
+            int var5 = world.getTypeId(var2, var3 - 1, var4);
+            // Forge start
+            Block soil = Block.byId[var5];
+            return (var5 == Block.MYCEL.id || world.l(var2, var3, var4) < 13) && 
+            		soil != null && soil.canSustainPlant(world, var2, var3 - 1, var4, ForgeDirection.UP, this);
+            // Forge end
+        }
+        else
+        {
             return false;
         }
     }

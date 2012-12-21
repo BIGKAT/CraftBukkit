@@ -1,5 +1,10 @@
 package net.minecraft.server;
 
+import cpw.mods.fml.common.Side;
+import cpw.mods.fml.common.asm.SideOnly;
+import cpw.mods.fml.common.registry.GameRegistry;
+import net.minecraftforge.common.ForgeDirection;
+import net.minecraftforge.common.ISidedInventory;
 // CraftBukkit start
 import java.util.List;
 
@@ -10,7 +15,7 @@ import org.bukkit.event.inventory.FurnaceSmeltEvent;
 import org.bukkit.craftbukkit.entity.CraftHumanEntity;
 // CraftBukkit end
 
-public class TileEntityFurnace extends TileEntity implements IInventory {
+public class TileEntityFurnace extends TileEntity implements IInventory, ISidedInventory { // Forge
 
     private ItemStack[] items = new ItemStack[3];
     public int burnTime = 0;
@@ -189,9 +194,8 @@ public class TileEntityFurnace extends TileEntity implements IInventory {
                     if (this.items[1] != null) {
                         --this.items[1].count;
                         if (this.items[1].count == 0) {
-                            Item item = this.items[1].getItem().r();
 
-                            this.items[1] = item != null ? new ItemStack(item) : null;
+                            this.items[1] = this.items[1].getItem().getContainerItemStack(this.items[1]); // Forge
                         }
                     }
                 }
@@ -225,7 +229,8 @@ public class TileEntityFurnace extends TileEntity implements IInventory {
         if (this.items[0] == null) {
             return false;
         } else {
-            ItemStack itemstack = RecipesFurnace.getInstance().getResult(this.items[0].getItem().id);
+        	// Forge start
+            ItemStack itemstack = RecipesFurnace.getInstance().getSmeltingResult(this.items[0]);
 
             // CraftBukkit - consider resultant count instead of current count
             return itemstack == null ? false : (this.items[2] == null ? true : (!this.items[2].doMaterialsMatch(itemstack) ? false : (this.items[2].count + itemstack.count <= this.getMaxStackSize() && this.items[2].count < this.items[2].getMaxStackSize() ? true : this.items[2].count + itemstack.count <= itemstack.getMaxStackSize())));
@@ -234,7 +239,7 @@ public class TileEntityFurnace extends TileEntity implements IInventory {
 
     public void burn() {
         if (this.canBurn()) {
-            ItemStack itemstack = RecipesFurnace.getInstance().getResult(this.items[0].getItem().id);
+            ItemStack itemstack = RecipesFurnace.getInstance().getSmeltingResult(this.items[0]); // Forge
 
             // CraftBukkit start
             CraftItemStack source = CraftItemStack.asCraftMirror(this.items[0]);
@@ -273,7 +278,7 @@ public class TileEntityFurnace extends TileEntity implements IInventory {
             int i = itemstack.getItem().id;
             Item item = itemstack.getItem();
 
-            if (i < 256 && Block.byId[i] != null) {
+            if (itemstack.getItem() instanceof ItemBlock && Block.byId[i] != null) {
                 Block block = Block.byId[i];
 
                 if (block == Block.WOOD_STEP) {
@@ -285,7 +290,8 @@ public class TileEntityFurnace extends TileEntity implements IInventory {
                 }
             }
 
-            return item instanceof ItemTool && ((ItemTool) item).g().equals("WOOD") ? 200 : (item instanceof ItemSword && ((ItemSword) item).h().equals("WOOD") ? 200 : (item instanceof ItemHoe && ((ItemHoe) item).g().equals("WOOD") ? 200 : (i == Item.STICK.id ? 100 : (i == Item.COAL.id ? 1600 : (i == Item.LAVA_BUCKET.id ? 20000 : (i == Block.SAPLING.id ? 100 : (i == Item.BLAZE_ROD.id ? 2400 : 0)))))));        }
+            return item instanceof ItemTool && ((ItemTool) item).g().equals("WOOD") ? 200 : (item instanceof ItemSword && ((ItemSword) item).h().equals("WOOD") ? 200 : (item instanceof ItemHoe && ((ItemHoe) item).g().equals("WOOD") ? 200 : (i == Item.STICK.id ? 100 : (i == Item.COAL.id ? 1600 : (i == Item.LAVA_BUCKET.id ? 20000 : (i == Block.SAPLING.id ? 100 : (i == Item.BLAZE_ROD.id ? 2400 : GameRegistry.getFuelValue(itemstack))))))));        
+        }
     }
 
     public static boolean isFuel(ItemStack itemstack) {
@@ -299,4 +305,12 @@ public class TileEntityFurnace extends TileEntity implements IInventory {
     public void startOpen() {}
 
     public void f() {}
+
+    public int getStartInventorySide(ForgeDirection var1) {
+        return var1 == ForgeDirection.DOWN ? 1 : (var1 == ForgeDirection.UP ? 0 : 2);
+    }
+
+    public int getSizeInventorySide(ForgeDirection var1) {
+        return 1;
+    }
 }

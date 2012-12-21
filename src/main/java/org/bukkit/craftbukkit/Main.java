@@ -16,6 +16,10 @@ public class Main {
     public static boolean useConsole = true;
 
     public static void main(String[] args) {
+        MinecraftServer.main(args);
+    }
+
+    public static OptionSet getOptions(String[] args) {
         // Todo: Installation script
         OptionParser parser = new OptionParser() {
             {
@@ -149,11 +153,12 @@ public class Main {
                     useConsole = false;
                 }
 
-                MinecraftServer.main(options);
+                return options;
             } catch (Throwable t) {
                 t.printStackTrace();
             }
         }
+        return null;
     }
 
     private static List<String> asList(String... params) {

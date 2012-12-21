@@ -1,8 +1,11 @@
 package net.minecraft.server;
 
 import org.bukkit.craftbukkit.block.CraftBlockState; // CraftBukkit
+import net.minecraftforge.common.EnumPlantType;
+import net.minecraftforge.common.ForgeDirection;
+import net.minecraftforge.common.IPlantable;
 
-public class ItemSeeds extends Item {
+public class ItemSeeds extends Item implements IPlantable { // Forge
 
     private int id;
     private int b;
@@ -19,8 +22,9 @@ public class ItemSeeds extends Item {
             return false;
         } else if (entityhuman.e(i, j, k) && entityhuman.e(i, j + 1, k)) {
             int i1 = world.getTypeId(i, j, k);
+            Block block = Block.byId[i1]; // Forge
 
-            if (i1 == this.b && world.isEmpty(i, j + 1, k)) {
+            if (block != null && block.canSustainPlant(world, i, j, k, ForgeDirection.UP, this) && world.isEmpty(i, j + 1, k)) {
                 CraftBlockState blockState = CraftBlockState.getBlockState(world, i, j + 1, k); // CraftBukkit
 
                 world.setTypeId(i, j + 1, k, this.id);
@@ -43,4 +47,18 @@ public class ItemSeeds extends Item {
             return false;
         }
     }
+
+    // Forge start
+    public EnumPlantType getPlantType(World var1, int var2, int var3, int var4) {
+        return this.id == Block.NETHER_WART.id ? EnumPlantType.Nether : EnumPlantType.Crop;
+    }
+
+    public int getPlantID(World var1, int var2, int var3, int var4) {
+        return this.id;
+    }
+
+    public int getPlantMetadata(World var1, int var2, int var3, int var4) {
+        return 0;
+    }
+    // Forge end
 }

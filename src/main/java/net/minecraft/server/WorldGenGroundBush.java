@@ -23,7 +23,9 @@ public class WorldGenGroundBush extends WorldGenerator implements BlockSapling.T
         // CraftBukkit end
         int l;
 
-        for (boolean flag = false; ((l = world.getTypeId(i, j, k)) == 0 || l == Block.LEAVES.id) && j > 0; --j) {
+        World w = world instanceof World ? (World) world : null;
+        Block block = null;
+        for (boolean flag = false; ((block = Block.byId[world.getTypeId(i, j, k))] == null && !isLeaves(w, i, j, k)) && j > 0; --j) {
             ;
         }
 
@@ -42,8 +44,9 @@ public class WorldGenGroundBush extends WorldGenerator implements BlockSapling.T
 
                     for (int k2 = k - l1; k2 <= k + l1; ++k2) {
                         int l2 = k2 - k;
+                        block = Block.byId[world.getTypeId(i2, j1, k2)];
 
-                        if ((Math.abs(j2) != l1 || Math.abs(l2) != l1 || random.nextInt(2) != 0) && !Block.q[world.getTypeId(i2, j1, k2)]) {
+                        if ((Math.abs(j2) != l1 || Math.abs(l2) != l1 || random.nextInt(2) != 0) && (block == null || block.canBeReplacedByLeaves(w, i2, j1, k2))) {
                             this.setTypeAndData(world, i2, j1, k2, Block.LEAVES.id, this.a);
                         }
                     }

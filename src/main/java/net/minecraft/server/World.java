@@ -1,5 +1,8 @@
 package net.minecraft.server;
 
+import ee.lutsu.alpha.minecraft.*;
+import mcpc.com.google.common.collect.ImmutableSetMultimap;
+
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collection;
@@ -25,8 +28,21 @@ import org.bukkit.event.weather.WeatherChangeEvent;
 import org.bukkit.event.weather.ThunderChangeEvent;
 // CraftBukkit end
 
+import cpw.mods.fml.common.Side;
+import cpw.mods.fml.common.asm.SideOnly;
+import net.minecraftforge.common.ForgeChunkManager;
+import net.minecraftforge.common.ForgeDirection;
+import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.common.WorldSpecificSaveHandler;
+import net.minecraftforge.event.entity.EntityEvent;
+import net.minecraftforge.event.entity.EntityJoinWorldEvent;
+import net.minecraftforge.event.entity.PlaySoundAtEntityEvent;
+import net.minecraftforge.event.entity.EntityEvent.CanUpdate;
+
 public abstract class World implements IBlockAccess {
 
+	public static double MAX_ENTITY_RADIUS = 2.0D;
+	public final WorldMapCollection perWorldStorage;
     public boolean d = false;
     public List entityList = new ArrayList();
     protected List f = new ArrayList();
@@ -39,11 +55,11 @@ public abstract class World implements IBlockAccess {
     public int j = 0;
     protected int k = (new Random()).nextInt();
     protected final int l = 1013904223;
-    protected float m;
-    protected float n;
-    protected float o;
-    protected float p;
-    protected int q = 0;
+    public float m;
+    public float n;
+    public float o;
+    public float p;
+    public int q = 0;
     public int r = 0;
     public boolean suppressPhysics = false;
     public int difficulty;
@@ -55,7 +71,7 @@ public abstract class World implements IBlockAccess {
     public WorldData worldData; // CraftBukkit - protected -> public
     public boolean isLoading;
     public WorldMapCollection worldMaps;
-    public final VillageCollection villages;
+    public VillageCollection villages;
     protected final VillageSiege siegeManager = new VillageSiege(this);
     public final MethodProfiler methodProfiler;
     private final Vec3DPool K = new Vec3DPool(300, 2000);
@@ -74,6 +90,8 @@ public abstract class World implements IBlockAccess {
     int[] I;
     private List P;
     public boolean isStatic;
+	private static WorldMapCollection s_mapStorage;
+	private static IDataManager s_savehandler;
     // Spigot start
 
     public static final long chunkToKey(int x, int z) {
@@ -89,6 +107,10 @@ public abstract class World implements IBlockAccess {
     }
     // Spigot end
     public BiomeBase getBiome(int i, int j) {
+		return this.worldProvider.getBiomeGenForCoords(i, j);
+	}
+
+	public BiomeBase getBiomeGenForCoordsBody(int i, int j) {
         if (this.isLoaded(i, 0, j)) {
             Chunk chunk = this.getChunkAtWorldCoords(i, j);
 
@@ -144,7 +166,7 @@ public abstract class World implements IBlockAccess {
         this.isStatic = false;
         this.dataManager = idatamanager;
         this.methodProfiler = methodprofiler;
-        this.worldMaps = new WorldMapCollection(idatamanager);
+        this.worldMaps = this.getMapStorage(idatamanager);
         // this.worldData = idatamanager.getWorldData(); Moved up
         if (worldprovider != null) {
             this.worldProvider = worldprovider;
@@ -180,11 +202,12 @@ public abstract class World implements IBlockAccess {
             this.worldData.d(true);
         }
 
-        VillageCollection villagecollection = (VillageCollection) this.worldMaps.get(VillageCollection.class, "villages");
+        this.perWorldStorage = new WorldMapCollection(new WorldSpecificSaveHandler((WorldServer)this, idatamanager));
+        VillageCollection villagecollection = (VillageCollection) this.perWorldStorage.get(VillageCollection.class, "villages");
 
         if (villagecollection == null) {
             this.villages = new VillageCollection(this);
-            this.worldMaps.a("villages", this.villages);
+            this.perWorldStorage.a("villages", this.villages);
         } else {
             this.villages = villagecollection;
             this.villages.a(this);
@@ -194,6 +217,14 @@ public abstract class World implements IBlockAccess {
         this.a();
 
         this.getServer().addWorld(this.world); // CraftBukkit
+	}
+	
+    private WorldMapCollection getMapStorage(IDataManager var1) {
+        if (s_savehandler != var1 || s_mapStorage == null) {
+            s_mapStorage = new WorldMapCollection(var1);
+            s_savehandler = var1;
+        }
+        return s_mapStorage;
     }
 
     protected abstract IChunkProvider j();
@@ -211,6 +242,32 @@ public abstract class World implements IBlockAccess {
 
         return this.getTypeId(i, k, j);
     }
+
+	// CPCM start - renamed to BlockChangeDelegate implement during CPCM reobf
+    public int getTypeId_API_CB(int var1, int var2, int var3) {
+        return this.getTypeId(var1, var2, var3);
+    }
+
+    public boolean isEmpty_API_CB(int var1, int var2, int var3) {
+        return this.isEmpty(var1, var2, var3);
+    }
+
+    public boolean setRawTypeId_API_CB(int var1, int var2, int var3, int var4) {
+        return this.setRawTypeId(var1, var2, var3, var4);
+    }
+
+    public boolean setRawTypeIdAndData_API_CB(int var1, int var2, int var3, int var4, int var5) {
+        return this.setRawTypeIdAndData(var1, var2, var3, var4, var5);
+    }
+
+    public boolean setTypeId_API_CB(int var1, int var2, int var3, int var4) {
+        return this.setTypeId(var1, var2, var3, var4);
+    }
+
+    public boolean setTypeIdAndData_API_CB(int var1, int var2, int var3, int var4, int var5) {
+        return this.setTypeIdAndData(var1, var2, var3, var4, var5);
+    }
+    // CPCM end
 
     public int getTypeId(int i, int j, int k) {
         if (i >= -30000000 && k >= -30000000 && i < 30000000 && k < 30000000) {
@@ -243,13 +300,15 @@ public abstract class World implements IBlockAccess {
     }
 
     public boolean isEmpty(int i, int j, int k) {
-        return this.getTypeId(i, j, k) == 0;
+        int type = this.getTypeId(i, j, k);
+        return type == 0 || Block.byId[type] == null || Block.byId[type].isAirBlock(this, i, j, k);
     }
 
     public boolean isTileEntity(int i, int j, int k) {
         int l = this.getTypeId(i, j, k);
+        int data = this.getData(i, j, k);
 
-        return Block.byId[l] != null && Block.byId[l].u();
+        return Block.byId[l] != null && Block.byId[l].hasTileEntity(data);
     }
 
     public int e(int i, int j, int k) {
@@ -702,8 +761,8 @@ public abstract class World implements IBlockAccess {
                 int l1 = this.getData(l, i1, j1);
                 Block block = Block.byId[k1];
 
-                if ((!flag1 || block == null || block.e(this, l, i1, j1) != null) && k1 > 0 && block.a(l1, flag)) {
-                    MovingObjectPosition movingobjectposition = block.a(this, l, i1, j1, vec3d, vec3d1);
+				if (block != null && (!flag1 || block == null || block.e(this, l, i1, j1) != null) && k1 > 0 && block.a(l1, flag)) {
+					MovingObjectPosition movingobjectposition = block.a(this, l, i1, j1, vec3d, vec3d1);
 
                     if (movingobjectposition != null) {
                         return movingobjectposition;
@@ -851,13 +910,17 @@ public abstract class World implements IBlockAccess {
     }
 
     public void makeSound(Entity entity, String s, float f, float f1) {
-        if (entity != null && s != null) {
+        PlaySoundAtEntityEvent var5 = new PlaySoundAtEntityEvent(entity, s, f, f1);
+
+        if (!MinecraftForge.EVENT_BUS.post(var5))
+        {        
+           if (entity != null && s != null) {
             for (int i = 0; i < this.w.size(); ++i) {
                 ((IWorldAccess) this.w.get(i)).a(s, entity.locX, entity.locY - (double) entity.height, entity.locZ, f, f1);
+                }
             }
         }
     }
-
     public void a(EntityHuman entityhuman, String s, float f, float f1) {
         if (entityhuman != null && s != null) {
             for (int i = 0; i < this.w.size(); ++i) {
@@ -988,6 +1051,11 @@ public abstract class World implements IBlockAccess {
                 this.everyoneSleeping();
             }
 
+        if (!flag && MinecraftForge.EVENT_BUS.post(new EntityJoinWorldEvent(entity, this)))
+        {
+            return false;
+        }
+        
             this.getChunkAt(i, j).a(entity);
             this.entityList.add(entity);
             this.a(entity);
@@ -1187,10 +1255,10 @@ public abstract class World implements IBlockAccess {
         for (j &= 15; k > 0; --k) {
             int l = chunk.getTypeId(i, k, j);
 
-            if (l != 0 && Block.byId[l].material.isSolid() && Block.byId[l].material != Material.LEAVES) {
-                return k + 1;
-            }
-        }
+			if (l != 0 && Block.byId[l].material.isSolid() && Block.byId[l].material != Material.LEAVES && !Block.byId[l].isBlockFoliage(this, i, k, j)) {
+				return k + 1;
+			}
+		}
 
         return -1;
     }
@@ -1350,21 +1418,32 @@ public abstract class World implements IBlockAccess {
                 if (this.isChunkLoaded(tileentity.x >> 4, tileentity.z >> 4)) {
                     Chunk chunk = this.getChunkAt(tileentity.x >> 4, tileentity.z >> 4);
 
-                    if (chunk != null) {
-                        chunk.f(tileentity.x & 15, tileentity.y, tileentity.z & 15);
-                    }
-                }
-            }
-        }
+					if (chunk != null) {
+						chunk.cleanChunkBlockTileEntity(tileentity.x & 15, tileentity.y, tileentity.z & 15);
+					}
+				}
+			}
+		}
 
         this.N = false;
         if (!this.b.isEmpty()) {
-            this.tileEntityList.removeAll(this.b);
-            this.b.clear();
-        }
+			
+			Iterator var9 = this.b.iterator();
 
-        this.methodProfiler.c("pendingTileEntities");
-        if (!this.a.isEmpty()) {
+            while (var9.hasNext())
+            {
+                Object var10 = var9.next();
+                ((TileEntity)var10).onChunkUnload();
+            }
+            
+			this.tileEntityList.removeAll(this.b);
+			this.b.clear();
+		}
+		
+		this.N = false; // Forge
+
+		this.methodProfiler.c("pendingTileEntities");
+		if (!this.a.isEmpty()) {
             for (int l = 0; l < this.a.size(); ++l) {
                 TileEntity tileentity1 = (TileEntity) this.a.get(l);
 
@@ -1399,11 +1478,19 @@ public abstract class World implements IBlockAccess {
         this.methodProfiler.b();
     }
 
-    public void a(Collection collection) {
-        if (this.N) {
-            this.a.addAll(collection);
-        } else {
-            this.tileEntityList.addAll(collection);
+    public void a(Collection var1)
+    {
+        List var2 = this.N ? this.a : this.tileEntityList;
+        Iterator var3 = var1.iterator();
+
+        while (var3.hasNext())
+        {
+            Object var4 = var3.next();
+
+            if (((TileEntity)var4).canUpdate())
+            {
+                var2.add(var4);
+            }
         }
     }
 
@@ -1412,7 +1499,8 @@ public abstract class World implements IBlockAccess {
     }
 
     // Spigot start
-    public int tickEntityExceptions = 0;
+	// MCPC - This interferes with MoCreatures so let's disable it for now
+   /* public int tickEntityExceptions = 0;
     public void entityJoinedWorld(final Entity entity, final boolean flag) {
         if (entity == null) {
             return;
@@ -1420,7 +1508,7 @@ public abstract class World implements IBlockAccess {
         try {
             tickEntity(entity, flag);
         } catch (Exception e) {
-            try {
+            /*try {
                 tickEntityExceptions++;
                 List<String> report = new ArrayList<String>();
                 report.add("Spigot has detected an unexpected exception while handling");
@@ -1436,28 +1524,51 @@ public abstract class World implements IBlockAccess {
             } catch (Throwable t) {
                 org.bukkit.craftbukkit.util.ExceptionReporter.handle(t, "Spigot has detected an unexpected exception while attempting to handle an exception (yes you read that correctly).");
                 Bukkit.shutdown();
-            }
+            }*
         }
     }
+    /**
+     * Will update the entity in the world if the chunk the entity is in is currently loaded or its forced to update.
+     * Args: entity, forceUpdate
+     */
+    public void entityJoinedWorld(Entity var1, boolean var2)
+    {
+// Spigot end
+        int var3 = MathHelper.floor(var1.locX);
+        int var4 = MathHelper.floor(var1.locZ);
+        boolean var5 = this.getPersistentChunks().containsKey(new ChunkCoordIntPair(var3 >> 4, var4 >> 4));
+        int var6 = var5 ? 0 : 32;
+        boolean var7 = !var2 || this.d(var3 - var6, 0, var4 - var6, var3 + var6, 0, var4 + var6);
 
-    public void tickEntity(Entity entity, boolean flag) {
-        // Spigot end
-        int i = MathHelper.floor(entity.locX);
-        int j = MathHelper.floor(entity.locZ);
-        byte b0 = 32;
+        if (!var7)
+        {
+            CanUpdate var8 = new CanUpdate(var1);
+            MinecraftForge.EVENT_BUS.post(var8);
+            var7 = var8.canUpdate;
+        }
 
-        if (!flag || this.d(i - b0, 0, j - b0, i + b0, 0, j + b0)) {
-            entity.T = entity.locX;
-            entity.U = entity.locY;
-            entity.V = entity.locZ;
-            entity.lastYaw = entity.yaw;
-            entity.lastPitch = entity.pitch;
-            if (flag && entity.ah) {
-                if (entity.vehicle != null) {
-                    entity.U();
-                } else {
-                    entity.j_();
-                }
+        if (var7)
+        {
+            var1.T = var1.locX;
+            var1.U = var1.locY;
+            var1.V = var1.locZ;
+            var1.lastYaw = var1.yaw;
+            var1.lastPitch = var1.pitch;
+
+            if (var2 && var1.ah)
+            {
+            	//if (handleLivingTickStart(var1))
+            	//{
+	                if (var1.vehicle != null)
+	                {
+	                    var1.U();
+	                }
+	                else
+	                {
+	                    var1.j_();
+	                }
+            	//}
+            	//handleLivingTickEnd(var1);
             }
 
             this.methodProfiler.a("chunkCheck");
@@ -1613,6 +1724,10 @@ public abstract class World implements IBlockAccess {
                         int j2 = this.getTypeId(k1, l1, i2);
 
                         if (j2 == Block.FIRE.id || j2 == Block.LAVA.id || j2 == Block.STATIONARY_LAVA.id) {
+                            return true;
+                        }
+                        Block block = Block.byId[j2];
+                        if (block != null && block.isBlockBurning(this, k, l, i)) {
                             return true;
                         }
                     }
@@ -1825,57 +1940,59 @@ public abstract class World implements IBlockAccess {
             }
         }
     }
+	
+    /**
+     * Sets the TileEntity for a given block in X, Y, Z coordinates
+     */
+    public void setTileEntity(int var1, int var2, int var3, TileEntity var4)
+    {
+        if (var4 != null && !var4.r())
+        {
+            if (var4.canUpdate())
+            {
+                List var5 = this.N ? this.a : this.tileEntityList;
+                var5.add(var4);
+            }
 
-    public void setTileEntity(int i, int j, int k, TileEntity tileentity) {
-        if (tileentity != null && !tileentity.r()) {
-            if (this.N) {
-                tileentity.x = i;
-                tileentity.y = j;
-                tileentity.z = k;
-                this.a.add(tileentity);
-            } else {
-                this.tileEntityList.add(tileentity);
-                Chunk chunk = this.getChunkAt(i >> 4, k >> 4);
+            Chunk var6 = this.getChunkAt(var1 >> 4, var3 >> 4);
 
-                if (chunk != null) {
-                    chunk.a(i & 15, j, k & 15, tileentity);
-                }
+            if (var6 != null)
+            {
+                var6.a(var1 & 15, var2, var3 & 15, var4);
             }
         }
     }
 
-    public void r(int i, int j, int k) {
-        TileEntity tileentity = this.getTileEntity(i, j, k);
+    /**
+     * Removes the TileEntity for a given block in X,Y,Z coordinates
+     */
+    public void r(int var1, int var2, int var3)
+    {
+        Chunk var4 = this.getChunkAt(var1 >> 4, var3 >> 4);
 
-        if (tileentity != null && this.N) {
-            tileentity.w_();
-            this.a.remove(tileentity);
-        } else {
-            if (tileentity != null) {
-                this.a.remove(tileentity);
-                this.tileEntityList.remove(tileentity);
-            }
-
-            Chunk chunk = this.getChunkAt(i >> 4, k >> 4);
-
-            if (chunk != null) {
-                chunk.f(i & 15, j, k & 15);
-            }
+        if (var4 != null)
+        {
+            var4.f(var1 & 15, var2, var3 & 15);
         }
     }
 
-    public void a(TileEntity tileentity) {
-        this.b.add(tileentity);
-    }
+	public void a(TileEntity tileentity) {
+		this.b.add(tileentity);
+	}
 
-    public boolean s(int i, int j, int k) {
-        Block block = Block.byId[this.getTypeId(i, j, k)];
+	public boolean s(int i, int j, int k) {
+		Block block = Block.byId[this.getTypeId(i, j, k)];
 
-        return block == null ? false : block.c();
-    }
+		return block == null ? false : block.c();
+	}
 
-    public boolean t(int i, int j, int k) {
-        return Block.i(this.getTypeId(i, j, k));
+    /**
+     * Returns true if the block at the specified coordinates is an opaque cube. Args: x, y, z
+     */
+    public boolean t(int var1, int var2, int var3)
+    {
+        Block var4 = Block.byId[this.getTypeId(var1, var2, var3)];
+        return var4 != null && var4.isBlockNormalCube(this, var1, var2, var3);
     }
 
     public boolean u(int i, int j, int k) {
@@ -1890,55 +2007,80 @@ public abstract class World implements IBlockAccess {
         }
     }
 
-    public boolean v(int i, int j, int k) {
-        Block block = Block.byId[this.getTypeId(i, j, k)];
-
-        return block == null ? false : (block.material.k() && block.b() ? true : (block instanceof BlockStairs ? (this.getData(i, j, k) & 4) == 4 : (block instanceof BlockStepAbstract ? (this.getData(i, j, k) & 8) == 8 : false)));
+    /**
+     * Returns true if the block at the given coordinate has a solid (buildable) top surface.
+     */
+    public boolean v(int var1, int var2, int var3) 
+    {
+        return this.isBlockSolidOnSide(var1, var2, var3, ForgeDirection.UP);
     }
 
-    public boolean b(int i, int j, int k, boolean flag) {
-        if (i >= -30000000 && k >= -30000000 && i < 30000000 && k < 30000000) {
-            Chunk chunk = this.chunkProvider.getOrCreateChunk(i >> 4, k >> 4);
+    /**
+     * Checks if the block is a solid, normal cube. If the chunk does not exist, or is not loaded, it returns the
+     * boolean parameter.
+     */
+    public boolean b(int var1, int var2, int var3, boolean var4)
+    {
+        if (var1 >= -30000000 && var3 >= -30000000 && var1 < 30000000 && var3 < 30000000)
+        {
+            Chunk var5 = this.chunkProvider.getOrCreateChunk(var1 >> 4, var3 >> 4);
 
-            if (chunk != null && !chunk.isEmpty()) {
-                Block block = Block.byId[this.getTypeId(i, j, k)];
-
-                return block == null ? false : block.material.k() && block.b();
-            } else {
-                return flag;
+            if (var5 != null && !var5.isEmpty())
+            {
+                Block var6 = Block.byId[this.getTypeId(var1, var2, var3)];
+                return var6 == null ? false : this.s(var1, var2, var3);
             }
-        } else {
-            return flag;
+            else
+            {
+                return var4;
+            }
+        }
+        else
+        {
+            return var4;
         }
     }
 
     public void x() {
-        int i = this.a(1.0F);
+		int i = this.a(1.0F);
 
-        if (i != this.j) {
-            this.j = i;
-        }
+		if (i != this.j) {
+			this.j = i;
+		}
+	}
+
+    /**
+     * first boolean for hostile mobs and second for peaceful mobs
+     */
+    public void setSpawnFlags(boolean var1, boolean var2)
+    {
+        this.worldProvider.setAllowedSpawnTypes(var1, var2);
     }
 
-    public void setSpawnFlags(boolean flag, boolean flag1) {
-        this.allowMonsters = flag;
-        this.allowAnimals = flag1;
+	public void doTick() {
+		this.n();
+	}
+
+	private void a() {
+        this.worldProvider.calculateInitialWeather();
     }
 
-    public void doTick() {
-        this.n();
+    public void calculateInitialWeatherBody()
+    {
+		if (this.worldData.hasStorm()) {
+			this.n = 1.0F;
+			if (this.worldData.isThundering()) {
+				this.p = 1.0F;
+			}
+		}
+	}
+
+	protected void n() {
+        this.worldProvider.updateWeather();
     }
 
-    private void a() {
-        if (this.worldData.hasStorm()) {
-            this.n = 1.0F;
-            if (this.worldData.isThundering()) {
-                this.p = 1.0F;
-            }
-        }
-    }
-
-    protected void n() {
+    public void updateWeatherBody()
+    {
         if (!this.worldProvider.f) {
             lightningSim.onTick(); // Spigot
             if (this.q > 0) {
@@ -2139,9 +2281,17 @@ public abstract class World implements IBlockAccess {
 
     public boolean x(int i, int j, int k) {
         return this.c(i, j, k, true);
+	}
+    /**
+     * checks to see if a given block is both water, and cold enough to freeze - if the par4 boolean is set, this will
+     * only return true if there is a non-water block immediately adjacent to the specified block
+     */
+    public boolean c(int var1, int var2, int var3, boolean var4)
+    {
+        return this.worldProvider.canBlockFreeze(var1, var2, var3, var4);
     }
 
-    public boolean c(int i, int j, int k, boolean flag) {
+    public boolean canBlockFreezeBody(int i, int j, int k, boolean flag) {
         BiomeBase biomebase = this.getBiome(i, k);
         float f = biomebase.j();
 
@@ -2184,7 +2334,11 @@ public abstract class World implements IBlockAccess {
         }
     }
 
-    public boolean y(int i, int j, int k) {
+    public boolean y(int var1, int var2, int var3) {
+        return this.worldProvider.canSnowAt(var1, var2, var3);
+    }
+
+    public boolean canSnowAtBody(int i, int j, int k) {
         BiomeBase biomebase = this.getBiome(i, k);
         float f = biomebase.j();
 
@@ -2258,7 +2412,7 @@ public abstract class World implements IBlockAccess {
     }
 
     private int g(int i, int j, int k, int l, int i1, int j1) {
-        int k1 = Block.lightEmission[i1];
+		int k1 = i1 != 0 && Block.byId[i1] != null ? Block.byId[i1].getLightValue(this, j, k, l) : 0;
         int l1 = this.b(EnumSkyBlock.BLOCK, j - 1, k, l) - j1;
         int i2 = this.b(EnumSkyBlock.BLOCK, j + 1, k, l) - j1;
         int j2 = this.b(EnumSkyBlock.BLOCK, j, k - 1, l) - j1;
@@ -2368,7 +2522,7 @@ public abstract class World implements IBlockAccess {
                                     int l4 = j2 + (i4 / 2 + 2) % 3 / 2 * l3;
 
                                     l2 = this.b(enumskyblock, j4, k4, l4);
-                                    int i5 = Block.lightBlock[this.getTypeId(j4, k4, l4)];
+                                    int i5 = this.b(j4, k4, l4);
 
                                     if (i5 == 0) {
                                         i5 = 1;
@@ -2396,7 +2550,7 @@ public abstract class World implements IBlockAccess {
                 j2 = (k1 >> 12 & 63) - 32 + k;
                 k2 = this.b(enumskyblock, l1, i2, j2);
                 l2 = this.getTypeId(l1, i2, j2);
-                i3 = Block.lightBlock[l2];
+				i3 = this.b(l1, i2, j2);
                 if (i3 == 0) {
                     i3 = 1;
                 }
@@ -2470,23 +2624,24 @@ public abstract class World implements IBlockAccess {
 
     public List getEntities(Entity entity, AxisAlignedBB axisalignedbb) {
     	// Spigot start
-        // this.P.clear();
-        ArrayList<?> entities = new ArrayList();
+		// MCPC - disable this spigot change for now due to issue with MoCreatures
+        this.P.clear();
+        //ArrayList<?> entities = new ArrayList();
         // Spigot end
-        int i = MathHelper.floor((axisalignedbb.a - 2.0D) / 16.0D);
-        int j = MathHelper.floor((axisalignedbb.d + 2.0D) / 16.0D);
-        int k = MathHelper.floor((axisalignedbb.c - 2.0D) / 16.0D);
-        int l = MathHelper.floor((axisalignedbb.f + 2.0D) / 16.0D);
+        int i = MathHelper.floor((axisalignedbb.a - MAX_ENTITY_RADIUS) / 16.0D);
+        int j = MathHelper.floor((axisalignedbb.d + MAX_ENTITY_RADIUS) / 16.0D);
+        int k = MathHelper.floor((axisalignedbb.c - MAX_ENTITY_RADIUS) / 16.0D);
+        int l = MathHelper.floor((axisalignedbb.f + MAX_ENTITY_RADIUS) / 16.0D);
 
         for (int i1 = i; i1 <= j; ++i1) {
             for (int j1 = k; j1 <= l; ++j1) {
                 if (this.isChunkLoaded(i1, j1)) {
-                    this.getChunkAt(i1, j1).a(entity, axisalignedbb, entities); // Spigot
+                    this.getChunkAt(i1, j1).a(entity, axisalignedbb, this.P);
                 }
             }
         }
 
-        return entities; // Spigot
+        return this.P;
     }
 
     public List a(Class oclass, AxisAlignedBB axisalignedbb) {
@@ -2494,10 +2649,10 @@ public abstract class World implements IBlockAccess {
     }
 
     public List a(Class oclass, AxisAlignedBB axisalignedbb, IEntitySelector ientityselector) {
-        int i = MathHelper.floor((axisalignedbb.a - 2.0D) / 16.0D);
-        int j = MathHelper.floor((axisalignedbb.d + 2.0D) / 16.0D);
-        int k = MathHelper.floor((axisalignedbb.c - 2.0D) / 16.0D);
-        int l = MathHelper.floor((axisalignedbb.f + 2.0D) / 16.0D);
+        int i = MathHelper.floor((axisalignedbb.a - MAX_ENTITY_RADIUS) / 16.0D);
+        int j = MathHelper.floor((axisalignedbb.d + MAX_ENTITY_RADIUS) / 16.0D);
+        int k = MathHelper.floor((axisalignedbb.c - MAX_ENTITY_RADIUS) / 16.0D);
+        int l = MathHelper.floor((axisalignedbb.f + MAX_ENTITY_RADIUS) / 16.0D);
         ArrayList arraylist = new ArrayList();
 
         for (int i1 = i; i1 <= j; ++i1) {
@@ -2562,9 +2717,11 @@ public abstract class World implements IBlockAccess {
             if (entity == null) {
                 continue;
             }
+            if (!MinecraftForge.EVENT_BUS.post(new EntityJoinWorldEvent(entity, this))) {
             this.entityList.add(entity);
             // CraftBukkit end
-            this.a((Entity) list.get(i));
+            this.a(entity);
+            }
         }
     }
 
@@ -2591,6 +2748,9 @@ public abstract class World implements IBlockAccess {
                 block = null;
             }
 
+            if (block != null && block.isBlockReplaceable(this, j, k, l)) {
+            	block = null;
+            }
             // CraftBukkit
             defaultReturn = block != null && block.material == Material.ORIENTABLE && block1 == Block.ANVIL ? true : i > 0 && block == null && block1.canPlace(this, j, k, l, i1);
         }
@@ -2750,7 +2910,7 @@ public abstract class World implements IBlockAccess {
     }
 
     public long getSeed() {
-        return this.worldData.getSeed();
+        return this.worldProvider.getSeed();
     }
 
     public long getTime() {
@@ -2766,10 +2926,14 @@ public abstract class World implements IBlockAccess {
     }
 
     public ChunkCoordinates getSpawn() {
-        return new ChunkCoordinates(this.worldData.c(), this.worldData.d(), this.worldData.e());
+        return this.worldProvider.getSpawnPoint();
     }
 
     public boolean a(EntityHuman entityhuman, int i, int j, int k) {
+        return this.worldProvider.canMineBlock(entityhuman, i, j, k);
+    }
+
+    public boolean canMineBlockBody(EntityHuman var1, int var2, int var3, int var4) {
         return true;
     }
 
@@ -2840,9 +3004,7 @@ public abstract class World implements IBlockAccess {
     }
 
     public boolean E(int i, int j, int k) {
-        BiomeBase biomebase = this.getBiome(i, k);
-
-        return biomebase.e();
+        return this.worldProvider.isBlockHighHumidity(i, j, k);
     }
 
     public void a(String s, WorldMapBase worldmapbase) {
@@ -2874,11 +3036,11 @@ public abstract class World implements IBlockAccess {
     }
 
     public int getHeight() {
-        return 256;
+        return this.worldProvider.getHeight();
     }
 
     public int P() {
-        return this.worldProvider.f ? 128 : 256;
+        return this.worldProvider.getActualHeight();
     }
 
     public IUpdatePlayerListBox a(EntityMinecart entityminecart) {
@@ -2904,7 +3066,7 @@ public abstract class World implements IBlockAccess {
         crashreportsystemdetails.a("Chunk stats", (Callable) (new CrashReportChunkStats(this)));
 
         try {
-            this.worldData.a(crashreportsystemdetails);
+            // this.worldData.a(crashreportsystemdetails);
         } catch (Throwable throwable) {
             crashreportsystemdetails.a("Level Data Unobtainable", throwable);
         }
@@ -2930,5 +3092,38 @@ public abstract class World implements IBlockAccess {
         }
 
         return this.L;
+	}
+	
+
+    public void addTileEntity(TileEntity var1) {
+        List var2 = this.N ? this.a : this.tileEntityList;
+
+        if (var1.canUpdate()) {
+            var2.add(var1);
+        }
+    }
+
+    public boolean isBlockSolidOnSide(int var1, int var2, int var3, ForgeDirection var4) {
+        return this.isBlockSolidOnSide(var1, var2, var3, var4, false);
+    }
+
+    public boolean isBlockSolidOnSide(int var1, int var2, int var3, ForgeDirection var4, boolean var5) {
+        if (var1 >= -30000000 && var3 >= -30000000 && var1 < 30000000 && var3 < 30000000) {
+            Chunk var6 = this.chunkProvider.getOrCreateChunk(var1 >> 4, var3 >> 4);
+
+            if (var6 != null && !var6.isEmpty()) {
+                Block var7 = Block.byId[this.getTypeId(var1, var2, var3)];
+                return var7 == null ? false : var7.isBlockSolidOnSide(this, var1, var2, var3, var4);
+            }
+            else {
+                return var5;
+            }
+        } else {
+            return var5;
+        }
+    }
+
+    public ImmutableSetMultimap getPersistentChunks() {
+        return ForgeChunkManager.getPersistentChunksFor(this);
     }
 }

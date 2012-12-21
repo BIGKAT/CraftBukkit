@@ -1,5 +1,10 @@
 package net.minecraft.server;
 
+import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.event.Event.Result;
+import net.minecraftforge.event.ForgeEventFactory;
+import net.minecraftforge.event.entity.player.PlayerDestroyItemEvent;
+
 // CraftBukkit start
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.craftbukkit.event.CraftEventFactory;
@@ -10,6 +15,8 @@ import org.bukkit.event.player.PlayerInteractEvent;
 
 public class ItemInWorldManager {
 
+	/** Forge reach distance */
+	private double blockReachDistance = 5.0D;
     public World world;
     public EntityPlayer player;
     private EnumGamemode gamemode;
@@ -113,6 +120,7 @@ public class ItemInWorldManager {
         // CraftBukkit
         PlayerInteractEvent event = CraftEventFactory.callPlayerInteractEvent(this.player, Action.LEFT_CLICK_BLOCK, i, j, k, l, this.player.inventory.getItemInHand());
 
+        ForgeEventFactory.onPlayerInteract(this.player, net.minecraftforge.event.entity.player.PlayerInteractEvent.Action.LEFT_CLICK_BLOCK, i, j, k, l); // Forge
         if (!this.gamemode.isAdventure() || this.player.f(i, j, k)) {
             // CraftBukkit start
             if (event.isCancelled()) {
@@ -136,6 +144,7 @@ public class ItemInWorldManager {
                 float f = 1.0F;
                 int i1 = this.world.getTypeId(i, j, k);
                 // CraftBukkit start - Swings at air do *NOT* exist.
+                if (Block.byId[i1]== null) return;
                 if (event.useInteractedBlock() == Event.Result.DENY) {
                     // If we denied a door from opening, we need to send a correcting update to the client, as it already opened the door.
                     if (i1 == Block.WOODEN_DOOR.id) {
@@ -228,21 +237,27 @@ public class ItemInWorldManager {
         this.world.g(this.player.id, this.f, this.g, this.h, -1);
     }
 
-    private boolean d(int i, int j, int k) {
-        Block block = Block.byId[this.world.getTypeId(i, j, k)];
-        int l = this.world.getData(i, j, k);
+    /**
+     * Removes a block and triggers the appropriate events
+     */
+    private boolean d(int var1, int var2, int var3)
+    {
+        Block var4 = Block.byId[this.world.getTypeId(var1, var2, var3)];
+        int var5 = this.world.getData(var1, var2, var3);
 
-        if (block != null) {
-            block.a(this.world, i, j, k, l, this.player);
+        if (var4 != null)
+        {
+            var4.a(this.world, var1, var2, var3, var5, this.player);
         }
 
-        boolean flag = this.world.setTypeId(i, j, k, 0);
+        boolean var6 = var4 != null && var4.removeBlockByPlayer(this.world, this.player, var1, var2, var3);
 
-        if (block != null && flag) {
-            block.postBreak(this.world, i, j, k, l);
+        if (var4 != null && var6)
+        {
+            var4.postBreak(this.world, var1, var2, var3, var5);
         }
 
-        return flag;
+        return var6;
     }
 
     public boolean breakBlock(int i, int j, int k) {
@@ -293,40 +308,46 @@ public class ItemInWorldManager {
             }
         }
 
-        if (false) { // Never trigger
-            // CraftBukkit end
+        ItemStack itemstack = this.player.bT();
+        if (itemstack != null && itemstack.getItem().onBlockStartBreak(itemstack, i, j, k, this.player))
+        {
             return false;
         } else {
             int l = this.world.getTypeId(i, j, k);
             if (Block.byId[l] == null) return false; // CraftBukkit - a plugin set block to air without cancelling
             int i1 = this.world.getData(i, j, k);
-
             // CraftBukkit start - special case skulls, their item data comes from a tile entity
-            if (l == Block.SKULL.id && !this.isCreative()) {
-                Block.SKULL.dropNaturally(world, i, j, k, i1, 1.0F, 0);
-                return this.d(i, j, k);
+            if (l == Block.SKULL.id) {
+                i1 = Block.SKULL.getDropData(world, i, j, k);
             }
             // CraftBukkit end
 
             this.world.a(this.player, 2001, i, j, k, l + (this.world.getData(i, j, k) << 12));
-            boolean flag = this.d(i, j, k);
-
+            boolean flag = false;
+            boolean flag1 = false;
             if (this.isCreative()) {
+            	flag = this.d(i, j, k);
                 this.player.netServerHandler.sendPacket(new Packet53BlockChange(i, j, k, this.world));
             } else {
-                ItemStack itemstack = this.player.bT();
-                boolean flag1 = this.player.b(Block.byId[l]);
-
+                flag1 = this.player.b(Block.byId[l]);
+                Block var10 = Block.byId[l];
+                
+                if (var10 != null)
+                	flag1 = var10.canHarvestBlock(this.player, i1);
+                
                 if (itemstack != null) {
                     itemstack.a(this.world, l, i, j, k, this.player);
                     if (itemstack.count == 0) {
                         this.player.bU();
+                        MinecraftForge.EVENT_BUS.post(new PlayerDestroyItemEvent(this.player, itemstack));
                     }
                 }
-
-                if (flag && flag1) {
-                    Block.byId[l].a(this.world, this.player, i, j, k, i1);
-                }
+            }
+            
+            flag = this.d(i, j, k);
+            
+            if (flag && flag1) {
+                Block.byId[l].a(this.world, this.player, i, j, k, i1);
             }
 
             // CraftBukkit start - drop event experience
@@ -357,6 +378,7 @@ public class ItemInWorldManager {
 
             if (itemstack1.count == 0) {
                 entityhuman.inventory.items[entityhuman.inventory.itemInHandIndex] = null;
+                MinecraftForge.EVENT_BUS.post(new PlayerDestroyItemEvent(this.player, itemstack1));
             }
 
             if (!entityhuman.bM()) {
@@ -366,48 +388,113 @@ public class ItemInWorldManager {
             return true;
         }
     }
+    
 
-    public boolean interact(EntityHuman entityhuman, World world, ItemStack itemstack, int i, int j, int k, int l, float f, float f1, float f2) {
-        int i1 = world.getTypeId(i, j, k);
+    /**
+     * Activate the clicked on block, otherwise use the held item. Args: player, world, itemStack, x, y, z, side,
+     * xOffset, yOffset, zOffset
+     */
+    public boolean interact(EntityHuman var1, World var2, ItemStack var3, int var4, int var5, int var6, int var7, float var8, float var9, float var10)
+    {
+    	net.minecraftforge.event.entity.player.PlayerInteractEvent var11 = ForgeEventFactory.onPlayerInteract(var1, net.minecraftforge.event.entity.player.PlayerInteractEvent.Action.RIGHT_CLICK_BLOCK, var4, var5, var6, var7);
 
-        // CraftBukkit start - Interact
-        boolean result = false;
-        if (i1 > 0) {
-            PlayerInteractEvent event = CraftEventFactory.callPlayerInteractEvent(entityhuman, Action.RIGHT_CLICK_BLOCK, i, j, k, l, itemstack);
-            if (event.useInteractedBlock() == Event.Result.DENY) {
-                // If we denied a door from opening, we need to send a correcting update to the client, as it already opened the door.
-                if (i1 == Block.WOODEN_DOOR.id) {
-                    boolean bottom = (world.getData(i, j, k) & 8) == 0;
-                    ((EntityPlayer) entityhuman).netServerHandler.sendPacket(new Packet53BlockChange(i, j + (bottom ? 1 : -1), k, world));
+        if (var11.isCanceled())
+        {
+            this.player.netServerHandler.sendPacket(new Packet53BlockChange(var4, var5, var6, this.world));
+            return false;
+        }
+        else
+        {
+            Item var12 = var3 != null ? var3.getItem() : null;
+
+            if (var12 != null && var12.onItemUseFirst(var3, var1, var2, var4, var5, var6, var7, var8, var9, var10))
+            {
+                if (var3.count <= 0)
+                {
+                    ForgeEventFactory.onPlayerDestroyItem(this.player, var3);
                 }
-                result = (event.useItemInHand() != Event.Result.ALLOW);
-            } else {
-                result = Block.byId[i1].interact(world, i, j, k, entityhuman, l, f, f1, f2);
+
+                return true;
             }
+            else
+            {
+                int i1 = var2.getTypeId(var4, var5, var6);
+                // Forge start
+                Block var14 = Block.byId[i1];
+                boolean result = false;
 
-            if (itemstack != null && !result) {
-                int j1 = itemstack.getData();
-                int k1 = itemstack.count;
-
-                result = itemstack.placeItem(entityhuman, world, i, j, k, l, f, f1, f2);
-
-                // The item count should not decrement in Creative mode.
-                if (this.isCreative()) {
-                    itemstack.setData(j1);
-                    itemstack.count = k1;
+                if (var14 != null)
+                {
+                    if (var11.useBlock != Result.DENY)
+                    {
+                    	// called below by bukkit
+                    	//result = var14.interact(var2, var4, var5, var6, var1, var7, var8, var9, var10);
+                    }
+                    else
+                    {
+                        this.player.netServerHandler.sendPacket(new Packet53BlockChange(var4, var5, var6, this.world));
+                        result = var11.useItem != Result.ALLOW;
+                    }
                 }
-            }
+                // Forge end
+                if (!result)
+                {
+                    // CraftBukkit start - Interact
+                    
+                    if (i1 > 0) {
+                        PlayerInteractEvent event = CraftEventFactory.callPlayerInteractEvent(var1, Action.RIGHT_CLICK_BLOCK, var4, var5, var6, var7, var3);
+                        if (event.useInteractedBlock() == Event.Result.DENY) {
+                            // If we denied a door from opening, we need to send a correcting update to the client, as it already opened the door.
+                            if (i1 == Block.WOODEN_DOOR.id) {
+                                boolean bottom = (world.getData(var4, var5, var6) & 8) == 0;
+                                ((EntityPlayer) var1).netServerHandler.sendPacket(new Packet53BlockChange(var4, var5 + (bottom ? 1 : -1), var6, world));
+                            }
+                            result = (event.useItemInHand() != Event.Result.ALLOW);
+                        } else {
+                            result = Block.byId[i1].interact(world, var4, var5, var6, var1, var7, var8, var9, var10);
+                        }
 
-            // If we have 'true' and no explicit deny *or* an explicit allow -- run the item part of the hook
-            if (itemstack != null && ((!result && event.useItemInHand() != Event.Result.DENY) || event.useItemInHand() == Event.Result.ALLOW)) {
-                this.useItem(entityhuman, world, itemstack);
+                        if (var3 != null && !result) {
+                            int j1 = var3.getData();
+                            int k1 = var3.count;
+
+                            result = var3.placeItem(var1, world,var4, var5, var6, var7, var8, var9, var10);
+
+                            // The item count should not decrement in Creative mode.
+                            if (this.isCreative()) {
+                                var3.setData(j1);
+                                var3.count = k1;
+                            }
+                        }
+
+                        // If we have 'true' and no explicit deny *or* an explicit allow -- run the item part of the hook
+                        if (var3 != null && ((!result && event.useItemInHand() != Event.Result.DENY) || event.useItemInHand() == Event.Result.ALLOW)) {
+                            this.useItem(var1, world, var3);
+                        }
+                    }
+                 // CraftBukkit end
+                    if (var3 != null && var3.count <= 0)
+                        ForgeEventFactory.onPlayerDestroyItem(this.player, var3); // Forge
+                }
+
+                return result;
             }
         }
-        return result;
-        // CraftBukkit end
     }
 
     public void a(WorldServer worldserver) {
         this.world = worldserver;
     }
+    
+    // Forge start
+    public double getBlockReachDistance()
+    {
+        return this.blockReachDistance;
+    }
+
+    public void setBlockReachDistance(double var1)
+    {
+        this.blockReachDistance = var1;
+    }
+    // Forge end
 }

@@ -1,5 +1,7 @@
 package net.minecraft.server;
 
+import cpw.mods.fml.common.network.FMLNetworkHandler;
+import cpw.mods.fml.common.registry.GameRegistry;
 import java.io.File;
 import java.net.SocketAddress;
 import java.text.SimpleDateFormat;
@@ -108,6 +110,7 @@ public abstract class ServerConfigurationManagerAbstract {
         }
 
         entityplayer.syncInventory();
+        FMLNetworkHandler.handlePlayerLogin(entityplayer, netserverhandler, inetworkmanager); // Forge
     }
 
     public void setPlayerFileData(WorldServer[] aworldserver) {
@@ -205,6 +208,7 @@ public abstract class ServerConfigurationManagerAbstract {
         this.cserver.getPluginManager().callEvent(playerQuitEvent);
         // CraftBukkit end
 
+        GameRegistry.onPlayerLogout(entityplayer); // Forge
         this.b(entityplayer);
         WorldServer worldserver = entityplayer.p();
 
@@ -413,10 +417,16 @@ public abstract class ServerConfigurationManagerAbstract {
             Bukkit.getServer().getPluginManager().callEvent(event);
         }
         // CraftBukkit end
+        GameRegistry.onPlayerRespawn(entityplayer1); // Forge
 
         return entityplayer1;
     }
 
+    public void transferPlayerToDimension(EntityPlayer var1, int var2, PortalTravelAgent var3) {
+    	changeDimension(var1, var2);
+    }
+
+    // TODO: didn't implement forge version
     public void changeDimension(EntityPlayer entityplayer, int i) {
         // CraftBukkit start -- Replaced the standard handling of portals with a more customised method.
         int dimension = i;
@@ -484,8 +494,14 @@ public abstract class ServerConfigurationManagerAbstract {
         toWorld = ((CraftWorld) finalLocation.getWorld()).getHandle();
         this.moveToWorld(entityplayer, toWorld.dimension, true, finalLocation);
         // CraftBukkit end
+        GameRegistry.onPlayerChangedDimension(entityplayer); // Forge
     }
 
+    public void transferEntityToWorld(Entity var1, int var2, WorldServer var3, WorldServer var4, PortalTravelAgent var5) {
+    	a(var1, var2, var3, var4);
+    }
+
+    // TODO: didn't implement forge version
     public void a(Entity entity, int i, WorldServer worldserver, WorldServer worldserver1) {
         double d0 = entity.locX;
         double d1 = entity.locZ;

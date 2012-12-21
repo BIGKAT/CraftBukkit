@@ -132,7 +132,13 @@ public class Packet56MapChunkBulk extends Packet {
                 k += this.a[j] >> l & 1;
             }
 
-            l = 2048 * 5 * k + 256;
+            // Forge start
+            int var9 = 0; // BugFix: MC does not read the MSB array from the packet properly, causing issues for servers that use blocks > 256
+            for (int var10 = 0; var10 < 16; ++var10) {
+                var9 += this.b[j] >> var10 & 1;
+            }
+            l = 2048 * 5 * k + (2048 * var9) + 256;
+            // Forge end
             this.inflatedBuffers[j] = new byte[l];
             System.arraycopy(abyte, i, this.inflatedBuffers[j], 0, l);
             i += l;

@@ -2,6 +2,7 @@ package net.minecraft.server;
 
 import gnu.trove.iterator.TLongShortIterator;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
@@ -11,6 +12,9 @@ import java.util.Random;
 import java.util.Set;
 import java.util.TreeSet;
 
+import net.minecraftforge.common.DimensionManager;
+import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.event.world.WorldEvent;
 // CraftBukkit start
 import org.bukkit.block.BlockState;
 import org.bukkit.craftbukkit.util.LongHash;
@@ -36,7 +40,7 @@ public class WorldServer extends World implements org.bukkit.BlockChangeDelegate
     private final PortalTravelAgent Q;
     private NoteDataList[] R = new NoteDataList[] { new NoteDataList((EmptyClass2) null), new NoteDataList((EmptyClass2) null)};
     private int S = 0;
-    private static final StructurePieceTreasure[] T = new StructurePieceTreasure[] { new StructurePieceTreasure(Item.STICK.id, 0, 1, 3, 10), new StructurePieceTreasure(Block.WOOD.id, 0, 1, 3, 10), new StructurePieceTreasure(Block.LOG.id, 0, 1, 3, 10), new StructurePieceTreasure(Item.STONE_AXE.id, 0, 1, 1, 3), new StructurePieceTreasure(Item.WOOD_AXE.id, 0, 1, 1, 5), new StructurePieceTreasure(Item.STONE_PICKAXE.id, 0, 1, 1, 3), new StructurePieceTreasure(Item.WOOD_PICKAXE.id, 0, 1, 1, 5), new StructurePieceTreasure(Item.APPLE.id, 0, 2, 3, 5), new StructurePieceTreasure(Item.BREAD.id, 0, 2, 3, 3)};
+    public static final StructurePieceTreasure[] T = new StructurePieceTreasure[] { new StructurePieceTreasure(Item.STICK.id, 0, 1, 3, 10), new StructurePieceTreasure(Block.WOOD.id, 0, 1, 3, 10), new StructurePieceTreasure(Block.LOG.id, 0, 1, 3, 10), new StructurePieceTreasure(Item.STONE_AXE.id, 0, 1, 1, 3), new StructurePieceTreasure(Item.WOOD_AXE.id, 0, 1, 1, 5), new StructurePieceTreasure(Item.STONE_PICKAXE.id, 0, 1, 1, 3), new StructurePieceTreasure(Item.WOOD_PICKAXE.id, 0, 1, 1, 5), new StructurePieceTreasure(Item.APPLE.id, 0, 2, 3, 5), new StructurePieceTreasure(Item.BREAD.id, 0, 2, 3, 3)};
     private IntHashMap entitiesById;
 
     // CraftBukkit start
@@ -62,6 +66,7 @@ public class WorldServer extends World implements org.bukkit.BlockChangeDelegate
             this.N = new TreeSet();
         }
 
+        DimensionManager.setWorld(i, this);
         this.Q = new PortalTravelAgent(this);
     }
 
@@ -406,7 +411,8 @@ public class WorldServer extends World implements org.bukkit.BlockChangeDelegate
 
     public void a(int i, int j, int k, int l, int i1, int j1) {
         NextTickListEntry nextticklistentry = new NextTickListEntry(i, j, k, l);
-        byte b0 = 8;
+        boolean persist = this.getPersistentChunks().containsKey(new ChunkCoordIntPair(nextticklistentry.a >> 4, nextticklistentry.c >> 4));
+        byte b0 = persist ? 0 : 8;
 
         if (this.d && l > 0) {
             if (Block.byId[l].l()) {
@@ -453,8 +459,8 @@ public class WorldServer extends World implements org.bukkit.BlockChangeDelegate
     }
 
     public void tickEntities() {
-        if (false && this.players.isEmpty()) { // CraftBukkit - this prevents entity cleanup, other issues on servers with no players
-            if (this.emptyTime++ >= 1200) {
+        if (this.players.isEmpty() && this.getPersistentChunks().isEmpty()) { // CraftBukkit - this prevents entity cleanup, other issues on servers with no players
+            if (this.emptyTime++ >= 1200) { // forge - enabled again with the extra check
                 return;
             }
         } else {
@@ -494,7 +500,8 @@ public class WorldServer extends World implements org.bukkit.BlockChangeDelegate
                 //this.N.remove(nextticklistentry); // CraftBukkit
                 //this.M.remove(nextticklistentry); // CraftBukkit
                 this.removeNextTickIfNeeded(nextticklistentry); // CraftBukkit
-                byte b0 = 8;
+                boolean persist = this.getPersistentChunks().containsKey(new ChunkCoordIntPair(nextticklistentry.a >> 4, nextticklistentry.c >> 4));
+                byte b0 = persist ? 0 : 8;
 
                 if (this.d(nextticklistentry.a - b0, nextticklistentry.b - b0, nextticklistentry.c - b0, nextticklistentry.a + b0, nextticklistentry.b + b0, nextticklistentry.c + b0)) {
                     int k = this.getTypeId(nextticklistentry.a, nextticklistentry.b, nextticklistentry.c);
@@ -615,6 +622,10 @@ public class WorldServer extends World implements org.bukkit.BlockChangeDelegate
     }
 
     public boolean a(EntityHuman entityhuman, int i, int j, int k) {
+        return super.a(entityhuman, i, j, k);
+    }
+
+    public boolean canMineBlockBody(EntityHuman entityhuman, int i, int j, int k) {
         int l = MathHelper.a(i - this.worldData.c());
         int i1 = MathHelper.a(k - this.worldData.e());
 
@@ -729,6 +740,7 @@ public class WorldServer extends World implements org.bukkit.BlockChangeDelegate
             }
 
             this.chunkProvider.saveChunks(flag, iprogressupdate);
+            MinecraftForge.EVENT_BUS.post(new WorldEvent.Save(this));
         }
     }
 
@@ -736,6 +748,7 @@ public class WorldServer extends World implements org.bukkit.BlockChangeDelegate
         this.D();
         this.dataManager.saveWorldData(this.worldData, this.server.getServerConfigurationManager().q());
         this.worldMaps.a();
+        this.perWorldStorage.a();
     }
 
     protected void a(Entity entity) {
@@ -949,4 +962,7 @@ public class WorldServer extends World implements org.bukkit.BlockChangeDelegate
         return list;
     }
     // Spigot end
-}
+
+    public File getChunkSaveLocation() {
+        return ((ChunkRegionLoader)this.chunkProviderServer.e).d;
+    }

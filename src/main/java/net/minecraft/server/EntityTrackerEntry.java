@@ -1,5 +1,6 @@
 package net.minecraft.server;
 
+import cpw.mods.fml.common.network.FMLNetworkHandler;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -313,6 +314,12 @@ public class EntityTrackerEntry {
                     this.j = this.tracker.motX;
                     this.k = this.tracker.motY;
                     this.l = this.tracker.motZ;
+                    int var7 = MathHelper.floor(this.tracker.locX * 32.0D);
+                    int var8 = MathHelper.floor(this.tracker.locY * 32.0D);
+                    int var9 = MathHelper.floor(this.tracker.locZ * 32.0D);
+                    if (var7 != this.xLoc || var8 != this.yLoc || var9 != this.zLoc) {
+                        FMLNetworkHandler.makeEntitySpawnAdjustment(this.tracker.id, entityplayer, this.xLoc, this.yLoc, this.zLoc);
+                    }
                     if (this.isMoving && !(packet instanceof Packet24MobSpawn)) {
                         entityplayer.netServerHandler.sendPacket(new Packet28EntityVelocity(this.tracker.id, this.tracker.motX, this.tracker.motY, this.tracker.motZ));
                     }
@@ -380,6 +387,8 @@ public class EntityTrackerEntry {
             // CraftBukkit end
         }
 
+        Packet pkt = FMLNetworkHandler.getEntitySpawningPacket(this.tracker);
+        if (pkt != null) return pkt;
         if (this.tracker instanceof EntityItem) {
             EntityItem entityitem = (EntityItem) this.tracker;
             Packet21PickupSpawn entityminecart0 = new Packet21PickupSpawn(entityitem);

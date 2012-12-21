@@ -80,6 +80,18 @@ public abstract class Enchantment {
         return this;
     }
 
+    // Forge start
+    /**
+     * Called to determine if this enchantment can be applied to a ItemStack
+     * @param item The ItemStack that the enchantment might be put on
+     * @return True if the item is valid, false otherwise
+     */
+    public boolean canEnchantItem(ItemStack var1)
+    {
+        return this.slot.canEnchant(var1.getItem());
+    }
+    // Forge end
+
     public String a() {
         return "enchantment." + this.name;
     }

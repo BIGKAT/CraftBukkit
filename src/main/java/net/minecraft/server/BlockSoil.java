@@ -2,10 +2,12 @@ package net.minecraft.server;
 
 import java.util.Random;
 
-// CraftBukkit start
+//CraftBukkit start
 import org.bukkit.event.entity.EntityInteractEvent;
 import org.bukkit.craftbukkit.event.CraftEventFactory;
-// CraftBukkit end
+//CraftBukkit end
+import net.minecraftforge.common.ForgeDirection;
+import net.minecraftforge.common.IPlantable;
 
 public class BlockSoil extends Block {
 
@@ -74,14 +76,24 @@ public class BlockSoil extends Block {
         }
     }
 
-    private boolean l(World world, int i, int j, int k) {
-        byte b0 = 0;
+    /**
+     * returns true if there is at least one cropblock nearby (x-1 to x+1, y+1, z-1 to z+1)
+     */
+    private boolean l(World var1, int var2, int var3, int var4)
+    {
+        byte var5 = 0;
 
-        for (int l = i - b0; l <= i + b0; ++l) {
-            for (int i1 = k - b0; i1 <= k + b0; ++i1) {
-                int j1 = world.getTypeId(l, j + 1, i1);
+        for (int var6 = var2 - var5; var6 <= var2 + var5; ++var6)
+        {
+            for (int var7 = var4 - var5; var7 <= var4 + var5; ++var7)
+            {
+                int var8 = var1.getTypeId(var6, var3 + 1, var7);
+                // Forge start
+                Block plant = byId[var8];
 
-                if (j1 == Block.CROPS.id || j1 == Block.MELON_STEM.id || j1 == Block.PUMPKIN_STEM.id || j1 == Block.POTATOES.id || j1 == Block.CARROTS.id) {
+                if (plant instanceof IPlantable && this.canSustainPlant(var1, var2, var3, var4, ForgeDirection.UP, (IPlantable)plant))
+                {
+                	// Forge end
                     return true;
                 }
             }

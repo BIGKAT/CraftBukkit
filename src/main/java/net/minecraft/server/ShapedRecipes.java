@@ -7,9 +7,11 @@ import org.bukkit.craftbukkit.inventory.CraftShapedRecipe;
 
 public class ShapedRecipes implements IRecipe {
 
-    private int width;
-    private int height;
-    private ItemStack[] items;
+    // Forge start
+    public int width;
+    public int height;
+    public ItemStack[] items;
+    // Forge end
     private ItemStack result;
     public final int a;
 

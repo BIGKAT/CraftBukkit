@@ -263,7 +263,7 @@ public class BlockPiston extends Block {
                 return false;
             }
 
-            return !(Block.byId[i] instanceof BlockContainer);
+            return !world.isTileEntity(j, k, l); // Forge
         }
     }
 
@@ -276,7 +276,7 @@ public class BlockPiston extends Block {
 
         while (true) {
             if (l1 < 13) {
-                if (j1 <= 0 || j1 >= 255) {
+                if (j1 <= 0 || j1 >= world.getHeight() - 1) { // Forge
                     return -1; // CraftBukkit
                 }
 
@@ -315,7 +315,7 @@ public class BlockPiston extends Block {
             int i2;
 
             if (l1 < 13) {
-                if (j1 <= 0 || j1 >= 255) {
+                if (j1 <= 0 || j1 >= world.getHeight() - 1) { // Forge
                     return false;
                 }
 

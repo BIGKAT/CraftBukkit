@@ -1,6 +1,11 @@
 package net.minecraft.server;
 
+import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.event.entity.living.LivingSpecialSpawnEvent;
+
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -14,7 +19,9 @@ import org.bukkit.event.entity.CreatureSpawnEvent.SpawnReason;
 
 public final class SpawnerCreature {
 
+	// eligibleChunksForSpawning
     private static LongObjectHashMap<Boolean> b = new LongObjectHashMap<Boolean>(); // CraftBukkit - HashMap -> LongObjectHashMap
+    // nightSpawnEntities
     protected static final Class[] a = new Class[] { EntitySpider.class, EntityZombie.class, EntitySkeleton.class};
     private static byte spawnRadius = 0; // Spigot
 
@@ -100,9 +107,13 @@ public final class SpawnerCreature {
                 int mobcnt = 0;
                 // CraftBukkit end
 
-                if ((!enumcreaturetype.d() || flag1) && (enumcreaturetype.d() || flag) && (!enumcreaturetype.e() || flag2) && (mobcnt = worldserver.a(enumcreaturetype.a())) <= limit * b.size() / 256) { // CraftBukkit - use per-world limits
+                mobcnt = worldserver.a(enumcreaturetype.a());
+                if ((!enumcreaturetype.d() || flag1) && (enumcreaturetype.d() || flag) && (!enumcreaturetype.e() || flag2) && mobcnt <= (limit * b.size() / 256)) { // CraftBukkit - use per-world limits
                     Iterator iterator = b.keySet().iterator();
 
+                    ArrayList var39 = new ArrayList(b.keySet());
+                    Collections.shuffle(var39);
+                    iterator = var39.iterator();
                     int moblimit = (limit * b.size() / 256) - mobcnt + 1; // CraftBukkit - up to 1 more than limit
                     label110:
                     while (iterator.hasNext() && (moblimit > 0)) { // Spigot - while more allowed

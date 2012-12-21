@@ -21,10 +21,14 @@ public abstract class CraftEntity implements org.bukkit.entity.Entity {
     protected final CraftServer server;
     protected Entity entity;
     private EntityDamageEvent lastDamageEvent;
+    // MCPC
+    private static CraftEntity instance;
 
     public CraftEntity(final CraftServer server, final Entity entity) {
         this.server = server;
         this.entity = entity;
+        // MCPC
+        instance = this;
     }
 
     public static CraftEntity getEntity(CraftServer server, Entity entity) {
@@ -49,6 +53,8 @@ public abstract class CraftEntity implements org.bukkit.entity.Entity {
                     else if (entity instanceof EntityTameableAnimal) {
                         if (entity instanceof EntityWolf) { return new CraftWolf(server, (EntityWolf) entity); }
                         else if (entity instanceof EntityOcelot) { return new CraftOcelot(server, (EntityOcelot) entity); }
+                        // MCPC - add support for Pixelmon
+                        else { return new CraftTameableAnimal(server, (EntityTameableAnimal) entity); }
                     }
                     else if (entity instanceof EntitySheep) { return new CraftSheep(server, (EntitySheep) entity); }
                     else  { return new CraftAnimals(server, (EntityAnimal) entity); }
@@ -148,8 +154,10 @@ public abstract class CraftEntity implements org.bukkit.entity.Entity {
             else { return new CraftHanging(server, (EntityHanging) entity); }
         }
         else if (entity instanceof EntityTNTPrimed) { return new CraftTNTPrimed(server, (EntityTNTPrimed) entity); }
+        // MCPC - used for custom entities that extend Entity
+        else if (entity instanceof Entity) { return instance; }
 
-        throw new IllegalArgumentException("Unknown entity");
+        throw new IllegalArgumentException("Unknown entity " + entity);
     }
 
     public Location getLocation() {

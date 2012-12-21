@@ -14,10 +14,14 @@ import java.util.concurrent.Callable;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import net.minecraft.server.CrashReportCategory;
+import cpw.mods.fml.common.FMLCommonHandler;
+
 public class CrashReport {
 
     private final String a;
     private final Throwable b;
+    private final CrashReportCategory field_85061_c = new CrashReportCategory(this, "System Details");
     private final CrashReportSystemDetails c = new CrashReportSystemDetails(this, "System Details");
     private final List d = new ArrayList();
     private File e = null;
@@ -41,6 +45,7 @@ public class CrashReport {
         this.c.a("Suspicious classes", (Callable) (new CrashReportSuspiciousClasses(this)));
         this.c.a("IntCache", (Callable) (new CrashReportIntCacheSize(this)));
         this.c.a("CraftBukkit Information", (Callable) (new org.bukkit.craftbukkit.CraftCrashReport())); // CraftBukkit
+        FMLCommonHandler.instance().enhanceCrashReport(this, this.field_85061_c); // Forge
     }
 
     public String a() {

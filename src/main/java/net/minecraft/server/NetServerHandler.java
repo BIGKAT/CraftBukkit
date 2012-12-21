@@ -1,5 +1,10 @@
 package net.minecraft.server;
 
+import cpw.mods.fml.common.network.FMLNetworkHandler;
+
+import net.minecraftforge.event.Event.Result;
+import net.minecraftforge.event.ForgeEventFactory;
+import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
 import java.io.IOException;
@@ -43,6 +48,7 @@ import org.bukkit.event.inventory.*;
 import org.bukkit.event.inventory.InventoryType.SlotType;
 import org.bukkit.event.player.PlayerPortalEvent;
 import org.bukkit.event.player.PlayerToggleFlightEvent;
+import org.bukkit.event.server.PacketListener;
 import org.bukkit.inventory.CraftingInventory;
 import org.bukkit.inventory.InventoryView;
 // CraftBukkit end
@@ -55,7 +61,7 @@ public class NetServerHandler extends NetHandler {
     private MinecraftServer minecraftServer;
     public EntityPlayer player;
     private int f;
-    private int g;
+    public int g;
     private boolean h;
     private int i;
     private long j;
@@ -100,6 +106,9 @@ public class NetServerHandler extends NetHandler {
     // Store the last block right clicked and what type it was
     private int lastMaterial;
 
+    public EntityHuman getPlayerH() {
+        return this.player;
+    }
     public CraftPlayer getPlayer() {
         return (this.player == null) ? null : (CraftPlayer) this.player.getBukkitEntity();
     }
@@ -298,6 +307,7 @@ public class NetServerHandler extends NetHandler {
                         this.player.vehicle.V();
                     }
 
+                    if (!this.checkMovement) return; // Fixes teleportation kick while riding entities
                     this.minecraftServer.getServerConfigurationManager().d(this.player);
                     this.y = this.player.locX;
                     this.z = this.player.locY;
@@ -367,7 +377,8 @@ public class NetServerHandler extends NetHandler {
                 // CraftBukkit end
                 double d11 = d8 * d8 + d9 * d9 + d10 * d10;
 
-                if (d11 > 100.0D && this.checkMovement && (!this.minecraftServer.I() || !this.minecraftServer.H().equals(this.player.name))) { // CraftBukkit - Added this.checkMovement condition to solve this check being triggered by teleports
+                // forge - 100 to 150 because external stuff like ender dragons can push the player instantly around 120
+                if (d11 > 150.0D && this.checkMovement && (!this.minecraftServer.I() || !this.minecraftServer.H().equals(this.player.name))) { // CraftBukkit - Added this.checkMovement condition to solve this check being triggered by teleports
                     logger.warning(this.player.name + " moved too quickly! " + d4 + "," + d6 + "," + d7 + " (" + d8 + ", " + d9 + ", " + d10 + ")");
                     this.a(this.y, this.z, this.q, this.player.yaw, this.player.pitch);
                     return;
@@ -379,7 +390,7 @@ public class NetServerHandler extends NetHandler {
                 if (this.player.onGround && !packet10flying.g && d6 > 0.0D) {
                     this.player.j(0.2F);
                 }
-
+                if (!this.checkMovement) return; // Fixes "Moved Too Fast" kick when being teleported while moving
                 this.player.move(d4, d6, d7);
                 this.player.onGround = packet10flying.g;
                 this.player.checkMovement(d4, d6, d7);
@@ -400,10 +411,12 @@ public class NetServerHandler extends NetHandler {
                     logger.warning(this.player.name + " moved wrongly!");
                 }
 
+                if (!this.checkMovement) return; //Fixes "Moved Too Fast" kick when being teleported while moving
+                
                 this.player.setLocation(d1, d2, d3, f2, f3);
                 boolean flag2 = worldserver.getCubes(this.player, this.player.boundingBox.clone().shrink((double) f4, (double) f4, (double) f4)).isEmpty();
 
-                if (flag && (flag1 || !flag2) && !this.player.isSleeping()) {
+                if (flag && (flag1 || !flag2) && !this.player.isSleeping() && !this.player.Y) { // Forge
                     this.a(this.y, this.z, this.q, f2, f3);
                     return;
                 }
@@ -423,6 +436,7 @@ public class NetServerHandler extends NetHandler {
                     this.g = 0;
                 }
 
+                if (!this.checkMovement) return; //Fixes "Moved Too Fast" kick when being teleported while moving  
                 this.player.onGround = packet10flying.g;
                 this.minecraftServer.getServerConfigurationManager().d(this.player);
                 if (this.player.itemInWorldManager.isCreative()) return; // CraftBukkit - fixed fall distance accumulating while being in Creative mode.
@@ -526,7 +540,10 @@ public class NetServerHandler extends NetHandler {
                 double d2 = this.player.locZ - ((double) k + 0.5D);
                 double d3 = d0 * d0 + d1 * d1 + d2 * d2;
 
-                if (d3 > 36.0D) {
+                // Forge start
+                double range = this.player.itemInWorldManager.getBlockReachDistance() + 1.0D;
+                if (d3 > range * range) {
+                	// Forge end
                     return;
                 }
 
@@ -547,6 +564,7 @@ public class NetServerHandler extends NetHandler {
                 // CraftBukkit start
                 if (i1 < this.server.getSpawnRadius() && !flag) {
                     CraftEventFactory.callPlayerInteractEvent(this.player, Action.LEFT_CLICK_BLOCK, i, j, k, l, this.player.inventory.getItemInHand());
+                    ForgeEventFactory.onPlayerInteract(this.player, PlayerInteractEvent.Action.LEFT_CLICK_BLOCK, i, j, k, 0); // Forge
                     this.player.netServerHandler.sendPacket(new Packet53BlockChange(i, j, k, worldserver));
                     // Update any tile entity data for this block
                     TileEntity tileentity = worldserver.getTileEntity(i, j, k);
@@ -633,9 +651,12 @@ public class NetServerHandler extends NetHandler {
             // CraftBukkit start
             int itemstackAmount = itemstack.count;
             org.bukkit.event.player.PlayerInteractEvent event = CraftEventFactory.callPlayerInteractEvent(this.player, Action.RIGHT_CLICK_AIR, itemstack);
-            if (event.useItemInHand() != Event.Result.DENY) {
+            // Forge start
+            PlayerInteractEvent var10 = ForgeEventFactory.onPlayerInteract(this.player, PlayerInteractEvent.Action.RIGHT_CLICK_AIR, 0, 0, 0, -1);
+            if (event.useItemInHand() != Event.Result.DENY && var10.useItem != Result.DENY) {
                 this.player.itemInWorldManager.useItem(this.player, this.player.world, itemstack);
             }
+            // Forge end
 
             // CraftBukkit - notch decrements the counter by 1 in the above method with food,
             // snowballs and so forth, but he does it in a place that doesn't cause the
@@ -778,6 +799,8 @@ public class NetServerHandler extends NetHandler {
         // CraftBukkit start
         if (this.player.dead) return;
 
+        // this.player.inventory.itemInHandIndex is the current slot id in player inventory
+        // packet16blockitemswitch.itemInHandIndex is the new slot id that the player switched to.
         if (packet16blockitemswitch.itemInHandIndex >= 0 && packet16blockitemswitch.itemInHandIndex < PlayerInventory.getHotbarSize()) {
             PlayerItemHeldEvent event = new PlayerItemHeldEvent(this.getPlayer(), this.player.inventory.itemInHandIndex, packet16blockitemswitch.itemInHandIndex);
             this.server.getPluginManager().callEvent(event);
@@ -791,6 +814,7 @@ public class NetServerHandler extends NetHandler {
     }
 
     public void a(Packet3Chat packet3chat) {
+    	packet3chat = FMLNetworkHandler.handleChatMessage(this, packet3chat); // Forge
         if (this.player.getChatFlags() == 2) {
             this.sendPacket(new Packet3Chat("Cannot send chat message."));
         } else {
@@ -1199,11 +1223,14 @@ public class NetServerHandler extends NetHandler {
     public void handleContainerClose(Packet101CloseWindow packet101closewindow) {
         if (this.player.dead) return; // CraftBukkit
 
+        // MCPC - temp fix to allow IC2 to bypass this
+        if (this.player.activeContainer.getBukkitView() != null) {
         // CraftBukkit start - INVENTORY_CLOSE hook
         InventoryCloseEvent event = new InventoryCloseEvent(this.player.activeContainer.getBukkitView());
         server.getPluginManager().callEvent(event);
         this.player.activeContainer.transferTo(this.player.defaultContainer, getPlayer());
         // CraftBukkit end
+        }
 
         this.player.k();
     }
@@ -1231,7 +1258,8 @@ public class NetServerHandler extends NetHandler {
 
             switch(event.getResult()) {
             case DEFAULT:
-                itemstack = this.player.activeContainer.clickItem(packet102windowclick.slot, packet102windowclick.button, packet102windowclick.shift, this.player);
+            	if (this.player.activeContainer != null)
+            		itemstack = this.player.activeContainer.clickItem(packet102windowclick.slot, packet102windowclick.button, packet102windowclick.shift, this.player);
                 defaultBehaviour = true;
                 break;
             case DENY: // Deny any change, including changes from the event
@@ -1241,11 +1269,11 @@ public class NetServerHandler extends NetHandler {
                 if (cursor == null) {
                     this.player.inventory.setCarried((ItemStack) null);
                 } else {
-                    this.player.inventory.setCarried(CraftItemStack.asNMSCopy(cursor));
+                    this.player.inventory.setCarried(CraftItemStack.createNMSItemStack(cursor));
                 }
                 org.bukkit.inventory.ItemStack item = event.getCurrentItem();
                 if (item != null) {
-                    itemstack = CraftItemStack.asNMSCopy(item);
+                    itemstack = CraftItemStack.createNMSItemStack(item);
                     if (packet102windowclick.slot == -999) {
                         this.player.drop(itemstack);
                     } else {
@@ -1482,6 +1510,10 @@ public class NetServerHandler extends NetHandler {
     }
 
     public void a(Packet250CustomPayload packet250custompayload) {
+        FMLNetworkHandler.handlePacket250Packet(packet250custompayload, this.networkManager, this); // Forge
+    }
+
+    public void handleVanilla250Packet(Packet250CustomPayload packet250custompayload) {
         DataInputStream datainputstream;
         ItemStack itemstack;
         ItemStack itemstack1;
@@ -1627,5 +1659,13 @@ public class NetServerHandler extends NetHandler {
                 // CraftBukkit end
             }
         }
+    }
+}
+
+    /**
+     * Contains logic for handling packets containing arbitrary unique item data. Currently this is only for maps.
+     */
+    public void a(Packet131ItemData var1) {
+        FMLNetworkHandler.handlePacket131Packet(this, var1);
     }
 }

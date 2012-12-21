@@ -225,7 +225,13 @@ public class PlayerManager {
                 // CraftBukkit start - send nearest chunks first
                 Collections.sort(chunksToLoad, new ChunkCoordComparator(entityplayer));
                 for (ChunkCoordIntPair pair : chunksToLoad) {
-                    this.a(pair.x, pair.z, true).a(entityplayer);
+                    PlayerInstance instance;
+                    if ((instance = this.a(pair.x, pair.z, false)) == null) {
+                        instance = this.a(pair.x, pair.z, true);
+                        PlayerInstance.b(instance).add(entityplayer);
+                    } else {
+                        instance.a(entityplayer);
+                    }
                 }
 
                 if (i1 > 1 || i1 < -1 || j1 > 1 || j1 < -1) {

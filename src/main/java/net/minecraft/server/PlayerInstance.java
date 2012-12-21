@@ -3,9 +3,12 @@ package net.minecraft.server;
 import java.util.ArrayList;
 import java.util.List;
 
-class PlayerInstance {
+import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.event.world.ChunkWatchEvent;
 
-    private final List b;
+public class PlayerInstance {
+
+    public final List b;
     private final ChunkCoordIntPair location;
     private short[] dirtyBlocks;
     private int dirtyCount;
@@ -55,6 +58,9 @@ class PlayerInstance {
             entityplayer.netServerHandler.sendPacket(new Packet51MapChunk(PlayerManager.a(this.playerManager).getChunkAt(this.location.x, this.location.z), true, 0));
             this.b.remove(entityplayer);
             entityplayer.chunkCoordIntPairQueue.remove(this.location);
+            // Forge start
+            MinecraftForge.EVENT_BUS.post(new ChunkWatchEvent.UnWatch(this.location, entityplayer));
+            // Forge end
             if (this.b.isEmpty()) {
                 long i = (long) this.location.x + 2147483647L | (long) this.location.z + 2147483647L << 32;
 
@@ -122,7 +128,11 @@ class PlayerInstance {
                     for (k = 0; k < 16; ++k) {
                         if ((this.f & 1 << k) != 0) {
                             l = k << 4;
-                            List list = PlayerManager.a(this.playerManager).getTileEntities(i, l, j, i + 16, l + 16, j + 16);
+                            // Forge start
+                            //BugFix: 16 makes it load an extra chunk, which isn't associated with a player, which makes it not unload unless a player walks near it.
+                            //ToDo: Find a way to efficiently clean abandoned chunks.
+                            List list = PlayerManager.a(this.playerManager).getTileEntities(i, l, j, i + 15, l + 16, j + 15);
+                            // Forge end
 
                             for (int i1 = 0; i1 < list.size(); ++i1) {
                                 this.sendTileEntity((TileEntity) list.get(i1));

@@ -1,5 +1,7 @@
 package net.minecraft.server;
 
+import cpw.mods.fml.common.network.FMLNetworkHandler;
+import java.io.IOException;
 import java.io.Serializable;
 import java.net.InetAddress;
 import java.net.Socket;
@@ -11,6 +13,8 @@ import java.util.List;
 import java.util.Random;
 import java.util.logging.Logger;
 import javax.crypto.SecretKey;
+import cpw.mods.fml.common.network.FMLNetworkHandler;
+import java.io.IOException;
 
 public class NetLoginHandler extends NetHandler {
 
@@ -21,7 +25,7 @@ public class NetLoginHandler extends NetHandler {
     public boolean c = false;
     private MinecraftServer server;
     private int g = 0;
-    private String h = null;
+    public String h = null;
     private volatile boolean i = false;
     private String loginKey = Long.toString(random.nextLong(), 16); // CraftBukkit - Security fix
     private SecretKey k = null;
@@ -42,10 +46,11 @@ public class NetLoginHandler extends NetHandler {
 
     public void c() {
         if (this.i) {
+        	// initialize playerConnection
             this.d();
         }
 
-        if (this.g++ == 600) {
+        if (this.g++ == 6000) {
             this.disconnect("Took too long to log in");
         } else {
             this.networkManager.b();
@@ -116,9 +121,16 @@ public class NetLoginHandler extends NetHandler {
         }
     }
 
-    public void a(Packet1Login packet1login) {}
+    public void a(Packet1Login packet1login) {
+        FMLNetworkHandler.handleLoginPacketOnServer(this, packet1login); // Forge
+    }
 
     public void d() {
+        FMLNetworkHandler.onConnectionReceivedFromClient(this, this.server, this.networkManager.getSocketAddress(), this.h); // Forge
+    }
+
+    public void completeConnection(String str) {
+        if (str != null) this.disconnect(str);
         // CraftBukkit start
         EntityPlayer s = this.server.getServerConfigurationManager().attemptLogin(this, this.h, this.hostname);
 
@@ -214,7 +226,19 @@ public class NetLoginHandler extends NetHandler {
         return netloginhandler.h;
     }
 
-    static boolean a(NetLoginHandler netloginhandler, boolean flag) {
+    // Forge start
+    public static boolean a(NetLoginHandler netloginhandler, boolean flag) {
         return netloginhandler.i = flag;
     }
+    
+    public void a(Packet250CustomPayload var1) {
+        FMLNetworkHandler.handlePacket250Packet(var1, this.networkManager, this);
+    }
+
+    public void handleVanilla250Packet(Packet250CustomPayload var1) {}
+
+    public EntityHuman getPlayerH() {
+        return null;
+    }
+    // Forge end
 }

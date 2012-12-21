@@ -1,5 +1,10 @@
 package net.minecraft.server;
 
+import java.util.List;
+import net.minecraftforge.common.ForgeHooks;
+import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.event.Event.Result;
+import net.minecraftforge.event.entity.player.BonemealEvent;
 // CraftBukkit start
 import org.bukkit.entity.Player;
 import org.bukkit.event.entity.SheepDyeWoolEvent;
@@ -33,6 +38,14 @@ public class ItemDye extends Item {
 
             if (itemstack.getData() == 15) {
                 i1 = world.getTypeId(i, j, k);
+                // Forge start
+                BonemealEvent event = new BonemealEvent(entityhuman, world, i1, i, j, k);
+                if (MinecraftForge.EVENT_BUS.post(event)) return false;
+                if (var13.getResult() == Result.ALLOW) {
+                    if (!world.isStatic) --itemstack.count;
+                    return true;
+                }
+                // Forge end
                 if (i1 == Block.SAPLING.id) {
                     if (!world.isStatic) {
                         // CraftBukkit start
@@ -116,12 +129,8 @@ public class ItemDye extends Item {
                                     if (Block.LONG_GRASS.d(world, k1, l1, i2)) {
                                         world.setTypeIdAndData(k1, l1, i2, Block.LONG_GRASS.id, 1);
                                     }
-                                } else if (d.nextInt(3) != 0) {
-                                    if (Block.YELLOW_FLOWER.d(world, k1, l1, i2)) {
-                                        world.setTypeId(k1, l1, i2, Block.YELLOW_FLOWER.id);
-                                    }
-                                } else if (Block.RED_ROSE.d(world, k1, l1, i2)) {
-                                    world.setTypeId(k1, l1, i2, Block.RED_ROSE.id);
+                                } else {
+                                   ForgeHooks.plantGrass(world, k1, l1, i2); // Forge
                                 }
                             }
                         }

@@ -109,7 +109,7 @@ public class BlockDoor extends Block {
 
     public boolean interact(World world, int i, int j, int k, EntityHuman entityhuman, int l, float f, float f1, float f2) {
         if (this.material == Material.ORE) {
-            return true;
+        	return false; // Forge - Allow items to interact with the door
         } else {
             int i1 = this.b_(world, i, j, k);
             int j1 = i1 & 7;
@@ -235,7 +235,7 @@ public class BlockDoor extends Block {
 
         return i1 & 7 | (flag ? 8 : 0) | (flag1 ? 16 : 0);
     }
-
+    
     public void a(World world, int i, int j, int k, int l, EntityHuman entityhuman) {
         if (entityhuman.abilities.canInstantlyBuild && (l & 8) != 0 && world.getTypeId(i, j - 1, k) == this.id) {
             world.setTypeId(i, j - 1, k, 0);

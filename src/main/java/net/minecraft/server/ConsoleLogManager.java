@@ -1,11 +1,17 @@
 package net.minecraft.server;
 
+import java.text.MessageFormat;
 import java.util.logging.ConsoleHandler;
 import java.util.logging.FileHandler;
+import java.util.logging.Formatter;
 import java.util.logging.Level;
+import java.util.logging.LogRecord;
 import java.util.logging.Logger;
 
 import java.io.File; // CraftBukkit
+
+import cpw.mods.fml.common.FMLLog;
+import cpw.mods.fml.relauncher.FMLRelaunchLog;
 
 public class ConsoleLogManager {
 
@@ -15,8 +21,9 @@ public class ConsoleLogManager {
     // CraftBukkit - change of method signature!
     public static void init(MinecraftServer server) {
         ConsoleLogFormatter consolelogformatter = new ConsoleLogFormatter(server.options.has("log-strip-color")); // CraftBukkit - pass strip color option
-
+        
         a.setUseParentHandlers(false);
+        
         // CraftBukkit start
         ConsoleHandler consolehandler = new org.bukkit.craftbukkit.util.TerminalConsoleHandler(server.reader);
 
@@ -24,7 +31,17 @@ public class ConsoleLogManager {
             global.removeHandler(handler);
         }
 
-        consolehandler.setFormatter(new org.bukkit.craftbukkit.util.ShortConsoleLogFormatter(server));
+        if (!FMLRelaunchLog.useOnlyThisLogger) {
+        	consolehandler.setFormatter(new org.bukkit.craftbukkit.util.ShortConsoleLogFormatter(server));
+        } else {
+        	consolehandler.setFormatter(new Formatter() {
+        		@Override
+        	  public String format(final LogRecord record) {
+        			return MessageFormat.format(record.getMessage(), record.getParameters()).concat("\n");
+        		}
+        	});
+        }
+        
         global.addHandler(consolehandler);
         // CraftBukkit end
 

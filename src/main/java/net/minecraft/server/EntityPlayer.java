@@ -7,6 +7,12 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+// Forge start
+import net.minecraftforge.common.ForgeHooks;
+import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.event.entity.player.PlayerDropsEvent;
+import net.minecraftforge.event.world.ChunkWatchEvent;
+// Forge end
 
 // CraftBukkit start
 import org.bukkit.Bukkit;
@@ -35,7 +41,7 @@ public class EntityPlayer extends EntityHuman implements ICrafting {
     private int cp = 0;
     private int cq = 0;
     private boolean cr = true;
-    private int containerCounter = 0;
+    public int containerCounter = 0;
     public boolean h;
     public int ping;
     public boolean viewingCredits = false;
@@ -55,7 +61,7 @@ public class EntityPlayer extends EntityHuman implements ICrafting {
         iteminworldmanager.player = this;
         this.itemInWorldManager = iteminworldmanager;
         this.cp = minecraftserver.getServerConfigurationManager().o();
-        ChunkCoordinates chunkcoordinates = world.getSpawn();
+        ChunkCoordinates chunkcoordinates = world.worldProvider.getRandomizedSpawnPoint();
         int i = chunkcoordinates.x;
         int j = chunkcoordinates.z;
         int k = chunkcoordinates.y;
@@ -185,6 +191,7 @@ public class EntityPlayer extends EntityHuman implements ICrafting {
                     Chunk chunk = (Chunk) iterator2.next();
 
                     this.p().getTracker().a(this, chunk);
+                    MinecraftForge.EVENT_BUS.post(new ChunkWatchEvent.Watch(chunk.l(), this));
                 }
             }
         }
@@ -234,6 +241,7 @@ public class EntityPlayer extends EntityHuman implements ICrafting {
         if (this.dead) {
             return;
         }
+        if (ForgeHooks.onLivingDeath(this, damagesource)) return;
 
         java.util.List<org.bukkit.inventory.ItemStack> loot = new java.util.ArrayList<org.bukkit.inventory.ItemStack>();
         boolean keepInventory = this.world.getGameRules().getBoolean("keepInventory");
@@ -272,6 +280,19 @@ public class EntityPlayer extends EntityHuman implements ICrafting {
         }
 
         this.closeInventory();
+        if (!keepInventory) {
+        	this.captureDrops = false;
+            PlayerDropsEvent var2 = new PlayerDropsEvent(this, damagesource, this.capturedDrops, this.lastDamageByPlayerTime > 0);
+
+            if (!MinecraftForge.EVENT_BUS.post(var2)) {
+                Iterator var3 = this.capturedDrops.iterator();
+
+                while (var3.hasNext()) {
+                    EntityItem var4 = (EntityItem)var3.next();
+                    this.a(var4);
+                }
+            }
+        }
 
         // Update effects on player death
         this.updateEffects = true;
@@ -406,10 +427,17 @@ public class EntityPlayer extends EntityHuman implements ICrafting {
         super.a(d0, flag);
     }
 
-    public int nextContainerCounter() { // CraftBukkit - private void -> public int
+    public int nextContainerCounterGetInteger_CB() { // CraftBukkit - private void -> public int // CPCM - rename to ..GetInteger_CB
+        nextContainerCounter(); // CPCM - refactor
+        return this.containerCounter; // CraftBukkit
+    }
+
+    // CPCM start - vanilla-compatible (same signature) method
+    public void nextContainerCounter() { // CPCM - private void -> public int
         this.containerCounter = this.containerCounter % 100 + 1;
         return this.containerCounter; // CraftBukkit
     }
+    // CPCM end
 
     public void startCrafting(int i, int j, int k) {
         // CraftBukkit start - inventory open hook
@@ -564,6 +592,7 @@ public class EntityPlayer extends EntityHuman implements ICrafting {
         this.netServerHandler.sendPacket(new Packet104WindowItems(container.windowId, list));
         this.netServerHandler.sendPacket(new Packet103SetSlot(-1, -1, this.inventory.getCarried()));
         // CraftBukkit start - send a Set Slot to update the crafting result slot
+        if (container.getBukkitView() == null) return;
         if (java.util.EnumSet.of(InventoryType.CRAFTING,InventoryType.WORKBENCH).contains(container.getBukkitView().getType())) {
             this.netServerHandler.sendPacket(new Packet103SetSlot(container.windowId, 0, container.getSlot(0).getItem()));
         }

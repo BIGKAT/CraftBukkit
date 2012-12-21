@@ -1,5 +1,7 @@
 package net.minecraft.server;
 
+import cpw.mods.fml.common.Side;
+import cpw.mods.fml.common.asm.SideOnly;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -7,6 +9,10 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.event.entity.EntityEvent.EnteringChunk;
+import net.minecraftforge.event.world.ChunkEvent.Load;
+import net.minecraftforge.event.world.ChunkEvent.Unload;
 
 // CraftBukkit start
 import org.bukkit.Bukkit;
@@ -82,7 +88,7 @@ public class Chunk {
         for (int l = 0; l < 16; ++l) {
             for (int i1 = 0; i1 < 16; ++i1) {
                 for (int j1 = 0; j1 < k; ++j1) {
-                    byte b0 = abyte[l << 11 | i1 << 7 | j1];
+                    int b0 = abyte[l << 11 | i1 << 7 | j1] & 0xff;
 
                     if (b0 != 0) {
                         int k1 = j1 >> 4;
@@ -92,6 +98,51 @@ public class Chunk {
                         }
 
                         this.sections[k1].a(l, j1 & 15, i1, b0);
+                    }
+                }
+            }
+        }
+    }
+    
+// Forge start
+    /**
+     * A Chunk Constructor which handles shorts to allow block ids > 256 (full 4096 range)
+     * Meta data sensitive
+     * NOTE: The x,y,z order of the array is different from the native Chunk constructor to allow for generation > y127
+     * NOTE: This is possibly more efficient than the standard constructor due to less memory skipping
+     *
+     * @param world The world this chunk belongs to
+     * @param ids A ShortArray containing all the BlockID's to set this chunk to (x is low order, z is mid, y is high)
+     * @param metadata A ByteArray containing all the metadata to set this chunk to
+     * @param chunkX The chunk's X position
+     * @param chunkZ The Chunk's Z position
+     */
+    public Chunk(World world, byte[] ids, byte[] metadata, int chunkX, int chunkZ)
+    {
+        this(world, chunkX, chunkZ);
+        int var6 = ids.length / 256;
+
+        for (int var7 = 0; var7 < 16; ++var7)
+        {
+            for (int var8 = 0; var8 < 16; ++var8)
+            {
+                for (int var9 = 0; var9 < var6; ++var9)
+                {
+                    int var10 = var7 << 11 | var8 << 7 | var9;
+                    int var11 = ids[var10] & 255;
+                    byte var12 = metadata[var10];
+
+                    if (var11 != 0)
+                    {
+                        int var13 = var9 >> 4;
+
+                        if (this.sections[var13] == null)
+                        {
+                            this.sections[var13] = new ChunkSection(var13 << 4);
+                        }
+
+                        this.sections[var13].a(var7, var9 & 15, var8, var11);
+                        this.sections[var13].b(var7, var9 & 15, var8, var12);
                     }
                 }
             }
@@ -337,27 +388,43 @@ public class Chunk {
         }
     }
 
-    public int b(int i, int j, int k) {
-        return Block.lightBlock[this.getTypeId(i, j, k)];
+    public int b(int var1, int var2, int var3)
+    {
+        int var4 = (this.x << 4) + var1;
+        int var5 = (this.z << 4) + var3;
+        Block var6 = Block.byId[this.getTypeId(var1, var2, var3)];
+        return var6 == null ? 0 : var6.getLightOpacity(this.world, var4, var2, var5);
     }
 
-    public int getTypeId(int i, int j, int k) {
-        if (j >> 4 >= this.sections.length) {
+    /**
+     * Return the ID of a block in the chunk.
+     */
+    public int getTypeId(int var1, int var2, int var3)
+    {
+        if (var2 >> 4 < this.sections.length && var2 >> 4 >= 0)
+        {
+            ChunkSection var4 = this.sections[var2 >> 4];
+            return var4 != null ? var4.a(var1, var2 & 15, var3) : 0;
+        }
+        else
+        {
             return 0;
-        } else {
-            ChunkSection chunksection = this.sections[j >> 4];
-
-            return chunksection != null ? chunksection.a(i, j & 15, k) : 0;
         }
     }
 
-    public int getData(int i, int j, int k) {
-        if (j >> 4 >= this.sections.length) {
+    /**
+     * Return the metadata corresponding to the given coordinates inside a chunk.
+     */
+    public int getData(int var1, int var2, int var3)
+    {
+        if (var2 >> 4 < this.sections.length && var2 >> 4 >= 0)
+        {
+            ChunkSection var4 = this.sections[var2 >> 4];
+            return var4 != null ? var4.b(var1, var2 & 15, var3) : 0;
+        }
+        else
+        {
             return 0;
-        } else {
-            ChunkSection chunksection = this.sections[j >> 4];
-
-            return chunksection != null ? chunksection.b(i, j & 15, k) : 0;
         }
     }
 
@@ -378,7 +445,8 @@ public class Chunk {
 
         if (l1 == l && i2 == i1) {
             return false;
-        } else {
+        } else if (j >> 4 < this.sections.length && j >> 4 >= 0)
+            {
             ChunkSection chunksection = this.sections[j >> 4];
             boolean flag = false;
 
@@ -414,7 +482,7 @@ public class Chunk {
                 if (flag) {
                     this.initLighting();
                 } else {
-                    if (Block.lightBlock[l & 4095] > 0) {
+                    if (this.b(i, j, k) > 0) {
                         if (j >= k1) {
                             this.h(i, j + 1, k);
                         }
@@ -425,8 +493,6 @@ public class Chunk {
                     this.e(i, k);
                 }
 
-                TileEntity tileentity;
-
                 if (l != 0) {
                     if (!this.world.isStatic) {
                         // CraftBukkit start - Don't extend piston until data is set
@@ -436,16 +502,17 @@ public class Chunk {
                         // CraftBukkit end
                     }
 
-                    if (Block.byId[l] instanceof BlockContainer) {
+                    if (Block.byId[l] != null && Block.byId[l].hasTileEntity(i1))
+                    {
                         // CraftBukkit start - don't create tile entity if placement failed
                         if (this.getTypeId(i, j, k) != l) {
                             return false;
                         }
                         // CraftBukkit end
 
-                        tileentity = this.e(i, j, k);
+                    	TileEntity tileentity = this.e(i, j, k);
                         if (tileentity == null) {
-                            tileentity = ((BlockContainer) Block.byId[l]).a(this.world);
+                            tileentity = Block.byId[l].createTileEntity(this.world, i1);
                             this.world.setTileEntity(j2, j, k2, tileentity);
                         }
 
@@ -453,40 +520,54 @@ public class Chunk {
                             tileentity.h();
                         }
                     }
-                } else if (l1 > 0 && Block.byId[l1] instanceof BlockContainer) {
-                    tileentity = this.e(i, j, k);
-                    if (tileentity != null) {
-                        tileentity.h();
-                    }
                 }
-
+                    else if (l1 > 0 && Block.byId[l1] instanceof BlockContainer) {
+                    	TileEntity tileentity = this.e(i, j, k);
+                    	if (tileentity != null) {
+                    		tileentity.h();
+                    	}
+                }
                 this.l = true;
                 return true;
             }
         }
+        else
+        	return false;
     }
 
-    public boolean b(int i, int j, int k, int l) {
-        ChunkSection chunksection = this.sections[j >> 4];
+    /**
+     * Set the metadata of a block in the chunk
+     */
+    public boolean b(int var1, int var2, int var3, int var4)
+    {
+        ChunkSection var5 = var2 >> 4 < this.sections.length && var2 >> 4 >= 0 ? this.sections[var2 >> 4] : null;
 
-        if (chunksection == null) {
+        if (var5 == null)
+        {
             return false;
-        } else {
-            int i1 = chunksection.b(i, j & 15, k);
+        }
+        else
+        {
+            int var6 = var5.b(var1, var2 & 15, var3);
 
-            if (i1 == l) {
+            if (var6 == var4)
+            {
                 return false;
-            } else {
+            }
+            else
+            {
                 this.l = true;
-                chunksection.b(i, j & 15, k, l);
-                int j1 = chunksection.a(i, j & 15, k);
+                var5.b(var1, var2 & 15, var3, var4);
+                int var7 = var5.a(var1, var2 & 15, var3);
 
-                if (j1 > 0 && Block.byId[j1] instanceof BlockContainer) {
-                    TileEntity tileentity = this.e(i, j, k);
+                if (var7 > 0 && Block.byId[var7] != null && Block.byId[var7].hasTileEntity(var4))
+                {
+                    TileEntity var8 = this.e(var1, var2, var3);
 
-                    if (tileentity != null) {
-                        tileentity.h();
-                        tileentity.p = l;
+                    if (var8 != null)
+                    {
+                        var8.h();
+                        var8.p = var4;
                     }
                 }
 
@@ -495,53 +576,85 @@ public class Chunk {
         }
     }
 
-    public int getBrightness(EnumSkyBlock enumskyblock, int i, int j, int k) {
-        ChunkSection chunksection = this.sections[j >> 4];
 
-        return chunksection == null ? (this.d(i, j, k) ? enumskyblock.c : 0) : (enumskyblock == EnumSkyBlock.SKY ? chunksection.c(i, j & 15, k) : (enumskyblock == EnumSkyBlock.BLOCK ? chunksection.d(i, j & 15, k) : enumskyblock.c));
+    /**
+     * Gets the amount of light saved in this block (doesn't adjust for daylight)
+     */
+    public int getBrightness(EnumSkyBlock var1, int var2, int var3, int var4)
+    {
+        ChunkSection var5 = var3 >> 4 < this.sections.length && var3 >> 4 >= 0 ? this.sections[var3 >> 4] : null;
+        return var5 == null ? (this.d(var2, var3, var4) ? var1.c : 0) : (var1 == EnumSkyBlock.SKY ? var5.c(var2, var3 & 15, var4) : (var1 == EnumSkyBlock.BLOCK ? var5.d(var2, var3 & 15, var4) : var1.c));
     }
 
-    public void a(EnumSkyBlock enumskyblock, int i, int j, int k, int l) {
-        ChunkSection chunksection = this.sections[j >> 4];
+    /**
+     * Sets the light value at the coordinate. If enumskyblock is set to sky it sets it in the skylightmap and if its a
+     * block then into the blocklightmap. Args enumSkyBlock, x, y, z, lightValue
+     */
+    public void a(EnumSkyBlock var1, int var2, int var3, int var4, int var5)
+    {
+        if (var3 >> 4 < this.sections.length && var3 >> 4 >= 0)
+        {
+            ChunkSection var6 = this.sections[var3 >> 4];
 
-        if (chunksection == null) {
-            chunksection = this.sections[j >> 4] = new ChunkSection(j >> 4 << 4);
-            this.initLighting();
-        }
-
-        this.l = true;
-        if (enumskyblock == EnumSkyBlock.SKY) {
-            if (!this.world.worldProvider.f) {
-                chunksection.c(i, j & 15, k, l);
+            if (var6 == null)
+            {
+                var6 = this.sections[var3 >> 4] = new ChunkSection(var3 >> 4 << 4);
+                this.initLighting();
             }
-        } else if (enumskyblock == EnumSkyBlock.BLOCK) {
-            chunksection.d(i, j & 15, k, l);
+
+            this.l = true;
+
+            if (var1 == EnumSkyBlock.SKY)
+            {
+                if (!this.world.worldProvider.f)
+                {
+                    var6.c(var2, var3 & 15, var4, var5);
+                }
+            }
+            else if (var1 == EnumSkyBlock.BLOCK)
+            {
+                var6.d(var2, var3 & 15, var4, var5);
+            }
         }
     }
 
-    public int c(int i, int j, int k, int l) {
-        ChunkSection chunksection = this.sections[j >> 4];
 
-        if (chunksection == null) {
-            return !this.world.worldProvider.f && l < EnumSkyBlock.SKY.c ? EnumSkyBlock.SKY.c - l : 0;
-        } else {
-            int i1 = this.world.worldProvider.f ? 0 : chunksection.c(i, j & 15, k);
 
-            if (i1 > 0) {
+    /**
+     * Gets the amount of light on a block taking into account sunlight
+     */
+    public int c(int var1, int var2, int var3, int var4)
+    {
+        ChunkSection var5 = var2 >> 4 < this.sections.length && var2 >> 4 >= 0 ? this.sections[var2 >> 4] : null;
+
+        if (var5 != null)
+        {
+            int var6 = this.world.worldProvider.f ? 0 : var5.c(var1, var2 & 15, var3);
+
+            if (var6 > 0)
+            {
                 a = true;
             }
 
-            i1 -= l;
-            int j1 = chunksection.d(i, j & 15, k);
+            var6 -= var4;
+            int var7 = var5.d(var1, var2 & 15, var3);
 
-            if (j1 > i1) {
-                i1 = j1;
+            if (var7 > var6)
+            {
+                var6 = var7;
             }
 
-            return i1;
+            return var6;
+        }
+        else
+        {
+            return !this.world.worldProvider.f && var4 < EnumSkyBlock.SKY.c ? EnumSkyBlock.SKY.c - var4 : 0;
         }
     }
 
+    /**
+     * Adds an entity to the chunk. Args: entity
+     */
     public void a(Entity entity) {
         this.m = true;
         int i = MathHelper.floor(entity.locX / 16.0D);
@@ -565,6 +678,7 @@ public class Chunk {
             k = this.entitySlices.length - 1;
         }
 
+        MinecraftForge.EVENT_BUS.post(new EnteringChunk(entity, this.x, this.z, entity.ai, entity.ak));
         entity.ah = true;
         entity.ai = this.x;
         entity.aj = k;
@@ -592,31 +706,47 @@ public class Chunk {
         return j >= this.heightMap[k << 4 | i];
     }
 
-    public TileEntity e(int i, int j, int k) {
-        ChunkPosition chunkposition = new ChunkPosition(i, j, k);
-        TileEntity tileentity = (TileEntity) this.tileEntities.get(chunkposition);
 
-        if (tileentity == null) {
-            int l = this.getTypeId(i, j, k);
+    /**
+     * Gets the TileEntity for a given block in this chunk
+     */
+    public TileEntity e(int var1, int var2, int var3)
+    {
+        ChunkPosition var4 = new ChunkPosition(var1, var2, var3);
+        TileEntity var5 = (TileEntity)this.tileEntities.get(var4);
 
-            if (l <= 0 || !Block.byId[l].u()) {
+        if (var5 != null && var5.r())
+        {
+            this.tileEntities.remove(var4);
+            var5 = null;
+        }
+
+        if (var5 == null)
+        {
+            int var6 = this.getTypeId(var1, var2, var3);
+            int var7 = this.getData(var1, var2, var3);
+
+            if (var6 <= 0 || !Block.byId[var6].hasTileEntity(var7))
+            {
                 return null;
             }
 
-            if (tileentity == null) {
-                tileentity = ((BlockContainer) Block.byId[l]).a(this.world);
-                this.world.setTileEntity(this.x * 16 + i, j, this.z * 16 + k, tileentity);
+            if (var5 == null)
+            {
+                var5 = Block.byId[var6].createTileEntity(this.world, var7);
+                this.world.setTileEntity(this.x * 16 + var1, var2, this.z * 16 + var3, var5);
             }
 
-            tileentity = (TileEntity) this.tileEntities.get(chunkposition);
+            var5 = (TileEntity)this.tileEntities.get(var4);
         }
 
-        if (tileentity != null && tileentity.r()) {
-            this.tileEntities.remove(chunkposition);
-            return null;
-        } else {
-            return tileentity;
-        }
+        //return var5;
+      if(var5 != null && var5.r()) {
+         this.tileEntities.remove(var4);
+         return null;
+      } else {
+         return var5;
+      }
     }
 
     public void a(TileEntity tileentity) {
@@ -626,29 +756,29 @@ public class Chunk {
 
         this.a(i, j, k, tileentity);
         if (this.d) {
-            this.world.tileEntityList.add(tileentity);
+            this.world.addTileEntity(tileentity);
         }
     }
 
-    public void a(int i, int j, int k, TileEntity tileentity) {
-        ChunkPosition chunkposition = new ChunkPosition(i, j, k);
+    /**
+     * Sets the TileEntity for a given block in this chunk
+     */
+   public void a(int i, int j, int k, TileEntity tileentity) {
+      ChunkPosition chunkposition = new ChunkPosition(i, j, k);
+      tileentity.b(this.world);
+      tileentity.x = this.x * 16 + i;
+      tileentity.y = j;
+      tileentity.z = this.z * 16 + k;
+      if(this.getTypeId(i, j, k) != 0 && Block.byId[this.getTypeId(i, j, k)] instanceof BlockContainer) {
+         tileentity.s();
+         this.tileEntities.put(chunkposition, tileentity);
+      } else {
+         System.out.println("Attempted to place a tile entity (" + tileentity + ") at " + tileentity.x + "," + tileentity.y + "," + tileentity.z + " (" + org.bukkit.Material.getMaterial(this.getTypeId(i, j, k)) + ") where there was no entity tile!");
+         System.out.println("Chunk coordinates: " + this.x * 16 + "," + this.z * 16);
+         (new Exception()).printStackTrace();
+      }
 
-        tileentity.b(this.world);
-        tileentity.x = this.x * 16 + i;
-        tileentity.y = j;
-        tileentity.z = this.z * 16 + k;
-        if (this.getTypeId(i, j, k) != 0 && Block.byId[this.getTypeId(i, j, k)] instanceof BlockContainer) {
-            tileentity.s();
-            this.tileEntities.put(chunkposition, tileentity);
-            // CraftBukkit start
-        } else {
-            System.out.println("Attempted to place a tile entity (" + tileentity + ") at " + tileentity.x + "," + tileentity.y + "," + tileentity.z
-                    + " (" + org.bukkit.Material.getMaterial(getTypeId(i, j, k)) + ") where there was no entity tile!");
-            System.out.println("Chunk coordinates: " + (this.x * 16) + "," + (this.z * 16));
-            new Exception().printStackTrace();
-            // CraftBukkit end
-        }
-    }
+   }
 
     public void f(int i, int j, int k) {
         ChunkPosition chunkposition = new ChunkPosition(i, j, k);
@@ -662,13 +792,19 @@ public class Chunk {
         }
     }
 
-    public void addEntities() {
-        this.d = true;
-        this.world.a(this.tileEntities.values());
+    /**
+     * Called when this Chunk is loaded by the ChunkProvider
+     */
+    public void addEntities()
+    {
+      this.d = true;
+      this.world.a(this.tileEntities.values());
 
-        for (int i = 0; i < this.entitySlices.length; ++i) {
-            this.world.a(this.entitySlices[i]);
-        }
+      for(int i = 0; i < this.entitySlices.length; ++i) {
+         this.world.a(this.entitySlices[i]);
+      }
+
+        MinecraftForge.EVENT_BUS.post(new Load(this));
     }
 
     public void removeEntities() {
@@ -699,6 +835,8 @@ public class Chunk {
 
             this.world.b(this.entitySlices[i]);
         }
+        
+        MinecraftForge.EVENT_BUS.post(new Unload(this));
     }
 
     public void e() {
@@ -706,8 +844,8 @@ public class Chunk {
     }
 
     public void a(Entity entity, AxisAlignedBB axisalignedbb, List list) {
-        int i = MathHelper.floor((axisalignedbb.b - 2.0D) / 16.0D);
-        int j = MathHelper.floor((axisalignedbb.e + 2.0D) / 16.0D);
+        int i = MathHelper.floor((axisalignedbb.b - World.MAX_ENTITY_RADIUS) / 16.0D);
+        int j = MathHelper.floor((axisalignedbb.e + World.MAX_ENTITY_RADIUS) / 16.0D);
 
         if (i < 0) {
             i = 0;
@@ -741,8 +879,8 @@ public class Chunk {
     }
 
     public void a(Class oclass, AxisAlignedBB axisalignedbb, List list, IEntitySelector ientityselector) {
-        int i = MathHelper.floor((axisalignedbb.b - 2.0D) / 16.0D);
-        int j = MathHelper.floor((axisalignedbb.e + 2.0D) / 16.0D);
+        int i = MathHelper.floor((axisalignedbb.b - World.MAX_ENTITY_RADIUS) / 16.0D);
+        int j = MathHelper.floor((axisalignedbb.e + World.MAX_ENTITY_RADIUS) / 16.0D);
 
         if (i < 0) {
             i = 0;
@@ -936,6 +1074,22 @@ public class Chunk {
 
                     this.world.z(i1, l1, j1);
                 }
+            }
+        }
+    }
+    
+
+    public void cleanChunkBlockTileEntity(int var1, int var2, int var3)
+    {
+        ChunkPosition var4 = new ChunkPosition(var1, var2, var3);
+
+        if (this.d)
+        {
+            TileEntity var5 = (TileEntity)this.tileEntities.get(var4);
+
+            if (var5 != null && var5.r())
+            {
+                this.tileEntities.remove(var4);
             }
         }
     }

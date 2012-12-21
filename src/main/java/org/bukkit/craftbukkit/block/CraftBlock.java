@@ -436,6 +436,13 @@ public class CraftBlock implements Block {
             if ((BiomeBase.biomes[i] != null) && (BIOME_MAPPING[i] == null)) {
                 throw new IllegalArgumentException("Missing Biome mapping for BiomeBase[" + i + "]");
             }
+            // MCPC start
+            String name = BiomeBase.biomes[i].y;
+            int id = BiomeBase.biomes[i].id;
+            System.out.println("Adding biome mapping " + BiomeBase.biomes[i].id + " " + name + " at BiomeBase[" + i + "]");
+            net.minecraftforge.common.EnumHelper.addBukkitBiome(name);
+            BIOME_MAPPING[BiomeBase.biomes[i].id] = ((Biome)Enum.valueOf(Biome.class, name));
+            // MCPC end
             if (BIOME_MAPPING[i] != null) {  /* Build reverse mapping for setBiome */
                 BIOMEBASE_MAPPING[BIOME_MAPPING[i].ordinal()] = BiomeBase.biomes[i];
             }
