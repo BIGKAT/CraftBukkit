@@ -146,7 +146,7 @@ public final class CraftServer implements Server {
     protected final MinecraftServer console;
     protected final ServerConfigurationManager server;
     private final Map<String, World> worlds = new LinkedHashMap<String, World>();
-    private YamlConfiguration configuration;
+    protected YamlConfiguration configuration; // Spigot private -> protected
     private final Yaml yaml = new Yaml(new SafeConstructor());
     private final Map<String, OfflinePlayer> offlinePlayers = new MapMaker().softValues().makeMap();
     private final AutoUpdater updater;
@@ -159,6 +159,14 @@ public final class CraftServer implements Server {
     private int ambientSpawn = -1;
     private File container;
     private WarningState warningState = WarningState.DEFAULT;
+    public String whitelistMessage = "You are not white-listed on this server!"; // Spigot
+    public String stopMessage = "Server restarting. Brb"; // Spigot
+    public boolean logCommands = true; // Spigot
+    public boolean ipFilter = false; // Spigot
+    public boolean commandComplete = true; // Spigot
+    public List<String> spamGuardExclusions; // Spigot
+    public int chunkGCPeriod = -1; // Spigot
+    public int chunkGCLoadThresh = 0; // Spigot
 
     static {
         ConfigurationSerialization.registerClass(CraftOfflinePlayer.class);
@@ -196,14 +204,41 @@ public final class CraftServer implements Server {
         ambientSpawn = configuration.getInt("spawn-limits.ambient");
         console.autosavePeriod = configuration.getInt("ticks-per.autosave");
         warningState = WarningState.value(configuration.getString("settings.deprecated-verbose"));
+        chunkGCPeriod = configuration.getInt("chunk-gc.period-in-ticks"); // Spigot
+        chunkGCLoadThresh = configuration.getInt("chunk-gc.load-threshold"); // Spigot
 
         updater = new AutoUpdater(new BukkitDLUpdaterService(configuration.getString("auto-updater.host")), getLogger(), configuration.getString("auto-updater.preferred-channel"));
-        updater.setEnabled(configuration.getBoolean("auto-updater.enabled"));
+        updater.setEnabled(false);
         updater.setSuggestChannels(configuration.getBoolean("auto-updater.suggest-channels"));
         updater.getOnBroken().addAll(configuration.getStringList("auto-updater.on-broken"));
         updater.getOnUpdate().addAll(configuration.getStringList("auto-updater.on-update"));
         updater.check(serverVersion);
 
+        // Spigot start
+        commandMap.register("bukkit", new org.bukkit.craftbukkit.command.RestartCommand("restart"));
+        commandMap.register("bukkit", new org.bukkit.craftbukkit.command.TicksPerSecondCommand("tps"));
+
+        org.bukkit.craftbukkit.util.WatchdogThread.startThread(configuration.getInt("settings.timeout-time", 180), configuration.getBoolean("settings.restart-on-crash", false));
+
+        whitelistMessage = configuration.getString("settings.whitelist-message", whitelistMessage);
+        stopMessage = configuration.getString("settings.stop-message", stopMessage);
+        logCommands = configuration.getBoolean("settings.log-commands", true);
+        ipFilter = configuration.getBoolean("settings.filter-unsafe-ips", false);
+        commandComplete = configuration.getBoolean("settings.command-complete", true);
+        spamGuardExclusions = configuration.getStringList("settings.spam-exclusions");
+
+        org.bukkit.craftbukkit.util.LightningSimulator.configure(configuration);
+
+        try {
+            configuration.save(getConfigFile());
+        } catch (IOException e) {
+        }
+        try {
+            new org.bukkit.craftbukkit.util.Metrics().start();
+        } catch (IOException e) {
+            getLogger().log(Level.SEVERE, "Could not start metrics", e);
+        }
+        // Spigot end
         loadPlugins();
         enablePlugins(PluginLoadOrder.STARTUP);
     }
@@ -212,7 +247,7 @@ public final class CraftServer implements Server {
         return (File) console.options.valueOf("bukkit-settings");
     }
 
-    private void saveConfig() {
+    public void saveConfig() { // Spigot private -> public
         try {
             configuration.save(getConfigFile());
         } catch (IOException ex) {
@@ -1024,11 +1059,8 @@ public final class CraftServer implements Server {
         return count;
     }
 
+    // Spigot start
     public OfflinePlayer getOfflinePlayer(String name) {
-        return getOfflinePlayer(name, true);
-    }
-
-    public OfflinePlayer getOfflinePlayer(String name, boolean search) {
         OfflinePlayer result = getPlayerExact(name);
         String lname = name.toLowerCase();
 
@@ -1036,17 +1068,7 @@ public final class CraftServer implements Server {
             result = offlinePlayers.get(lname);
 
             if (result == null) {
-                if (search) {
-                    WorldNBTStorage storage = (WorldNBTStorage) console.worlds.get(0).getDataManager();
-                    for (String dat : storage.getPlayerDir().list(new DatFileFilter())) {
-                        String datName = dat.substring(0, dat.length() - 4);
-                        if (datName.equalsIgnoreCase(name)) {
-                            name = datName;
-                            break;
-                        }
-                    }
-                }
-
+                // Spigot end
                 result = new CraftOfflinePlayer(this, name);
                 offlinePlayers.put(lname, result);
             }
@@ -1184,7 +1206,7 @@ public final class CraftServer implements Server {
         Set<OfflinePlayer> players = new HashSet<OfflinePlayer>();
 
         for (String file : files) {
-            players.add(getOfflinePlayer(file.substring(0, file.length() - 4), false));
+            players.add(getOfflinePlayer(file.substring(0, file.length() - 4))); // Spigot
         }
         players.addAll(Arrays.asList(getOnlinePlayers()));
 
@@ -1290,7 +1312,7 @@ public final class CraftServer implements Server {
     public List<String> tabCompleteCommand(Player player, String message) {
         List<String> completions = null;
         try {
-            completions = getCommandMap().tabComplete(player, message.substring(1));
+            completions = (commandComplete) ? getCommandMap().tabComplete(player, message.substring(1)) : null; // Spigot
         } catch (CommandException ex) {
             player.sendMessage(ChatColor.RED + "An internal error occurred while attempting to tab-complete this command");
             getLogger().log(Level.SEVERE, "Exception when " + player.getName() + " attempted to tab complete " + message, ex);
@@ -1326,4 +1348,52 @@ public final class CraftServer implements Server {
     public CraftItemFactory getItemFactory() {
         return CraftItemFactory.instance();
     }
+
+    // Spigot start
+    public void restart() {
+        try {
+            String startupScript = configuration.getString("settings.restart-script-location", "");
+            File file = new File(startupScript);
+            if (file.isFile()) {
+                System.out.println("Attempting to restart with " + startupScript);
+
+                // Kick all players
+                for (Player p : this.getOnlinePlayers()) {
+                    p.kickPlayer("Server is restarting");
+                }
+                // Give the socket a chance to send the packets
+                try {
+                    Thread.sleep(100);
+                } catch (InterruptedException ex) {
+                }
+                // Close the socket so we can rebind with the new process
+                this.server.getServer().ae().a();
+
+                // Give time for it to kick in
+                try {
+                    Thread.sleep(100);
+                } catch (InterruptedException ex) {
+                }
+
+                // Actually shutdown
+                try {
+                    this.server.getServer().stop();
+                } catch (Throwable t) {
+                }
+
+                String os = System.getProperty("os.name").toLowerCase();
+                if (os.contains("win")) {
+                    Runtime.getRuntime().exec("cmd /c start " + file.getPath());
+                } else {
+                    Runtime.getRuntime().exec(file.getPath());
+                }
+                System.exit(0);
+            } else {
+                System.out.println("Startup script '" + startupScript + "' does not exist!");
+            }
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+    }
+    // Spigot end
 }

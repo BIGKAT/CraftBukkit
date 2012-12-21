@@ -58,6 +58,8 @@ public class CraftWorld implements World {
     private int animalSpawn = -1;
     private int waterAnimalSpawn = -1;
     private int ambientSpawn = -1;
+    private int loadCnt = 0; // Spigot
+    private int chunkGCTickCount; // Spigot
 
     private static final Random rand = new Random();
 
@@ -66,7 +68,84 @@ public class CraftWorld implements World {
         this.generator = gen;
 
         environment = env;
+        // Spigot Start
+        org.bukkit.configuration.file.YamlConfiguration configuration = server.configuration;
+        String name;
+        if (world.worldData == null || world.worldData.getName() == null) {
+            name = "default";
+        } else {
+            name = world.worldData.getName().replaceAll(" ", "_");
+        }
+
+        //load defaults first
+        growthPerTick = configuration.getInt("world-settings.default.growth-chunks-per-tick", growthPerTick);
+        itemMergeRadius = configuration.getDouble("world-settings.default.item-merge-radius", itemMergeRadius);
+        expMergeRadius = configuration.getDouble("world-settings.default.exp-merge-radius", expMergeRadius);
+        randomLightingUpdates = configuration.getBoolean("world-settings.default.random-light-updates", randomLightingUpdates);
+        mobSpawnRange = configuration.getInt("world-settings.default.mob-spawn-range", mobSpawnRange);
+        aggregateTicks = Math.max(1, configuration.getInt("world-settings.default.aggregate-chunkticks", aggregateTicks));
+
+        wheatGrowthModifier = configuration.getInt("world-settings.default.wheat-growth-modifier", wheatGrowthModifier);
+        cactusGrowthModifier = configuration.getInt("world-settings.default.cactus-growth-modifier", cactusGrowthModifier);
+        melonGrowthModifier = configuration.getInt("world-settings.default.melon-growth-modifier", melonGrowthModifier);
+        pumpkinGrowthModifier = configuration.getInt("world-settings.default.pumpkin-growth-modifier", pumpkinGrowthModifier);
+        sugarGrowthModifier = configuration.getInt("world-settings.default.sugar-growth-modifier", sugarGrowthModifier);
+        treeGrowthModifier = configuration.getInt("world-settings.default.tree-growth-modifier", treeGrowthModifier);
+        mushroomGrowthModifier = configuration.getInt("world-settings.default.mushroom-growth-modifier", mushroomGrowthModifier);
+
+        //override defaults with world specific, if they exist
+        growthPerTick = configuration.getInt("world-settings." + name + ".growth-chunks-per-tick", growthPerTick);
+        itemMergeRadius = configuration.getDouble("world-settings." + name + ".item-merge-radius", itemMergeRadius);
+      expMergeRadius = configuration.getDouble("world-settings." + name + ".exp-merge-radius", expMergeRadius);
+        randomLightingUpdates = configuration.getBoolean("world-settings." + name + ".random-light-updates", randomLightingUpdates);
+        mobSpawnRange = configuration.getInt("world-settings." + name + ".mob-spawn-range", mobSpawnRange);
+        aggregateTicks = Math.max(1, configuration.getInt("world-settings." + name + ".aggregate-chunkticks", aggregateTicks));
+
+        wheatGrowthModifier = configuration.getInt("world-settings." + name + ".wheat-growth-modifier", wheatGrowthModifier);
+        cactusGrowthModifier = configuration.getInt("world-settings." + name + ".cactus-growth-modifier", cactusGrowthModifier);
+        melonGrowthModifier = configuration.getInt("world-settings." + name + ".melon-growth-modifier", melonGrowthModifier);
+        pumpkinGrowthModifier = configuration.getInt("world-settings." + name + ".pumpkin-growth-modifier", pumpkinGrowthModifier);
+        sugarGrowthModifier = configuration.getInt("world-settings." + name + ".sugar-growth-modifier", sugarGrowthModifier);
+        treeGrowthModifier = configuration.getInt("world-settings." + name + ".tree-growth-modifier", treeGrowthModifier);
+        mushroomGrowthModifier = configuration.getInt("world-settings." + name + ".mushroom-growth-modifier", mushroomGrowthModifier);
+
+        server.getLogger().info("-------------- Spigot ----------------");
+        server.getLogger().info("-------- World Settings For [" + name + "] --------");
+        server.getLogger().info("Growth Per Chunk: " + growthPerTick);
+        server.getLogger().info("Item Merge Radius: " + itemMergeRadius);
+        server.getLogger().info("Experience Merge Radius: " + expMergeRadius);
+        server.getLogger().info("Random Lighting Updates: " + randomLightingUpdates);
+        server.getLogger().info("Mob Spawn Range: " + mobSpawnRange);
+        server.getLogger().info("Aggregate Ticks: " + aggregateTicks);
+        server.getLogger().info("Wheat Growth Modifier: " + wheatGrowthModifier);
+        server.getLogger().info("Cactus Growth Modifier: " + cactusGrowthModifier);
+        server.getLogger().info("Melon Growth Modifier: " + melonGrowthModifier);
+        server.getLogger().info("Pumpkin Growth Modifier: " + pumpkinGrowthModifier);
+        server.getLogger().info("Sugar Growth Modifier: " + sugarGrowthModifier);
+        server.getLogger().info("Tree Growth Modifier: " + treeGrowthModifier);
+        server.getLogger().info("Mushroom Growth Modifier: " + mushroomGrowthModifier);
+        server.getLogger().info("-------------------------------------------------");
+        if(this.server.chunkGCPeriod > 0) {
+            chunkGCTickCount = rand.nextInt(this.server.chunkGCPeriod);
+        }
+        // Spigot end
     }
+    // Spigot Start
+    public int growthPerTick = 650;
+    public double itemMergeRadius = 3;
+    public double expMergeRadius = 3;
+    public boolean randomLightingUpdates = false;
+    public int mobSpawnRange = 4;
+    public int aggregateTicks = 4;
+    //Crop growth rates:
+    public int wheatGrowthModifier = 100;
+    public int cactusGrowthModifier = 100;
+    public int melonGrowthModifier = 100;
+    public int pumpkinGrowthModifier = 100;
+    public int sugarGrowthModifier = 100;
+    public int treeGrowthModifier = 100;
+    public int mushroomGrowthModifier = 100;
+    // Spigot end
 
     public Block getBlockAt(int x, int y, int z) {
         return getChunkAt(x >> 4, z >> 4).getBlock(x & 0xF, y & 0xFF, z & 0xF);
@@ -226,6 +305,7 @@ public class CraftWorld implements World {
     }
 
     public boolean loadChunk(int x, int z, boolean generate) {
+        this.loadCnt++; // Spigot
         if (generate) {
             // Use the default variant of loadChunk when generate == true.
             return world.chunkProviderServer.getChunkAt(x, z) != null;
@@ -1231,4 +1311,28 @@ public class CraftWorld implements World {
     public boolean isGameRule(String rule) {
         return getHandle().getGameRules().e(rule);
     }
+    
+    // Spigot start
+    public void processChunkGC() {
+        chunkGCTickCount++;
+        if (((this.server.chunkGCLoadThresh > 0) && (loadCnt >= this.server.chunkGCLoadThresh)) ||
+                ((this.server.chunkGCPeriod > 0) && (chunkGCTickCount >= this.server.chunkGCPeriod))) {        
+            chunkGCTickCount = 0;
+            loadCnt = 0;
+            ChunkProviderServer cps = this.world.chunkProviderServer;
+            java.util.Iterator<net.minecraft.server.Chunk> iter = cps.chunks.values().iterator();
+            while (iter.hasNext()) {
+                net.minecraft.server.Chunk c = iter.next();
+                /* If in use, skip it */
+                if (this.isChunkInUse(c.x, c.z)) {
+                    continue;
+                }
+                if (cps.unloadQueue.contains(c.x, c.z)) { /* Already unloading? */
+                    continue;
+                }
+                cps.queueUnload(c.x,  c.z); /* Add unload request */
+            }
+        }
+    }
+    // Spigot end
 }

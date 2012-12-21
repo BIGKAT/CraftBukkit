@@ -55,6 +55,7 @@ public class EntityItem extends Entity {
         this.lastTick = currentTick;
         // CraftBukkit end
 
+        if (lastTick % 2 == 0) { // Spigot
         this.lastX = this.locX;
         this.lastY = this.locY;
         this.lastZ = this.locZ;
@@ -93,7 +94,7 @@ public class EntityItem extends Entity {
         if (this.onGround) {
             this.motY *= -0.5D;
         }
-
+        } // Spigot
         ++this.age;
         if (!this.world.isStatic && this.age >= 6000) {
             // CraftBukkit start

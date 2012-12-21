@@ -215,7 +215,7 @@ public class ChunkSection {
     }
 
     public void a(byte[] abyte) {
-        this.blockIds = abyte;
+        this.blockIds = validateByteArray(abyte); // Spigot - validate
     }
 
     public void a(NibbleArray nibblearray) {
@@ -232,19 +232,38 @@ public class ChunkSection {
             return;
         }
         // CraftBukkit end
-
-        this.extBlockIds = nibblearray;
+        this.extBlockIds = validateNibbleArray(nibblearray); // Spigot - validate
     }
 
     public void b(NibbleArray nibblearray) {
-        this.blockData = nibblearray;
+        this.blockData = validateNibbleArray(nibblearray); // Spigot - validate
     }
 
     public void c(NibbleArray nibblearray) {
-        this.blockLight = nibblearray;
+        this.blockLight = validateNibbleArray(nibblearray); // Spigot - validate
     }
 
     public void d(NibbleArray nibblearray) {
-        this.skyLight = nibblearray;
+        this.skyLight = validateNibbleArray(nibblearray); // Spigot - validate
     }
+    
+    // Spigot start - validate/correct nibble array
+    private static final NibbleArray validateNibbleArray(NibbleArray na) {
+        if ((na != null) && (na.a.length < 2048)) {
+            NibbleArray newna = new NibbleArray(4096, 4);
+            System.arraycopy(na.a, 0, newna.a, 0, na.a.length);
+            na = newna;
+        }
+        return na;
+    }
+    // Validate/correct byte array
+    private static final byte[] validateByteArray(byte[] ba) {
+        if ((ba != null) && (ba.length < 4096)) {
+            byte[] newba = new byte[4096];
+            System.arraycopy(ba,  0,  newba,  0,  ba.length);
+            ba = newba;
+        }
+        return ba;
+    }
+    // Spigot end
 }

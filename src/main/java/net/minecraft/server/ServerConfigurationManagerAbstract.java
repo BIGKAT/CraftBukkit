@@ -248,7 +248,7 @@ public abstract class ServerConfigurationManagerAbstract {
 
             event.disallow(PlayerLoginEvent.Result.KICK_BANNED, s1);
         } else if (!this.isWhitelisted(s)) {
-            event.disallow(PlayerLoginEvent.Result.KICK_WHITELIST, "You are not white-listed on this server!");
+            event.disallow(PlayerLoginEvent.Result.KICK_WHITELIST, cserver.whitelistMessage); // Spigot
         } else {
             String s2 = socketaddress.toString();
 
@@ -819,7 +819,13 @@ public abstract class ServerConfigurationManagerAbstract {
 
     public void r() {
         while (!this.players.isEmpty()) {
-            ((EntityPlayer) this.players.get(0)).netServerHandler.disconnect(this.server.server.getShutdownMessage()); // CraftBukkit - add custom shutdown message
+            // Spigot start
+            EntityPlayer p = (EntityPlayer) this.players.get(0);
+            p.netServerHandler.disconnect(this.server.server.getShutdownMessage());
+            if ((!this.players.isEmpty()) && (this.players.get(0) == p)) {
+                this.players.remove(0); // Prevent shutdown hang if already disconnected
+            }
+            // Spigot end
         }
     }
 }
