@@ -130,7 +130,7 @@ public class WorldServer extends World implements org.bukkit.BlockChangeDelegate
             this.pendingTickListEntries = new TreeSet();
         }
 
-        this.field_85177_Q = new Teleporter(this);
+        this.field_85177_Q = new org.bukkit.craftbukkit.CraftTravelAgent(this); // CraftBukkit
     }
 
     // CraftBukkit start

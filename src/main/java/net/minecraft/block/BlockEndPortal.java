@@ -10,6 +10,8 @@ import net.minecraft.util.AxisAlignedBB;
 import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
 
+import org.bukkit.event.entity.EntityPortalEnterEvent; // CraftBukkit
+
 public class BlockEndPortal extends BlockContainer
 {
     /**
@@ -77,6 +79,10 @@ public class BlockEndPortal extends BlockContainer
     {
         if (par5Entity.ridingEntity == null && par5Entity.riddenByEntity == null && !par1World.isRemote)
         {
+            // CraftBukkit start - Entity in portal
+            EntityPortalEnterEvent event = new EntityPortalEnterEvent(par5Entity.getBukkitEntity(), new org.bukkit.Location(par1World.getWorld(), par2, par3, par4));
+            par1World.getServer().getPluginManager().callEvent(event);
+            // CraftBukkit end
             par5Entity.travelToDimension(1);
         }
     }

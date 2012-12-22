@@ -82,6 +82,7 @@ import org.bukkit.craftbukkit.entity.CraftPlayer;
 import org.bukkit.craftbukkit.event.CraftEventFactory;
 import org.bukkit.craftbukkit.inventory.CraftItemStack;
 import org.bukkit.event.inventory.InventoryType;
+import org.bukkit.event.player.PlayerTeleportEvent.TeleportCause;
 // CraftBukkit end
 
 public class EntityPlayerMP extends EntityPlayer implements ICrafting
@@ -514,20 +515,30 @@ public class EntityPlayerMP extends EntityPlayer implements ICrafting
         }
         else
         {
-            this.triggerAchievement((StatBase) AchievementList.theEnd);
-            /* CraftBukkit start - removed to fix our handling of The End portals
-            ChunkCoordinates chunkcoordinates = this.server.getWorldServer(i).getDimensionSpawn();
+            if (this.dimension == 1 && par1 == 0)
+            {
+                this.triggerAchievement((StatBase) AchievementList.theEnd);
+                // CraftBukkit start - rely on custom portal management
+                /*
+                ChunkCoordinates chunkcoordinates = this.server.getWorldServer(i).getDimensionSpawn();
 
                 if (chunkcoordinates != null) {
                     this.netServerHandler.a((double) chunkcoordinates.x, (double) chunkcoordinates.y, (double) chunkcoordinates.z, 0.0F, 0.0F);
                 }
 
                 i = 1;
-            } else {
-                this.a((Statistic) AchievementList.x);
+                */
+                // CraftBukkit end
             }
-            // CraftBukkit end */
-            this.mcServer.getConfigurationManager().transferPlayerToDimension(this, par1);
+            else
+            {
+                this.triggerAchievement((StatBase) AchievementList.portal);
+            }
+
+            // CraftBukkit start
+            TeleportCause cause = (this.dimension == 1 || par1 == 1) ? TeleportCause.END_PORTAL : TeleportCause.NETHER_PORTAL;
+            this.mcServer.getConfigurationManager().changeDimension(this, par1, cause);
+            // CraftBukkit end
             this.lastExperience = -1;
             this.lastHealth = -1;
             this.lastFoodLevel = -1;

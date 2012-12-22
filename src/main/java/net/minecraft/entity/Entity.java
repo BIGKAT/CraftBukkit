@@ -36,7 +36,9 @@ import net.minecraft.world.WorldServer;
 import java.util.UUID;
 
 import org.bukkit.Bukkit;
+import org.bukkit.Location;
 import org.bukkit.Server;
+import org.bukkit.TravelAgent;
 import org.bukkit.block.BlockFace;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Painting;
@@ -47,11 +49,13 @@ import org.bukkit.event.vehicle.VehicleBlockCollisionEvent;
 import org.bukkit.event.vehicle.VehicleEnterEvent;
 import org.bukkit.event.vehicle.VehicleExitEvent;
 import org.bukkit.craftbukkit.CraftWorld;
+import org.bukkit.craftbukkit.entity.CraftEntity;
 import org.bukkit.craftbukkit.entity.CraftPlayer;
 import org.bukkit.event.entity.EntityCombustEvent;
 import org.bukkit.event.entity.EntityDamageByBlockEvent;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
+import org.bukkit.event.entity.EntityPortalEvent;
 import org.bukkit.plugin.PluginManager;
 // CraftBukkit end
 
@@ -1976,9 +1980,9 @@ public abstract class Entity
         this.setPassengerOf(par1Entity);
     }
 
-    protected org.bukkit.entity.Entity bukkitEntity;
+    protected CraftEntity bukkitEntity;
 
-    public org.bukkit.entity.Entity getBukkitEntity()
+    public CraftEntity getBukkitEntity()
     {
         if (this.bukkitEntity == null)
         {
@@ -2499,31 +2503,64 @@ public abstract class Entity
      */
     public void travelToDimension(int par1)
     {
-        if (false && !this.worldObj.isRemote && !this.isDead)   // CraftBukkit - disable entity portal support for now.
+        if (!this.worldObj.isRemote && !this.isDead)
         {
             this.worldObj.theProfiler.startSection("changeDimension");
             MinecraftServer var2 = MinecraftServer.getServer();
-            int var3 = this.dimension;
-            WorldServer var4 = var2.worldServerForDimension(var3);
-            WorldServer var5 = var2.worldServerForDimension(par1);
-            this.dimension = par1;
+            // CraftBukkit start - move logic into new function "teleportToLocation"
+            // int j = this.dimension;
+            Location enter = this.getBukkitEntity().getLocation();
+            Location exit = var2.getConfigurationManager().calculateTarget(enter, var2.worldServerForDimension(par1));
+            TravelAgent agent = (TravelAgent)((CraftWorld) exit.getWorld()).getHandle().func_85176_s();
+            EntityPortalEvent event = new EntityPortalEvent(this.getBukkitEntity(), enter, exit, agent);
+            event.getEntity().getServer().getPluginManager().callEvent(event);
+
+            if (event.isCancelled() || event.getTo() == null || !this.isEntityAlive())
+            {
+                return;
+            }
+
+            exit = event.useTravelAgent() ? event.getPortalTravelAgent().findOrCreate(exit) : event.getTo();
+            this.teleportTo(exit, true);
+        }
+    }
+
+    public void teleportTo(Location exit, boolean portal)
+    {
+        if (true)
+        {
+            WorldServer worldserver = ((CraftWorld) this.getBukkitEntity().getLocation().getWorld()).getHandle();
+            WorldServer worldserver1 = ((CraftWorld) exit.getWorld()).getHandle();
+            int i = worldserver1.dimension;
+            // CraftBukkit end
+            this.dimension = i;
             this.worldObj.setEntityDead(this);
             this.isDead = false;
             this.worldObj.theProfiler.startSection("reposition");
-            var2.getConfigurationManager().transferEntityToWorld(this, var3, var4, var5);
+            // CraftBukkit start - ensure chunks are loaded in case TravelAgent is not used which would initially cause chunks to load during find/create
+            // minecraftserver.getPlayerList().a(this, j, worldserver, worldserver1);
+            boolean before = worldserver1.theChunkProviderServer.loadChunkOnProvideRequest;
+            worldserver1.theChunkProviderServer.loadChunkOnProvideRequest = true;
+            worldserver1.getMinecraftServer().getConfigurationManager().repositionEntity(this, exit, portal);
+            worldserver1.theChunkProviderServer.loadChunkOnProvideRequest = before;
+            // CraftBukkit end
             this.worldObj.theProfiler.endStartSection("reloading");
-            Entity var6 = EntityList.createEntityByName(EntityList.getEntityString(this), var5);
+            Entity entity = EntityList.createEntityByName(EntityList.getEntityString(this), worldserver1);
 
-            if (var6 != null)
+            if (entity != null)
             {
-                var6.copyDataFrom(this, true);
-                var5.spawnEntityInWorld(var6);
+                entity.copyDataFrom(this, true);
+                worldserver1.spawnEntityInWorld(entity);
+                // CraftBukkit start - forward the CraftEntity to the new entity
+                this.getBukkitEntity().setHandle(entity);
+                entity.bukkitEntity = this.getBukkitEntity();
+                // CraftBukkit end
             }
 
             this.isDead = true;
             this.worldObj.theProfiler.endSection();
-            var4.resetUpdateEntityTick();
-            var5.resetUpdateEntityTick();
+            worldserver.resetUpdateEntityTick();
+            worldserver1.resetUpdateEntityTick();
             this.worldObj.theProfiler.endSection();
         }
     }

@@ -53,7 +53,6 @@ import net.minecraft.network.packet.Packet255KickDisconnect;
 import net.minecraft.network.packet.Packet3Chat;
 import net.minecraft.network.packet.Packet53BlockChange;
 import net.minecraft.network.packet.Packet6SpawnPosition;
-import net.minecraft.network.packet.Packet70GameEvent;
 import net.minecraft.network.packet.Packet7UseEntity;
 import net.minecraft.network.packet.Packet9Respawn;
 import net.minecraft.server.MinecraftServer;
@@ -101,6 +100,7 @@ import org.bukkit.event.player.PlayerItemHeldEvent;
 import org.bukkit.event.player.PlayerKickEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerTeleportEvent;
+import org.bukkit.event.player.PlayerTeleportEvent.TeleportCause;
 import org.bukkit.event.player.PlayerToggleSneakEvent;
 import org.bukkit.event.player.PlayerToggleSprintEvent;
 import org.bukkit.event.inventory.*;
@@ -1525,28 +1525,7 @@ public class NetServerHandler extends NetHandler
         {
             if (this.playerEntity.playerConqueredTheEnd)
             {
-                // CraftBukkit start
-                org.bukkit.craftbukkit.PortalTravelAgent pta = new org.bukkit.craftbukkit.PortalTravelAgent();
-                Location toLocation;
-
-                if (this.playerEntity.getBukkitEntity().getBedSpawnLocation() == null)
-                {
-                    CraftWorld cworld = (CraftWorld) this.server.getWorlds().get(0);
-                    ChunkCoordinates chunkcoordinates = cworld.getHandle().getSpawnPoint();
-                    toLocation = new Location(cworld, chunkcoordinates.posX + 0.5, chunkcoordinates.posY, chunkcoordinates.posZ + 0.5);
-                    this.playerEntity.playerNetServerHandler.sendPacketToPlayer(new Packet70GameEvent(0, 0));
-                }
-                else
-                {
-                    toLocation = this.playerEntity.getBukkitEntity().getBedSpawnLocation();
-                    toLocation = new Location(toLocation.getWorld(), toLocation.getX() + 0.5, toLocation.getY(), toLocation.getZ() + 0.5);
-                }
-
-                PlayerPortalEvent event = new PlayerPortalEvent(this.playerEntity.getBukkitEntity(), this.playerEntity.getBukkitEntity().getLocation(), toLocation, pta, PlayerPortalEvent.TeleportCause.END_PORTAL);
-                event.useTravelAgent(false);
-                Bukkit.getServer().getPluginManager().callEvent(event);
-                this.playerEntity = this.mcServer.getConfigurationManager().moveToWorld(this.playerEntity, 0, true, event.getTo());
-                // CraftBukkit end
+                this.mcServer.getConfigurationManager().changeDimension(this.playerEntity, 0, TeleportCause.END_PORTAL); // CraftBukkit - reroute logic through custom portal management
             }
             else if (this.playerEntity.getServerForPlayer().getWorldInfo().isHardcoreModeEnabled())
             {
