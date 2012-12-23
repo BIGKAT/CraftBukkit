@@ -1481,6 +1481,7 @@ public abstract class World implements IBlockAccess
             event = CraftEventFactory.callItemSpawnEvent((EntityItem) entity);
             // Spigot start
             ItemStack item = ((EntityItem) entity).func_92014_d();
+            org.bukkit.craftbukkit.inventory.CraftItemStack craft = org.bukkit.craftbukkit.inventory.CraftItemStack.asCraftMirror(item);
             int maxSize = item.getMaxStackSize();
 
             if (item.stackSize < maxSize)
@@ -1498,18 +1499,15 @@ public abstract class World implements IBlockAccess
                             EntityItem loopItem = (EntityItem) e;
                             ItemStack loopStack = loopItem.func_92014_d();
 
-                            if (!loopItem.isDead && loopStack.itemID == item.itemID && loopStack.getItemDamage() == item.getItemDamage())
+                            if (!loopItem.isDead && craft.isSimilar(org.bukkit.craftbukkit.inventory.CraftItemStack.asCraftMirror(loopStack)))
                             {
-                                if (loopStack.stackTagCompound == null || item.stackTagCompound == null || !loopStack.stackTagCompound.equals(item.stackTagCompound))
-                                {
-                                    int toAdd = Math.min(loopStack.stackSize, maxSize - item.stackSize);
-                                    item.stackSize += toAdd;
-                                    loopStack.stackSize -= toAdd;
+                                int toAdd = Math.min(loopStack.stackSize, maxSize - item.stackSize);
+                                item.stackSize += toAdd;
+                                loopStack.stackSize -= toAdd;
 
-                                    if (loopStack.stackSize <= 0)
-                                    {
-                                        loopItem.setDead();
-                                    }
+                                if (loopStack.stackSize <= 0)
+                                {
+                                    loopItem.setDead();
                                 }
                             }
                         }
