@@ -1,13 +1,14 @@
 package net.minecraft.server;
 
-import cpw.mods.fml.common.registry.VillagerRegistry;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
 
-public class WorldGenVillagePieces
-{
+import cpw.mods.fml.common.registry.VillagerRegistry; // Forge
+
+public class WorldGenVillagePieces {
+
     public static ArrayList a(Random var0, int var1)
     {
         ArrayList var2 = new ArrayList();

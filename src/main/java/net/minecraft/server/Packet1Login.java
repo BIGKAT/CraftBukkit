@@ -1,12 +1,13 @@
 package net.minecraft.server;
 
-import cpw.mods.fml.common.network.FMLNetworkHandler;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 
-public class Packet1Login extends Packet
-{
+import cpw.mods.fml.common.network.FMLNetworkHandler; // Forge
+
+public class Packet1Login extends Packet {
+
     /** The player's entity ID */
     public int a = 0;
     public WorldType b;

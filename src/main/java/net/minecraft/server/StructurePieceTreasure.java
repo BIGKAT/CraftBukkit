@@ -1,13 +1,8 @@
 package net.minecraft.server;
 
 import java.util.Random;
-import net.minecraft.server.Item;
-import net.minecraft.server.ItemStack;
-import net.minecraft.server.TileEntityChest;
-import net.minecraft.server.TileEntityDispenser;
-import net.minecraft.server.WeightedRandom;
-import net.minecraft.server.WeightedRandomChoice;
-import net.minecraftforge.common.ChestGenHooks;
+
+import net.minecraftforge.common.ChestGenHooks; // Forge
 
 public class StructurePieceTreasure extends WeightedRandomChoice {
 

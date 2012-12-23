@@ -1,12 +1,10 @@
 package net.minecraft.server;
 
 import java.util.Random;
-
-import net.minecraft.server.EntityMinecart;
-import net.minecraft.server.IBlockAccess;
-import net.minecraft.server.World;
+// Forge start
 import net.minecraftforge.common.ForgeDirection;
 import static net.minecraftforge.common.ForgeDirection.*;
+// Forge end
 
 public class BlockMinecartTrack extends Block
 {

@@ -54,7 +54,7 @@ public final class CraftMapView implements MapView {
     }
 
     public World getWorld() {
-        int dimension = worldMap.map;
+        int dimension = worldMap.map; // Forge
         for (World world : Bukkit.getServer().getWorlds()) {
             if (((CraftWorld) world).getHandle().dimension == dimension) {
                 return world;

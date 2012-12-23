@@ -1,6 +1,5 @@
 package net.minecraft.server;
 
-import cpw.mods.fml.common.FMLLog;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -8,8 +7,10 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-public abstract class ServerConnection
-{
+import cpw.mods.fml.common.FMLLog; // Forge
+
+public abstract class ServerConnection {
+
     /** Reference to the logger. */
     public static Logger a = Logger.getLogger("Minecraft");
 

@@ -6,9 +6,11 @@ import java.util.List;
 import org.bukkit.craftbukkit.entity.CraftHumanEntity;
 import org.bukkit.entity.HumanEntity;
 import org.bukkit.event.inventory.BrewEvent;
+// CraftBukkit end
+// Forge start
 import net.minecraftforge.common.ForgeDirection;
 import net.minecraftforge.common.ISidedInventory;
-// CraftBukkit end
+// Forge end
 
 public class TileEntityBrewingStand extends TileEntity implements IInventory, ISidedInventory {
 

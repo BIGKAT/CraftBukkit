@@ -32,15 +32,12 @@ public class BlockSnow extends Block {
         this.a(0.0F, 0.0F, 0.0F, 1.0F, f, 1.0F);
     }
 
-    /**
-     * Checks to see if its valid to put this block at the specified coordinates. Args: world, x, y, z
-     */
-    public boolean canPlace(World var1, int var2, int var3, int var4)
-    {
-        int var5 = var1.getTypeId(var2, var3 - 1, var4);
+    public boolean canPlace(World world, int i, int j, int k) {
+        int l = world.getTypeId(i, j - 1, k);
+
         // Forge start
-        Block var6 = Block.byId[var5];
-        return var6 != null && (var6.isLeaves(var1, var2, var3 - 1, var4) || Block.byId[var5].c()) ? var1.getMaterial(var2, var3 - 1, var4).isSolid() : false;
+        Block block = Block.byId[l];
+        return block != null && (block.isLeaves(world, i, j - 1, k) || Block.byId[l].c()) ? world.getMaterial(i, j - 1, k).isSolid() : false;
         // Forge end
     }
 
@@ -50,7 +47,7 @@ public class BlockSnow extends Block {
 
     private boolean n(World world, int i, int j, int k) {
         if (!this.canPlace(world, i, j, k)) {
-            //this.c(world, i, j, k, world.getData(i, j, k), 0);
+            this.c(world, i, j, k, world.getData(i, j, k), 0);
             world.setRawTypeId(i, j, k, 0); // CraftBukkit
             world.notify(i, j, k); // CraftBukkit - Notify clients of the reversion
             return false;
@@ -60,6 +57,8 @@ public class BlockSnow extends Block {
     }
 
     public void a(World world, EntityHuman entityhuman, int i, int j, int k, int l) {
+        int i1 = Item.SNOW_BALL.id;
+
         super.a(world, entityhuman, i, j, k, l); // Forge
         world.setTypeId(i, j, k, 0);
     }
@@ -79,7 +78,8 @@ public class BlockSnow extends Block {
                 return;
             }
             // CraftBukkit end
-            
+
+            this.c(world, i, j, k, world.getData(i, j, k), 0);
             world.setTypeId(i, j, k, 0);
         }
     }

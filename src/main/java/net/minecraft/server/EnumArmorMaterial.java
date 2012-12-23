@@ -1,8 +1,5 @@
 package net.minecraft.server;
 
-import net.minecraft.server.Item;
-import net.minecraft.server.ItemArmor;
-
 public enum EnumArmorMaterial {
 
     CLOTH(5, new int[]{1, 3, 2, 1}, 15),

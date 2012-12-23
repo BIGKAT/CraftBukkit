@@ -1,10 +1,12 @@
 package net.minecraft.server;
 
 import java.util.Random;
+// Forge start
 import net.minecraftforge.common.EnumPlantType;
 import net.minecraftforge.common.IPlantable;
+// Forge end
 
-public class BlockReed extends Block implements IPlantable {
+public class BlockReed extends Block implements IPlantable { // Forge
 
     protected BlockReed(int i, int j) {
         super(i, Material.PLANT);
@@ -77,18 +79,17 @@ public class BlockReed extends Block implements IPlantable {
         return 1;
     }
 
-    public EnumPlantType getPlantType(World var1, int var2, int var3, int var4)
-    {
+    // Forge start
+    public EnumPlantType getPlantType(World world, int i, int j, int k) {
         return EnumPlantType.Beach;
     }
 
-    public int getPlantID(World var1, int var2, int var3, int var4)
-    {
+    public int getPlantID(World world, int i, int j, int k) {
         return this.id;
     }
 
-    public int getPlantMetadata(World var1, int var2, int var3, int var4)
-    {
-        return var1.getData(var2, var3, var4);
+    public int getPlantMetadata(World world, int i, int j, int k) {
+        return world.getData(i, j, k);
     }
+    // Forge end
 }

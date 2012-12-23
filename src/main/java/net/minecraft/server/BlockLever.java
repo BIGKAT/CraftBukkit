@@ -1,8 +1,10 @@
 package net.minecraft.server;
 
+import org.bukkit.event.block.BlockRedstoneEvent; // CraftBukkit
+// Forge start
 import net.minecraftforge.common.ForgeDirection;
 import static net.minecraftforge.common.ForgeDirection.*;
-import org.bukkit.event.block.BlockRedstoneEvent; // CraftBukkit
+// Forge end
 
 public class BlockLever extends Block {
 
@@ -27,35 +29,15 @@ public class BlockLever extends Block {
         return 12;
     }
 
-    /**
-     * checks to see if you can place this block can be placed on that side of a block: BlockLever overrides
-     */
-    public boolean canPlace(World world, int var2, int var3, int var4, int var5)
-    {
-    	// Forge start
-        ForgeDirection dir = getOrientation(var5);
-        return dir == DOWN && world.isBlockSolidOnSide(var2, var3 + 1, var4, DOWN)   || 
-        	   dir == UP && world.isBlockSolidOnSide(var2, var3 - 1, var4, UP)       || 
-        	   dir == NORTH && world.isBlockSolidOnSide(var2, var3, var4 + 1, NORTH) || 
-        	   dir == SOUTH && world.isBlockSolidOnSide(var2, var3, var4 - 1, SOUTH) || 
-        	   dir == WEST && world.isBlockSolidOnSide(var2 + 1, var3, var4, WEST)   || 
-        	   dir == EAST && world.isBlockSolidOnSide(var2 - 1, var3, var4, EAST);
+    public boolean canPlace(World world, int i, int j, int k, int l) {
+        // Forge start
+        ForgeDirection dir = ForgeDirection.getOrientation(l);
+        return dir == DOWN && world.isBlockSolidOnSide(i, j + 1, k, DOWN) ? true : dir == UP && world.isBlockSolidOnSide(i, j - 1, k, UP) ? true : dir == NORTH && world.isBlockSolidOnSide(i, j, k + 1, NORTH) ? true : dir == SOUTH && world.isBlockSolidOnSide(i, j, k - 1, SOUTH) ? true : dir == WEST && world.isBlockSolidOnSide(i + 1, j, k, WEST) ? true : dir == EAST && world.isBlockSolidOnSide(i - 1, j, k, EAST);
         // Forge end
     }
 
-    /**
-     * Checks to see if its valid to put this block at the specified coordinates. Args: world, x, y, z
-     */
-    public boolean canPlace(World world, int var2, int var3, int var4)
-    {
-    	// Forge start
-        return world.isBlockSolidOnSide(var2 - 1, var3, var4, EAST)  || 
-        	   world.isBlockSolidOnSide(var2 + 1, var3, var4, WEST)  || 
-        	   world.isBlockSolidOnSide(var2, var3, var4 - 1, SOUTH) || 
-        	   world.isBlockSolidOnSide(var2, var3, var4 + 1, NORTH) || 
-        	   world.isBlockSolidOnSide(var2, var3 - 1, var4, UP)    || 
-        	   world.isBlockSolidOnSide(var2, var3 + 1, var4, DOWN);
-        // Forge end
+    public boolean canPlace(World world, int i, int j, int k) {
+        return world.isBlockSolidOnSide(i - 1, j, k, EAST) ? true : world.isBlockSolidOnSide(i + 1, j, k, WEST) ? true : world.isBlockSolidOnSide(i, j, k - 1, SOUTH) ? true : world.isBlockSolidOnSide(i, j, k + 1, NORTH) ? true : world.isBlockSolidOnSide(i, j - 1, k, UP) ? true : world.isBlockSolidOnSide(i, j + 1, k, DOWN); // Forge
     }
 
     public int getPlacedData(World world, int i, int j, int k, int l, float f, float f1, float f2, int i1) {
@@ -88,6 +70,7 @@ public class BlockLever extends Block {
             k1 = 1;
         }
         // Forge end
+
         return k1 + j1;
     }
 
@@ -116,61 +99,48 @@ public class BlockLever extends Block {
         }
     }
 
-    /**
-     * Lets the block know when one of its neighbor changes. Doesn't know which neighbor changed (coordinates passed are
-     * their own) Args: x, y, z, neighbor blockID
-     */
-    public void doPhysics(World world, int var2, int var3, int var4, int var5)
-    {
-        if (this.l(world, var2, var3, var4))
-        {
-            int var6 = world.getData(var2, var3, var4) & 7;
-            boolean var7 = false;
+    public void doPhysics(World world, int i, int j, int k, int l) {
+        if (this.l(world, i, j, k)) {
+            int i1 = world.getData(i, j, k) & 7;
+            boolean flag = false;
+
             // Forge start
-            if (!world.isBlockSolidOnSide(var2 - 1, var3, var4, EAST) && var6 == 1)
-            {
-                var7 = true;
+            if (!world.isBlockSolidOnSide(i - 1, j, k, EAST) && i1 == 1) {
+                flag = true;
             }
 
-            if (!world.isBlockSolidOnSide(var2 + 1, var3, var4, WEST) && var6 == 2)
-            {
-                var7 = true;
+            if (!world.isBlockSolidOnSide(i + 1, j, k, WEST) && i1 == 2) {
+                flag = true;
             }
 
-            if (!world.isBlockSolidOnSide(var2, var3, var4 - 1, SOUTH) && var6 == 3)
-            {
-                var7 = true;
+            if (!world.isBlockSolidOnSide(i, j, k - 1, SOUTH) && i1 == 3) {
+                flag = true;
             }
 
-            if (!world.isBlockSolidOnSide(var2, var3, var4 + 1, NORTH) && var6 == 4)
-            {
-                var7 = true;
+            if (!world.isBlockSolidOnSide(i, j, k + 1, NORTH) && i1 == 4) {
+                flag = true;
             }
 
-            if (!world.isBlockSolidOnSide(var2, var3 - 1, var4, UP) && var6 == 5)
-            {
-                var7 = true;
+            if (!world.isBlockSolidOnSide(i, j - 1, k, UP) && i1 == 5) {
+                flag = true;
             }
 
-            if (!world.isBlockSolidOnSide(var2, var3 - 1, var4, UP) && var6 == 6)
-            {
-                var7 = true;
+            if (!world.isBlockSolidOnSide(i, j - 1, k, UP) && i1 == 6) {
+                flag = true;
             }
 
-            if (!world.isBlockSolidOnSide(var2, var3 + 1, var4, DOWN) && var6 == 0)
-            {
-                var7 = true;
+            if (!world.isBlockSolidOnSide(i, j + 1, k, DOWN) && i1 == 0) {
+                flag = true;
             }
 
-            if (!world.isBlockSolidOnSide(var2, var3 + 1, var4, DOWN) && var6 == 7)
-            {
-                var7 = true;
+            if (!world.isBlockSolidOnSide(i, j + 1, k, DOWN) && i1 == 7) {
+                flag = true;
             }
             // Forge end
-            if (var7)
-            {
-                this.c(world, var2, var3, var4, world.getData(var2, var3, var4), 0);
-                world.setTypeId(var2, var3, var4, 0);
+
+            if (flag) {
+                this.c(world, i, j, k, world.getData(i, j, k), 0);
+                world.setTypeId(i, j, k, 0);
             }
         }
     }

@@ -133,7 +133,8 @@ public class LongHashSet {
         remove(LongHash.toLong(msw, lsw));
     }
 
-    private boolean remove(long value) { // Spigot
+    public boolean remove(long value) { // Spigot
+        flat.put(value, null);
         int hash = hash(value);
         int index = (hash & 0x7FFFFFFF) % values.length;
         int offset = 1;

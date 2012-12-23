@@ -315,25 +315,25 @@ public class BlockRedstoneWire extends Block {
         } else if (l == 1) {
             return true;
         } else {
-            boolean flag = g(iblockaccess, i - 1, j, k, 1) || !iblockaccess.s(i - 1, j, k) && g(iblockaccess, i - 1, j - 1, k, -1);
-            boolean flag1 = g(iblockaccess, i + 1, j, k, 3) || !iblockaccess.s(i + 1, j, k) && g(iblockaccess, i + 1, j - 1, k, -1);
-            boolean flag2 = g(iblockaccess, i, j, k - 1, 2) || !iblockaccess.s(i, j, k - 1) && g(iblockaccess, i, j - 1, k - 1, -1);
-            boolean flag3 = g(iblockaccess, i, j, k + 1, 0) || !iblockaccess.s(i, j, k + 1) && g(iblockaccess, i, j - 1, k + 1, -1);
+            boolean flag = g(iblockaccess, i - 1, j, k, 1) || !iblockaccess.t(i - 1, j, k) && g(iblockaccess, i - 1, j - 1, k, -1);
+            boolean flag1 = g(iblockaccess, i + 1, j, k, 3) || !iblockaccess.t(i + 1, j, k) && g(iblockaccess, i + 1, j - 1, k, -1);
+            boolean flag2 = g(iblockaccess, i, j, k - 1, 2) || !iblockaccess.t(i, j, k - 1) && g(iblockaccess, i, j - 1, k - 1, -1);
+            boolean flag3 = g(iblockaccess, i, j, k + 1, 0) || !iblockaccess.t(i, j, k + 1) && g(iblockaccess, i, j - 1, k + 1, -1);
 
-            if (!iblockaccess.s(i, j + 1, k)) {
-                if (iblockaccess.s(i - 1, j, k) && g(iblockaccess, i - 1, j + 1, k, -1)) {
+            if (!iblockaccess.t(i, j + 1, k)) {
+                if (iblockaccess.t(i - 1, j, k) && g(iblockaccess, i - 1, j + 1, k, -1)) {
                     flag = true;
                 }
 
-                if (iblockaccess.s(i + 1, j, k) && g(iblockaccess, i + 1, j + 1, k, -1)) {
+                if (iblockaccess.t(i + 1, j, k) && g(iblockaccess, i + 1, j + 1, k, -1)) {
                     flag1 = true;
                 }
 
-                if (iblockaccess.s(i, j, k - 1) && g(iblockaccess, i, j + 1, k - 1, -1)) {
+                if (iblockaccess.t(i, j, k - 1) && g(iblockaccess, i, j + 1, k - 1, -1)) {
                     flag2 = true;
                 }
 
-                if (iblockaccess.s(i, j, k + 1) && g(iblockaccess, i, j + 1, k + 1, -1)) {
+                if (iblockaccess.t(i, j, k + 1) && g(iblockaccess, i, j + 1, k + 1, -1)) {
                     flag3 = true;
                 }
             }

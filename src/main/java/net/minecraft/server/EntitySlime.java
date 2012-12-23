@@ -207,7 +207,7 @@ public class EntitySlime extends EntityLiving implements IMonster {
     public boolean canSpawn() {
         Chunk chunk = this.world.getChunkAtWorldCoords(MathHelper.floor(this.locX), MathHelper.floor(this.locZ));
 
-        if (this.world.getWorldData().getType() == WorldType.FLAT && this.random.nextInt(4) != 1) {
+        if (this.world.getWorldData().getType().handleSlimeSpawnReduction(this.random, world)) { // Forge
             return false;
         } else {
             if (this.getSize() == 1 || this.world.difficulty > 0) {

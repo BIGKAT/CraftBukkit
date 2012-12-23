@@ -14,13 +14,13 @@ import net.minecraft.server.MinecraftServer;
 public class Main {
     public static boolean useJline = true;
     public static boolean useConsole = true;
-
+    // MCPC start
     public static void main(String[] args) {
         MinecraftServer.main(args);
     }
 
-    public static OptionSet getOptions(String[] args) {
-        // Todo: Installation script
+    public static OptionSet loadOptions(String[] args) {
+    // MCPC end
         OptionParser parser = new OptionParser() {
             {
                 acceptsAll(asList("?", "help"), "Show the help");
@@ -152,13 +152,12 @@ public class Main {
                 if (options.has("noconsole")) {
                     useConsole = false;
                 }
-
-                return options;
+                return options; // MCPC
             } catch (Throwable t) {
                 t.printStackTrace();
             }
         }
-        return null;
+        return null; // MCPC
     }
 
     private static List<String> asList(String... params) {

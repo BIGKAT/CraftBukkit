@@ -1,7 +1,7 @@
 package net.minecraft.server;
 
-public abstract class NetHandler
-{
+public abstract class NetHandler {
+
     /**
      * determine if it is a server handler
      */
@@ -427,4 +427,10 @@ public abstract class NetHandler
 
     public abstract EntityHuman getPlayerH();
     // Forge end
+
+	/*protected Object evaluate()
+	{
+		// TODO Auto-generated method stub
+		return null;
+	}*/
 }

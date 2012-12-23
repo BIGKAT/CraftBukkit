@@ -1,7 +1,8 @@
 package net.minecraft.server;
-
+// Forge start
 import cpw.mods.fml.common.Side;
 import cpw.mods.fml.common.asm.SideOnly;
+// Forge end
 
 public class ChunkCache implements IBlockAccess
 {
@@ -135,7 +136,7 @@ public class ChunkCache implements IBlockAccess
     /**
      * Returns true if the block at the specified coordinates is an opaque cube. Args: x, y, z
      */
-    public boolean s(int var1, int var2, int var3)
+    public boolean t(int var1, int var2, int var3)
     {
         Block var4 = Block.byId[this.getTypeId(var1, var2, var3)];
         return var4 == null ? false : var4.material.isSolid() && var4.b();
@@ -158,9 +159,8 @@ public class ChunkCache implements IBlockAccess
         return var5 == 0 ? false : Block.byId[var5].c(this, var1, var2, var3, var4);
     }
 
-	@Override
-	public BiomeBase getBiome(int i, int j) 
-	{
-		return e.getBiome(i, j);
-	}
+    @Override
+    public BiomeBase getBiome(int i, int j) {
+        return e.getBiome(i, j);
+    }
 }

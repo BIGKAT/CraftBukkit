@@ -230,7 +230,7 @@ public class CraftHumanEntity extends CraftLivingEntity implements HumanEntity {
 
     private void openCustomInventory(Inventory inventory, EntityPlayer player, int windowType) {
         if (player.netServerHandler == null) return;
-        Container container = new CraftContainer(inventory, this, player.nextContainerCounterGetInteger_CB());
+        Container container = new CraftContainer(inventory, this, player.nextContainerCounter());
 
         container = CraftEventFactory.callInventoryOpenEvent(player, container);
         if(container == null) return;
@@ -289,7 +289,7 @@ public class CraftHumanEntity extends CraftLivingEntity implements HumanEntity {
         if (inventory instanceof CraftInventoryView) {
             container = ((CraftInventoryView) inventory).getHandle();
         } else {
-            container = new CraftContainer(inventory, player.nextContainerCounterGetInteger_CB());
+            container = new CraftContainer(inventory, player.nextContainerCounter());
         }
 
         // Trigger an INVENTORY_OPEN event

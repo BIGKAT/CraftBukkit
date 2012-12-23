@@ -7,10 +7,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
-import cpw.mods.fml.common.registry.GameRegistry;
-import net.minecraftforge.common.DimensionManager;
-import net.minecraftforge.common.ForgeChunkManager;
-
 // CraftBukkit start
 import java.util.Random;
 
@@ -21,6 +17,11 @@ import org.bukkit.craftbukkit.util.LongHashSet;
 import org.bukkit.craftbukkit.util.LongObjectHashMap;
 import org.bukkit.event.world.ChunkUnloadEvent;
 // CraftBukkit end
+// Forge start
+import cpw.mods.fml.common.registry.GameRegistry;
+import net.minecraftforge.common.DimensionManager;
+import net.minecraftforge.common.ForgeChunkManager;
+// Forge end
 
 public class ChunkProviderServer implements IChunkProvider {
 
@@ -28,7 +29,7 @@ public class ChunkProviderServer implements IChunkProvider {
     public LongHashSet unloadQueue = new LongHashSet();
     public Chunk emptyChunk;
     public IChunkProvider chunkProvider; // CraftBukkit
-    IChunkLoader e;
+    IChunkLoader e; // Spigot
     public boolean forceChunkLoad = false; // true -> false
     public LongObjectHashMap<Chunk> chunks = new LongObjectHashMap<Chunk>();
     public WorldServer world;
@@ -46,7 +47,7 @@ public class ChunkProviderServer implements IChunkProvider {
     }
 
     public void queueUnload(int i, int j) {
-        if (this.world.worldProvider.e() && DimensionManager.shouldLoadSpawn(this.world.dimension)) {
+        if (this.world.worldProvider.e() && DimensionManager.shouldLoadSpawn(this.world.dimension)) { // Forge
             ChunkCoordinates chunkcoordinates = this.world.getSpawn();
             int k = i * 16 + 8 - chunkcoordinates.x;
             int l = j * 16 + 8 - chunkcoordinates.z;
@@ -106,17 +107,17 @@ public class ChunkProviderServer implements IChunkProvider {
         }
         // CraftBukkit end
 
-        if (chunk == null) {                
-           chunk =  ForgeChunkManager.fetchDormantChunk(LongHash.toLong(i, j), this.world);
-            if (chunk == null)
-            	chunk = this.loadChunk(i, j);
-            
+        if (chunk == null) {
+            // Forge start
+            chunk =  ForgeChunkManager.fetchDormantChunk(LongHash.toLong(i, j), this.world);
+            if (chunk == null) chunk = this.loadChunk(i, j);
+            // Forge end
             if (chunk == null) {
                 if (this.chunkProvider == null) {
                     chunk = this.emptyChunk;
                 } else {
                     try {
-                    chunk = this.chunkProvider.getOrCreateChunk(i, j);
+                        chunk = this.chunkProvider.getOrCreateChunk(i, j);
                     } catch (Throwable throwable) {
                         CrashReport crashreport = CrashReport.a(throwable, "Exception generating new chunk");
                         CrashReportSystemDetails crashreportsystemdetails = crashreport.a("Chunk to be generated");
@@ -251,7 +252,6 @@ public class ChunkProviderServer implements IChunkProvider {
                 // CraftBukkit end
 
                 GameRegistry.generateWorld(i, j, this.world, this.chunkProvider, ichunkprovider); // Forge
-                
                 chunk.e();
             }
         }
@@ -293,16 +293,13 @@ public class ChunkProviderServer implements IChunkProvider {
 
     public boolean unloadChunks() {
         if (!this.world.savingDisabled) {
-        	
+            // Forge start
             Iterator var1 = this.world.getPersistentChunks().keySet().iterator();
-
-            while (var1.hasNext())
-            {
+            while (var1.hasNext()) {
                 ChunkCoordIntPair var2 = (ChunkCoordIntPair)var1.next();
                 this.unloadQueue.remove(Long.valueOf(ChunkCoordIntPair.a(var2.x, var2.z)));
             }
-
-            
+            // Forge end
             // CraftBukkit start
             Server server = this.world.getServer();
             for (int i = 0; i < 100 && !this.unloadQueue.isEmpty(); i++) {
@@ -318,20 +315,15 @@ public class ChunkProviderServer implements IChunkProvider {
                     this.saveChunkNOP(chunk);
                     // this.unloadQueue.remove(integer);
                     this.chunks.remove(chunkcoordinates); // CraftBukkit
-                    
+                    // Forge start
                     ForgeChunkManager.putDormantChunk(ChunkCoordIntPair.a(chunk.x, chunk.z), chunk);
-
-                    // Multiverse worlds don't wake up anymore
-                    
-                    if (this.chunks.size() == 0 && ForgeChunkManager.getPersistentChunksFor(this.world).size() == 0 && !DimensionManager.shouldLoadSpawn(this.world.worldProvider.dimension))
-                    {
-                    	// unly unload forge worlds under the first data folder
-                    	if (this.chunkProvider.getName().equals(MinecraftServer.getServer().worlds.get(0).chunkProvider.getName()))
-                    	{
-                    		DimensionManager.unloadWorld(this.world.dimension);
-                        	return this.chunkProvider.unloadChunks();
-                    	}
+                    if (this.chunks.size() == 0 && ForgeChunkManager.getPersistentChunksFor(this.world).size() == 0 && !DimensionManager.shouldLoadSpawn(this.world.worldProvider.dimension)) {
+                        if (this.chunkProvider.getName().equals(MinecraftServer.getServer().worlds.get(0).chunkProvider.getName())) {
+                            DimensionManager.unloadWorld(this.world.dimension);
+                            return this.chunkProvider.unloadChunks();
+                        }
                     }
+                    // Forge end
                 }
             }
             // CraftBukkit end

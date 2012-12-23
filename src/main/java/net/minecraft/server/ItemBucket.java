@@ -1,14 +1,16 @@
 package net.minecraft.server;
 
-import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.event.Event.Result;
-import net.minecraftforge.event.entity.player.FillBucketEvent;
 // CraftBukkit start
 import org.bukkit.craftbukkit.event.CraftEventFactory;
 import org.bukkit.craftbukkit.inventory.CraftItemStack;
 import org.bukkit.event.player.PlayerBucketEmptyEvent;
 import org.bukkit.event.player.PlayerBucketFillEvent;
 // CraftBukkit end
+// Forge start
+import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.event.Event.Result;
+import net.minecraftforge.event.entity.player.FillBucketEvent;
+// Forge end
 
 public class ItemBucket extends Item {
 
@@ -32,36 +34,27 @@ public class ItemBucket extends Item {
         if (movingobjectposition == null) {
             return itemstack;
         } else {
-        	// Forge start
-        	FillBucketEvent var13 = new FillBucketEvent(entityhuman, itemstack, world, movingobjectposition);
+            // Forge start
+            FillBucketEvent forgeEvent = new FillBucketEvent(entityhuman, itemstack, world, movingobjectposition);
 
-            if (MinecraftForge.EVENT_BUS.post(var13))
-            {
+            if (MinecraftForge.EVENT_BUS.post(forgeEvent)) {
                 return itemstack;
             }
-            else if (var13.getResult() == Result.ALLOW)
-            {
-                if (entityhuman.abilities.canInstantlyBuild)
-                {
+            else if (forgeEvent.getResult() == Result.ALLOW) {
+                if (entityhuman.abilities.canInstantlyBuild) {
                     return itemstack;
                 }
-                else if (--itemstack.count <= 0)
-                {
-                    return var13.result;
+                else if (--itemstack.count <= 0) {
+                    return forgeEvent.result;
                 }
-                else
-                {
-                    if (!entityhuman.inventory.pickup(var13.result))
-                    {
-                    	entityhuman.drop(var13.result);
+                else {
+                    if (!entityhuman.inventory.pickup(forgeEvent.result)) {
+                        entityhuman.drop(forgeEvent.result);
                     }
-
                     return itemstack;
-                }               
+                }
             }
             // Forge end
-            else
-            {
             if (movingobjectposition.type == EnumMovingObjectType.TILE) {
                 int i = movingobjectposition.b;
                 int j = movingobjectposition.c;

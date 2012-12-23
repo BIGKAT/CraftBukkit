@@ -25,7 +25,7 @@ public class ItemWorldMap extends ItemWorldMapBase {
 
             worldmap.centerX = Math.round((float) world.getWorldData().c() / (float) i) * i;
             worldmap.centerZ = Math.round((float) (world.getWorldData().e() / i)) * i;
-            worldmap.map = ((WorldServer) world).dimension; // CraftBukkit - fixes Bukkit multiworld maps
+            worldmap.map = (byte) ((WorldServer) world).dimension; // CraftBukkit - fixes Bukkit multiworld maps
             worldmap.c();
             world.a(s, (WorldMapBase) worldmap);
 

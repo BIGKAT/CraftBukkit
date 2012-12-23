@@ -25,7 +25,7 @@ import net.minecraft.server.EntityPlayer;
 import net.minecraft.server.INetworkManager;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.CrashReport;
-import net.minecraft.server.CrashReportCategory;
+import net.minecraft.server.CrashReportSystemDetails;
 import net.minecraft.server.DedicatedServer;
 import net.minecraft.server.Entity;
 import net.minecraft.server.EntityHuman;
@@ -391,11 +391,11 @@ public class FMLCommonHandler
         crashCallables.add(callable);
     }
 
-    public void enhanceCrashReport(CrashReport crashReport, CrashReportCategory category)
+    public void enhanceCrashReport(CrashReport crashReport, CrashReportSystemDetails category)
     {
         for (ICrashCallable call: crashCallables)
         {
-            category.addCrashSectionCallable(call.getLabel(), call);
+            category.a(call.getLabel(), call);
         }
     }
 

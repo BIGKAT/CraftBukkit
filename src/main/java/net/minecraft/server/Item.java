@@ -1,77 +1,12 @@
 package net.minecraft.server;
 
+import java.util.List;
+import java.util.Random;
+// Forge start
 import cpw.mods.fml.common.Side;
 import cpw.mods.fml.common.asm.SideOnly;
 import cpw.mods.fml.common.registry.GameData;
-
-import java.util.List;
-import java.util.Random;
-import net.minecraft.server.Block;
-import net.minecraft.server.CreativeModeTab;
-import net.minecraft.server.Entity;
-import net.minecraft.server.EntityHuman;
-import net.minecraft.server.EntityItemFrame;
-import net.minecraft.server.EntityLiving;
-import net.minecraft.server.EntityPainting;
-import net.minecraft.server.EnumAnimation;
-import net.minecraft.server.EnumArmorMaterial;
-import net.minecraft.server.EnumToolMaterial;
-import net.minecraft.server.ItemArmor;
-import net.minecraft.server.ItemAxe;
-import net.minecraft.server.ItemBed;
-import net.minecraft.server.ItemBoat;
-import net.minecraft.server.ItemBookAndQuill;
-import net.minecraft.server.ItemBow;
-import net.minecraft.server.ItemBucket;
-import net.minecraft.server.ItemCarrotStick;
-import net.minecraft.server.ItemCoal;
-import net.minecraft.server.ItemDoor;
-import net.minecraft.server.ItemDye;
-import net.minecraft.server.ItemEgg;
-import net.minecraft.server.ItemEnderEye;
-import net.minecraft.server.ItemEnderPearl;
-import net.minecraft.server.ItemExpBottle;
-import net.minecraft.server.ItemFireball;
-import net.minecraft.server.ItemFishingRod;
-import net.minecraft.server.ItemFlintAndSteel;
-import net.minecraft.server.ItemFood;
-import net.minecraft.server.ItemGlassBottle;
-import net.minecraft.server.ItemGoldenApple;
-import net.minecraft.server.ItemHanging;
-import net.minecraft.server.ItemHoe;
-import net.minecraft.server.ItemMapEmpty;
-import net.minecraft.server.ItemMilkBucket;
-import net.minecraft.server.ItemMinecart;
-import net.minecraft.server.ItemMonsterEgg;
-import net.minecraft.server.ItemNetherStar;
-import net.minecraft.server.ItemPickaxe;
-import net.minecraft.server.ItemPotion;
-import net.minecraft.server.ItemRecord;
-import net.minecraft.server.ItemRedstone;
-import net.minecraft.server.ItemReed;
-import net.minecraft.server.ItemSaddle;
-import net.minecraft.server.ItemSeedFood;
-import net.minecraft.server.ItemSeeds;
-import net.minecraft.server.ItemShears;
-import net.minecraft.server.ItemSign;
-import net.minecraft.server.ItemSkull;
-import net.minecraft.server.ItemSnowball;
-import net.minecraft.server.ItemSoup;
-import net.minecraft.server.ItemSpade;
-import net.minecraft.server.ItemStack;
-import net.minecraft.server.ItemSword;
-import net.minecraft.server.ItemWorldMap;
-import net.minecraft.server.ItemWrittenBook;
-import net.minecraft.server.LocaleI18n;
-import net.minecraft.server.LocaleLanguage;
-import net.minecraft.server.Material;
-import net.minecraft.server.MathHelper;
-import net.minecraft.server.MobEffectList;
-import net.minecraft.server.MovingObjectPosition;
-import net.minecraft.server.PotionBrewer;
-import net.minecraft.server.StatisticList;
-import net.minecraft.server.Vec3D;
-import net.minecraft.server.World;
+// Forge end
 
 public class Item {
 

@@ -6,11 +6,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.Map.Entry;
-import net.minecraft.server.BiomeBase;
-import net.minecraft.server.MathHelper;
-import net.minecraft.server.StructureGenerator;
-import net.minecraft.server.StructureStart;
-import net.minecraft.server.WorldGenVillageStart;
 
 public class WorldGenVillage extends StructureGenerator {
 

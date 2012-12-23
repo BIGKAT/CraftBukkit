@@ -1,13 +1,16 @@
 package net.minecraft.server;
 
 import org.bukkit.event.player.PlayerShearEntityEvent; // CraftBukkit
+// Forge start
 import java.util.ArrayList;
+
 import net.minecraftforge.common.IShearable;
+// Forge end
 
 public class EntityMushroomCow extends EntityCow implements IShearable { // Forge
 
-	EntityHuman shearer = null;
-	
+    EntityHuman shearer = null; // MCPC
+
     public EntityMushroomCow(World world) {
         super(world);
         this.texture = "/mob/redcow.png";
@@ -29,26 +32,20 @@ public class EntityMushroomCow extends EntityCow implements IShearable { // Forg
             }
         }
 
-        shearer = entityhuman; // for bukkit down there
+        shearer = entityhuman; // MCPC
         return super.a(entityhuman); // Forge
-
     }
 
-    public EntityMushroomCow c(EntityAgeable entityageable) {
-        return new EntityMushroomCow(this.world);
-    }
-    
+    // Forge start
     @Override
-    public boolean isShearable(ItemStack var1, World var2, int var3, int var4, int var5)
-    {
+    public boolean isShearable(ItemStack var1, World var2, int var3, int var4, int var5) {
         return this.getAge() >= 0;
     }
 
     @Override
-    public ArrayList<ItemStack> onSheared(ItemStack item, World world, int X, int Y, int Z, int fortune) 
-    {
-    	 ArrayList<ItemStack> ret = new ArrayList<ItemStack>();
-    	
+    public ArrayList<ItemStack> onSheared(ItemStack item, World world, int X, int Y, int Z, int fortune) {
+         ArrayList<ItemStack> ret = new ArrayList<ItemStack>();
+
         // CraftBukkit start
         PlayerShearEntityEvent event = new PlayerShearEntityEvent((org.bukkit.entity.Player) shearer.getBukkitEntity(), this.getBukkitEntity());
         this.world.getServer().getPluginManager().callEvent(event);
@@ -67,13 +64,17 @@ public class EntityMushroomCow extends EntityCow implements IShearable { // Forg
         this.world.addEntity(entitycow);
         this.world.addParticle("largeexplode", this.locX, this.locY + (double)(this.length / 2.0F), this.locZ, 0.0D, 0.0D, 0.0D);
         
-        for (int var9 = 0; var9 < 5; ++var9)
-        {
+        for (int i = 0; i < 5; ++i) {
             ret.add(new ItemStack(Block.RED_MUSHROOM));
         }
 
         return ret;
-        // Forge end
+    }
+    // Forge end
+
+
+    public EntityMushroomCow c(EntityAgeable entityageable) {
+        return new EntityMushroomCow(this.world);
     }
 
     public EntityCow b(EntityAgeable entityageable) {

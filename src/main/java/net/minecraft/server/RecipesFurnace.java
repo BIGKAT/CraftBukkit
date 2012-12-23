@@ -1,15 +1,19 @@
 package net.minecraft.server;
 
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+// Forge start
+import java.util.Arrays;
+import java.util.List;
+// Forge end
 
 public class RecipesFurnace {
 
     private static final RecipesFurnace a = new RecipesFurnace();
     public Map recipes = new HashMap(); // CraftBukkit - private -> public
     private Map c = new HashMap();
-    private Map metaSmeltingList = new HashMap();
+    private HashMap<List<Integer>, ItemStack> metaSmeltingList = new HashMap<List<Integer>, ItemStack>(); // Forge
+    private HashMap<List<Integer>, Float> metaExperience = new HashMap<List<Integer>, Float>(); // Forge
 
     public static final RecipesFurnace getInstance() {
         return a;
@@ -40,6 +44,7 @@ public class RecipesFurnace {
         this.c.put(Integer.valueOf(itemstack.id), Float.valueOf(f));
     }
 
+    @Deprecated // Forge
     public ItemStack getResult(int i) {
         return (ItemStack) this.recipes.get(Integer.valueOf(i));
     }
@@ -48,31 +53,71 @@ public class RecipesFurnace {
         return this.recipes;
     }
 
+    @Deprecated // Forge - In favor of ItemStack sensitive version
     public float c(int i) {
         return this.c.containsKey(Integer.valueOf(i)) ? ((Float) this.c.get(Integer.valueOf(i))).floatValue() : 0.0F;
     }
     
-    public void addSmelting(int var1, int var2, ItemStack var3, float f)
+    // Forge start   
+    /**
+     * Add a metadata-sensitive furnace recipe
+     * @param itemID The Item ID
+     * @param metadata The Item Metadata
+     * @param itemstack The ItemStack for the result
+     */
+    @Deprecated //In favor of the exp version, will remove next major MC version.
+    public void addSmelting(int itemID, int metadata, ItemStack itemstack)
     {
-        this.metaSmeltingList.put(Arrays.asList(new Integer[] {Integer.valueOf(var1), Integer.valueOf(var2)}), var3);
-        this.c.put(Integer.valueOf(var3.id), Float.valueOf(f));
+        addSmelting(itemID, metadata, itemstack, 0.0f);
     }
-
-    public void addSmelting(int var1, int var2, ItemStack var3)
+     
+    /**
+     * A metadata sensitive version of adding a furnace recipe.
+     */
+    public void addSmelting(int itemID, int metadata, ItemStack itemstack, float experience)
     {
-        this.metaSmeltingList.put(Arrays.asList(new Integer[] {Integer.valueOf(var1), Integer.valueOf(var2)}), var3);
+        metaSmeltingList.put(Arrays.asList(itemID, metadata), itemstack);
+        metaExperience.put(Arrays.asList(itemID, metadata), experience);
     }
-
-    public ItemStack getSmeltingResult(ItemStack var1)
+     
+    /**
+     * Used to get the resulting ItemStack form a source ItemStack
+     * @param item The Source ItemStack
+     * @return The result ItemStack
+     */
+    public ItemStack getSmeltingResult(ItemStack item) 
     {
-        if (var1 == null)
+        if (item == null)
         {
             return null;
         }
-        else
+        ItemStack ret = (ItemStack)metaSmeltingList.get(Arrays.asList(item.id, item.getData()));
+        if (ret != null) 
         {
-            ItemStack var2 = (ItemStack)this.metaSmeltingList.get(Arrays.asList(new Integer[] {Integer.valueOf(var1.id), Integer.valueOf(var1.getData())}));
-            return var2 != null ? var2 : (ItemStack)this.recipes.get(Integer.valueOf(var1.id));
+            return ret;
         }
+        return (ItemStack)recipes.get(Integer.valueOf(item.id));
     }
+     
+    /**
+     * Grabs the amount of base experience for this item to give when pulled from the furnace slot.
+     */
+    public float getExperience(ItemStack item)
+    {
+        if (item == null || item.getItem() == null)
+        {
+            return 0;
+        }
+        float ret = item.getItem().getSmeltingExperience(item);
+        if (ret < 0 && metaExperience.containsKey(Arrays.asList(item.id, item.getData())))
+        {
+            ret = metaExperience.get(Arrays.asList(item.id, item.getData()));
+        }
+        if (ret < 0 && c.containsKey(item.id))
+        {
+            ret = ((Float)c.get(item.id)).floatValue();
+        }
+        return (ret < 0 ? 0 : ret);
+   }
+    // Forge end
 }

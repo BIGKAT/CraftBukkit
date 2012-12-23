@@ -2,10 +2,11 @@ package net.minecraft.server;
 
 import java.util.List;
 import java.util.Random;
-import net.minecraftforge.common.ChestGenHooks;
 
-public class WorldGenStrongholdLibrary extends WorldGenStrongholdPiece
-{
+import net.minecraftforge.common.ChestGenHooks; // Forge
+
+public class WorldGenStrongholdLibrary extends WorldGenStrongholdPiece {
+
     /** List of items that Stronghold Library chests can contain. */
     public static final StructurePieceTreasure[] b = new StructurePieceTreasure[] {new StructurePieceTreasure(Item.BOOK.id, 0, 1, 3, 20), new StructurePieceTreasure(Item.PAPER.id, 0, 2, 7, 20), new StructurePieceTreasure(Item.MAP_EMPTY.id, 0, 1, 1, 1), new StructurePieceTreasure(Item.COMPASS.id, 0, 1, 1, 1)};
     protected final WorldGenStrongholdDoorType a;

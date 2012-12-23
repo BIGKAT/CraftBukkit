@@ -1,9 +1,11 @@
 package net.minecraft.server;
 
-import cpw.mods.fml.common.Side;
-import cpw.mods.fml.common.asm.SideOnly;
 import java.util.List;
 import java.util.Random;
+// Forge start
+import cpw.mods.fml.common.Side;
+import cpw.mods.fml.common.asm.SideOnly;
+// Forge end
 
 public class BlockLog extends Block
 {

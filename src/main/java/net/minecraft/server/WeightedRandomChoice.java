@@ -1,11 +1,10 @@
 package net.minecraft.server;
 
-public class WeightedRandomChoice
-{
-  public int a;
+public class WeightedRandomChoice {
 
-  public WeightedRandomChoice(int paramInt)
-  {
-    this.a = paramInt;
-  }
+    public int a;
+
+    public WeightedRandomChoice(int paramInt) {
+        this.a = paramInt;
+    }
 }

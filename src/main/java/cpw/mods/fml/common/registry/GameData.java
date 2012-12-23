@@ -278,7 +278,7 @@ public class GameData {
         for (ItemData dat : idMap.values())
         {
 	        // MCPC - some classes are used more then once and need to be handled
-	        if (dat.itemType.equals("net.minecraft.server.ItemWithAuxData"))
+	        if (dat.itemType.equalsIgnoreCase("net.minecraft.server.ItemWithAuxData"))
 	        {
 	        	switch(dat.itemId)
 	        	{
@@ -298,7 +298,7 @@ public class GameData {
 	        }
 
 	        // MCPC - strip out NMS so we can search id map
-	        String[] replace = dat.itemType.split("net\\.minecraft\\.server\\.");
+	        String[] replace = dat.itemType.split("net\\.minecraft\\.server\\.v1_4_5.");
 	        
 	        // MCPC - if not a custom class, proceed
 	        if (replace.length > 1) // vanilla

@@ -1,13 +1,15 @@
 package net.minecraft.server;
 
-import cpw.mods.fml.common.Side;
-import cpw.mods.fml.common.asm.SideOnly;
-import cpw.mods.fml.common.registry.VillagerRegistry;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Random;
+// Forge start
+import cpw.mods.fml.common.Side;
+import cpw.mods.fml.common.asm.SideOnly;
+import cpw.mods.fml.common.registry.VillagerRegistry;
+// Forge end
 
 public class EntityVillager extends EntityAgeable implements NPC, IMerchant
 {

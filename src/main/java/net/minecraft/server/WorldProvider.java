@@ -1,11 +1,12 @@
 package net.minecraft.server;
-
+// Forge start
 import cpw.mods.fml.common.Side;
 import cpw.mods.fml.common.asm.SideOnly;
 import net.minecraftforge.common.DimensionManager;
+// Forge end
 
-public abstract class WorldProvider
-{
+public abstract class WorldProvider {
+
     /** world object being used */
     public World a;
     public WorldType type;

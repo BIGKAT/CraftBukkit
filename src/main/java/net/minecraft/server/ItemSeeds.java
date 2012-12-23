@@ -1,9 +1,11 @@
 package net.minecraft.server;
 
 import org.bukkit.craftbukkit.block.CraftBlockState; // CraftBukkit
+// Forge start
 import net.minecraftforge.common.EnumPlantType;
 import net.minecraftforge.common.ForgeDirection;
 import net.minecraftforge.common.IPlantable;
+// Forge end
 
 public class ItemSeeds extends Item implements IPlantable { // Forge
 
@@ -24,7 +26,7 @@ public class ItemSeeds extends Item implements IPlantable { // Forge
             int i1 = world.getTypeId(i, j, k);
             Block block = Block.byId[i1]; // Forge
 
-            if (block != null && block.canSustainPlant(world, i, j, k, ForgeDirection.UP, this) && world.isEmpty(i, j + 1, k)) {
+            if (block != null && block.canSustainPlant(world, i, j, k, ForgeDirection.UP, this) && world.isEmpty(i, j + 1, k)) { // Forge
                 CraftBlockState blockState = CraftBlockState.getBlockState(world, i, j + 1, k); // CraftBukkit
 
                 world.setTypeId(i, j + 1, k, this.id);

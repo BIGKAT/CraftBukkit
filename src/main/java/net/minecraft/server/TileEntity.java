@@ -1,12 +1,15 @@
 package net.minecraft.server;
 
-import cpw.mods.fml.common.FMLLog;
-import cpw.mods.fml.common.Side;
-import cpw.mods.fml.common.asm.SideOnly;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Callable;
+// Forge start
 import java.util.logging.Level;
+
+import cpw.mods.fml.common.FMLLog;
+import cpw.mods.fml.common.Side;
+import cpw.mods.fml.common.asm.SideOnly;
+// Forge end
 
 import org.bukkit.inventory.InventoryHolder; // CraftBukkit
 
@@ -123,7 +126,7 @@ public class TileEntity {
         }
 
         if (tileentity != null) {
-        	// Forge start
+            // Forge start
             try {
             tileentity.a(nbttagcompound);
             }

@@ -702,4 +702,328 @@ public enum Material {
     public boolean isRecord() {
         return id >= GOLD_RECORD.id && id <= RECORD_12.id;
     }
+
+    /**
+     * Check if the material is a block and solid (cannot be passed through by a player)
+     *
+     * @return True if this material is a block and solid
+     */
+    public boolean isSolid() {
+        if (!isBlock() || id == 0) {
+            return false;
+        }
+        switch (this) {
+            case STONE:
+            case GRASS:
+            case DIRT:
+            case COBBLESTONE:
+            case WOOD:
+            case BEDROCK:
+            case SAND:
+            case GRAVEL:
+            case GOLD_ORE:
+            case IRON_ORE:
+            case COAL_ORE:
+            case LOG:
+            case LEAVES:
+            case SPONGE:
+            case GLASS:
+            case LAPIS_ORE:
+            case LAPIS_BLOCK:
+            case DISPENSER:
+            case SANDSTONE:
+            case NOTE_BLOCK:
+            case BED_BLOCK:
+            case PISTON_STICKY_BASE:
+            case PISTON_BASE:
+            case PISTON_EXTENSION:
+            case WOOL:
+            case PISTON_MOVING_PIECE:
+            case GOLD_BLOCK:
+            case IRON_BLOCK:
+            case DOUBLE_STEP:
+            case STEP:
+            case BRICK:
+            case TNT:
+            case BOOKSHELF:
+            case MOSSY_COBBLESTONE:
+            case OBSIDIAN:
+            case MOB_SPAWNER:
+            case WOOD_STAIRS:
+            case CHEST:
+            case DIAMOND_ORE:
+            case DIAMOND_BLOCK:
+            case WORKBENCH:
+            case SOIL:
+            case FURNACE:
+            case BURNING_FURNACE:
+            case SIGN_POST:
+            case WOODEN_DOOR:
+            case COBBLESTONE_STAIRS:
+            case WALL_SIGN:
+            case STONE_PLATE:
+            case IRON_DOOR_BLOCK:
+            case WOOD_PLATE:
+            case REDSTONE_ORE:
+            case GLOWING_REDSTONE_ORE:
+            case ICE:
+            case SNOW_BLOCK:
+            case CACTUS:
+            case CLAY:
+            case JUKEBOX:
+            case FENCE:
+            case PUMPKIN:
+            case NETHERRACK:
+            case SOUL_SAND:
+            case GLOWSTONE:
+            case JACK_O_LANTERN:
+            case CAKE_BLOCK:
+            case LOCKED_CHEST:
+            case TRAP_DOOR:
+            case MONSTER_EGGS:
+            case SMOOTH_BRICK:
+            case HUGE_MUSHROOM_1:
+            case HUGE_MUSHROOM_2:
+            case IRON_FENCE:
+            case THIN_GLASS:
+            case MELON_BLOCK:
+            case FENCE_GATE:
+            case BRICK_STAIRS:
+            case SMOOTH_STAIRS:
+            case MYCEL:
+            case NETHER_BRICK:
+            case NETHER_FENCE:
+            case NETHER_BRICK_STAIRS:
+            case ENCHANTMENT_TABLE:
+            case BREWING_STAND:
+            case CAULDRON:
+            case ENDER_PORTAL_FRAME:
+            case ENDER_STONE:
+            case DRAGON_EGG:
+            case REDSTONE_LAMP_OFF:
+            case REDSTONE_LAMP_ON:
+            case WOOD_DOUBLE_STEP:
+            case WOOD_STEP:
+            case SANDSTONE_STAIRS:
+            case EMERALD_ORE:
+            case ENDER_CHEST:
+            case EMERALD_BLOCK:
+            case SPRUCE_WOOD_STAIRS:
+            case BIRCH_WOOD_STAIRS:
+            case JUNGLE_WOOD_STAIRS:
+            case COMMAND:
+            case BEACON:
+            case COBBLE_WALL:
+            case ANVIL:
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    /**
+     * Check if the material is a block and does not block any light
+     *
+     * @return True if this material is a block and does not block any light
+     */
+    public boolean isTransparent() {
+        if (!isBlock()) {
+            return false;
+        }
+        switch (this) {
+            case AIR:
+            case SAPLING:
+            case POWERED_RAIL:
+            case DETECTOR_RAIL:
+            case LONG_GRASS:
+            case DEAD_BUSH:
+            case YELLOW_FLOWER:
+            case RED_ROSE:
+            case BROWN_MUSHROOM:
+            case RED_MUSHROOM:
+            case TORCH:
+            case FIRE:
+            case REDSTONE_WIRE:
+            case CROPS:
+            case LADDER:
+            case RAILS:
+            case LEVER:
+            case REDSTONE_TORCH_OFF:
+            case REDSTONE_TORCH_ON:
+            case STONE_BUTTON:
+            case SNOW:
+            case SUGAR_CANE_BLOCK:
+            case PORTAL:
+            case DIODE_BLOCK_OFF:
+            case DIODE_BLOCK_ON:
+            case PUMPKIN_STEM:
+            case MELON_STEM:
+            case VINE:
+            case WATER_LILY:
+            case NETHER_WARTS:
+            case ENDER_PORTAL:
+            case COCOA:
+            case TRIPWIRE_HOOK:
+            case TRIPWIRE:
+            case FLOWER_POT:
+            case CARROT:
+            case POTATO:
+            case WOOD_BUTTON:
+            case SKULL:
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    /**
+     * Check if the material is a block and can catch fire
+     *
+     * @return True if this material is a block and can catch fire
+     */
+    public boolean isFlammable() {
+        if (!isBlock()) {
+            return false;
+        }
+        switch (this) {
+            case WOOD:
+            case LOG:
+            case LEAVES:
+            case NOTE_BLOCK:
+            case BED_BLOCK:
+            case LONG_GRASS:
+            case DEAD_BUSH:
+            case WOOL:
+            case TNT:
+            case BOOKSHELF:
+            case WOOD_STAIRS:
+            case CHEST:
+            case WORKBENCH:
+            case SIGN_POST:
+            case WOODEN_DOOR:
+            case WALL_SIGN:
+            case WOOD_PLATE:
+            case JUKEBOX:
+            case FENCE:
+            case LOCKED_CHEST:
+            case TRAP_DOOR:
+            case HUGE_MUSHROOM_1:
+            case HUGE_MUSHROOM_2:
+            case VINE:
+            case FENCE_GATE:
+            case WOOD_DOUBLE_STEP:
+            case WOOD_STEP:
+            case SPRUCE_WOOD_STAIRS:
+            case BIRCH_WOOD_STAIRS:
+            case JUNGLE_WOOD_STAIRS:
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    /**
+     * Check if the material is a block and can burn away
+     *
+     * @return True if this material is a block and can burn away
+     */
+    public boolean isBurnable() {
+        if (!isBlock()) {
+            return false;
+        }
+        switch (this) {
+            case WOOD:
+            case LOG:
+            case LEAVES:
+            case LONG_GRASS:
+            case WOOL:
+            case TNT:
+            case BOOKSHELF:
+            case WOOD_STAIRS:
+            case FENCE:
+            case VINE:
+            case WOOD_DOUBLE_STEP:
+            case WOOD_STEP:
+            case SPRUCE_WOOD_STAIRS:
+            case BIRCH_WOOD_STAIRS:
+            case JUNGLE_WOOD_STAIRS:
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    /**
+     * Check if the material is a block and completely blocks vision
+     *
+     * @return True if this material is a block and completely blocks vision
+     */
+    public boolean isOccluding() {
+        if (!isBlock()) {
+            return false;
+        }
+        switch (this) {
+            case STONE:
+            case GRASS:
+            case DIRT:
+            case COBBLESTONE:
+            case WOOD:
+            case BEDROCK:
+            case SAND:
+            case GRAVEL:
+            case GOLD_ORE:
+            case IRON_ORE:
+            case COAL_ORE:
+            case LOG:
+            case SPONGE:
+            case LAPIS_ORE:
+            case LAPIS_BLOCK:
+            case DISPENSER:
+            case SANDSTONE:
+            case NOTE_BLOCK:
+            case WOOL:
+            case GOLD_BLOCK:
+            case IRON_BLOCK:
+            case DOUBLE_STEP:
+            case BRICK:
+            case BOOKSHELF:
+            case MOSSY_COBBLESTONE:
+            case OBSIDIAN:
+            case MOB_SPAWNER:
+            case DIAMOND_ORE:
+            case DIAMOND_BLOCK:
+            case WORKBENCH:
+            case FURNACE:
+            case BURNING_FURNACE:
+            case REDSTONE_ORE:
+            case GLOWING_REDSTONE_ORE:
+            case SNOW_BLOCK:
+            case CLAY:
+            case JUKEBOX:
+            case PUMPKIN:
+            case NETHERRACK:
+            case SOUL_SAND:
+            case JACK_O_LANTERN:
+            case LOCKED_CHEST:
+            case MONSTER_EGGS:
+            case SMOOTH_BRICK:
+            case HUGE_MUSHROOM_1:
+            case HUGE_MUSHROOM_2:
+            case MELON_BLOCK:
+            case MYCEL:
+            case NETHER_BRICK:
+            case ENDER_PORTAL_FRAME:
+            case ENDER_STONE:
+            case REDSTONE_LAMP_OFF:
+            case REDSTONE_LAMP_ON:
+            case WOOD_DOUBLE_STEP:
+            case EMERALD_ORE:
+            case EMERALD_BLOCK:
+            case COMMAND:
+                return true;
+            default:
+                return false;
+        }
+    }
+
 }

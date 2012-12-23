@@ -1,14 +1,17 @@
 package net.minecraft.server;
 
-import java.util.List;
-import net.minecraftforge.common.ForgeHooks;
-import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.event.Event.Result;
-import net.minecraftforge.event.entity.player.BonemealEvent;
 // CraftBukkit start
 import org.bukkit.entity.Player;
 import org.bukkit.event.entity.SheepDyeWoolEvent;
 // CraftBukkit end
+// Forge start
+import java.util.List;
+
+import net.minecraftforge.common.ForgeHooks;
+import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.event.Event.Result;
+import net.minecraftforge.event.entity.player.BonemealEvent;
+// Forge end
 
 public class ItemDye extends Item {
 
@@ -41,7 +44,7 @@ public class ItemDye extends Item {
                 // Forge start
                 BonemealEvent event = new BonemealEvent(entityhuman, world, i1, i, j, k);
                 if (MinecraftForge.EVENT_BUS.post(event)) return false;
-                if (var13.getResult() == Result.ALLOW) {
+                if (event.getResult() == Result.ALLOW) {
                     if (!world.isStatic) --itemstack.count;
                     return true;
                 }

@@ -2,8 +2,8 @@ package net.minecraft.server;
 
 import java.util.Random;
 
-class WorldGenStrongholdStones extends StructurePieceBlockSelector
-{
+class WorldGenStrongholdStones extends StructurePieceBlockSelector {
+
   public void a(Random paramRandom, int paramInt1, int paramInt2, int paramInt3, boolean paramBoolean)
   {
     if (paramBoolean) {

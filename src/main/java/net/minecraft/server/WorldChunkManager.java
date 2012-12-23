@@ -1,16 +1,19 @@
 package net.minecraft.server;
 
-import cpw.mods.fml.common.Side;
-import cpw.mods.fml.common.asm.SideOnly;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
-import static net.minecraft.server.BiomeBase.*;
+// Forge start
+import cpw.mods.fml.common.Side;
+import cpw.mods.fml.common.asm.SideOnly;
 
-public class WorldChunkManager
-{
-	public static ArrayList<BiomeBase> allowedBiomes = new ArrayList<BiomeBase>(Arrays.asList(FOREST, PLAINS, TAIGA, TAIGA_HILLS, FOREST_HILLS, JUNGLE, JUNGLE_HILLS));
+import static net.minecraft.server.BiomeBase.*;
+// Forge end
+
+public class WorldChunkManager {
+
+    public static ArrayList<BiomeBase> allowedBiomes = new ArrayList<BiomeBase>(Arrays.asList(FOREST, PLAINS, TAIGA, TAIGA_HILLS, FOREST_HILLS, JUNGLE, JUNGLE_HILLS));
     private GenLayer d;
 
     /** A GenLayer containing the indices into BiomeBase.biomeList[] */

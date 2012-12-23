@@ -1,8 +1,5 @@
 package net.minecraft.server;
 
-import cpw.mods.fml.common.Side;
-import cpw.mods.fml.common.asm.SideOnly;
-import cpw.mods.fml.common.registry.LanguageRegistry;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -10,9 +7,14 @@ import java.util.Enumeration;
 import java.util.IllegalFormatException;
 import java.util.Properties;
 import java.util.TreeMap;
+// Forge start
+import cpw.mods.fml.common.Side;
+import cpw.mods.fml.common.asm.SideOnly;
+import cpw.mods.fml.common.registry.LanguageRegistry;
+// Forge end
 
-public class LocaleLanguage
-{
+public class LocaleLanguage {
+
     /** Is the private singleton instance of StringTranslate. */
     private static LocaleLanguage a = new LocaleLanguage("en_US");
 

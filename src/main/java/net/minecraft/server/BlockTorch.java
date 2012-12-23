@@ -1,10 +1,11 @@
 package net.minecraft.server;
-
+// Forge start
 import cpw.mods.fml.common.Side;
 import cpw.mods.fml.common.asm.SideOnly;
 import java.util.Random;
 import net.minecraftforge.common.ForgeDirection;
 import static net.minecraftforge.common.ForgeDirection.*;
+// Forge end
 
 public class BlockTorch extends Block
 {

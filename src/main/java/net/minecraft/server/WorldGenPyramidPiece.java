@@ -3,8 +3,8 @@ package net.minecraft.server;
 import java.util.Random;
 import net.minecraftforge.common.ChestGenHooks;
 
-public class WorldGenPyramidPiece extends WorldGenScatteredPiece
-{
+public class WorldGenPyramidPiece extends WorldGenScatteredPiece {
+
     private boolean[] field_74940_h = new boolean[4];
 
     /** List of items to generate in chests of Temples. */

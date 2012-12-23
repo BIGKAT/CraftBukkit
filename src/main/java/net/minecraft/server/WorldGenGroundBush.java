@@ -21,13 +21,17 @@ public class WorldGenGroundBush extends WorldGenerator implements BlockSapling.T
 
     public boolean generate(BlockChangeDelegate world, Random random, int i, int j, int k) {
         // CraftBukkit end
-        int l;
 
-        World w = world instanceof World ? (World) world : null;
+        World w = world instanceof World ? (World)world : null;      
         Block block = null;
-        for (boolean flag = false; ((block = Block.byId[world.getTypeId(i, j, k))] == null && !isLeaves(w, i, j, k)) && j > 0; --j) {
-            ;
+        do {
+            block = Block.byId[world.getTypeId(i, j, k)];
+            if (block != null && !block.isLeaves(w, i, j, k)) {
+                break;
         }
+            --j;
+        }
+        while (j > 0);
 
         int i1 = world.getTypeId(i, j, k);
 
@@ -44,9 +48,9 @@ public class WorldGenGroundBush extends WorldGenerator implements BlockSapling.T
 
                     for (int k2 = k - l1; k2 <= k + l1; ++k2) {
                         int l2 = k2 - k;
-                        block = Block.byId[world.getTypeId(i2, j1, k2)];
+                        block = Block.byId[world.getTypeId(i2, j1, k2)]; // Forge
 
-                        if ((Math.abs(j2) != l1 || Math.abs(l2) != l1 || random.nextInt(2) != 0) && (block == null || block.canBeReplacedByLeaves(w, i2, j1, k2))) {
+                        if ((Math.abs(j2) != l1 || Math.abs(l2) != l1 || random.nextInt(2) != 0) && (block == null || block.canBeReplacedByLeaves((World)world, i2, j1, k2))) { // Forge
                             this.setTypeAndData(world, i2, j1, k2, Block.LEAVES.id, this.a);
                         }
                     }

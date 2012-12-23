@@ -8,10 +8,6 @@ import org.bukkit.entity.HumanEntity;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
 
-import net.minecraft.server.EntityHuman;
-import net.minecraft.server.IInventory;
-import net.minecraft.server.ItemStack;
-
 public class FakeInventory implements IInventory, InventoryHolder 
 {
 	public ItemStack[] items;

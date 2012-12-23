@@ -1,7 +1,7 @@
 package net.minecraft.server;
 
-public class ItemMilkBucket extends Item
-{
+public class ItemMilkBucket extends Item {
+
     public ItemMilkBucket(int var1)
     {
         super(var1);

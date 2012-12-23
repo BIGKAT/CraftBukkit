@@ -1,9 +1,13 @@
 package net.minecraft.server;
 
-import java.util.ArrayList;
 import java.util.Random;
-import net.minecraftforge.common.IShearable;
+
 import org.bukkit.event.block.LeavesDecayEvent; // CraftBukkit
+// Forge start
+import java.util.ArrayList;
+
+import net.minecraftforge.common.IShearable;
+// Forge end
 
 public class BlockLeaves extends BlockTransparant implements IShearable { // Forge
 
@@ -28,111 +32,83 @@ public class BlockLeaves extends BlockTransparant implements IShearable { // For
                     for (int i2 = -b0; i2 <= b0; ++i2) {
                         int j2 = world.getTypeId(i + k1, j + l1, k + i2);
                         // Forge start
-                        if (Block.byId[j2] != null)
-                        {
+                        if (Block.byId[j2] != null) {
                             Block.byId[j2].beginLeavesDecay(world, i + k1, j + l1, k + i2);
-                        } // Forge end
+                        // Forge end
+                        }
                     }
                 }
             }
         }
     }
-    
-    /**
-     * Ticks the block if it's been scheduled
-     */
-    public void b(World var1, int var2, int var3, int var4, Random var5)
-    {
-        if (!var1.isStatic)
-        {
-            int var6 = var1.getData(var2, var3, var4);
 
-            if ((var6 & 8) != 0 && (var6 & 4) == 0)
-            {
-                byte var7 = 4;
-                int var8 = var7 + 1;
-                byte var9 = 32;
-                int var10 = var9 * var9;
-                int var11 = var9 / 2;
+    public void b(World world, int i, int j, int k, Random random) {
+        if (!world.isStatic) {
+            int l = world.getData(i, j, k);
 
-                if (this.b == null)
-                {
-                    this.b = new int[var9 * var9 * var9];
+            if ((l & 8) != 0 && (l & 4) == 0) {
+                byte b0 = 4;
+                int i1 = b0 + 1;
+                byte b1 = 32;
+                int j1 = b1 * b1;
+                int k1 = b1 / 2;
+
+                if (this.b == null) {
+                    this.b = new int[b1 * b1 * b1];
                 }
 
-                int var12;
+                int l1;
 
-                if (var1.d(var2 - var8, var3 - var8, var4 - var8, var2 + var8, var3 + var8, var4 + var8))
-                {
-                    int var13;
-                    int var14;
-                    int var15;
+                if (world.d(i - i1, j - i1, k - i1, i + i1, j + i1, k + i1)) {
+                    int i2;
+                    int j2;
+                    int k2;
 
-                    for (var12 = -var7; var12 <= var7; ++var12)
-                    {
-                        for (var13 = -var7; var13 <= var7; ++var13)
-                        {
-                            for (var14 = -var7; var14 <= var7; ++var14)
-                            {
-                                var15 = var1.getTypeId(var2 + var12, var3 + var13, var4 + var14);
+                    for (l1 = -b0; l1 <= b0; ++l1) {
+                        for (i2 = -b0; i2 <= b0; ++i2) {
+                            for (j2 = -b0; j2 <= b0; ++j2) {
+                                k2 = world.getTypeId(i + l1, j + i2, k + j2);
                                 // Forge start
-                                Block block = Block.byId[var15];
-
-                                if (block != null && block.canSustainLeaves(var1, var2 + var12, var3 + var13, var4 + var14))
-                                { 
-                                	// Forge end
-                                    this.b[(var12 + var11) * var10 + (var13 + var11) * var9 + var14 + var11] = 0;
-                                }
-                                else if (block != null && block.isLeaves(var1, var2 + var12, var3 + var13, var4 + var14)) // Forge
-                                {
-                                    this.b[(var12 + var11) * var10 + (var13 + var11) * var9 + var14 + var11] = -2;
-                                }
-                                else
-                                {
-                                    this.b[(var12 + var11) * var10 + (var13 + var11) * var9 + var14 + var11] = -1;
+                                Block block = Block.byId[k2];
+                                if (block != null && block.canSustainLeaves(world, i + l1, j + i2, k + j2)) { 
+                                // Forge end
+                                    this.b[(l1 + k1) * j1 + (i2 + k1) * b1 + j2 + k1] = 0;
+                                } else if (block != null && block.isLeaves(world, i + l1, j + i2, k + j2)) { // Forge
+                                    this.b[(l1 + k1) * j1 + (i2 + k1) * b1 + j2 + k1] = -2;
+                                } else {
+                                    this.b[(l1 + k1) * j1 + (i2 + k1) * b1 + j2 + k1] = -1;
                                 }
                             }
                         }
                     }
 
-                    for (var12 = 1; var12 <= 4; ++var12)
-                    {
-                        for (var13 = -var7; var13 <= var7; ++var13)
-                        {
-                            for (var14 = -var7; var14 <= var7; ++var14)
-                            {
-                                for (var15 = -var7; var15 <= var7; ++var15)
-                                {
-                                    if (this.b[(var13 + var11) * var10 + (var14 + var11) * var9 + var15 + var11] == var12 - 1)
-                                    {
-                                        if (this.b[(var13 + var11 - 1) * var10 + (var14 + var11) * var9 + var15 + var11] == -2)
-                                        {
-                                            this.b[(var13 + var11 - 1) * var10 + (var14 + var11) * var9 + var15 + var11] = var12;
+                    for (l1 = 1; l1 <= 4; ++l1) {
+                        for (i2 = -b0; i2 <= b0; ++i2) {
+                            for (j2 = -b0; j2 <= b0; ++j2) {
+                                for (k2 = -b0; k2 <= b0; ++k2) {
+                                    if (this.b[(i2 + k1) * j1 + (j2 + k1) * b1 + k2 + k1] == l1 - 1) {
+                                        if (this.b[(i2 + k1 - 1) * j1 + (j2 + k1) * b1 + k2 + k1] == -2) {
+                                            this.b[(i2 + k1 - 1) * j1 + (j2 + k1) * b1 + k2 + k1] = l1;
                                         }
 
-                                        if (this.b[(var13 + var11 + 1) * var10 + (var14 + var11) * var9 + var15 + var11] == -2)
-                                        {
-                                            this.b[(var13 + var11 + 1) * var10 + (var14 + var11) * var9 + var15 + var11] = var12;
+                                        if (this.b[(i2 + k1 + 1) * j1 + (j2 + k1) * b1 + k2 + k1] == -2) {
+                                            this.b[(i2 + k1 + 1) * j1 + (j2 + k1) * b1 + k2 + k1] = l1;
                                         }
 
-                                        if (this.b[(var13 + var11) * var10 + (var14 + var11 - 1) * var9 + var15 + var11] == -2)
-                                        {
-                                            this.b[(var13 + var11) * var10 + (var14 + var11 - 1) * var9 + var15 + var11] = var12;
+                                        if (this.b[(i2 + k1) * j1 + (j2 + k1 - 1) * b1 + k2 + k1] == -2) {
+                                            this.b[(i2 + k1) * j1 + (j2 + k1 - 1) * b1 + k2 + k1] = l1;
                                         }
 
-                                        if (this.b[(var13 + var11) * var10 + (var14 + var11 + 1) * var9 + var15 + var11] == -2)
-                                        {
-                                            this.b[(var13 + var11) * var10 + (var14 + var11 + 1) * var9 + var15 + var11] = var12;
+                                        if (this.b[(i2 + k1) * j1 + (j2 + k1 + 1) * b1 + k2 + k1] == -2) {
+                                            this.b[(i2 + k1) * j1 + (j2 + k1 + 1) * b1 + k2 + k1] = l1;
                                         }
 
-                                        if (this.b[(var13 + var11) * var10 + (var14 + var11) * var9 + (var15 + var11 - 1)] == -2)
-                                        {
-                                            this.b[(var13 + var11) * var10 + (var14 + var11) * var9 + (var15 + var11 - 1)] = var12;
+                                        if (this.b[(i2 + k1) * j1 + (j2 + k1) * b1 + (k2 + k1 - 1)] == -2) {
+                                            this.b[(i2 + k1) * j1 + (j2 + k1) * b1 + (k2 + k1 - 1)] = l1;
                                         }
 
-                                        if (this.b[(var13 + var11) * var10 + (var14 + var11) * var9 + var15 + var11 + 1] == -2)
-                                        {
-                                            this.b[(var13 + var11) * var10 + (var14 + var11) * var9 + var15 + var11 + 1] = var12;
+                                        if (this.b[(i2 + k1) * j1 + (j2 + k1) * b1 + k2 + k1 + 1] == -2) {
+                                            this.b[(i2 + k1) * j1 + (j2 + k1) * b1 + k2 + k1 + 1] = l1;
                                         }
                                     }
                                 }
@@ -141,15 +117,11 @@ public class BlockLeaves extends BlockTransparant implements IShearable { // For
                     }
                 }
 
-                var12 = this.b[var11 * var10 + var11 * var9 + var11];
-
-                if (var12 >= 0)
-                {
-                    var1.setRawData(var2, var3, var4, var6 & -9);
-                }
-                else
-                {
-                    this.l(var1, var2, var3, var4);
+                l1 = this.b[k1 * j1 + k1 * b1 + k1];
+                if (l1 >= 0) {
+                    world.setRawData(i, j, k, l & -9);
+                } else {
+                    this.l(world, i, j, k);
                 }
             }
         }
@@ -214,25 +186,21 @@ public class BlockLeaves extends BlockTransparant implements IShearable { // For
     }
     
     // Forge start
-    public boolean isShearable(ItemStack var1, World var2, int var3, int var4, int var5)
-    {
+    public boolean isShearable(ItemStack itemstack, World world, int i, int j, int k) {
         return true;
     }
 
-    public ArrayList onSheared(ItemStack var1, World var2, int var3, int var4, int var5, int var6)
-    {
-        ArrayList<ItemStack> var7 = new ArrayList<ItemStack>();
-        var7.add(new ItemStack(this, 1, var2.getData(var3, var4, var5) & 3));
-        return var7;
+    public ArrayList onSheared(ItemStack itemstack, World world, int i, int j, int k, int l) {
+        ArrayList<ItemStack> list = new ArrayList<ItemStack>();
+        list.add(new ItemStack(this, 1, world.getData(i, j, k) & 3));
+        return list;
     }
 
-    public void beginLeavesDecay(World var1, int var2, int var3, int var4)
-    {
-        var1.setRawData(var2, var3, var4, var1.getData(var2, var3, var4) | 8);
+    public void beginLeavesDecay(World world, int i, int j, int k) {
+        world.setRawData(i, j, k, world.getData(i, j, k) | 8);
     }
 
-    public boolean isLeaves(World var1, int var2, int var3, int var4)
-    {
+    public boolean isLeaves(World world, int i, int j, int k) {
         return true;
     }
     // Forge end

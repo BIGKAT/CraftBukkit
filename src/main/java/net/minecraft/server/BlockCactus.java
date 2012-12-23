@@ -1,12 +1,15 @@
 package net.minecraft.server;
 
 import java.util.Random;
+
+import org.bukkit.event.entity.EntityDamageByBlockEvent; // CraftBukkit
+// Forge start
 import net.minecraftforge.common.EnumPlantType;
 import net.minecraftforge.common.ForgeDirection;
 import net.minecraftforge.common.IPlantable;
-import org.bukkit.event.entity.EntityDamageByBlockEvent; // CraftBukkit
+// Forge end
 
-public class BlockCactus extends Block implements IPlantable {
+public class BlockCactus extends Block implements IPlantable { // Forge
 
     protected BlockCactus(int i, int j) {
         super(i, j, Material.CACTUS);
@@ -68,31 +71,19 @@ public class BlockCactus extends Block implements IPlantable {
         }
     }
 
-    /**
-     * Can this block stay at this position.  Similar to canPlaceBlockAt except gets checked often with plants.
-     */
-    public boolean d(World var1, int var2, int var3, int var4)
-    {
-        if (var1.getMaterial(var2 - 1, var3, var4).isBuildable())
-        {
+    public boolean d(World world, int i, int j, int k) {
+        if (world.getMaterial(i - 1, j, k).isBuildable()) {
             return false;
-        }
-        else if (var1.getMaterial(var2 + 1, var3, var4).isBuildable())
-        {
+        } else if (world.getMaterial(i + 1, j, k).isBuildable()) {
             return false;
-        }
-        else if (var1.getMaterial(var2, var3, var4 - 1).isBuildable())
-        {
+        } else if (world.getMaterial(i, j, k - 1).isBuildable()) {
             return false;
-        }
-        else if (var1.getMaterial(var2, var3, var4 + 1).isBuildable())
-        {
+        } else if (world.getMaterial(i, j, k + 1).isBuildable()) {
             return false;
-        }
-        else
-        {
-            int var5 = var1.getTypeId(var2, var3 - 1, var4);
-            return byId[var5] != null && byId[var5].canSustainPlant(var1, var2, var3 - 1, var4, ForgeDirection.UP, this); // Forge
+        } else {
+            int l = world.getTypeId(i, j - 1, k);
+
+            return byId[l] != null && byId[l].canSustainPlant(world, i, j - 1, k, ForgeDirection.UP, this); // Forge
         }
     }
 
@@ -117,18 +108,15 @@ public class BlockCactus extends Block implements IPlantable {
     }
     
     // Forge start
-    public EnumPlantType getPlantType(World var1, int var2, int var3, int var4)
-    {
+    public EnumPlantType getPlantType(World var1, int var2, int var3, int var4) {
         return EnumPlantType.Desert;
     }
 
-    public int getPlantID(World var1, int var2, int var3, int var4)
-    {
+    public int getPlantID(World var1, int var2, int var3, int var4) {
         return this.id;
     }
 
-    public int getPlantMetadata(World var1, int var2, int var3, int var4)
-    {
+    public int getPlantMetadata(World var1, int var2, int var3, int var4) {
         return -1;
     }
     // Forge end

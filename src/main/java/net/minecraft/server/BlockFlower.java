@@ -1,10 +1,12 @@
 package net.minecraft.server;
 
 import java.util.Random;
+// Forge start
 import net.minecraftforge.common.EnumPlantType;
 import net.minecraftforge.common.ForgeDirection;
 import net.minecraftforge.common.IPlantable;
 import static net.minecraftforge.common.EnumPlantType.*;
+// Forge end
 
 public class BlockFlower extends Block implements IPlantable // Forge
 {

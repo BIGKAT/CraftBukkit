@@ -1,6 +1,5 @@
 package net.minecraft.server;
 
-import cpw.mods.fml.common.FMLCommonHandler;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.File;
@@ -16,6 +15,7 @@ import java.util.UUID;
 
 import org.bukkit.craftbukkit.entity.CraftPlayer;
 // CraftBukkit end
+import cpw.mods.fml.common.FMLCommonHandler; // Forge
 
 public class WorldNBTStorage implements IDataManager, PlayerFileData {
 
@@ -92,12 +92,12 @@ public class WorldNBTStorage implements IDataManager, PlayerFileData {
                 nbttagcompound = NBTCompressedStreamTools.a((InputStream) (new FileInputStream(file1)));
                 nbttagcompound1 = nbttagcompound.getCompound("Data");
                 // Forge start
-                WorldData worldInfo = new WorldData(nbttagcompund1);
+                WorldData worldInfo = new WorldData(nbttagcompound1);
                 FMLCommonHandler.instance().handleWorldDataLoad(this, worldInfo, nbttagcompound);
                 return worldInfo;
                 // Forge end
             } catch (Exception exception) {
-            	if (FMLCommonHandler.instance().shouldServerBeKilledQuietly()) throw (RuntimeException) var7;
+                if (FMLCommonHandler.instance().shouldServerBeKilledQuietly()) throw (RuntimeException) exception;
                 exception.printStackTrace();
             }
         }
@@ -107,9 +107,11 @@ public class WorldNBTStorage implements IDataManager, PlayerFileData {
             try {
                 nbttagcompound = NBTCompressedStreamTools.a((InputStream) (new FileInputStream(file1)));
                 nbttagcompound1 = nbttagcompound.getCompound("Data");
-                WorldData worldInfo = new WorldData(nbttagcompund1);
+                // Forge start
+                WorldData worldInfo = new WorldData(nbttagcompound1);
                 FMLCommonHandler.instance().handleWorldDataLoad(this, worldInfo, nbttagcompound);
                 return worldInfo;
+                // Forge end
             } catch (Exception exception1) {
                 exception1.printStackTrace();
             }

@@ -1,10 +1,11 @@
 package net.minecraft.server;
 
 import java.util.Random;
-import net.minecraftforge.common.ChestGenHooks;
 
-public class WorldGenJungleTemple extends WorldGenScatteredPiece
-{
+import net.minecraftforge.common.ChestGenHooks; // Forge
+
+public class WorldGenJungleTemple extends WorldGenScatteredPiece {
+
     private boolean field_74947_h;
     private boolean field_74948_i;
     private boolean field_74945_j;

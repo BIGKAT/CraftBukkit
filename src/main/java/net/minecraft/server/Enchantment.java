@@ -86,9 +86,8 @@ public abstract class Enchantment {
      * @param item The ItemStack that the enchantment might be put on
      * @return True if the item is valid, false otherwise
      */
-    public boolean canEnchantItem(ItemStack var1)
-    {
-        return this.slot.canEnchant(var1.getItem());
+    public boolean canEnchantItem(ItemStack item) {
+        return this.slot.canEnchant(item.getItem());
     }
     // Forge end
 

@@ -1,17 +1,15 @@
 package net.minecraft.server;
 
-public class ItemSpade extends ItemTool
-{
-  public static Block[] c = { Block.GRASS, Block.DIRT, Block.SAND, Block.GRAVEL, Block.SNOW, Block.SNOW_BLOCK, Block.CLAY, Block.SOIL, Block.SOUL_SAND, Block.MYCEL };
+public class ItemSpade extends ItemTool {
 
-  public ItemSpade(int paramInt, EnumToolMaterial paramEnumToolMaterial)
-  {
-    super(paramInt, 1, paramEnumToolMaterial, c);
-  }
+    public static Block[] c = { Block.GRASS, Block.DIRT, Block.SAND, Block.GRAVEL, Block.SNOW, Block.SNOW_BLOCK, Block.CLAY, Block.SOIL, Block.SOUL_SAND, Block.MYCEL };
 
-  public boolean canDestroySpecialBlock(Block paramBlock)
-  {
-    if (paramBlock == Block.SNOW) return true;
-    return paramBlock == Block.SNOW_BLOCK;
-  }
+    public ItemSpade(int paramInt, EnumToolMaterial paramEnumToolMaterial) {
+        super(paramInt, 1, paramEnumToolMaterial, c);
+    }
+
+    public boolean canDestroySpecialBlock(Block paramBlock) {
+        if (paramBlock == Block.SNOW) return true;
+        return paramBlock == Block.SNOW_BLOCK;
+    }
 }

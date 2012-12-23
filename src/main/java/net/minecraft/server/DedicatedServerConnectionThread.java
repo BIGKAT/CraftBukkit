@@ -10,7 +10,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import cpw.mods.fml.common.FMLLog;
+import cpw.mods.fml.common.FMLLog; // Forge
 
 public class DedicatedServerConnectionThread extends Thread {
 

@@ -1,6 +1,5 @@
 package net.minecraft.server;
 
-import cpw.mods.fml.common.network.FMLNetworkHandler;
 import java.io.BufferedOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -17,6 +16,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import javax.crypto.SecretKey;
 
 import java.io.IOException; // CraftBukkit
+import cpw.mods.fml.common.network.FMLNetworkHandler; // Forge
 
 public class NetworkManager implements INetworkManager {
 

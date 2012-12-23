@@ -41,9 +41,10 @@ public class WorldMap extends WorldMapBase {
 
     public void a(NBTTagCompound nbttagcompound) {
         // CraftBukkit start
+        // Forge start
         NBTBase dimTag = nbttagcompound.get("dimension");
         int dimension = (dimTag instanceof NBTTagByte) ? ((NBTTagByte) dimTag).data : ((NBTTagInt) dimTag).data;
-
+        // Forge end
         if (dimension >= 10) {
             long least = nbttagcompound.getLong("UUIDLeast");
             long most = nbttagcompound.getLong("UUIDMost");

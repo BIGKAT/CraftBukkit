@@ -1,7 +1,5 @@
 package net.minecraft.server;
 
-import cpw.mods.fml.common.network.FMLNetworkHandler;
-import cpw.mods.fml.common.registry.GameRegistry;
 import java.io.File;
 import java.net.SocketAddress;
 import java.text.SimpleDateFormat;
@@ -28,6 +26,10 @@ import org.bukkit.event.player.PlayerRespawnEvent;
 import org.bukkit.event.player.PlayerTeleportEvent.TeleportCause;
 import org.bukkit.Bukkit;
 // CraftBukkit end
+// Forge start
+import cpw.mods.fml.common.network.FMLNetworkHandler;
+import cpw.mods.fml.common.registry.GameRegistry;
+// Forge end
 
 public abstract class ServerConfigurationManagerAbstract {
 
@@ -423,7 +425,7 @@ public abstract class ServerConfigurationManagerAbstract {
     }
 
     public void transferPlayerToDimension(EntityPlayer var1, int var2, PortalTravelAgent var3) {
-    	changeDimension(var1, var2);
+        changeDimension(var1, var2); // Forge
     }
 
     // TODO: didn't implement forge version
@@ -498,7 +500,7 @@ public abstract class ServerConfigurationManagerAbstract {
     }
 
     public void transferEntityToWorld(Entity var1, int var2, WorldServer var3, WorldServer var4, PortalTravelAgent var5) {
-    	a(var1, var2, var3, var4);
+        a(var1, var2, var3, var4); // Forge
     }
 
     // TODO: didn't implement forge version

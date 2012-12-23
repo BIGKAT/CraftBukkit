@@ -7,8 +7,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Vector;
 import java.util.concurrent.Callable;
-import net.minecraft.server.CrashReport;
-import net.minecraft.server.PackageNameComparator;
 
 class CrashReportSuspiciousClasses implements Callable {
 

@@ -1,10 +1,5 @@
 package net.minecraft.server;
 
-import cpw.mods.fml.common.network.FMLNetworkHandler;
-
-import net.minecraftforge.event.Event.Result;
-import net.minecraftforge.event.ForgeEventFactory;
-import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
 import java.io.IOException;
@@ -48,10 +43,16 @@ import org.bukkit.event.inventory.*;
 import org.bukkit.event.inventory.InventoryType.SlotType;
 import org.bukkit.event.player.PlayerPortalEvent;
 import org.bukkit.event.player.PlayerToggleFlightEvent;
-import org.bukkit.event.server.PacketListener;
 import org.bukkit.inventory.CraftingInventory;
 import org.bukkit.inventory.InventoryView;
 // CraftBukkit end
+// Forge start
+import cpw.mods.fml.common.network.FMLNetworkHandler;
+
+import net.minecraftforge.event.Event.Result;
+import net.minecraftforge.event.ForgeEventFactory;
+import net.minecraftforge.event.entity.player.PlayerInteractEvent;
+// Forge end
 
 public class NetServerHandler extends NetHandler {
 
@@ -543,7 +544,7 @@ public class NetServerHandler extends NetHandler {
                 // Forge start
                 double range = this.player.itemInWorldManager.getBlockReachDistance() + 1.0D;
                 if (d3 > range * range) {
-                	// Forge end
+                // Forge end
                     return;
                 }
 
@@ -799,8 +800,6 @@ public class NetServerHandler extends NetHandler {
         // CraftBukkit start
         if (this.player.dead) return;
 
-        // this.player.inventory.itemInHandIndex is the current slot id in player inventory
-        // packet16blockitemswitch.itemInHandIndex is the new slot id that the player switched to.
         if (packet16blockitemswitch.itemInHandIndex >= 0 && packet16blockitemswitch.itemInHandIndex < PlayerInventory.getHotbarSize()) {
             PlayerItemHeldEvent event = new PlayerItemHeldEvent(this.getPlayer(), this.player.inventory.itemInHandIndex, packet16blockitemswitch.itemInHandIndex);
             this.server.getPluginManager().callEvent(event);
@@ -814,7 +813,7 @@ public class NetServerHandler extends NetHandler {
     }
 
     public void a(Packet3Chat packet3chat) {
-    	packet3chat = FMLNetworkHandler.handleChatMessage(this, packet3chat); // Forge
+        packet3chat = FMLNetworkHandler.handleChatMessage(this, packet3chat); // Forge
         if (this.player.getChatFlags() == 2) {
             this.sendPacket(new Packet3Chat("Cannot send chat message."));
         } else {
@@ -1258,8 +1257,7 @@ public class NetServerHandler extends NetHandler {
 
             switch(event.getResult()) {
             case DEFAULT:
-            	if (this.player.activeContainer != null)
-            		itemstack = this.player.activeContainer.clickItem(packet102windowclick.slot, packet102windowclick.button, packet102windowclick.shift, this.player);
+                itemstack = this.player.activeContainer.clickItem(packet102windowclick.slot, packet102windowclick.button, packet102windowclick.shift, this.player);
                 defaultBehaviour = true;
                 break;
             case DENY: // Deny any change, including changes from the event
@@ -1269,11 +1267,11 @@ public class NetServerHandler extends NetHandler {
                 if (cursor == null) {
                     this.player.inventory.setCarried((ItemStack) null);
                 } else {
-                    this.player.inventory.setCarried(CraftItemStack.createNMSItemStack(cursor));
+                    this.player.inventory.setCarried(CraftItemStack.asNMSCopy(cursor));
                 }
                 org.bukkit.inventory.ItemStack item = event.getCurrentItem();
                 if (item != null) {
-                    itemstack = CraftItemStack.createNMSItemStack(item);
+                    itemstack = CraftItemStack.asNMSCopy(item);
                     if (packet102windowclick.slot == -999) {
                         this.player.drop(itemstack);
                     } else {
@@ -1513,7 +1511,7 @@ public class NetServerHandler extends NetHandler {
         FMLNetworkHandler.handlePacket250Packet(packet250custompayload, this.networkManager, this); // Forge
     }
 
-    public void handleVanilla250Packet(Packet250CustomPayload packet250custompayload) {
+    public void handleVanilla250Packet(Packet250CustomPayload packet250custompayload) { // Forge
         DataInputStream datainputstream;
         ItemStack itemstack;
         ItemStack itemstack1;
@@ -1660,12 +1658,11 @@ public class NetServerHandler extends NetHandler {
             }
         }
     }
-}
 
     /**
      * Contains logic for handling packets containing arbitrary unique item data. Currently this is only for maps.
      */
     public void a(Packet131ItemData var1) {
-        FMLNetworkHandler.handlePacket131Packet(this, var1);
+        FMLNetworkHandler.handlePacket131Packet(this, var1); // Forge
     }
 }

@@ -1,11 +1,6 @@
 package net.minecraft.server;
 
-import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.event.entity.living.LivingSpecialSpawnEvent;
-
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -16,12 +11,17 @@ import org.bukkit.craftbukkit.util.LongHash;
 import org.bukkit.craftbukkit.util.LongObjectHashMap;
 import org.bukkit.event.entity.CreatureSpawnEvent.SpawnReason;
 // CraftBukkit end
+// Forge start
+import java.util.ArrayList;
+import java.util.Collections;
+
+import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.event.entity.living.LivingSpecialSpawnEvent;
+// Forge end
 
 public final class SpawnerCreature {
 
-	// eligibleChunksForSpawning
     private static LongObjectHashMap<Boolean> b = new LongObjectHashMap<Boolean>(); // CraftBukkit - HashMap -> LongObjectHashMap
-    // nightSpawnEntities
     protected static final Class[] a = new Class[] { EntitySpider.class, EntityZombie.class, EntitySkeleton.class};
     private static byte spawnRadius = 0; // Spigot
 
@@ -110,10 +110,11 @@ public final class SpawnerCreature {
                 mobcnt = worldserver.a(enumcreaturetype.a());
                 if ((!enumcreaturetype.d() || flag1) && (enumcreaturetype.d() || flag) && (!enumcreaturetype.e() || flag2) && mobcnt <= (limit * b.size() / 256)) { // CraftBukkit - use per-world limits
                     Iterator iterator = b.keySet().iterator();
-
-                    ArrayList var39 = new ArrayList(b.keySet());
-                    Collections.shuffle(var39);
-                    iterator = var39.iterator();
+                    // Forge start
+                    ArrayList<ChunkCoordIntPair> tmp = new ArrayList(b.keySet());
+                    Collections.shuffle(tmp);
+                    iterator = tmp.iterator();
+                    // Forge end
                     int moblimit = (limit * b.size() / 256) - mobcnt + 1; // CraftBukkit - up to 1 more than limit
                     label110:
                     while (iterator.hasNext() && (moblimit > 0)) { // Spigot - while more allowed
@@ -221,14 +222,18 @@ public final class SpawnerCreature {
             return false;
         } else {
             int l = world.getTypeId(i, j - 1, k);
-
-            return l != Block.BEDROCK.id && !world.t(i, j, k) && !world.getMaterial(i, j, k).isLiquid() && !world.t(i, j + 1, k);
+            // Forge start
+            boolean spawnBlock = Block.byId[l] != null && Block.byId[l].canCreatureSpawn(enumcreaturetype, world, i, j - 1, k);
+            return spawnBlock && l != Block.BEDROCK.id && !world.t(i, j, k) && !world.getMaterial(i, j, k).isLiquid() && !world.t(i, j + 1, k);
+            // Forge end
         }
     }
 
     private static void a(EntityLiving entityliving, World world, float f, float f1, float f2) {
         if (entityliving.dead) return; // CraftBukkit
-        entityliving.bG();
+        if (!MinecraftForge.EVENT_BUS.post(new LivingSpecialSpawnEvent(entityliving, world, f, f1, f2))) { // Forge
+            entityliving.bG();
+        }
     }
 
     public static void a(World world, BiomeBase biomebase, int i, int j, int k, int l, Random random) {

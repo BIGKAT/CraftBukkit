@@ -1,9 +1,11 @@
 package net.minecraft.server;
 
-import java.util.ArrayList;
 import java.util.Random;
+// Forge start
+import java.util.ArrayList;
 
 import net.minecraftforge.common.ForgeDirection;
+// Forge end
 
 public class BlockNetherWart extends BlockFlower {
 
@@ -21,7 +23,7 @@ public class BlockNetherWart extends BlockFlower {
     }
 
     public boolean d(World world, int i, int j, int k) {
-    	// Forge start
+        // Forge start
         Block block = Block.byId[world.getTypeId(i, j - 1, k)];
         return (block != null && block.canSustainPlant(world, i, j - 1, k, ForgeDirection.UP, this));
         // Forge end
@@ -46,7 +48,7 @@ public class BlockNetherWart extends BlockFlower {
     }
 
     public void dropNaturally(World world, int i, int j, int k, int l, float f, int i1) {
-    	super.dropNaturally(world, i, j, k, l, f, i1);
+        super.dropNaturally(world, i, j, k, l, f, i1); // Forge
     }
 
     public int getDropType(int i, Random random, int j) {
@@ -56,25 +58,22 @@ public class BlockNetherWart extends BlockFlower {
     public int a(Random random) {
         return 0;
     }
-    
+
     // Forge start
     @Override
-    public ArrayList<ItemStack> getBlockDropped(World world, int x, int y, int z, int metadata, int fortune)
-    {
-    	ArrayList<ItemStack> ret = new ArrayList<ItemStack>();
-    	int count = 1;
-    
-    	if (metadata >= 3)
-    	{
-    		count = 2 + world.random.nextInt(3) + (fortune > 0 ? world.random.nextInt(fortune + 1) : 0);
-    	}
-    
-    	for (int i = 0; i < count; i++)
-    	{
-    		ret.add(new ItemStack(Item.NETHER_STALK));
-    	}
-    
-    	return ret;
+    public ArrayList<ItemStack> getBlockDropped(World world, int x, int y, int z, int metadata, int fortune) {
+        ArrayList<ItemStack> ret = new ArrayList<ItemStack>();
+        int count = 1;
+
+        if (metadata >= 3) {
+            count = 2 + world.random.nextInt(3) + (fortune > 0 ? world.random.nextInt(fortune + 1) : 0);
+        }
+
+        for (int i = 0; i < count; i++) {
+            ret.add(new ItemStack(Item.NETHER_STALK));
+        }
+
+        return ret;
     }
     // Forge end
 }

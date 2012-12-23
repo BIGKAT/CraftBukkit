@@ -2,8 +2,10 @@ package net.minecraft.server;
 
 import java.util.ArrayList;
 import java.util.Random;
+// Forge start
 import net.minecraftforge.common.ForgeHooks;
 import net.minecraftforge.common.IShearable;
+// Forge end
 
 public class BlockLongGrass extends BlockFlower implements IShearable // Forge
 {

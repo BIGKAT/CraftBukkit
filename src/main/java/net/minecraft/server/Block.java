@@ -2,23 +2,22 @@ package net.minecraft.server;
 
 import java.util.List;
 import java.util.Random;
+// Forge start
 import java.util.ArrayList;
-import java.util.Iterator;
 
 import cpw.mods.fml.common.Side;
 import cpw.mods.fml.common.asm.SideOnly;
 import cpw.mods.fml.common.registry.BlockProxy;
-
-import net.minecraft.server.WorldProviderTheEnd;
-import net.minecraft.server.World;
 import net.minecraftforge.common.EnumPlantType;
 import net.minecraftforge.common.ForgeDirection;
 import net.minecraftforge.common.ForgeHooks;
 import net.minecraftforge.common.IPlantable;
 import net.minecraftforge.common.MinecraftForge;
+// Forge end
 
-public class Block implements BlockProxy { 
-	// Forge start
+public class Block implements BlockProxy {
+
+    // Forge start
     protected static int[] blockFireSpreadSpeed = new int[4096];
     protected static int[] blockFlammability = new int[4096];
     protected String currentTexture = "/terrain.png";
@@ -211,9 +210,10 @@ public class Block implements BlockProxy {
     private String name;
 
     public Block(int i, Material material) {
+        // Forge start
         this.currentTexture = "/terrain.png";
         this.isDefaultTexture = true;
-        
+        // Forge end
         this.cp = true;
         this.cq = true;
         this.stepSound = d;
@@ -382,8 +382,6 @@ public class Block implements BlockProxy {
     }
 
     public float getDamage(EntityHuman entityhuman, World world, int i, int j, int k) {
-        float f = this.m(world, i, j, k);
-
         return ForgeHooks.blockStrength(this, entityhuman, world, i, j, k); // Forge
     }
 
@@ -393,18 +391,14 @@ public class Block implements BlockProxy {
 
     public void dropNaturally(World world, int i, int j, int k, int l, float f, int i1) {
         if (!world.isStatic) {
-        	// Forge start
-
-            	ArrayList<ItemStack> items = getBlockDropped(world, i, j, k, l, i1); // Forge
-            	for (ItemStack item : items) 
-            	{
-            // Forge end
+                ArrayList<ItemStack> items = getBlockDropped(world, i, j, k, l, i1); // Forge
+                for (ItemStack item : items) {
                 // CraftBukkit - <= to < to allow for plugins to completely disable block drops from explosions
                 if (world.random.nextFloat() < f) {
                     int l1 = this.getDropType(l, world.random, i1);
 
                     if (l1 > 0) {
-                    	this.b(world, i, j, k, item); // Forge
+                        this.b(world, i, j, k, item); // Forge
                     }
                 }
             }
@@ -712,7 +706,6 @@ public class Block implements BlockProxy {
         return true;
     }
 
-    // Forge Start
     /* =================================================== FORGE START =====================================*/    
     /**
      * Get a light value for this block, normal ranges are between 0 and 15
@@ -728,6 +721,39 @@ public class Block implements BlockProxy {
         return lightEmission[this.id];
     }
 
+    @SideOnly(Side.CLIENT)
+    /**
+     * only called by clickMiddleMouseButton , and passed to inventory.setCurrentItem (along with isCreative)
+     */
+    public int idPicked(World par1World, int par2, int par3, int par4)
+    {
+        return this.id;
+    }
+    
+    /**
+     * Called when a user uses the creative pick block button on this block
+     * 
+     * @param target The full target the player is looking at
+     * @return A ItemStack to add to the player's inventory, Null if nothing should be added.
+     */
+    public ItemStack getPickBlock(MovingObjectPosition target, World world, int x, int y, int z)
+    {
+        int id = this.idPicked(world, x, y, z);
+        
+        if (id == 0)
+        {
+            return null;
+        }
+
+        Item item = Item.byId[id];
+        if (item == null)
+        {
+            return null;
+        }
+
+        return new ItemStack(id, 1, getDropData(world, x, y, z));
+    }
+    
     /**
      * Checks if a player or entity can use this block to 'climb' like a ladder.
      * 
@@ -1344,30 +1370,6 @@ public class Block implements BlockProxy {
     }
 
     /**
-     * Called when a user uses the creative pick block button on this block
-     * 
-     * @param target The full target the player is looking at
-     * @return A ItemStack to add to the player's inventory, Null if nothing should be added.
-     */
-    public ItemStack getPickBlock(MovingObjectPosition target, World world, int x, int y, int z)
-    {
-        int id = this.idPicked(world, x, y, z);
-        
-        if (id == 0)
-        {
-            return null;
-        }
-
-        Item item = Item.byId[id];
-        if (item == null)
-        {
-            return null;
-        }
-
-        return new ItemStack(id, 1, getDropData(world, x, y, z));
-    }
-
-    /**
      * Used by getTopSolidOrLiquidBlock while placing biome decorations, villages, etc
      * Also used to determine if the player can spawn on this block.
      * 
@@ -1509,7 +1511,7 @@ public class Block implements BlockProxy {
     {
         return (this.id == EMERALD_BLOCK.id || this.id == GOLD_BLOCK.id || this.id == DIAMOND_BLOCK.id || this.id == IRON_BLOCK.id);
     }
-    // Forge end    
+/* =================================================== FORGE END =====================================*/    
     static {
         Item.byId[WOOL.id] = (new ItemCloth(WOOL.id - 256)).b("cloth");
         Item.byId[LOG.id] = (new ItemMultiTexture(LOG.id - 256, LOG, BlockLog.a)).b("log");

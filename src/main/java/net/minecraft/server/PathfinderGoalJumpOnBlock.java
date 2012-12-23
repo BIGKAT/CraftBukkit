@@ -2,8 +2,8 @@ package net.minecraft.server;
 
 import java.util.Random;
 
-public class PathfinderGoalJumpOnBlock extends PathfinderGoal
-{
+public class PathfinderGoalJumpOnBlock extends PathfinderGoal {
+
   private final EntityOcelot a;
   private final float b;
   private int c = 0;

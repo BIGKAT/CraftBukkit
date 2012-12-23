@@ -1,10 +1,11 @@
 package net.minecraft.server;
 
 import java.util.Random;
-import net.minecraftforge.common.DungeonHooks;
 
-public class WorldGenDungeons extends WorldGenerator
-{
+import net.minecraftforge.common.DungeonHooks; // Forge
+
+public class WorldGenDungeons extends WorldGenerator {
+
     public boolean a(World var1, Random var2, int var3, int var4, int var5)
     {
         byte var6 = 3;

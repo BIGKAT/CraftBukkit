@@ -10,10 +10,13 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
+// Forge start
 import java.io.IOException;
+
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.world.ChunkDataEvent.Load;
 import net.minecraftforge.event.world.ChunkDataEvent.Save;
+// Forge end
 
 public class ChunkRegionLoader implements IAsyncChunkSaver, IChunkLoader {
 
@@ -85,11 +88,10 @@ public class ChunkRegionLoader implements IAsyncChunkSaver, IChunkLoader {
             }
 
             try {
-				nbttagcompound = NBTCompressedStreamTools.a((DataInput) datainputstream);
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
+                nbttagcompound = NBTCompressedStreamTools.a((DataInput) datainputstream);
+            } catch (IOException ex) {
+                throw new RuntimeException(ex);
+            }
         }
 
         return this.a(world, i, j, nbttagcompound);
@@ -111,7 +113,7 @@ public class ChunkRegionLoader implements IAsyncChunkSaver, IChunkLoader {
                 nbttagcompound.getCompound("Level").setInt("zPos", j); // CraftBukkit - .getCompound("Level")
                 chunk = this.a(world, nbttagcompound.getCompound("Level"));
             }
-            
+
             // CraftBukkit start
             Object[] data = new Object[2];
             data[0] = chunk;
@@ -124,11 +126,11 @@ public class ChunkRegionLoader implements IAsyncChunkSaver, IChunkLoader {
 
     public void a(World world, Chunk chunk) {
         // CraftBukkit start - "handle" exception
-    	try {
+        try {
             world.D();
         } catch (ExceptionWorldConflict ex) {
             ex.printStackTrace();
-		}
+        }
         // CraftBukkit end
 
         try {

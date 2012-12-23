@@ -25,20 +25,21 @@ import org.bukkit.craftbukkit.util.Waitable;
 import org.bukkit.event.server.RemoteServerCommandEvent;
 import org.bukkit.event.world.WorldSaveEvent;
 // CraftBukkit end
-
-import net.minecraftforge.common.DimensionManager;
-import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.event.world.WorldEvent;
-import net.minecraftforge.event.world.WorldEvent.Load;
-import net.minecraftforge.event.world.WorldEvent.Unload;
+// Forge start
 import java.util.Hashtable;
 
+import com.google.common.io.Files;
 import cpw.mods.fml.common.FMLCommonHandler;
 import cpw.mods.fml.common.Side;
 import cpw.mods.fml.common.asm.SideOnly;
 import cpw.mods.fml.relauncher.ArgsWrapper;
 import cpw.mods.fml.relauncher.FMLRelauncher;
-import com.google.common.io.Files;
+import net.minecraftforge.common.DimensionManager;
+import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.event.world.WorldEvent;
+import net.minecraftforge.event.world.WorldEvent.Load;
+import net.minecraftforge.event.world.WorldEvent.Unload;
+// Forge end
 
 public abstract class MinecraftServer implements ICommandListener, Runnable, IMojangStatistics {
 
@@ -75,8 +76,10 @@ public abstract class MinecraftServer implements ICommandListener, Runnable, IMo
     public final long[] h = new long[100];
     public final long[] i = new long[100];
     public final long[] j = new long[100];
-    public long[][] k;
+    // Forge start
+    //public long[][] k;
     public Hashtable<Integer, long[]> worldTickTimes = new Hashtable<Integer, long[]>();
+    // Forge end
     private KeyPair I;
     private String J;
     private String K;
@@ -106,20 +109,6 @@ public abstract class MinecraftServer implements ICommandListener, Runnable, IMo
     private static final int TICK_TIME = 1000000000 / TPS;
     public static double currentTPS = 0;
     // Spigot end
-
-    // CPCM/MCPC start
-    // false if running MCPC, true if running CPCM
-    public static boolean isReobfuscated = false;
-
-    static {
-        try {
-            Class.forName("a"); // reobfuscated class name
-        } catch (ClassNotFoundException ex) {
-            isReobfuscated = false;
-        }
-        isReobfuscated = true;
-    }
-    // CPCM/MCPC end
 
     public MinecraftServer(OptionSet options) { // CraftBukkit - signature file -> OptionSet
         l = this;
@@ -287,7 +276,7 @@ public abstract class MinecraftServer implements ICommandListener, Runnable, IMo
             this.worlds.add(world);
             this.t.setPlayerFileData(this.worlds.toArray(new WorldServer[this.worlds.size()]));
             // CraftBukkit end
-            MinecraftForge.EVENT_BUS.post(new WorldEvent.Load((World)world));
+            MinecraftForge.EVENT_BUS.post(new WorldEvent.Load((World)world)); // Forge
         }
 
         this.c(this.getDifficulty());
@@ -409,7 +398,7 @@ public abstract class MinecraftServer implements ICommandListener, Runnable, IMo
             // CraftBukkit end */
             for (int j = 0; j < this.worlds.size(); ++j) {
                 WorldServer worldserver = this.worlds.get(j);
-                MinecraftForge.EVENT_BUS.post(new WorldEvent.Unload(worldserver));
+                MinecraftForge.EVENT_BUS.post(new WorldEvent.Unload(worldserver)); // Forge
             }
             List<WorldServer> tmp = this.worlds;
             for (WorldServer world : tmp) {
@@ -441,8 +430,7 @@ public abstract class MinecraftServer implements ICommandListener, Runnable, IMo
     public void run() {
         try {
             if (this.init()) {
-            	FMLCommonHandler.instance().handleServerStarted();
-                long lastTick = System.nanoTime();
+                FMLCommonHandler.instance().handleServerStarted();
                 FMLCommonHandler.instance().onWorldLoadTick(this.worlds.toArray(new WorldServer[this.worlds.size()]));
                 // Spigot start
                 for (long lastTick = 0L; this.isRunning; this.Q = true) {
@@ -463,7 +451,7 @@ public abstract class MinecraftServer implements ICommandListener, Runnable, IMo
                 this.a((CrashReport) null);
             }
         } catch (Throwable throwable) {
-        	if (FMLCommonHandler.instance().shouldServerBeKilledQuietly()) return;
+                if (FMLCommonHandler.instance().shouldServerBeKilledQuietly()) return; // Forge
             throwable.printStackTrace();
             log.log(Level.SEVERE, "Encountered an unexpected exception " + throwable.getClass().getSimpleName(), throwable);
             CrashReport crashreport = null;
@@ -486,7 +474,7 @@ public abstract class MinecraftServer implements ICommandListener, Runnable, IMo
         } finally {
             org.bukkit.craftbukkit.util.WatchdogThread.stopping(); // Spigot
             try {
-            	if (FMLCommonHandler.instance().shouldServerBeKilledQuietly()) return;
+                if (FMLCommonHandler.instance().shouldServerBeKilledQuietly()) return; // Forge
                 this.stop();
                 this.isStopped = true;
             } catch (Throwable throwable1) {
@@ -512,7 +500,7 @@ public abstract class MinecraftServer implements ICommandListener, Runnable, IMo
     protected void p() {}
 
     protected void q() throws ExceptionWorldConflict { // CraftBukkit - added throws
-    	FMLCommonHandler.instance().rescheduleTicks(Side.SERVER); // Forge
+        FMLCommonHandler.instance().rescheduleTicks(Side.SERVER); // Forge
         long i = System.nanoTime();
 
         AxisAlignedBB.a().a();
@@ -659,19 +647,17 @@ public abstract class MinecraftServer implements ICommandListener, Runnable, IMo
     }
 
     public static void main(String[] options) {
-    	FMLRelauncher.handleServerRelaunch(new ArgsWrapper(opt)); // Forge
+        FMLRelauncher.handleServerRelaunch(new ArgsWrapper(options)); // Forge
     }
 
     @SideOnly(Side.SERVER)
     public static void fmlReentry(ArgsWrapper var1) { // Forge, CraftBukkit - replaces main(String[] astring)
-    	log.severe(var1.args.getClass().getName());
-    	OptionSet options = Main.loadOptions(var1.args);
-    	if (options == null) return;
-    	cpw.mods.fml.relauncher.FMLLogFormatter.setFormat(options.has("nojline"), options.has("date-format") ? (SimpleDateFormat)options.valueOf("date-format") : null);
-        main(options);
-    }
+        log.severe(var1.args.getClass().getName());
+        OptionSet options = org.bukkit.craftbukkit.Main.loadOptions(var1.args);
 
-    public static void main(final OptionSet options) { // CraftBukkit - replaces main(String[] astring)
+        if (options == null) return;
+            cpw.mods.fml.relauncher.FMLLogFormatter.setFormat(options.has("nojline"), options.has("date-format") ? (SimpleDateFormat)options.valueOf("date-format") : null);
+
         StatisticList.a();
 
         try {
@@ -899,7 +885,7 @@ public abstract class MinecraftServer implements ICommandListener, Runnable, IMo
     }
 
     public String getServerModName() {
-        return isReobfuscated ? "craftbukkit-cpcm" : "craftbukkit-mcpc"; // CraftBukkit - cb > vanilla!
+        return "craftbukkit"; // CraftBukkit - cb > vanilla!
     }
 
     public CrashReport b(CrashReport crashreport) {
@@ -1072,7 +1058,7 @@ public abstract class MinecraftServer implements ICommandListener, Runnable, IMo
             // CraftBukkit end
 
             if (worldserver != null) {
-            	MinecraftForge.EVENT_BUS.post(new WorldEvent.Unload(worldserver));
+                MinecraftForge.EVENT_BUS.post(new WorldEvent.Unload(worldserver)); // Forge
                 worldserver.saveLevel();
             }
         }

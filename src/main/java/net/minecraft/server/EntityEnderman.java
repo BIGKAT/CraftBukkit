@@ -8,7 +8,7 @@ import org.bukkit.event.entity.EntityTeleportEvent;
 
 public class EntityEnderman extends EntityMonster {
 
-    public static boolean[] d = new boolean[256];
+    public static boolean[] d = new boolean[256]; // Forge
     private int e = 0;
     private int f = 0;
 

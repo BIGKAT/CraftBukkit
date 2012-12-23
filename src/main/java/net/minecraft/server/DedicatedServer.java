@@ -10,13 +10,13 @@ import java.util.Random;
 import java.util.concurrent.Callable;
 import java.util.logging.Level;
 
-import cpw.mods.fml.common.FMLCommonHandler;
 // CraftBukkit start
 import java.io.PrintStream;
 
 import org.bukkit.craftbukkit.LoggerOutputStream;
 import org.bukkit.event.server.ServerCommandEvent;
 // CraftBukkit end
+import cpw.mods.fml.common.FMLCommonHandler; // Forge
 
 public class DedicatedServer extends MinecraftServer implements IMinecraftServer {
 

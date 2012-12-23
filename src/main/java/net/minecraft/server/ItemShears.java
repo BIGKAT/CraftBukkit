@@ -1,8 +1,10 @@
 package net.minecraft.server;
-
+// Forge start
 import java.util.ArrayList;
 import java.util.Iterator;
+
 import net.minecraftforge.common.IShearable;
+// Forge end
 
 public class ItemShears extends Item
 {

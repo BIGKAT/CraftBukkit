@@ -1,16 +1,18 @@
 package net.minecraft.server;
 
-import cpw.mods.fml.common.Side;
-import cpw.mods.fml.common.asm.SideOnly;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+// Forge start
+import cpw.mods.fml.common.Side;
+import cpw.mods.fml.common.asm.SideOnly;
+// Forge end
 
-public class StatisticList
-{
+public class StatisticList {
+
     /** Tracks one-off stats. */
     protected static Map a = new HashMap();
     public static List b = new ArrayList();

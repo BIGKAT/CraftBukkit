@@ -1,20 +1,20 @@
 package net.minecraft.server;
 
-public abstract interface IBlockAccess
-{
-  public abstract int getTypeId(int paramInt1, int paramInt2, int paramInt3);
+public interface IBlockAccess {
 
-  public abstract TileEntity getTileEntity(int paramInt1, int paramInt2, int paramInt3);
+   int getTypeId(int var1, int var2, int var3);
 
-  public abstract int getData(int paramInt1, int paramInt2, int paramInt3);
+   TileEntity getTileEntity(int var1, int var2, int var3);
 
-  public abstract Material getMaterial(int paramInt1, int paramInt2, int paramInt3);
+   int getData(int var1, int var2, int var3);
 
-  public abstract boolean s(int paramInt1, int paramInt2, int paramInt3);
+   Material getMaterial(int var1, int var2, int var3);
 
-  public abstract Vec3DPool getVec3DPool();
+   boolean t(int var1, int var2, int var3);
 
-  public abstract boolean isBlockFacePowered(int paramInt1, int paramInt2, int paramInt3, int paramInt4);
+   Vec3DPool getVec3DPool();
 
-  public abstract BiomeBase getBiome(int i, int j);
+   boolean isBlockFacePowered(int var1, int var2, int var3, int var4);
+
+  public abstract BiomeBase getBiome(int i, int j); // MCPC
 }

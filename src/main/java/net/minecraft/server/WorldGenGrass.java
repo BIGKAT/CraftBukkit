@@ -2,8 +2,8 @@ package net.minecraft.server;
 
 import java.util.Random;
 
-public class WorldGenGrass extends WorldGenerator
-{
+public class WorldGenGrass extends WorldGenerator {
+
     /** Stores ID for WorldGenTallGrass */
     private int a;
     private int b;

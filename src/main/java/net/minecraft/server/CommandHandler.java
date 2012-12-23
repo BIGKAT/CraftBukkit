@@ -8,8 +8,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.Map.Entry;
+// Forge start
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.CommandEvent;
+// Forge end
 
 public class CommandHandler implements ICommandHandler
 {

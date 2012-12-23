@@ -433,7 +433,7 @@ public class EntityEnderDragon extends EntityLiving implements IComplex {
                     Block block = Block.byId[j2];
                     if (block != null) {
                         if (block.canDragonDestroy(this.world, k1, l1, i2)) {
-                        	// Forge end
+                    // Forge end
                             flag1 = true;
                             // CraftBukkit start - add blocks to list rather than destroying them
                             // this.world.setTypeId(k1, l1, i2, 0);

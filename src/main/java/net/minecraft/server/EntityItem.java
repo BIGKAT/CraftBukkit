@@ -1,13 +1,15 @@
 package net.minecraft.server;
 
-import cpw.mods.fml.common.registry.GameRegistry;
 import java.util.Iterator;
 
+import org.bukkit.event.player.PlayerPickupItemEvent; // CraftBukkit
+// Forge start
+import cpw.mods.fml.common.registry.GameRegistry;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.Event.Result;
 import net.minecraftforge.event.entity.item.ItemExpireEvent;
 import net.minecraftforge.event.entity.player.EntityItemPickupEvent;
-import org.bukkit.event.player.PlayerPickupItemEvent; // CraftBukkit
+// Forge end
 
 public class EntityItem extends Entity {
 
@@ -108,27 +110,22 @@ public class EntityItem extends Entity {
         ++this.age;
         // Forge start
         if (!this.world.isStatic && this.age >= this.lifespan) {
-        	
             ItemExpireEvent event = new ItemExpireEvent(this, this.itemStack.getItem() == null ? 6000 : this.itemStack.getItem().getEntityLifespan(this.itemStack, this.world));
-
-            if (MinecraftForge.EVENT_BUS.post(event))
-            {
+            if (MinecraftForge.EVENT_BUS.post(event)) {
                 this.lifespan += event.extraLife;
+            } else {
+            // CraftBukkit start
+            if (org.bukkit.craftbukkit.event.CraftEventFactory.callItemDespawnEvent(this).isCancelled()) {
+                this.age = 0;
+                return;
             }
-            else
-            {
-	            // CraftBukkit start
-	            if (org.bukkit.craftbukkit.event.CraftEventFactory.callItemDespawnEvent(this).isCancelled()) {
-	                this.age = 0;
-	            }
-	            else
-	            	this.die();
-	         // CraftBukkit end
+            this.die();
+            // CraftBukkit end
             }
             // Forge end
         }
-        
-        if (this.itemStack == null || this.itemStack.count <= 0)
+
+        if (this.itemStack == null || this.itemStack.count <= 0) // Forge
             this.die();
     }
 
@@ -153,25 +150,25 @@ public class EntityItem extends Entity {
             } else if (entityitem.itemStack.hasTag() && !entityitem.itemStack.getTag().equals(this.itemStack.getTag())) {
                 return false;
             } else if (entityitem.itemStack.getItem().l() && entityitem.itemStack.getData() != this.itemStack.getData()) {
-                    return false;
-                } else if (entityitem.itemStack.count < this.itemStack.count) {
-                    return entityitem.a(this);
-                } else if (entityitem.itemStack.count + this.itemStack.count > entityitem.itemStack.getMaxStackSize()) {
-                    return false;
-                // CraftBukkit start - don't merge items with enchantments
-                } else if (entityitem.itemStack.hasEnchantments() || this.itemStack.hasEnchantments()) {
-                    return false;
-                    // CraftBukkit end
-                } else {
-                    entityitem.itemStack.count += this.itemStack.count;
-                    entityitem.pickupDelay = Math.max(entityitem.pickupDelay, this.pickupDelay);
-                    entityitem.age = Math.min(entityitem.age, this.age);
-                    this.die();
-                    return true;
-                }
-            } else {
                 return false;
+            } else if (entityitem.itemStack.count < this.itemStack.count) {
+                return entityitem.a(this);
+            } else if (entityitem.itemStack.count + this.itemStack.count > entityitem.itemStack.getMaxStackSize()) {
+                return false;
+            // CraftBukkit start - don't merge items with enchantments
+            } else if (entityitem.itemStack.hasEnchantments() || this.itemStack.hasEnchantments()) {
+                return false;
+                // CraftBukkit end
+            } else {
+                entityitem.itemStack.count += this.itemStack.count;
+                entityitem.pickupDelay = Math.max(entityitem.pickupDelay, this.pickupDelay);
+                entityitem.age = Math.min(entityitem.age, this.age);
+                this.die();
+                return true;
             }
+        } else {
+            return false;
+        }
     }
 
     public void c() {
@@ -190,14 +187,14 @@ public class EntityItem extends Entity {
         if (this.isInvulnerable()) {
             return false;
         } else {
-        this.K();
-        this.e -= i;
-        if (this.e <= 0) {
-            this.die();
-        }
+            this.K();
+            this.e -= i;
+            if (this.e <= 0) {
+                this.die();
+            }
 
-        return false;
-    }
+            return false;
+        }
     }
 
     public void b(NBTTagCompound nbttagcompound) {
@@ -212,26 +209,25 @@ public class EntityItem extends Entity {
     public void a(NBTTagCompound nbttagcompound) {
         this.e = nbttagcompound.getShort("Health") & 255;
         this.age = nbttagcompound.getShort("Age");
-        
         NBTTagCompound nbttagcompound1 = nbttagcompound.getCompound("Item");
+
         this.itemStack = ItemStack.a(nbttagcompound1);
-        if (this.itemStack == null || this.itemStack.count <= 0) { // Forge start
+        if (this.itemStack == null || this.itemStack.count <= 0) { // Forge
             this.die();
         }
-        if (nbttagcompound1.hasKey("Lifespan"))
-        {
-        	lifespan = nbttagcompound1.getInt("Lifespan");
+        // Forge start
+        if (nbttagcompound1.hasKey("Lifespan")) {
+            lifespan = nbttagcompound1.getInt("Lifespan");
         }
         // Forge end
     }
 
     public void c_(EntityHuman entityhuman) {
-        if ((!this.world.isStatic) && (this.itemStack != null)) // CraftBukkit - nullcheck
-        { 
-        	// Forge start
+        if ((!this.world.isStatic) && (this.itemStack != null)) { // CraftBukkit - nullcheck
+            // Forge start
             if (this.pickupDelay > 0)
                 return;
-            
+
             EntityItemPickupEvent var2 = new EntityItemPickupEvent(entityhuman, this);
             if (MinecraftForge.EVENT_BUS.post(var2))
                 return;
@@ -246,6 +242,7 @@ public class EntityItem extends Entity {
             if (this.pickupDelay <= 0 && canHold > 0) {
                 this.itemStack.count = canHold;
                 PlayerPickupItemEvent event = new PlayerPickupItemEvent((org.bukkit.entity.Player) entityhuman.getBukkitEntity(), (org.bukkit.entity.Item) this.getBukkitEntity(), remaining);
+                event.setCancelled(!entityhuman.canPickUpLoot);
                 this.world.getServer().getPluginManager().callEvent(event);
                 this.itemStack.count = canHold + remaining;
 
@@ -275,7 +272,7 @@ public class EntityItem extends Entity {
                     entityhuman.a((Statistic) AchievementList.z);
                 }
 
-                GameRegistry.onPickupNotification(entityhuman, this);
+                GameRegistry.onPickupNotification(entityhuman, this); // Forge
                 this.makeSound("random.pop", 0.2F, ((this.random.nextFloat() - this.random.nextFloat()) * 0.7F + 1.0F) * 2.0F);
                 entityhuman.receive(this, i);
                 if (this.itemStack.count <= 0) {

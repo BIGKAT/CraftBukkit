@@ -1,7 +1,5 @@
 package net.minecraft.server;
 
-import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.Callable;
@@ -28,9 +26,13 @@ import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.plugin.PluginManager;
 // CraftBukkit end
+// Forge start
+import java.util.ArrayList;
+import java.util.Iterator;
 
 import cpw.mods.fml.common.Side;
 import cpw.mods.fml.common.asm.SideOnly;
+// Forge end
 
 public abstract class Entity {
 
@@ -154,7 +156,7 @@ public abstract class Entity {
         this.world = world;
         this.setPosition(0.0D, 0.0D, 0.0D);
         if (world != null) {
-            this.dimension = world.worldProvider.dimension; // TODO: should be provider?
+            this.dimension = world.worldProvider.dimension;
         }
 
         this.datawatcher.a(0, Byte.valueOf((byte) 0));
@@ -1780,7 +1782,7 @@ public abstract class Entity {
     }
 
     public float a(Explosion explosion, Block block, int i, int j, int k) {
-        return var2.getExplosionResistance(this, this.world, i, j, k, this.locX, this.locY + (double) this.getHeadHeight(), this.locZ); // Forge
+        return block.getExplosionResistance(this, this.world, i, j, k, this.locX, this.locY + (double) this.getHeadHeight(), this.locZ); // Forge
     }
 
     public int as() {
@@ -1860,7 +1862,7 @@ public abstract class Entity {
             return var2 > 0 && EntityTypes.a.containsKey(Integer.valueOf(var2)) ? new ItemStack(Item.MONSTER_EGG, 1, var2) : null;
         }
     }
-    
+
     public UUID getPersistentID()
     {
         return this.uniqueId;

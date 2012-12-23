@@ -1,7 +1,5 @@
 package net.minecraft.server;
 
-import cpw.mods.fml.common.Side;
-import cpw.mods.fml.common.asm.SideOnly;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -9,10 +7,14 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+// Forge start
+import cpw.mods.fml.common.Side;
+import cpw.mods.fml.common.asm.SideOnly;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.entity.EntityEvent.EnteringChunk;
 import net.minecraftforge.event.world.ChunkEvent.Load;
 import net.minecraftforge.event.world.ChunkEvent.Unload;
+// Forge end
 
 // CraftBukkit start
 import org.bukkit.Bukkit;
@@ -88,6 +90,8 @@ public class Chunk {
         for (int l = 0; l < 16; ++l) {
             for (int i1 = 0; i1 < 16; ++i1) {
                 for (int j1 = 0; j1 < k; ++j1) {
+                    /* FORGE: The following change, a cast from unsigned byte to int,
+                     * fixes a vanilla bug when generating new chunks that contain a block ID > 127 */
                     int b0 = abyte[l << 11 | i1 << 7 | j1] & 0xff;
 
                     if (b0 != 0) {
@@ -104,15 +108,13 @@ public class Chunk {
         }
     }
     
-// Forge start
+    // Forge start
     /**
-     * A Chunk Constructor which handles shorts to allow block ids > 256 (full 4096 range)
-     * Meta data sensitive
-     * NOTE: The x,y,z order of the array is different from the native Chunk constructor to allow for generation > y127
-     * NOTE: This is possibly more efficient than the standard constructor due to less memory skipping
+     * Metadata sensitive Chunk constructor for use in new ChunkProviders that
+     * use metadata sensitive blocks during generation.
      *
      * @param world The world this chunk belongs to
-     * @param ids A ShortArray containing all the BlockID's to set this chunk to (x is low order, z is mid, y is high)
+     * @param ids A ByteArray containing all the BlockID's to set this chunk to (x is low order, z is mid, y is high)
      * @param metadata A ByteArray containing all the metadata to set this chunk to
      * @param chunkX The chunk's X position
      * @param chunkZ The Chunk's Z position
@@ -122,32 +124,86 @@ public class Chunk {
         this(world, chunkX, chunkZ);
         int var6 = ids.length / 256;
 
-        for (int var7 = 0; var7 < 16; ++var7)
+        for (int x = 0; x < 16; ++x)
         {
-            for (int var8 = 0; var8 < 16; ++var8)
+            for (int z = 0; z < 16; ++z)
             {
-                for (int var9 = 0; var9 < var6; ++var9)
+                for (int y = 0; y < var6; ++y)
                 {
-                    int var10 = var7 << 11 | var8 << 7 | var9;
-                    int var11 = ids[var10] & 255;
-                    byte var12 = metadata[var10];
+                    int idx = x << 11 | z << 7 | y;
+                    int id = ids[idx] & 0xFF;
+                    int meta = metadata[idx];
 
-                    if (var11 != 0)
+                    if (id != 0)
                     {
-                        int var13 = var9 >> 4;
+                        int storageBlock = y >> 4;
 
-                        if (this.sections[var13] == null)
+                        if (this.sections[storageBlock] == null)
                         {
-                            this.sections[var13] = new ChunkSection(var13 << 4);
+                            this.sections[storageBlock] = new ChunkSection(storageBlock << 4);
                         }
 
-                        this.sections[var13].a(var7, var9 & 15, var8, var11);
-                        this.sections[var13].b(var7, var9 & 15, var8, var12);
+                        this.sections[storageBlock].a(x, y & 15, z, id);
+                        this.sections[storageBlock].b(x, y & 15, z, meta);
                     }
                 }
             }
         }
     }
+
+     /**
+      * A Chunk Constructor which handles shorts to allow block ids > 256 (full 4096 range)
+      * Meta data sensitive
+      * NOTE: The x,y,z order of the array is different from the native Chunk constructor to allow for generation > y127
+      * NOTE: This is possibly more efficient than the standard constructor due to less memory skipping
+      *
+      * @param world The world this chunk belongs to
+      * @param ids A ShortArray containing all the BlockID's to set this chunk to (x is low order, z is mid, y is high)
+      * @param metadata A ByteArray containing all the metadata to set this chunk to
+      * @param chunkX The chunk's X position
+      * @param chunkZ The Chunk's Z position
+      */
+     public Chunk(World world, short[] ids, byte[] metadata, int chunkX, int chunkZ)
+     {
+         this(world, chunkX, chunkZ);
+         int max = ids.length / 256;
+
+         for (int y = 0; y < max; ++y)
+         {
+             for (int z = 0; z < 16; ++z)
+             {
+                 for (int x = 0; x < 16; ++x)
+                 {
+                     int idx = y << 8 | z << 4 | x;
+                     int id = ids[idx] & 0xFFFFFF;
+                     int meta = metadata[idx];
+
+                     if (id != 0) {
+                         int storageBlock = y >> 4;
+
+                         if (this.sections[storageBlock] == null) {
+                                 this.sections[storageBlock] = new ChunkSection(storageBlock << 4);
+                         }
+
+                         this.sections[storageBlock].a(x, y & 15, z, id);
+                         this.sections[storageBlock].b(x, y & 15, z, meta);
+                     }
+                 }
+             }
+         }
+     }
+     
+     /** FORGE: Used to remove only invalid TileEntities */
+     public void cleanChunkBlockTileEntity(int x, int y, int z) {
+         ChunkPosition position = new ChunkPosition(x, y, z);
+         if (d) {
+             TileEntity entity = (TileEntity)tileEntities.get(position);
+             if (entity != null && entity.r()) {
+                 tileEntities.remove(position);
+             }
+         }
+     }
+     // Forge end
 
     public boolean a(int i, int j) {
         return i == this.x && j == this.z;
@@ -388,43 +444,32 @@ public class Chunk {
         }
     }
 
-    public int b(int var1, int var2, int var3)
-    {
-        int var4 = (this.x << 4) + var1;
-        int var5 = (this.z << 4) + var3;
-        Block var6 = Block.byId[this.getTypeId(var1, var2, var3)];
-        return var6 == null ? 0 : var6.getLightOpacity(this.world, var4, var2, var5);
+    public int b(int i, int j, int k) {
+        // Forge start
+        int var4 = (this.x << 4) + i;
+        int var5 = (this.z << 4) + k;
+        Block block = Block.byId[this.getTypeId(i, j, k)];
+        return block == null ? 0 : block.getLightOpacity(this.world, var4, j, var5);
+        // Forge end
     }
 
-    /**
-     * Return the ID of a block in the chunk.
-     */
-    public int getTypeId(int var1, int var2, int var3)
-    {
-        if (var2 >> 4 < this.sections.length && var2 >> 4 >= 0)
-        {
-            ChunkSection var4 = this.sections[var2 >> 4];
-            return var4 != null ? var4.a(var1, var2 & 15, var3) : 0;
-        }
-        else
-        {
+    public int getTypeId(int i, int j, int k) {
+        if (j >> 4 >= this.sections.length || j >> 4 < 0) { // Forge
             return 0;
+        } else {
+            ChunkSection chunksection = this.sections[j >> 4];
+
+            return chunksection != null ? chunksection.a(i, j & 15, k) : 0;
         }
     }
 
-    /**
-     * Return the metadata corresponding to the given coordinates inside a chunk.
-     */
-    public int getData(int var1, int var2, int var3)
-    {
-        if (var2 >> 4 < this.sections.length && var2 >> 4 >= 0)
-        {
-            ChunkSection var4 = this.sections[var2 >> 4];
-            return var4 != null ? var4.b(var1, var2 & 15, var3) : 0;
-        }
-        else
-        {
+    public int getData(int i, int j, int k) {
+        if (j >> 4 >= this.sections.length || j >> 4 < 0) { // Forge
             return 0;
+        } else {
+            ChunkSection chunksection = this.sections[j >> 4];
+
+            return chunksection != null ? chunksection.b(i, j & 15, k) : 0;
         }
     }
 
@@ -445,8 +490,8 @@ public class Chunk {
 
         if (l1 == l && i2 == i1) {
             return false;
-        } else if (j >> 4 < this.sections.length && j >> 4 >= 0)
-            {
+        } else {
+            if (j >> 4 >= this.sections.length || j >> 4 < 0) return false; // Forge
             ChunkSection chunksection = this.sections[j >> 4];
             boolean flag = false;
 
@@ -470,9 +515,13 @@ public class Chunk {
             if (l1 != 0) {
                 if (!this.world.isStatic) {
                     Block.byId[l1].remove(this.world, j2, j, k2, l1, i2);
-                } else if (Block.byId[l1] instanceof BlockContainer && l1 != l) {
-                    this.world.r(j2, j, k2);
-                }
+                  // Forge start
+                } else if (Block.byId[l1] != null && Block.byId[l1].hasTileEntity(i2)) {
+                   TileEntity te = world.getTileEntity(j2, j, k2);
+                    if (te != null && te.shouldRefresh(l1, l, i2, i1, world, j2, j, k2))  {
+                        this.world.r(j2, j, k2);
+                    }
+                } // Forge end
             }
 
             if (chunksection.a(i, j & 15, k) != l) {
@@ -482,7 +531,7 @@ public class Chunk {
                 if (flag) {
                     this.initLighting();
                 } else {
-                    if (this.b(i, j, k) > 0) {
+                    if (b(i, j, k) > 0) { // Forge
                         if (j >= k1) {
                             this.h(i, j + 1, k);
                         }
@@ -493,6 +542,8 @@ public class Chunk {
                     this.e(i, k);
                 }
 
+                TileEntity tileentity;
+
                 if (l != 0) {
                     if (!this.world.isStatic) {
                         // CraftBukkit start - Don't extend piston until data is set
@@ -502,72 +553,53 @@ public class Chunk {
                         // CraftBukkit end
                     }
 
-                    if (Block.byId[l] != null && Block.byId[l].hasTileEntity(i1))
-                    {
+                    if (Block.byId[l] != null && Block.byId[l].hasTileEntity(i1)) { // Forge
                         // CraftBukkit start - don't create tile entity if placement failed
                         if (this.getTypeId(i, j, k) != l) {
                             return false;
                         }
                         // CraftBukkit end
 
-                    	TileEntity tileentity = this.e(i, j, k);
+                        tileentity = this.e(i, j, k);
                         if (tileentity == null) {
-                            tileentity = Block.byId[l].createTileEntity(this.world, i1);
+                            tileentity = Block.byId[l].createTileEntity(this.world, i1); // Forge
                             this.world.setTileEntity(j2, j, k2, tileentity);
                         }
 
                         if (tileentity != null) {
                             tileentity.h();
+                            tileentity.p = i1; // Forge
                         }
                     }
                 }
-                    else if (l1 > 0 && Block.byId[l1] instanceof BlockContainer) {
-                    	TileEntity tileentity = this.e(i, j, k);
-                    	if (tileentity != null) {
-                    		tileentity.h();
-                    	}
-                }
+
                 this.l = true;
                 return true;
             }
         }
-        else
-        	return false;
     }
 
-    /**
-     * Set the metadata of a block in the chunk
-     */
-    public boolean b(int var1, int var2, int var3, int var4)
-    {
-        ChunkSection var5 = var2 >> 4 < this.sections.length && var2 >> 4 >= 0 ? this.sections[var2 >> 4] : null;
+    public boolean b(int i, int j, int k, int l) {
+        ChunkSection chunksection = j >> 4 >= this.sections.length || j >> 4 < 0 ? null : this.sections[j >> 4]; // Forge
 
-        if (var5 == null)
-        {
+        if (chunksection == null) {
             return false;
-        }
-        else
-        {
-            int var6 = var5.b(var1, var2 & 15, var3);
+        } else {
+            int i1 = chunksection.b(i, j & 15, k);
 
-            if (var6 == var4)
-            {
+            if (i1 == l) {
                 return false;
-            }
-            else
-            {
+            } else {
                 this.l = true;
-                var5.b(var1, var2 & 15, var3, var4);
-                int var7 = var5.a(var1, var2 & 15, var3);
+                chunksection.b(i, j & 15, k, l);
+                int j1 = chunksection.a(i, j & 15, k);
 
-                if (var7 > 0 && Block.byId[var7] != null && Block.byId[var7].hasTileEntity(var4))
-                {
-                    TileEntity var8 = this.e(var1, var2, var3);
+                if (j1 > 0 && Block.byId[j1] != null && Block.byId[j1].hasTileEntity(l)) { // Forge
+                    TileEntity tileentity = this.e(i, j, k);
 
-                    if (var8 != null)
-                    {
-                        var8.h();
-                        var8.p = var4;
+                    if (tileentity != null) {
+                        tileentity.h();
+                        tileentity.p = l;
                     }
                 }
 
@@ -576,85 +608,54 @@ public class Chunk {
         }
     }
 
+    public int getBrightness(EnumSkyBlock enumskyblock, int i, int j, int k) {
+        ChunkSection chunksection = j >> 4 >= this.sections.length || j >> 4 < 0 ? null : this.sections[j >> 4];
 
-    /**
-     * Gets the amount of light saved in this block (doesn't adjust for daylight)
-     */
-    public int getBrightness(EnumSkyBlock var1, int var2, int var3, int var4)
-    {
-        ChunkSection var5 = var3 >> 4 < this.sections.length && var3 >> 4 >= 0 ? this.sections[var3 >> 4] : null;
-        return var5 == null ? (this.d(var2, var3, var4) ? var1.c : 0) : (var1 == EnumSkyBlock.SKY ? var5.c(var2, var3 & 15, var4) : (var1 == EnumSkyBlock.BLOCK ? var5.d(var2, var3 & 15, var4) : var1.c));
+        return chunksection == null ? (this.d(i, j, k) ? enumskyblock.c : 0) : (enumskyblock == EnumSkyBlock.SKY ? chunksection.c(i, j & 15, k) : (enumskyblock == EnumSkyBlock.BLOCK ? chunksection.d(i, j & 15, k) : enumskyblock.c));
     }
 
-    /**
-     * Sets the light value at the coordinate. If enumskyblock is set to sky it sets it in the skylightmap and if its a
-     * block then into the blocklightmap. Args enumSkyBlock, x, y, z, lightValue
-     */
-    public void a(EnumSkyBlock var1, int var2, int var3, int var4, int var5)
-    {
-        if (var3 >> 4 < this.sections.length && var3 >> 4 >= 0)
-        {
-            ChunkSection var6 = this.sections[var3 >> 4];
+    public void a(EnumSkyBlock enumskyblock, int i, int j, int k, int l) {
+        if (j >> 4 >= this.sections.length || j >> 4 < 0) return; // Forge
+        ChunkSection chunksection = this.sections[j >> 4];
 
-            if (var6 == null)
-            {
-                var6 = this.sections[var3 >> 4] = new ChunkSection(var3 >> 4 << 4);
-                this.initLighting();
-            }
+        if (chunksection == null) {
+            chunksection = this.sections[j >> 4] = new ChunkSection(j >> 4 << 4);
+            this.initLighting();
+        }
 
-            this.l = true;
-
-            if (var1 == EnumSkyBlock.SKY)
-            {
-                if (!this.world.worldProvider.f)
-                {
-                    var6.c(var2, var3 & 15, var4, var5);
-                }
+        this.l = true;
+        if (enumskyblock == EnumSkyBlock.SKY) {
+            if (!this.world.worldProvider.f) {
+                chunksection.c(i, j & 15, k, l);
             }
-            else if (var1 == EnumSkyBlock.BLOCK)
-            {
-                var6.d(var2, var3 & 15, var4, var5);
-            }
+        } else if (enumskyblock == EnumSkyBlock.BLOCK) {
+            chunksection.d(i, j & 15, k, l);
         }
     }
 
+    public int c(int i, int j, int k, int l) {
+        ChunkSection chunksection = this.sections[j >> 4];
 
+        if (chunksection == null) {
+            return !this.world.worldProvider.f && l < EnumSkyBlock.SKY.c ? EnumSkyBlock.SKY.c - l : 0;
+        } else {
+            int i1 = this.world.worldProvider.f ? 0 : chunksection.c(i, j & 15, k);
 
-    /**
-     * Gets the amount of light on a block taking into account sunlight
-     */
-    public int c(int var1, int var2, int var3, int var4)
-    {
-        ChunkSection var5 = var2 >> 4 < this.sections.length && var2 >> 4 >= 0 ? this.sections[var2 >> 4] : null;
-
-        if (var5 != null)
-        {
-            int var6 = this.world.worldProvider.f ? 0 : var5.c(var1, var2 & 15, var3);
-
-            if (var6 > 0)
-            {
+            if (i1 > 0) {
                 a = true;
             }
 
-            var6 -= var4;
-            int var7 = var5.d(var1, var2 & 15, var3);
+            i1 -= l;
+            int j1 = chunksection.d(i, j & 15, k);
 
-            if (var7 > var6)
-            {
-                var6 = var7;
+            if (j1 > i1) {
+                i1 = j1;
             }
 
-            return var6;
-        }
-        else
-        {
-            return !this.world.worldProvider.f && var4 < EnumSkyBlock.SKY.c ? EnumSkyBlock.SKY.c - var4 : 0;
+            return i1;
         }
     }
 
-    /**
-     * Adds an entity to the chunk. Args: entity
-     */
     public void a(Entity entity) {
         this.m = true;
         int i = MathHelper.floor(entity.locX / 16.0D);
@@ -678,7 +679,7 @@ public class Chunk {
             k = this.entitySlices.length - 1;
         }
 
-        MinecraftForge.EVENT_BUS.post(new EnteringChunk(entity, this.x, this.z, entity.ai, entity.ak));
+        MinecraftForge.EVENT_BUS.post(new EnteringChunk(entity, this.x, this.z, entity.ai, entity.ak)); // Forge
         entity.ah = true;
         entity.ai = this.x;
         entity.aj = k;
@@ -706,47 +707,33 @@ public class Chunk {
         return j >= this.heightMap[k << 4 | i];
     }
 
+    public TileEntity e(int i, int j, int k) {
+        ChunkPosition chunkposition = new ChunkPosition(i, j, k);
+        TileEntity tileentity = (TileEntity) this.tileEntities.get(chunkposition);
 
-    /**
-     * Gets the TileEntity for a given block in this chunk
-     */
-    public TileEntity e(int var1, int var2, int var3)
-    {
-        ChunkPosition var4 = new ChunkPosition(var1, var2, var3);
-        TileEntity var5 = (TileEntity)this.tileEntities.get(var4);
-
-        if (var5 != null && var5.r())
-        {
-            this.tileEntities.remove(var4);
-            var5 = null;
+        // Forge start
+        if (tileentity != null && tileentity.r()) {
+            this.tileEntities.remove(chunkposition);
+            tileentity = null;
         }
+        // Forge end
+        if (tileentity == null) {
+            int l = this.getTypeId(i, j, k);
+            int meta = this.getData(i, j, k); // Forge
 
-        if (var5 == null)
-        {
-            int var6 = this.getTypeId(var1, var2, var3);
-            int var7 = this.getData(var1, var2, var3);
-
-            if (var6 <= 0 || !Block.byId[var6].hasTileEntity(var7))
-            {
+            if (l <= 0 || !Block.byId[l].hasTileEntity(meta)) { // Forge
                 return null;
             }
 
-            if (var5 == null)
-            {
-                var5 = Block.byId[var6].createTileEntity(this.world, var7);
-                this.world.setTileEntity(this.x * 16 + var1, var2, this.z * 16 + var3, var5);
+            if (tileentity == null) {
+                tileentity = Block.byId[l].createTileEntity(this.world, meta); // Forge
+                this.world.setTileEntity(this.x * 16 + i, j, this.z * 16 + k, tileentity);
             }
 
-            var5 = (TileEntity)this.tileEntities.get(var4);
+            tileentity = (TileEntity)this.tileEntities.get(chunkposition);
         }
 
-        //return var5;
-      if(var5 != null && var5.r()) {
-         this.tileEntities.remove(var4);
-         return null;
-      } else {
-         return var5;
-      }
+        return tileentity; // Forge
     }
 
     public void a(TileEntity tileentity) {
@@ -756,29 +743,36 @@ public class Chunk {
 
         this.a(i, j, k, tileentity);
         if (this.d) {
-            this.world.addTileEntity(tileentity);
+            this.world.addTileEntity(tileentity); // Forge
         }
     }
 
-    /**
-     * Sets the TileEntity for a given block in this chunk
-     */
-   public void a(int i, int j, int k, TileEntity tileentity) {
-      ChunkPosition chunkposition = new ChunkPosition(i, j, k);
-      tileentity.b(this.world);
-      tileentity.x = this.x * 16 + i;
-      tileentity.y = j;
-      tileentity.z = this.z * 16 + k;
-      if(this.getTypeId(i, j, k) != 0 && Block.byId[this.getTypeId(i, j, k)] instanceof BlockContainer) {
-         tileentity.s();
-         this.tileEntities.put(chunkposition, tileentity);
-      } else {
-         System.out.println("Attempted to place a tile entity (" + tileentity + ") at " + tileentity.x + "," + tileentity.y + "," + tileentity.z + " (" + org.bukkit.Material.getMaterial(this.getTypeId(i, j, k)) + ") where there was no entity tile!");
-         System.out.println("Chunk coordinates: " + this.x * 16 + "," + this.z * 16);
-         (new Exception()).printStackTrace();
-      }
+    public void a(int i, int j, int k, TileEntity tileentity) {
+        ChunkPosition chunkposition = new ChunkPosition(i, j, k);
 
-   }
+        tileentity.b(this.world);
+        tileentity.x = this.x * 16 + i;
+        tileentity.y = j;
+        tileentity.z = this.z * 16 + k;
+        // Forge start
+        Block block = Block.byId[getTypeId(i, j, k)];
+        if(block != null && block.hasTileEntity(getData(i, j, k))) {
+            TileEntity old = (TileEntity)tileEntities.get(chunkposition);
+            if (old != null) {
+                old.w_();
+            }
+        // Forge end
+            tileentity.s();
+            this.tileEntities.put(chunkposition, tileentity);
+            // CraftBukkit start
+        } else {
+            System.out.println("Attempted to place a tile entity (" + tileentity + ") at " + tileentity.x + "," + tileentity.y + "," + tileentity.z
+                    + " (" + org.bukkit.Material.getMaterial(getTypeId(i, j, k)) + ") where there was no entity tile!");
+            System.out.println("Chunk coordinates: " + (this.x * 16) + "," + (this.z * 16));
+            new Exception().printStackTrace();
+            // CraftBukkit end
+        }
+    }
 
     public void f(int i, int j, int k) {
         ChunkPosition chunkposition = new ChunkPosition(i, j, k);
@@ -792,19 +786,14 @@ public class Chunk {
         }
     }
 
-    /**
-     * Called when this Chunk is loaded by the ChunkProvider
-     */
-    public void addEntities()
-    {
-      this.d = true;
-      this.world.a(this.tileEntities.values());
+    public void addEntities() {
+        this.d = true;
+        this.world.a(this.tileEntities.values());
 
-      for(int i = 0; i < this.entitySlices.length; ++i) {
-         this.world.a(this.entitySlices[i]);
-      }
-
-        MinecraftForge.EVENT_BUS.post(new Load(this));
+        for (int i = 0; i < this.entitySlices.length; ++i) {
+            this.world.a(this.entitySlices[i]);
+        }
+        MinecraftForge.EVENT_BUS.post(new Load(this)); // Forge
     }
 
     public void removeEntities() {
@@ -835,8 +824,7 @@ public class Chunk {
 
             this.world.b(this.entitySlices[i]);
         }
-        
-        MinecraftForge.EVENT_BUS.post(new Unload(this));
+        MinecraftForge.EVENT_BUS.post(new Unload(this)); // Forge
     }
 
     public void e() {
@@ -844,8 +832,8 @@ public class Chunk {
     }
 
     public void a(Entity entity, AxisAlignedBB axisalignedbb, List list) {
-        int i = MathHelper.floor((axisalignedbb.b - World.MAX_ENTITY_RADIUS) / 16.0D);
-        int j = MathHelper.floor((axisalignedbb.e + World.MAX_ENTITY_RADIUS) / 16.0D);
+        int i = MathHelper.floor((axisalignedbb.b - World.MAX_ENTITY_RADIUS) / 16.0D); // Forge
+        int j = MathHelper.floor((axisalignedbb.e + World.MAX_ENTITY_RADIUS) / 16.0D); // Forge
 
         if (i < 0) {
             i = 0;
@@ -879,8 +867,8 @@ public class Chunk {
     }
 
     public void a(Class oclass, AxisAlignedBB axisalignedbb, List list, IEntitySelector ientityselector) {
-        int i = MathHelper.floor((axisalignedbb.b - World.MAX_ENTITY_RADIUS) / 16.0D);
-        int j = MathHelper.floor((axisalignedbb.e + World.MAX_ENTITY_RADIUS) / 16.0D);
+        int i = MathHelper.floor((axisalignedbb.b - World.MAX_ENTITY_RADIUS) / 16.0D); // Forge
+        int j = MathHelper.floor((axisalignedbb.e + World.MAX_ENTITY_RADIUS) / 16.0D); // Forge
 
         if (i < 0) {
             i = 0;
@@ -1074,22 +1062,6 @@ public class Chunk {
 
                     this.world.z(i1, l1, j1);
                 }
-            }
-        }
-    }
-    
-
-    public void cleanChunkBlockTileEntity(int var1, int var2, int var3)
-    {
-        ChunkPosition var4 = new ChunkPosition(var1, var2, var3);
-
-        if (this.d)
-        {
-            TileEntity var5 = (TileEntity)this.tileEntities.get(var4);
-
-            if (var5 != null && var5.r())
-            {
-                this.tileEntities.remove(var4);
             }
         }
     }

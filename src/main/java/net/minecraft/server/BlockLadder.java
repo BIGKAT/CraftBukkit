@@ -7,9 +7,10 @@ import net.minecraft.server.CreativeModeTab;
 import net.minecraft.server.IBlockAccess;
 import net.minecraft.server.Material;
 import net.minecraft.server.World;
-
+// Forge start
 import net.minecraftforge.common.ForgeDirection;
 import static net.minecraftforge.common.ForgeDirection.*;
+// Forge end
 
 public class BlockLadder extends Block {
 

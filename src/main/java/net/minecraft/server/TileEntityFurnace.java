@@ -1,10 +1,5 @@
 package net.minecraft.server;
 
-import cpw.mods.fml.common.Side;
-import cpw.mods.fml.common.asm.SideOnly;
-import cpw.mods.fml.common.registry.GameRegistry;
-import net.minecraftforge.common.ForgeDirection;
-import net.minecraftforge.common.ISidedInventory;
 // CraftBukkit start
 import java.util.List;
 
@@ -14,6 +9,13 @@ import org.bukkit.event.inventory.FurnaceBurnEvent;
 import org.bukkit.event.inventory.FurnaceSmeltEvent;
 import org.bukkit.craftbukkit.entity.CraftHumanEntity;
 // CraftBukkit end
+// Forge start
+import cpw.mods.fml.common.Side;
+import cpw.mods.fml.common.asm.SideOnly;
+import cpw.mods.fml.common.registry.GameRegistry;
+import net.minecraftforge.common.ForgeDirection;
+import net.minecraftforge.common.ISidedInventory;
+// Forge end
 
 public class TileEntityFurnace extends TileEntity implements IInventory, ISidedInventory { // Forge
 
@@ -229,11 +231,14 @@ public class TileEntityFurnace extends TileEntity implements IInventory, ISidedI
         if (this.items[0] == null) {
             return false;
         } else {
-        	// Forge start
+            // Forge start
             ItemStack itemstack = RecipesFurnace.getInstance().getSmeltingResult(this.items[0]);
-
-            // CraftBukkit - consider resultant count instead of current count
-            return itemstack == null ? false : (this.items[2] == null ? true : (!this.items[2].doMaterialsMatch(itemstack) ? false : (this.items[2].count + itemstack.count <= this.getMaxStackSize() && this.items[2].count < this.items[2].getMaxStackSize() ? true : this.items[2].count + itemstack.count <= itemstack.getMaxStackSize())));
+            if (itemstack == null) return false;
+            if (this.items[2] == null) return true;
+            if (!this.items[2].doMaterialsMatch(itemstack)) return false;
+            int result = this.items[2].count + itemstack.count;
+            return (result <= this.getMaxStackSize() && result <= itemstack.getMaxStackSize());
+            // Forge end
         }
     }
 

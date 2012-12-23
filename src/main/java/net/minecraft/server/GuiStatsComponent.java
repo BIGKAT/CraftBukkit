@@ -1,14 +1,16 @@
 package net.minecraft.server;
 
-import cpw.mods.fml.common.Side;
-import cpw.mods.fml.common.asm.SideOnly;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.text.DecimalFormat;
 import javax.swing.JComponent;
 import javax.swing.Timer;
+// Forge start
+import cpw.mods.fml.common.Side;
+import cpw.mods.fml.common.asm.SideOnly;
 import net.minecraftforge.common.DimensionManager;
+// Forge end
 
 @SideOnly(Side.SERVER)
 public class GuiStatsComponent extends JComponent

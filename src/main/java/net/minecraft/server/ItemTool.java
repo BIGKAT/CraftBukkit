@@ -1,11 +1,12 @@
 package net.minecraft.server;
-
+// Forge start
 import cpw.mods.fml.common.Side;
 import cpw.mods.fml.common.asm.SideOnly;
 import net.minecraftforge.common.ForgeHooks;
+// Forge end
 
-public class ItemTool extends Item
-{
+public class ItemTool extends Item {
+
     /** Array of blocks the tool has extra effect against. */
     private Block[] c;
     public float a = 4.0F;

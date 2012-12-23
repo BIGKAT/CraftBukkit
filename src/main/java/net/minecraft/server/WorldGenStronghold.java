@@ -9,9 +9,9 @@ import java.util.Map;
 import java.util.Random;
 import java.util.Map.Entry;
 
-public class WorldGenStronghold extends StructureGenerator
-{
-	public static ArrayList<BiomeBase> allowedBiomes = new ArrayList<BiomeBase>(Arrays.asList(BiomeBase.DESERT, BiomeBase.FOREST, BiomeBase.EXTREME_HILLS, BiomeBase.SWAMPLAND, BiomeBase.TAIGA, BiomeBase.ICE_PLAINS, BiomeBase.ICE_MOUNTAINS, BiomeBase.DESERT_HILLS, BiomeBase.FOREST_HILLS, BiomeBase.SMALL_MOUNTAINS, BiomeBase.JUNGLE, BiomeBase.JUNGLE_HILLS)); 
+public class WorldGenStronghold extends StructureGenerator {
+
+    public static ArrayList<BiomeBase> allowedBiomes = new ArrayList<BiomeBase>(Arrays.asList(BiomeBase.DESERT, BiomeBase.FOREST, BiomeBase.EXTREME_HILLS, BiomeBase.SWAMPLAND, BiomeBase.TAIGA, BiomeBase.ICE_PLAINS, BiomeBase.ICE_MOUNTAINS, BiomeBase.DESERT_HILLS, BiomeBase.FOREST_HILLS, BiomeBase.SMALL_MOUNTAINS, BiomeBase.JUNGLE, BiomeBase.JUNGLE_HILLS)); 
     private BiomeBase[] e;
 
     /**

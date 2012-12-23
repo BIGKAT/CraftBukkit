@@ -8,8 +8,8 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
-public class RegionFileCache
-{
+public class RegionFileCache {
+
 	/** A map containing Files as keys and RegionFiles as values */
 	private static final Map a = new HashMap();
 

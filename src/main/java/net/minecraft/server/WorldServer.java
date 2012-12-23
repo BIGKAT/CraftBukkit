@@ -2,7 +2,6 @@ package net.minecraft.server;
 
 import gnu.trove.iterator.TLongShortIterator;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
@@ -11,10 +10,14 @@ import java.util.List;
 import java.util.Random;
 import java.util.Set;
 import java.util.TreeSet;
+// Forge start
+import gnu.trove.iterator.TLongShortIterator;
 
+import java.io.File;
 import net.minecraftforge.common.DimensionManager;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.world.WorldEvent;
+// Forge end
 // CraftBukkit start
 import org.bukkit.block.BlockState;
 import org.bukkit.craftbukkit.util.LongHash;
@@ -66,7 +69,7 @@ public class WorldServer extends World implements org.bukkit.BlockChangeDelegate
             this.N = new TreeSet();
         }
 
-        DimensionManager.setWorld(i, this);
+        DimensionManager.setWorld(i, this); // Forge
         this.Q = new PortalTravelAgent(this);
     }
 
@@ -412,7 +415,7 @@ public class WorldServer extends World implements org.bukkit.BlockChangeDelegate
     public void a(int i, int j, int k, int l, int i1, int j1) {
         NextTickListEntry nextticklistentry = new NextTickListEntry(i, j, k, l);
         boolean persist = this.getPersistentChunks().containsKey(new ChunkCoordIntPair(nextticklistentry.a >> 4, nextticklistentry.c >> 4));
-        byte b0 = persist ? 0 : 8;
+        int b0 = persist ? 0 : 8;
 
         if (this.d && l > 0) {
             if (Block.byId[l].l()) {
@@ -501,7 +504,7 @@ public class WorldServer extends World implements org.bukkit.BlockChangeDelegate
                 //this.M.remove(nextticklistentry); // CraftBukkit
                 this.removeNextTickIfNeeded(nextticklistentry); // CraftBukkit
                 boolean persist = this.getPersistentChunks().containsKey(new ChunkCoordIntPair(nextticklistentry.a >> 4, nextticklistentry.c >> 4));
-                byte b0 = persist ? 0 : 8;
+                int b0 = persist ? 0 : 8;
 
                 if (this.d(nextticklistentry.a - b0, nextticklistentry.b - b0, nextticklistentry.c - b0, nextticklistentry.a + b0, nextticklistentry.b + b0, nextticklistentry.c + b0)) {
                     int k = this.getTypeId(nextticklistentry.a, nextticklistentry.b, nextticklistentry.c);
@@ -966,3 +969,4 @@ public class WorldServer extends World implements org.bukkit.BlockChangeDelegate
     public File getChunkSaveLocation() {
         return ((ChunkRegionLoader)this.chunkProviderServer.e).d;
     }
+}

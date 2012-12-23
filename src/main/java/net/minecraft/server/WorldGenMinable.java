@@ -2,8 +2,8 @@ package net.minecraft.server;
 
 import java.util.Random;
 
-public class WorldGenMinable extends WorldGenerator
-{
+public class WorldGenMinable extends WorldGenerator {
+
     /** The block ID of the ore to be placed using this generator. */
     private int a;
     private int minableBlockMeta;

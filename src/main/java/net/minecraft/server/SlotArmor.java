@@ -1,18 +1,8 @@
 package net.minecraft.server;
 
-import net.minecraft.server.Block;
-import net.minecraft.server.ContainerPlayer;
-import net.minecraft.server.IInventory;
-import net.minecraft.server.Item;
-import net.minecraft.server.ItemArmor;
-import net.minecraft.server.ItemStack;
-import net.minecraft.server.Slot;
-
 class SlotArmor extends Slot {
 
-   // $FF: synthetic field
    final int a;
-   // $FF: synthetic field
    final ContainerPlayer b;
 
 

@@ -41,7 +41,7 @@ public class EntityPlayer extends EntityHuman implements ICrafting {
     private int cp = 0;
     private int cq = 0;
     private boolean cr = true;
-    public int containerCounter = 0;
+    public int containerCounter = 0; // Forge private -> public
     public boolean h;
     public int ping;
     public boolean viewingCredits = false;
@@ -433,7 +433,7 @@ public class EntityPlayer extends EntityHuman implements ICrafting {
     }
 
     // CPCM start - vanilla-compatible (same signature) method
-    public void nextContainerCounter() { // CPCM - private void -> public int
+    public int nextContainerCounter() { // CPCM - private void -> public int
         this.containerCounter = this.containerCounter % 100 + 1;
         return this.containerCounter; // CraftBukkit
     }

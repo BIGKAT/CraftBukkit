@@ -1,17 +1,18 @@
 package net.minecraft.server;
 
+import java.util.Arrays;
+import java.util.LinkedHashSet;
+import java.util.Random;
+// Forge start
 import cpw.mods.fml.common.Side;
 import cpw.mods.fml.common.asm.SideOnly;
 import mcpc.com.google.common.collect.ObjectArrays;
 import mcpc.com.google.common.collect.Sets;
+// Forge end
 
-import java.util.Arrays;
-import java.util.LinkedHashSet;
-import java.util.Random;
+public class WorldType {
 
-public class WorldType
-{
-	// Forge start
+    // Forge start
     public static final BiomeBase[] base11Biomes = new BiomeBase[] {BiomeBase.DESERT, BiomeBase.FOREST, BiomeBase.EXTREME_HILLS, BiomeBase.SWAMPLAND, BiomeBase.PLAINS, BiomeBase.TAIGA};
     public static final BiomeBase[] base12Biomes = (BiomeBase[])ObjectArrays.concat(base11Biomes, BiomeBase.JUNGLE);
     // Forge end

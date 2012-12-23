@@ -2,10 +2,11 @@ package net.minecraft.server;
 
 import java.util.List;
 import java.util.Random;
-import net.minecraftforge.common.ChestGenHooks;
 
-public class WorldGenStrongholdRoomCrossing extends WorldGenStrongholdPiece
-{
+import net.minecraftforge.common.ChestGenHooks; // Forge
+
+public class WorldGenStrongholdRoomCrossing extends WorldGenStrongholdPiece {
+
     /**
      * Items that could generate in the chest that is located in Stronghold Room Crossing.
      */

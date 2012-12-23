@@ -1,18 +1,6 @@
 package net.minecraft.server;
 
 import java.util.Random;
-import net.minecraft.server.BiomeBase;
-import net.minecraft.server.BiomeMeta;
-import net.minecraft.server.Block;
-import net.minecraft.server.EntityChicken;
-import net.minecraft.server.EntityOcelot;
-import net.minecraft.server.World;
-import net.minecraft.server.WorldGenGrass;
-import net.minecraft.server.WorldGenGroundBush;
-import net.minecraft.server.WorldGenMegaTree;
-import net.minecraft.server.WorldGenTrees;
-import net.minecraft.server.WorldGenVines;
-import net.minecraft.server.WorldGenerator;
 
 public class BiomeJungle extends BiomeBase {
 

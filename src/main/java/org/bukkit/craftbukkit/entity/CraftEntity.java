@@ -21,14 +21,12 @@ public abstract class CraftEntity implements org.bukkit.entity.Entity {
     protected final CraftServer server;
     protected Entity entity;
     private EntityDamageEvent lastDamageEvent;
-    // MCPC
-    private static CraftEntity instance;
+    private static CraftEntity instance; // MCPC
 
     public CraftEntity(final CraftServer server, final Entity entity) {
         this.server = server;
         this.entity = entity;
-        // MCPC
-        instance = this;
+        instance = this; // MCPC
     }
 
     public static CraftEntity getEntity(CraftServer server, Entity entity) {
@@ -157,7 +155,7 @@ public abstract class CraftEntity implements org.bukkit.entity.Entity {
         // MCPC - used for custom entities that extend Entity
         else if (entity instanceof Entity) { return instance; }
 
-        throw new IllegalArgumentException("Unknown entity " + entity);
+        throw new IllegalArgumentException("Unknown entity " + entity); // MCPC - show the entity that caused exception
     }
 
     public Location getLocation() {

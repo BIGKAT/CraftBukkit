@@ -1,7 +1,6 @@
 package net.minecraft.server;
 
-public class GenLayerBiome extends GenLayer
-{
+public class GenLayerBiome extends GenLayer {
     /** this sets all the biomes that are allowed to appear in the overworld */
     private BiomeBase[] b;
 

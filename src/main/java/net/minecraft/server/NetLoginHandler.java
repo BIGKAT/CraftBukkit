@@ -1,7 +1,5 @@
 package net.minecraft.server;
 
-import cpw.mods.fml.common.network.FMLNetworkHandler;
-import java.io.IOException;
 import java.io.Serializable;
 import java.net.InetAddress;
 import java.net.Socket;
@@ -13,8 +11,11 @@ import java.util.List;
 import java.util.Random;
 import java.util.logging.Logger;
 import javax.crypto.SecretKey;
-import cpw.mods.fml.common.network.FMLNetworkHandler;
+// Forge start
 import java.io.IOException;
+
+import cpw.mods.fml.common.network.FMLNetworkHandler;
+// Forge end
 
 public class NetLoginHandler extends NetHandler {
 
@@ -46,11 +47,10 @@ public class NetLoginHandler extends NetHandler {
 
     public void c() {
         if (this.i) {
-        	// initialize playerConnection
             this.d();
         }
 
-        if (this.g++ == 6000) {
+        if (this.g++ == 6000) { // Forge
             this.disconnect("Took too long to log in");
         } else {
             this.networkManager.b();
@@ -129,7 +129,7 @@ public class NetLoginHandler extends NetHandler {
         FMLNetworkHandler.onConnectionReceivedFromClient(this, this.server, this.networkManager.getSocketAddress(), this.h); // Forge
     }
 
-    public void completeConnection(String str) {
+    public void completeConnection(String str) { // Forge
         if (str != null) this.disconnect(str);
         // CraftBukkit start
         EntityPlayer s = this.server.getServerConfigurationManager().attemptLogin(this, this.h, this.hostname);

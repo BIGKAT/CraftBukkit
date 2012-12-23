@@ -8,8 +8,7 @@ import org.bukkit.TreeType;
 import org.bukkit.craftbukkit.util.StructureGrowDelegate;
 import org.bukkit.event.world.StructureGrowEvent;
 // CraftBukkit end
-
-import net.minecraftforge.event.terraingen.TerrainGen;
+import net.minecraftforge.event.terraingen.TerrainGen; // Forge
 
 public class BlockSapling extends BlockFlower {
 
@@ -45,9 +44,8 @@ public class BlockSapling extends BlockFlower {
 
     // CraftBukkit - added bonemeal, player and itemstack
     public void grow(World world, int i, int j, int k, Random random, boolean bonemeal, org.bukkit.entity.Player player, ItemStack itemstack) {
-    	if (!TerrainGen.saplingGrowTree(world, random, i, j, k)) return; // Forge
-    	
-    	int l = world.getData(i, j, k) & 3;
+        if (!TerrainGen.saplingGrowTree(world, random, i, j, k)) return; // Forge
+        int l = world.getData(i, j, k) & 3;
         int i1 = 0;
         int j1 = 0;
         boolean flag = false;

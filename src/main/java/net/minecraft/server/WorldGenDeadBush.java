@@ -2,8 +2,8 @@ package net.minecraft.server;
 
 import java.util.Random;
 
-public class WorldGenDeadBush extends WorldGenerator
-{
+public class WorldGenDeadBush extends WorldGenerator {
+
     /** stores the ID for WorldGenDeadBush */
     private int a;
 

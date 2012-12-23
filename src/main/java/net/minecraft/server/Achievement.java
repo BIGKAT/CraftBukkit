@@ -1,11 +1,5 @@
 package net.minecraft.server;
 
-import net.minecraft.server.AchievementList;
-import net.minecraft.server.Block;
-import net.minecraft.server.Item;
-import net.minecraft.server.ItemStack;
-import net.minecraft.server.Statistic;
-
 public class Achievement extends Statistic {
 
 	public final int a;

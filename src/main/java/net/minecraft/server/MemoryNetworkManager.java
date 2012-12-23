@@ -5,10 +5,8 @@ import java.net.SocketAddress;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import net.minecraft.server.INetworkManager;
-import net.minecraft.server.NetHandler;
-import net.minecraft.server.Packet;
-import cpw.mods.fml.common.network.FMLNetworkHandler;
+
+import cpw.mods.fml.common.network.FMLNetworkHandler; // Forge
 
 public class MemoryNetworkManager implements INetworkManager {
 

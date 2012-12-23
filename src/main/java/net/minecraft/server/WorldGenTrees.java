@@ -30,7 +30,6 @@ public class WorldGenTrees extends WorldGenerator implements BlockSapling.TreeGe
 
     public boolean generate(BlockChangeDelegate world, Random random, int i, int j, int k) {
         // CraftBukkit end
-    	World w = world instanceof World ? (World) world : null;
         int l = random.nextInt(3) + this.a;
         boolean flag = true;
 
@@ -54,8 +53,10 @@ public class WorldGenTrees extends WorldGenerator implements BlockSapling.TreeGe
                     for (j1 = k - b0; j1 <= k + b0 && flag; ++j1) {
                         if (i1 >= 0 && i1 < 256) {
                             k1 = world.getTypeId(l1, i1, j1);
+                            // Forge start
                             Block block = Block.byId[k1];
-                            if (k1 != 0 && !block.isLeaves(w, l1, i1, j1) && k1 != Block.GRASS.id && k1 != Block.DIRT.id && !block.isWood(w, l1, i1, j1)) {
+                            if (k1 != 0 && !block.isLeaves((World)world, l1, i1, j1) && k1 != Block.GRASS.id && k1 != Block.DIRT.id && !block.isWood((World)world, l1, i1, j1)) {
+                            // Forge end
                                 flag = false;
                             }
                         } else {
@@ -87,20 +88,22 @@ public class WorldGenTrees extends WorldGenerator implements BlockSapling.TreeGe
 
                             for (int l2 = k - i2; l2 <= k + i2; ++l2) {
                                 int i3 = l2 - k;
-
+                                // Forge start
                                 Block block = Block.byId[world.getTypeId(j2, j1, l2)];
-                                if ((Math.abs(k2) != i2 || Math.abs(i3) != i2 || random.nextInt(2) != 0 && k1 != 0) && (block == null || block.canBeReplacedByLeaves(w, j2, j1, l2))) {
+                                if ((Math.abs(k2) != i2 || Math.abs(i3) != i2 || random.nextInt(2) != 0 && k1 != 0) && (block == null || block.canBeReplacedByLeaves((World)world, j2, j1, l2))) {
+                                // Forge end
                                     this.setTypeAndData(world, j2, j1, l2, Block.LEAVES.id, this.d);
                                 }
                             }
                         }
                     }
-                    Block block;
 
                     for (j1 = 0; j1 < l; ++j1) {
                         k1 = world.getTypeId(i, j + j1, k);
-                        block = Block.byId[k1];
-                        if (k1 == 0 || block == null || block.isLeaves(w, i, j + j1, k)) {
+                        // Forge start
+                        Block block = Block.byId[k1];
+                        if (k1 == 0 || block == null || block.isLeaves((World)world, i, j + j1, k)) {
+                        // Forge end
                             this.setTypeAndData(world, i, j + j1, k, Block.LOG.id, this.c);
                             if (this.b && j1 > 0) {
                                 if (random.nextInt(3) > 0 && world.isEmpty(i - 1, j + j1, k)) {
@@ -129,8 +132,10 @@ public class WorldGenTrees extends WorldGenerator implements BlockSapling.TreeGe
 
                             for (j2 = i - i2; j2 <= i + i2; ++j2) {
                                 for (k2 = k - i2; k2 <= k + i2; ++k2) {
-                                    block = Block.byId[world.getTypeId(j2, j1, k2)];
-                                    if (block != null && block.isLeaves(w, j2, j1, k2)) {
+                                    // Forge start
+                                    Block block = Block.byId[world.getTypeId(j2, j1, k2)];
+                                    if (block != null && block.isLeaves((World)world, j2, j1, k2)) {
+                                    // Forge end
                                         if (random.nextInt(4) == 0 && world.getTypeId(j2 - 1, j1, k2) == 0) {
                                             this.b(world, j2 - 1, j1, k2, 8);
                                         }

@@ -1,105 +1,87 @@
 package net.minecraft.server;
 
-import cpw.mods.fml.common.registry.GameRegistry;
+// CraftBukkit start
+import org.bukkit.entity.Player;
+import org.bukkit.event.inventory.FurnaceExtractEvent;
+// CraftBukkit end
+import cpw.mods.fml.common.registry.GameRegistry; // Forge
 
-public class SlotFurnaceResult extends Slot
-{
-    /** The player that is using the GUI where this slot resides. */
+public class SlotFurnaceResult extends Slot {
+
     private EntityHuman a;
-    private int field_75228_b;
+    private int b;
 
-    public SlotFurnaceResult(EntityHuman var1, IInventory var2, int var3, int var4, int var5)
-    {
-        super(var2, var3, var4, var5);
-        this.a = var1;
+    public SlotFurnaceResult(EntityHuman entityhuman, IInventory iinventory, int i, int j, int k) {
+        super(iinventory, i, j, k);
+        this.a = entityhuman;
     }
 
-    /**
-     * Check if the stack is a valid item for this slot. Always true beside for the armor slots.
-     */
-    public boolean isAllowed(ItemStack var1)
-    {
+    public boolean isAllowed(ItemStack itemstack) {
         return false;
     }
 
-    /**
-     * Decrease the size of the stack in slot (first int arg) by the amount of the second int arg. Returns the new
-     * stack.
-     */
-    public ItemStack a(int var1)
-    {
-        if (this.d())
-        {
-            this.field_75228_b += Math.min(var1, this.getItem().count);
+    public ItemStack a(int i) {
+        if (this.d()) {
+            this.b += Math.min(i, this.getItem().count);
         }
 
-        return super.a(var1);
+        return super.a(i);
     }
 
-    public void a(EntityHuman var1, ItemStack var2)
-    {
-        this.b(var2);
-        super.a(var1, var2);
+    public void a(EntityHuman entityhuman, ItemStack itemstack) {
+        this.b(itemstack);
+        super.a(entityhuman, itemstack);
     }
 
-    /**
-     * the itemStack passed in is the output - ie, iron ingots, and pickaxes, not ore and wood. Typically increases an
-     * internal count then calls onCrafting(item).
-     */
-    protected void b(ItemStack var1, int var2)
-    {
-        this.field_75228_b += var2;
-        this.b(var1);
+    protected void a(ItemStack itemstack, int i) {
+        this.b += i;
+        this.b(itemstack);
     }
 
-    /**
-     * the itemStack passed in is the output - ie, iron ingots, and pickaxes, not ore and wood.
-     */
-    protected void b(ItemStack var1)
-    {
-        var1.a(this.a.world, this.a, this.field_75228_b);
+    protected void b(ItemStack itemstack) {
+        itemstack.a(this.a.world, this.a, this.b);
+        if (!this.a.world.isStatic) {
+            int i = this.b;
+            float f = RecipesFurnace.getInstance().getExperience(itemstack); // Forge
+            int j;
 
-        if (!this.a.world.isStatic)
-        {
-            int var2 = this.field_75228_b;
-            float var3 = RecipesFurnace.getInstance().c(var1.id);
-            int var4;
-
-            if (var3 == 0.0F)
-            {
-                var2 = 0;
-            }
-            else if (var3 < 1.0F)
-            {
-                var4 = MathHelper.d((float)var2 * var3);
-
-                if (var4 < MathHelper.f((float)var2 * var3) && (float)Math.random() < (float)var2 * var3 - (float)var4)
-                {
-                    ++var4;
+            if (f == 0.0F) {
+                i = 0;
+            } else if (f < 1.0F) {
+                j = MathHelper.d((float) i * f);
+                if (j < MathHelper.f((float) i * f) && (float) Math.random() < (float) i * f - (float) j) {
+                    ++j;
                 }
 
-                var2 = var4;
+                i = j;
             }
 
-            while (var2 > 0)
-            {
-                var4 = EntityExperienceOrb.getOrbValue(var2);
-                var2 -= var4;
-                this.a.world.addEntity(new EntityExperienceOrb(this.a.world, this.a.locX, this.a.locY + 0.5D, this.a.locZ + 0.5D, var4));
+            // CraftBukkit start
+            Player player = (Player) a.getBukkitEntity();
+            TileEntityFurnace furnace = ((TileEntityFurnace) this.inventory);
+            org.bukkit.block.Block block = a.world.getWorld().getBlockAt(furnace.x, furnace.y, furnace.z);
+
+            FurnaceExtractEvent event = new FurnaceExtractEvent(player, block, org.bukkit.Material.getMaterial(itemstack.id), itemstack.count, i);
+            a.world.getServer().getPluginManager().callEvent(event);
+
+            i = event.getExpToDrop();
+            // CraftBukkit end
+
+            while (i > 0) {
+                j = EntityExperienceOrb.getOrbValue(i);
+                i -= j;
+                this.a.world.addEntity(new EntityExperienceOrb(this.a.world, this.a.locX, this.a.locY + 0.5D, this.a.locZ + 0.5D, j));
             }
         }
 
-        this.field_75228_b = 0;
-        GameRegistry.onItemSmelted(this.a, var1);
-
-        if (var1.id == Item.IRON_INGOT.id)
-        {
-            this.a.a(AchievementList.k, 1);
+        this.b = 0;
+        GameRegistry.onItemSmelted(this.a, itemstack); // Forge
+        if (itemstack.id == Item.IRON_INGOT.id) {
+            this.a.a((Statistic) AchievementList.k, 1);
         }
 
-        if (var1.id == Item.COOKED_FISH.id)
-        {
-            this.a.a(AchievementList.p, 1);
+        if (itemstack.id == Item.COOKED_FISH.id) {
+            this.a.a((Statistic) AchievementList.p, 1);
         }
     }
 }

@@ -4,8 +4,8 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-public class MinecartTrackLogic
-{
+public class MinecartTrackLogic {
+
     /** Reference to the World object. */
     private World b;
     private int c;

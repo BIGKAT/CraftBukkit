@@ -1,9 +1,9 @@
 package net.minecraft.server;
 
-import cpw.mods.fml.common.registry.VillagerRegistry;
+import cpw.mods.fml.common.registry.VillagerRegistry; // Forge
 
-public class PathfinderGoalMakeLove extends PathfinderGoal
-{
+public class PathfinderGoalMakeLove extends PathfinderGoal {
+
     private EntityVillager b;
     private EntityVillager c;
     private World d;

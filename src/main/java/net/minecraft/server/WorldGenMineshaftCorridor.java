@@ -4,8 +4,8 @@ import java.util.List;
 import java.util.Random;
 import net.minecraftforge.common.ChestGenHooks;
 
-public class WorldGenMineshaftCorridor extends StructurePiece
-{
+public class WorldGenMineshaftCorridor extends StructurePiece {
+
     private final boolean a;
     private final boolean b;
     private boolean c;

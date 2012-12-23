@@ -2,8 +2,8 @@ package net.minecraft.server;
 
 import java.io.File;
 
-public class ServerNBTManager extends WorldNBTStorage
-{
+public class ServerNBTManager extends WorldNBTStorage {
+
     public ServerNBTManager(File var1, String var2, boolean var3)
     {
         super(var1, var2, var3);
