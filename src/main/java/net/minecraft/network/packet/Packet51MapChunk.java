@@ -196,8 +196,11 @@ public class Packet51MapChunk extends Packet
             if (var4[var8] != null && (!par1 || !var4[var8].isEmpty()) && (par2 & 1 << var8) != 0)
             {
                 var10 = var4[var8].getMetadataArray();
-                System.arraycopy(var10.data, 0, var7, var3, var10.data.length);
-                var3 += var10.data.length;
+                // Spigot start
+                // System.arraycopy(nibblearray.a, 0, abyte, j, nibblearray.a.length);
+                // j += nibblearray.a.length;
+                var3 = var10.copyToByteArray(var7, var3);
+                // Spigot end
             }
         }
 
@@ -206,8 +209,11 @@ public class Packet51MapChunk extends Packet
             if (var4[var8] != null && (!par1 || !var4[var8].isEmpty()) && (par2 & 1 << var8) != 0)
             {
                 var10 = var4[var8].getBlocklightArray();
-                System.arraycopy(var10.data, 0, var7, var3, var10.data.length);
-                var3 += var10.data.length;
+                // Spigot start
+                // System.arraycopy(nibblearray.a, 0, abyte, j, nibblearray.a.length);
+                // j += nibblearray.a.length;
+                var3 = var10.copyToByteArray(var7, var3);
+                // Spigot end
             }
         }
 
@@ -218,8 +224,11 @@ public class Packet51MapChunk extends Packet
                 if (var4[var8] != null && (!par1 || !var4[var8].isEmpty()) && (par2 & 1 << var8) != 0)
                 {
                     var10 = var4[var8].getSkylightArray();
-                    System.arraycopy(var10.data, 0, var7, var3, var10.data.length);
-                    var3 += var10.data.length;
+                    // Spigot start
+                    // System.arraycopy(nibblearray.a, 0, abyte, j, nibblearray.a.length);
+                    // j += nibblearray.a.length;
+                    var3 = var10.copyToByteArray(var7, var3);
+                    // Spigot end
                 }
             }
         }
@@ -231,8 +240,11 @@ public class Packet51MapChunk extends Packet
                 if (var4[var8] != null && (!par1 || !var4[var8].isEmpty()) && var4[var8].getBlockMSBArray() != null && (par2 & 1 << var8) != 0)
                 {
                     var10 = var4[var8].getBlockMSBArray();
-                    System.arraycopy(var10.data, 0, var7, var3, var10.data.length);
-                    var3 += var10.data.length;
+                    // Spigot start
+                    //System.arraycopy(nibblearray.a, 0, abyte, j, nibblearray.a.length);
+                    //j += nibblearray.a.length;
+                    var3 = var10.copyToByteArray(var7, var3);
+                    // Spigot end
                 }
             }
         }
