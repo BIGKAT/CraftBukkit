@@ -24,14 +24,14 @@ import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
-import net.minecraft.org.bouncycastle.crypto.BufferedBlockCipher;
-import net.minecraft.org.bouncycastle.crypto.engines.AESFastEngine;
-import net.minecraft.org.bouncycastle.crypto.io.CipherInputStream;
-import net.minecraft.org.bouncycastle.crypto.io.CipherOutputStream;
-import net.minecraft.org.bouncycastle.crypto.modes.CFBBlockCipher;
-import net.minecraft.org.bouncycastle.crypto.params.KeyParameter;
-import net.minecraft.org.bouncycastle.crypto.params.ParametersWithIV;
-import net.minecraft.org.bouncycastle.jce.provider.BouncyCastleProvider;
+import org.bouncycastle.crypto.BufferedBlockCipher;
+import org.bouncycastle.crypto.engines.AESFastEngine;
+import org.bouncycastle.crypto.io.CipherInputStream;
+import org.bouncycastle.crypto.io.CipherOutputStream;
+import org.bouncycastle.crypto.modes.CFBBlockCipher;
+import org.bouncycastle.crypto.params.KeyParameter;
+import org.bouncycastle.crypto.params.ParametersWithIV;
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
 
 @ReobfuscationMarker // Forge
 public class MinecraftEncryption {
