@@ -33,6 +33,7 @@ public class WorldGenHugeMushroom extends WorldGenerator implements BlockSapling
     public boolean grow(BlockChangeDelegate world, Random random, int i, int j, int k, org.bukkit.event.world.StructureGrowEvent event, ItemStack itemstack, org.bukkit.craftbukkit.CraftWorld bukkitWorld) {
         // CraftBukkit end
         int l = random.nextInt(2);
+        World w = world instanceof World ? (World)world : null;   
 
         if (this.a >= 0) {
             l = this.a;
@@ -58,7 +59,7 @@ public class WorldGenHugeMushroom extends WorldGenerator implements BlockSapling
                     for (l1 = k - b0; l1 <= k + b0 && flag; ++l1) {
                         if (j1 >= 0 && j1 < 256) {
                             i2 = world.getTypeId(k1, j1, l1);
-                            if (i2 != 0 && Block.byId[i2] != null && !Block.byId[i2].isLeaves((World)world, k1, j1, l1)) // Forge
+                            if (i2 != 0 && Block.byId[i2] != null && !Block.byId[i2].isLeaves(w, k1, j1, l1)) // Forge
                                 flag = false;
                         } else {
                             flag = false;
@@ -162,7 +163,7 @@ public class WorldGenHugeMushroom extends WorldGenerator implements BlockSapling
                                 }
                                 // Forge start
                                 Block block = Block.byId[world.getTypeId(i2, k1, k2)];
-                                if ((l2 != 0 || j >= j + i1 - 1) && (block == null || block.canBeReplacedByLeaves((World)world, i2, k1, k2))) {
+                                if ((l2 != 0 || j >= j + i1 - 1) && (block == null || block.canBeReplacedByLeaves(w, i2, k1, k2))) {
                                 // Forge end
                                     // CraftBukkit start
                                     if (event == null) {
@@ -183,7 +184,7 @@ public class WorldGenHugeMushroom extends WorldGenerator implements BlockSapling
                         l1 = world.getTypeId(i, j + k1, k);
                         // Forge start
                         Block block = Block.byId[l1];
-                        if (block == null || block.canBeReplacedByLeaves((World)world, i, j + k1, k)) {
+                        if (block == null || block.canBeReplacedByLeaves(w, i, j + k1, k)) {
                         // Forge end
                             // CraftBukkit start
                             if (event == null) {

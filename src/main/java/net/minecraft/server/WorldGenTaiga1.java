@@ -20,6 +20,7 @@ public class WorldGenTaiga1 extends WorldGenerator implements BlockSapling.TreeG
         int j1 = l - i1;
         int k1 = 1 + random.nextInt(j1 + 1);
         boolean flag = true;
+        World w = world instanceof World ? (World)world : null;
 
         if (j >= 1 && j + l + 1 <= 128) {
             int l1;
@@ -43,7 +44,7 @@ public class WorldGenTaiga1 extends WorldGenerator implements BlockSapling.TreeG
                             k2 = world.getTypeId(i2, l1, j2);
                             // Forge start
                             Block block = Block.byId[k2];
-                            if (k2 != 0 && (block == null || !block.isLeaves((World)world, i2, l1, j2))) {
+                            if (k2 != 0 && (block == null || !block.isLeaves(w, i2, l1, j2))) {
                             // Forge end
                                 flag = false;
                             }
@@ -70,7 +71,7 @@ public class WorldGenTaiga1 extends WorldGenerator implements BlockSapling.TreeG
                                 int j3 = i3 - k;
                                 // Forge start
                                 Block block = Block.byId[world.getTypeId(j2, i2, i3)];
-                                if ((Math.abs(k2) != l2 || Math.abs(j3) != l2 || l2 <= 0) && (block == null || !block.canBeReplacedByLeaves((World)world, j2, i2, i3))) {
+                                if ((Math.abs(k2) != l2 || Math.abs(j3) != l2 || l2 <= 0) && (block == null || !block.canBeReplacedByLeaves(w, j2, i2, i3))) {
                                 // Forge end
                                     this.setTypeAndData(world, j2, i2, i3, Block.LEAVES.id, 1);
                                 }
@@ -88,7 +89,7 @@ public class WorldGenTaiga1 extends WorldGenerator implements BlockSapling.TreeG
                         j2 = world.getTypeId(i, j + i2, k);
                         // Forge start
                         Block block = Block.byId[j2];
-                        if (j2 == 0 || block == null || block.isLeaves((World)world, i, j + i2, k)) {
+                        if (j2 == 0 || block == null || block.isLeaves(w, i, j + i2, k)) {
                         // Forge end
                             this.setTypeAndData(world, i, j + i2, k, Block.LOG.id, 1);
                         }

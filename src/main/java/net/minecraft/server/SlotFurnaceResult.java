@@ -56,16 +56,21 @@ public class SlotFurnaceResult extends Slot {
                 i = j;
             }
 
-            // CraftBukkit start
-            Player player = (Player) a.getBukkitEntity();
-            TileEntityFurnace furnace = ((TileEntityFurnace) this.inventory);
-            org.bukkit.block.Block block = a.world.getWorld().getBlockAt(furnace.x, furnace.y, furnace.z);
+            // MCPC start
+            if (this.inventory instanceof TileEntityFurnace)
+            {
+                // CraftBukkit start
+                Player player = (Player) a.getBukkitEntity();
+                TileEntityFurnace furnace = ((TileEntityFurnace) this.inventory);
+                org.bukkit.block.Block block = a.world.getWorld().getBlockAt(furnace.x, furnace.y, furnace.z);
 
-            FurnaceExtractEvent event = new FurnaceExtractEvent(player, block, org.bukkit.Material.getMaterial(itemstack.id), itemstack.count, i);
-            a.world.getServer().getPluginManager().callEvent(event);
+                FurnaceExtractEvent event = new FurnaceExtractEvent(player, block, org.bukkit.Material.getMaterial(itemstack.id), itemstack.count, i);
+                a.world.getServer().getPluginManager().callEvent(event);
 
-            i = event.getExpToDrop();
-            // CraftBukkit end
+                i = event.getExpToDrop();
+                // CraftBukkit end
+            }
+            // MCPC end
 
             while (i > 0) {
                 j = EntityExperienceOrb.getOrbValue(i);

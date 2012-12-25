@@ -22,6 +22,7 @@ public class WorldGenTaiga2 extends WorldGenerator implements BlockSapling.TreeG
         int j1 = l - i1;
         int k1 = 2 + random.nextInt(2);
         boolean flag = true;
+        World w = world instanceof World ? (World)world : null;
 
         if (j >= 1 && j + l + 1 <= 256) {
             int l1;
@@ -44,7 +45,7 @@ public class WorldGenTaiga2 extends WorldGenerator implements BlockSapling.TreeG
                             j2 = world.getTypeId(i2, l1, l2);
                             // Forge start
                             Block block = Block.byId[j2];
-                            if (j2 != 0 && block != null && !block.isLeaves((World)world, i2, l1, l2)) {
+                            if (j2 != 0 && block != null && !block.isLeaves(w, i2, l1, l2)) {
                             // Forge end
                                 flag = false;
                             }
@@ -78,7 +79,7 @@ public class WorldGenTaiga2 extends WorldGenerator implements BlockSapling.TreeG
                                 int i4 = l3 - k;
                                 // Forge start
                                 Block block = Block.byId[world.getTypeId(i3, j3, l3)];
-                                if ((Math.abs(k3) != k2 || Math.abs(i4) != k2 || k2 <= 0) && (block == null || block.canBeReplacedByLeaves((World)world, i3, j3, l3))) {
+                                if ((Math.abs(k3) != k2 || Math.abs(i4) != k2 || k2 <= 0) && (block == null || block.canBeReplacedByLeaves(w, i3, j3, l3))) {
                                 // Forge end
                                     this.setTypeAndData(world, i3, j3, l3, Block.LEAVES.id, 1);
                                 }
@@ -102,7 +103,7 @@ public class WorldGenTaiga2 extends WorldGenerator implements BlockSapling.TreeG
                     for (j3 = 0; j3 < l - j2; ++j3) {
                         i3 = world.getTypeId(i, j + j3, k);
                         Block block = Block.byId[i3];
-                        if (i3 == 0 || block == null || block.isLeaves((World)world, i, j + j3, k)) {
+                        if (i3 == 0 || block == null || block.isLeaves(w, i, j + j3, k)) {
                             this.setTypeAndData(world, i, j + j3, k, Block.LOG.id, 1);
                         }
                     }
