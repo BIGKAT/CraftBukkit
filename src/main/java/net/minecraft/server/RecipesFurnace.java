@@ -60,18 +60,6 @@ public class RecipesFurnace {
     
     // Forge start   
     /**
-     * Add a metadata-sensitive furnace recipe
-     * @param itemID The Item ID
-     * @param metadata The Item Metadata
-     * @param itemstack The ItemStack for the result
-     */
-    @Deprecated //In favor of the exp version, will remove next major MC version.
-    public void addSmelting(int itemID, int metadata, ItemStack itemstack)
-    {
-        addSmelting(itemID, metadata, itemstack, 0.0f);
-    }
-     
-    /**
      * A metadata sensitive version of adding a furnace recipe.
      */
     public void addSmelting(int itemID, int metadata, ItemStack itemstack, float experience)

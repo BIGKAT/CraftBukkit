@@ -26,7 +26,7 @@ public class WorldGenMegaTree extends WorldGenerator implements BlockSapling.Tre
         // CraftBukkit end
         int l = random.nextInt(3) + this.a;
         boolean flag = true;
-        World w = world instanceof World ? (World)world : null;   
+        World w = world instanceof World ? (World)world : null; // MCPC
 
         if (j >= 1 && j + l + 1 <= 256) {
             int i1;
@@ -49,7 +49,7 @@ public class WorldGenMegaTree extends WorldGenerator implements BlockSapling.Tre
                     for (k1 = k - b0; k1 <= k + b0 && flag; ++k1) {
                         if (i1 >= 0 && i1 < 256) {
                             l1 = world.getTypeId(j1, i1, k1);
-                            if (l1 != 0 && Block.byId[l1] != null && !Block.byId[l1].isLeaves(w, j1, i1, k1) && l1 != Block.GRASS.id && l1 != Block.DIRT.id && !Block.byId[l1].isWood(w, j1, i1, k1) && l1 != Block.SAPLING.id) { // Forge
+                            if (l1 != 0 && Block.byId[l1] != null && !Block.byId[l1].isLeaves(w, j1, i1, k1) && l1 != Block.GRASS.id && l1 != Block.DIRT.id && !Block.byId[l1].isWood((World)world, j1, i1, k1) && l1 != Block.SAPLING.id) { // Forge
                                 flag = false;
                             }
                         } else {
@@ -157,7 +157,7 @@ public class WorldGenMegaTree extends WorldGenerator implements BlockSapling.Tre
     // CraftBukkit - Changed signature
     private void a(BlockChangeDelegate world, int i, int j, int k, int l, Random random) {
         byte b0 = 2;
-        World w = world instanceof World ? (World)world : null;
+        World w = world instanceof World ? (World)world : null; 
 
         for (int i1 = k - b0; i1 <= k; ++i1) {
             int j1 = i1 - k;

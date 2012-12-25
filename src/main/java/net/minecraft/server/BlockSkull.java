@@ -1,5 +1,6 @@
 package net.minecraft.server;
 
+import java.util.ArrayList;
 import java.util.Random;
 
 // CraftBukkit start
@@ -99,30 +100,38 @@ public class BlockSkull extends BlockContainer {
             l |= 8;
             world.setData(i, j, k, l);
         }
-
+        c(world, i, j, k, l, 0); // Forge
         super.a(world, i, j, k, l, entityhuman);
     }
 
     public void remove(World world, int i, int j, int k, int l, int i1) {
-        if (!world.isStatic) {
-            /* CraftBukkit start - drop item in code above, not here
-            if ((i1 & 8) == 0) {
-                ItemStack itemstack = new ItemStack(Item.SKULL.id, 1, this.getDropData(world, i, j, k));
-                TileEntitySkull tileentityskull = (TileEntitySkull) world.getTileEntity(i, j, k);
-
-                if (tileentityskull.getSkullType() == 3 && tileentityskull.getExtraType() != null && tileentityskull.getExtraType().length() > 0) {
-                    itemstack.setTag(new NBTTagCompound());
-                    itemstack.getTag().setString("SkullOwner", tileentityskull.getExtraType());
-                }
-
-                this.b(world, i, j, k, itemstack);
-            }
-            // CraftBukkit end */
-
+            // Forge - remove code
             super.remove(world, i, j, k, l, i1);
-        }
     }
+    // Forge start
+    @Override
+    public ArrayList<ItemStack> getBlockDropped(World world, int x, int y, int z, int metadata, int fortune)
+    {
+        ArrayList<ItemStack> drops = new ArrayList<ItemStack>();
+        if ((metadata & 8) == 0)
+        {
+            ItemStack var7 = new ItemStack(Item.SKULL.id, 1, this.getDropData(world, x, y, z));
+            TileEntitySkull var8 = (TileEntitySkull)world.getTileEntity(x, y, z);
 
+            if (var8 == null)
+            {
+                return drops;
+            }
+            if (var8.getSkullType() == 3 && var8.getExtraType() != null && var8.getExtraType().length() > 0)
+            {
+                var7.setTag(new NBTTagCompound());
+                var7.getTag().setString("SkullOwner", var8.getExtraType());
+            }
+            drops.add(var7);
+        }
+        return drops;
+    }
+    // Forge end
     public int getDropType(int i, Random random, int j) {
         return Item.SKULL.id;
     }
@@ -155,7 +164,7 @@ public class BlockSkull extends BlockContainer {
                     if (!world.isStatic) {
                         entitywither = new EntityWither(world);
                         entitywither.setPositionRotation((double) i + 0.5D, (double) j - 1.45D, (double) (k + i1) + 1.5D, 90.0F, 0.0F);
-                        entitywither.aw = 90.0F;
+                        entitywither.ax = 90.0F;
                         entitywither.m();
 
                         if (world.addEntity(entitywither, SpawnReason.BUILD_WITHER)) {

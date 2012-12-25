@@ -10,9 +10,9 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.Container;
 import net.minecraft.server.EntityHuman;
 import net.minecraft.server.EntityPlayer;
-import net.minecraft.server.NetHandler;
-import net.minecraft.server.NetLoginHandler;
-import net.minecraft.server.NetServerHandler;
+import net.minecraft.server.Connection;
+import net.minecraft.server.PendingConnection;
+import net.minecraft.server.PlayerConnection;
 import net.minecraft.server.INetworkManager;
 import net.minecraft.server.Packet131ItemData;
 import net.minecraft.server.Packet1Login;
@@ -35,8 +35,8 @@ import cpw.mods.fml.common.FMLCommonHandler;
 import cpw.mods.fml.common.FMLLog;
 import cpw.mods.fml.common.Loader;
 import cpw.mods.fml.common.ModContainer;
-import cpw.mods.fml.common.Side;
 import cpw.mods.fml.common.network.FMLPacket.Type;
+import cpw.mods.fml.relauncher.Side;
 
 /**
  * @author cpw
@@ -159,7 +159,7 @@ public class NetworkRegistry
         chatListeners.add(listener);
     }
 
-    void playerLoggedIn(EntityPlayer player, NetServerHandler netHandler, INetworkManager manager)
+    void playerLoggedIn(EntityPlayer player, PlayerConnection netHandler, INetworkManager manager)
     {
         generateChannelRegistration(player, netHandler, manager);
         for (IConnectionHandler handler : connectionHandlers)
@@ -168,7 +168,7 @@ public class NetworkRegistry
         }
     }
 
-    String connectionReceived(NetLoginHandler netHandler, INetworkManager manager)
+    String connectionReceived(PendingConnection netHandler, INetworkManager manager)
     {
         for (IConnectionHandler handler : connectionHandlers)
         {
@@ -181,7 +181,7 @@ public class NetworkRegistry
         return null;
     }
 
-    void connectionOpened(NetHandler netClientHandler, String server, int port, INetworkManager networkManager)
+    void connectionOpened(Connection netClientHandler, String server, int port, INetworkManager networkManager)
     {
         for (IConnectionHandler handler : connectionHandlers)
         {
@@ -189,7 +189,7 @@ public class NetworkRegistry
         }
     }
 
-    void connectionOpened(NetHandler netClientHandler, MinecraftServer server, INetworkManager networkManager)
+    void connectionOpened(Connection netClientHandler, MinecraftServer server, INetworkManager networkManager)
     {
         for (IConnectionHandler handler : connectionHandlers)
         {
@@ -197,7 +197,7 @@ public class NetworkRegistry
         }
     }
 
-    void clientLoggedIn(NetHandler clientHandler, INetworkManager manager, Packet1Login login)
+    void clientLoggedIn(Connection clientHandler, INetworkManager manager, Packet1Login login)
     {
         generateChannelRegistration(clientHandler.getPlayerH(), clientHandler, manager);
         for (IConnectionHandler handler : connectionHandlers)
@@ -215,7 +215,7 @@ public class NetworkRegistry
         activeChannels.removeAll(player);
     }
 
-    void generateChannelRegistration(EntityHuman player, NetHandler netHandler, INetworkManager manager)
+    void generateChannelRegistration(EntityHuman player, Connection netHandler, INetworkManager manager)
     {
         Packet250CustomPayload pkt = new Packet250CustomPayload();
         pkt.tag = "REGISTER";
@@ -224,19 +224,19 @@ public class NetworkRegistry
         manager.queue(pkt);
     }
 
-    void handleCustomPacket(Packet250CustomPayload packet, INetworkManager network, NetHandler handler)
+    void handleCustomPacket(Packet250CustomPayload packet, INetworkManager network, Connection connection)
     {
         if ("REGISTER".equals(packet.tag))
         {
-            handleRegistrationPacket(packet, (Player)handler.getPlayerH());
+            handleRegistrationPacket(packet, (Player)connection.getPlayerH());
         }
         else if ("UNREGISTER".equals(packet.tag))
         {
-            handleUnregistrationPacket(packet, (Player)handler.getPlayerH());
+            handleUnregistrationPacket(packet, (Player)connection.getPlayerH());
         }
         else
         {
-            handlePacket(packet, network, (Player)handler.getPlayerH());
+            handlePacket(packet, network, (Player)connection.getPlayerH());
         }
     }
 
@@ -309,7 +309,7 @@ public class NetworkRegistry
                 pkt.tag = "FML";
                 pkt.data = FMLPacket.makePacket(Type.GUIOPEN, windowId, nmh.getNetworkId(), modGuiId, x, y, z);
                 pkt.length = pkt.data.length;
-                player.netServerHandler.sendPacket(pkt);
+                player.playerConnection.sendPacket(pkt);
                 player.activeContainer = container;
                 player.activeContainer.windowId = windowId;
                 player.activeContainer.addSlotListener(player);
@@ -321,21 +321,21 @@ public class NetworkRegistry
         IGuiHandler handler = clientGuiHandlers.get(mc);
         FMLCommonHandler.instance().showGuiScreen(handler.getClientGuiElement(modGuiId, player, world, x, y, z));
     }
-    public Packet3Chat handleChat(NetHandler handler, Packet3Chat chat)
+    public Packet3Chat handleChat(Connection connection, Packet3Chat chat)
     {
         Side s = Side.CLIENT;
-        if (handler instanceof NetServerHandler)
+        if (connection instanceof PlayerConnection)
         {
             s = Side.SERVER;
         }
         for (IChatListener listener : chatListeners)
         {
-            chat = s.isClient() ? listener.clientChat(handler, chat) : listener.serverChat(handler, chat);
+            chat = s.isClient() ? listener.clientChat(connection, chat) : listener.serverChat(connection, chat);
         }
 
         return chat;
     }
-    public void handleTinyPacket(NetHandler handler, Packet131ItemData mapData)
+    public void handleTinyPacket(Connection connection, Packet131ItemData mapData)
     {
         NetworkModHandler nmh = FMLNetworkHandler.instance().findNetworkModHandler((int)mapData.a);
         if (nmh == null)
@@ -345,7 +345,7 @@ public class NetworkRegistry
         }
         if (nmh.hasTinyPacketHandler())
         {
-            nmh.getTinyPacketHandler().handle(handler, mapData);
+            nmh.getTinyPacketHandler().handle(connection, mapData);
         }
         else
         {

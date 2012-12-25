@@ -4,8 +4,8 @@ import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.Random;
 // Forge start
-import cpw.mods.fml.common.Side;
-import cpw.mods.fml.common.asm.SideOnly;
+import cpw.mods.fml.relauncher.Side;
+import cpw.mods.fml.relauncher.SideOnly;
 import mcpc.com.google.common.collect.ObjectArrays;
 import mcpc.com.google.common.collect.Sets;
 // Forge end

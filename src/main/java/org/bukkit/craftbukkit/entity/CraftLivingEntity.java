@@ -255,8 +255,8 @@ public class CraftLivingEntity extends CraftEntity implements LivingEntity {
         getHandle().effects.remove(type.getId());
         getHandle().updateEffects = true;
         if (getHandle() instanceof EntityPlayer) {
-            if (((EntityPlayer) getHandle()).netServerHandler == null) return;
-            ((EntityPlayer) getHandle()).netServerHandler.sendPacket(new Packet42RemoveMobEffect(getHandle().id, new MobEffect(type.getId(), 0, 0)));
+            if (((EntityPlayer) getHandle()).playerConnection == null) return;
+            ((EntityPlayer) getHandle()).playerConnection.sendPacket(new Packet42RemoveMobEffect(getHandle().id, new MobEffect(type.getId(), 0, 0)));
         }
     }
 
@@ -332,4 +332,16 @@ public class CraftLivingEntity extends CraftEntity implements LivingEntity {
     public boolean getCanPickupItems() {
         return getHandle().canPickUpLoot;
     }
+
+	@Override
+	public void resetMaxHealth() {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void setMaxHealth(int arg0) {
+		// TODO Auto-generated method stub
+		
+	}
 }

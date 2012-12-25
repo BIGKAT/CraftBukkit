@@ -21,7 +21,7 @@ import com.google.common.collect.Maps;
  * An enum of all material ids accepted by the official server + client
  */
 public enum Material {
-    AIR(0),
+    AIR(0, 0),
     STONE(1),
     GRASS(2),
     DIRT(3),
@@ -319,6 +319,9 @@ public enum Material {
     CARROT_STICK(398, 1, 25),
     NETHER_STAR(399),
     PUMPKIN_PIE(400),
+    FIREWORK(401),
+    FIREWORK_CHARGE(402),
+    ENCHANTED_BOOK(403, 1),
     GOLD_RECORD(2256, 1),
     GREEN_RECORD(2257, 1),
     RECORD_3(2258, 1),
@@ -455,28 +458,33 @@ public enum Material {
      * @return true if this Material is edible.
      */
     public boolean isEdible() {
-        return equals(Material.BREAD)
-                || equals(Material.CARROT_ITEM)
-                || equals(Material.BAKED_POTATO)
-                || equals(Material.POTATO_ITEM)
-                || equals(Material.POISONOUS_POTATO)
-                || equals(Material.GOLDEN_CARROT)
-                || equals(Material.PUMPKIN_PIE)
-                || equals(Material.COOKIE)
-                || equals(Material.MELON)
-                || equals(Material.MUSHROOM_SOUP)
-                || equals(Material.RAW_CHICKEN)
-                || equals(Material.COOKED_CHICKEN)
-                || equals(Material.RAW_BEEF)
-                || equals(Material.COOKED_BEEF)
-                || equals(Material.RAW_FISH)
-                || equals(Material.COOKED_FISH)
-                || equals(Material.PORK)
-                || equals(Material.GRILLED_PORK)
-                || equals(Material.APPLE)
-                || equals(Material.GOLDEN_APPLE)
-                || equals(Material.ROTTEN_FLESH)
-                || equals(Material.SPIDER_EYE);
+        switch (this) {
+            case BREAD:
+            case CARROT_ITEM:
+            case BAKED_POTATO:
+            case POTATO_ITEM:
+            case POISONOUS_POTATO:
+            case GOLDEN_CARROT:
+            case PUMPKIN_PIE:
+            case COOKIE:
+            case MELON:
+            case MUSHROOM_SOUP:
+            case RAW_CHICKEN:
+            case COOKED_CHICKEN:
+            case RAW_BEEF:
+            case COOKED_BEEF:
+            case RAW_FISH:
+            case COOKED_FISH:
+            case PORK:
+            case GRILLED_PORK:
+            case APPLE:
+            case GOLDEN_APPLE:
+            case ROTTEN_FLESH:
+            case SPIDER_EYE:
+                return true;
+            default:
+                return false;
+        }
     }
 
     /**

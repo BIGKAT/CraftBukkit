@@ -1,9 +1,14 @@
 package net.minecraft.server;
 
+import java.util.ArrayList;
+
+import mcpc.com.google.common.collect.ObjectArrays; // Forge
+
 public abstract class Enchantment {
 
     // CraftBukkit - update CraftEnchant.getName(i) if this changes
     public static final Enchantment[] byId = new Enchantment[256];
+    public static final Enchantment[] c;
     public static final Enchantment PROTECTION_ENVIRONMENTAL = new EnchantmentProtection(0, 10, 0);
     public static final Enchantment PROTECTION_FIRE = new EnchantmentProtection(1, 5, 1);
     public static final Enchantment PROTECTION_FALL = new EnchantmentProtection(2, 5, 2);
@@ -11,6 +16,7 @@ public abstract class Enchantment {
     public static final Enchantment PROTECTION_PROJECTILE = new EnchantmentProtection(4, 5, 4);
     public static final Enchantment OXYGEN = new EnchantmentOxygen(5, 2);
     public static final Enchantment WATER_WORKER = new EnchantmentWaterWorker(6, 2);
+    public static final Enchantment THORNS = new EnchantmentThorns(7, 1);
     public static final Enchantment DAMAGE_ALL = new EnchantmentWeaponDamage(16, 10, 0);
     public static final Enchantment DAMAGE_UNDEAD = new EnchantmentWeaponDamage(17, 5, 1);
     public static final Enchantment DAMAGE_ARTHROPODS = new EnchantmentWeaponDamage(18, 5, 2);
@@ -80,17 +86,6 @@ public abstract class Enchantment {
         return this;
     }
 
-    // Forge start
-    /**
-     * Called to determine if this enchantment can be applied to a ItemStack
-     * @param item The ItemStack that the enchantment might be put on
-     * @return True if the item is valid, false otherwise
-     */
-    public boolean canEnchantItem(ItemStack item) {
-        return this.slot.canEnchant(item.getItem());
-    }
-    // Forge end
-
     public String a() {
         return "enchantment." + this.name;
     }
@@ -99,5 +94,49 @@ public abstract class Enchantment {
         String s = LocaleI18n.get(this.a());
 
         return s + " " + LocaleI18n.get("enchantment.level." + i);
+    }
+
+    public boolean canEnchant(ItemStack itemstack) {
+        return this.slot.canEnchant(itemstack.getItem());
+    }
+
+    // Forge start
+    /**
+    * This applies specifically to applying at the enchanting table. The other method {@link #func_92037_a(ItemStack)}
+    * applies for <i>all possible</i> enchantments.
+    * @param stack
+    * @return
+    */
+    public boolean canApplyAtEnchantingTable(ItemStack stack)
+    {
+        return this.slot.canEnchant(stack.getItem());
+    }
+    
+    /**
+     * Add to the list of enchantments applicable by the anvil from a book
+     *
+     * @param enchantment
+     */
+    public static void addToBookList(Enchantment enchantment)
+    {
+        ObjectArrays.concat(c, enchantment);
+    }
+    // Forge end
+    
+    static {
+        ArrayList arraylist = new ArrayList();
+        Enchantment[] aenchantment = byId;
+        int i = aenchantment.length;
+
+        for (int j = 0; j < i; ++j) {
+            Enchantment enchantment = aenchantment[j];
+
+
+            if (enchantment != null) {
+                arraylist.add(enchantment);
+            }
+        }
+
+        c = (Enchantment[]) arraylist.toArray(new Enchantment[0]);
     }
 }

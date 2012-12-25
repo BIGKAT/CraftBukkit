@@ -20,7 +20,7 @@ public class ModLoaderPacketHandler implements IPacketHandler
     {
         if (player instanceof EntityPlayer)
         {
-            mod.serverCustomPayload(((EntityPlayer)player).netServerHandler, packet);
+            mod.serverCustomPayload(((EntityPlayer)player).playerConnection, packet);
         }
         else
         {

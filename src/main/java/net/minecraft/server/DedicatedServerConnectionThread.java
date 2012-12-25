@@ -39,21 +39,21 @@ public class DedicatedServerConnectionThread extends Thread {
 
         synchronized (this.b) {
             for (int i = 0; i < this.b.size(); ++i) {
-                NetLoginHandler netloginhandler = (NetLoginHandler) this.b.get(i);
+                PendingConnection pendingconnection = (PendingConnection) this.b.get(i);
 
                 try {
-                    netloginhandler.c();
+                    pendingconnection.c();
                 } catch (Exception exception) {
-                    netloginhandler.disconnect("Internal server error");
-                    FMLLog.log(Level.SEVERE, exception, "Error handling login related packet - connection from %s refused", new Object[] {netloginhandler.h}); // Forge
-                    a.log(Level.WARNING, "Failed to handle packet for " + netloginhandler.getName() + ": " + exception, exception);
+                    pendingconnection.disconnect("Internal server error");
+                    FMLLog.log(Level.SEVERE, exception, "Error handling login related packet - connection from %s refused", new Object[] {pendingconnection.h}); // Forge
+                    a.log(Level.WARNING, "Failed to handle packet for " + pendingconnection.getName() + ": " + exception, exception);
                 }
 
-                if (netloginhandler.c) {
+                if (pendingconnection.c) {
                     this.b.remove(i--);
                 }
 
-                netloginhandler.networkManager.a();
+                pendingconnection.networkManager.a();
             }
         }
     }
@@ -85,9 +85,9 @@ public class DedicatedServerConnectionThread extends Thread {
                     this.c.put(inetaddress, Long.valueOf(i));
                 }
 
-                NetLoginHandler netloginhandler = new NetLoginHandler(this.f.d(), socket, "Connection #" + this.d++);
+                PendingConnection pendingconnection = new PendingConnection(this.f.d(), socket, "Connection #" + this.d++);
 
-                this.a(netloginhandler);
+                this.a(pendingconnection);
             } catch (IOException ioexception) {
                 a.warning("DSCT: " + ioexception.getMessage()); // CraftBukkit
             }
@@ -96,14 +96,14 @@ public class DedicatedServerConnectionThread extends Thread {
         System.out.println("Closing listening thread");
     }
 
-    private void a(NetLoginHandler netloginhandler) {
-        if (netloginhandler == null) {
+    private void a(PendingConnection pendingconnection) {
+        if (pendingconnection == null) {
             throw new IllegalArgumentException("Got null pendingconnection!");
         } else {
             List list = this.b;
 
             synchronized (this.b) {
-                this.b.add(netloginhandler);
+                this.b.add(pendingconnection);
             }
         }
     }

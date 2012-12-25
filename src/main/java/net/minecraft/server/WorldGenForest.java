@@ -19,7 +19,7 @@ public class WorldGenForest extends WorldGenerator implements BlockSapling.TreeG
         // CraftBukkit end
         int l = random.nextInt(3) + 5;
         boolean flag = true;
-        World w = world instanceof World ? (World)world : null;   
+        World w = world instanceof World ? (World)world : null; // MCPC
 
         if (j >= 1 && j + l + 1 <= 256) {
             int i1;

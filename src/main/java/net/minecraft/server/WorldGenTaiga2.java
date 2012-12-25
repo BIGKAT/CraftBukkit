@@ -22,7 +22,7 @@ public class WorldGenTaiga2 extends WorldGenerator implements BlockSapling.TreeG
         int j1 = l - i1;
         int k1 = 2 + random.nextInt(2);
         boolean flag = true;
-        World w = world instanceof World ? (World)world : null;
+        World w = world instanceof World ? (World)world : null; // MCPC
 
         if (j >= 1 && j + l + 1 <= 256) {
             int l1;

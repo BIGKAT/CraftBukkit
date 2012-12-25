@@ -33,7 +33,7 @@ public class WorldGenHugeMushroom extends WorldGenerator implements BlockSapling
     public boolean grow(BlockChangeDelegate world, Random random, int i, int j, int k, org.bukkit.event.world.StructureGrowEvent event, ItemStack itemstack, org.bukkit.craftbukkit.CraftWorld bukkitWorld) {
         // CraftBukkit end
         int l = random.nextInt(2);
-        World w = world instanceof World ? (World)world : null;   
+        World w = world instanceof World ? (World)world : null; // MCPC
 
         if (this.a >= 0) {
             l = this.a;

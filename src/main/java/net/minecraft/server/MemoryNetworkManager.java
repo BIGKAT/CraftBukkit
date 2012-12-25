@@ -13,18 +13,18 @@ public class MemoryNetworkManager implements INetworkManager {
    private static final SocketAddress a = new InetSocketAddress("127.0.0.1", 0);
    private final List b = Collections.synchronizedList(new ArrayList());
    private MemoryNetworkManager c;
-   private NetHandler d;
+   private Connection d;
    private boolean e = false;
    private String f = "";
    private Object[] g;
    private boolean h = false;
 
 
-   public MemoryNetworkManager(NetHandler var1) {
+   public MemoryNetworkManager(Connection var1) {
       this.d = var1;
    }
 
-   public void a(NetHandler var1) {
+   public void a(Connection var1) {
       this.d = var1;
    }
 

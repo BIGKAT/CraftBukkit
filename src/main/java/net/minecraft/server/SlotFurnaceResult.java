@@ -56,7 +56,7 @@ public class SlotFurnaceResult extends Slot {
                 i = j;
             }
 
-            // MCPC start
+            // MCPC start - fix IC2 crash
             if (this.inventory instanceof TileEntityFurnace)
             {
                 // CraftBukkit start

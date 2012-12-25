@@ -18,6 +18,7 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.security.cert.Certificate;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -29,11 +30,16 @@ import java.util.zip.ZipFile;
 import java.util.zip.ZipInputStream;
 
 import mcpc.com.google.common.base.Function;
+import mcpc.com.google.common.base.Predicates;
 import mcpc.com.google.common.base.Strings;
 import mcpc.com.google.common.base.Throwables;
 import mcpc.com.google.common.collect.ArrayListMultimap;
 import mcpc.com.google.common.collect.BiMap;
 import mcpc.com.google.common.collect.ImmutableBiMap;
+import mcpc.com.google.common.collect.ImmutableList;
+import mcpc.com.google.common.collect.ImmutableList.Builder;
+import mcpc.com.google.common.collect.ImmutableSet;
+import mcpc.com.google.common.collect.Iterators;
 import mcpc.com.google.common.collect.Lists;
 import mcpc.com.google.common.collect.Multimap;
 import mcpc.com.google.common.collect.SetMultimap;
@@ -49,6 +55,7 @@ import cpw.mods.fml.common.event.FMLConstructionEvent;
 import cpw.mods.fml.common.event.FMLEvent;
 import cpw.mods.fml.common.event.FMLInitializationEvent;
 import cpw.mods.fml.common.event.FMLInterModComms.IMCEvent;
+import cpw.mods.fml.common.event.FMLFingerprintViolationEvent;
 import cpw.mods.fml.common.event.FMLPostInitializationEvent;
 import cpw.mods.fml.common.event.FMLPreInitializationEvent;
 import cpw.mods.fml.common.event.FMLServerStartedEvent;
@@ -86,10 +93,14 @@ public class FMLModContainer implements ModContainer
         .put(FMLServerStartedEvent.class, Mod.ServerStarted.class)
         .put(FMLServerStoppingEvent.class, Mod.ServerStopping.class)
         .put(IMCEvent.class,Mod.IMCCallback.class)
+        .put(FMLFingerprintViolationEvent.class, Mod.FingerprintWarning.class)
         .build();
     private static final BiMap<Class<? extends Annotation>, Class<? extends FMLEvent>> modTypeAnnotations = modAnnotationTypes.inverse();
     private String annotationDependencies;
     private VersionRange minecraftAccepted;
+    private boolean fingerprintNotPresent;
+    private Set<String> sourceFingerprints;
+    private Certificate certificate;
 
 
     public FMLModContainer(String className, File modSource, Map<String,Object> modDescriptor)
@@ -335,13 +346,6 @@ public class FMLModContainer implements ModContainer
                 return mc.getMetadata();
             }
         });
-
-//TODO
-//        for (Object o : annotations.get(Block.class))
-//        {
-//            Field f = (Field) o;
-//            f.set(modInstance, GameRegistry.buildBlock(this, f.getType(), f.getAnnotation(Block.class)));
-//        }
     }
 
     private void parseSimpleFieldAnnotation(SetMultimap<String, ASMData> annotations, String annotationClassName, Function<ModContainer, Object> retreiver) throws IllegalAccessException
@@ -407,15 +411,47 @@ public class FMLModContainer implements ModContainer
         {
             ModClassLoader modClassLoader = event.getModClassLoader();
             modClassLoader.addFile(source);
-            // MCPC - show users what mod is being loaded in case a crash occurs
-            FMLLog.fine("Constructing mod from file source : " + source);
             Class<?> clazz = Class.forName(className, true, modClassLoader);
-            ASMDataTable asmHarvestedAnnotations = event.getASMHarvestedData();
-            // TODO
-            asmHarvestedAnnotations.getAnnotationsFor(this);
+
+            Certificate[] certificates = clazz.getProtectionDomain().getCodeSource().getCertificates();
+            int len = 0;
+            if (certificates != null)
+            {
+                len = certificates.length;
+            }
+            Builder<String> certBuilder = ImmutableList.<String>builder();
+            for (int i = 0; i < len; i++)
+            {
+                certBuilder.add(CertificateHelper.getFingerprint(certificates[i]));
+            }
+
+            ImmutableList<String> certList = certBuilder.build();
+            sourceFingerprints = ImmutableSet.copyOf(certList);
+
+            String expectedFingerprint = (String) descriptor.get("certificateFingerprint");
+
+            fingerprintNotPresent = true;
+            if (expectedFingerprint != "" &&  !sourceFingerprints.contains(expectedFingerprint))
+            {
+                Level warnLevel = Level.SEVERE;
+                if (source.isDirectory())
+                {
+                    warnLevel = Level.FINER;
+                }
+                FMLLog.log(warnLevel, "The mod %s is expecting signature %s for source %s, however there is no signature matching that description", getModId(), expectedFingerprint, source.getName());
+            }
+            else
+            {
+                certificate = certificates[certList.indexOf(expectedFingerprint)];
+                fingerprintNotPresent = false;
+            }
             annotations = gatherAnnotations(clazz);
             isNetworkMod = FMLNetworkHandler.instance().registerNetworkMod(this, clazz, event.getASMHarvestedData());
             modInstance = clazz.newInstance();
+            if (fingerprintNotPresent)
+            {
+                eventBus.post(new FMLFingerprintViolationEvent(source.isDirectory(), source, ImmutableSet.copyOf(this.sourceFingerprints)));
+            }
             ProxyInjector.inject(this, event.getASMHarvestedData(), FMLCommonHandler.instance().getSide());
             processFieldAnnotations(event.getASMHarvestedData());
         }
@@ -480,5 +516,11 @@ public class FMLModContainer implements ModContainer
     public VersionRange acceptableMinecraftVersionRange()
     {
         return minecraftAccepted;
+    }
+
+    @Override
+    public Certificate getSigningCertificate()
+    {
+        return certificate;
     }
 }

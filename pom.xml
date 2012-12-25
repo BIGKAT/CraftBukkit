@@ -4,7 +4,7 @@
   <groupId>org.bukkit</groupId>
   <artifactId>craftbukkit</artifactId>
   <packaging>jar</packaging>
-  <version>1.4.5-R1.1-SNAPSHOT</version>
+  <version>1.4.6-R0.2-SNAPSHOT</version>
   <name>CraftBukkit</name>
   <url>http://www.bukkit.org</url>
 
@@ -12,8 +12,8 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <api.version>unknown</api.version>
     <junit.version>4.11</junit.version>
-    <minecraft.version>1.4.5</minecraft.version>
-    <minecraft_version>1_4_5</minecraft_version>
+    <minecraft.version>1.4.6</minecraft.version>
+    <minecraft_version>1_4_6</minecraft_version>
   </properties>
 
   <scm>
@@ -39,10 +39,16 @@
     <repository>
       <id>repobo-snap</id>
       <url>http://repo.bukkit.org/content/groups/public</url>
+        <snapshots>
+          <enabled>false</enabled>
+        </snapshots>
     </repository>
     <repository>
-        <id>md_5-public</id>
-        <url>http://repo.md-5.net/content/groups/public/</url>
+      <id>md_5-public</id>
+      <url>http://repo.md-5.net/content/groups/public/</url>
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
     </repository>
   </repositories>
 
@@ -126,7 +132,7 @@
     <dependency>
       <groupId>com.google.guava</groupId>
       <artifactId>guava</artifactId>
-      <version>10.0.1</version>
+      <version>10.0</version>
       <type>jar</type>
       <scope>provided</scope>
     </dependency>

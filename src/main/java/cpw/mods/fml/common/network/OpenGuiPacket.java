@@ -1,7 +1,7 @@
 package cpw.mods.fml.common.network;
 
 import net.minecraft.server.EntityHuman;
-import net.minecraft.server.NetHandler;
+import net.minecraft.server.Connection;
 import net.minecraft.server.INetworkManager;
 
 import mcpc.com.google.common.io.ByteArrayDataInput;
@@ -49,7 +49,7 @@ public class OpenGuiPacket extends FMLPacket
     }
 
     @Override
-    public void execute(INetworkManager network, FMLNetworkHandler handler, NetHandler netHandler, String userName)
+    public void execute(INetworkManager network, FMLNetworkHandler handler, Connection netHandler, String userName)
     {
         EntityHuman player = netHandler.getPlayerH();
         player.openGui(networkId, modGuiId, player.world, x, y, z);

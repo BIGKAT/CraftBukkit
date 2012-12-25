@@ -131,7 +131,7 @@ public class SlotResult extends Slot
                         var5 = null;
                     }
 
-                    if (var5 != null && (!var4.getItem().h(var4) || !this.b.inventory.pickup(var5)))
+                    if (var5 != null && (!var4.getItem().j(var4) || !this.b.inventory.pickup(var5)))
                     {
                     // Forge end
                         if (this.a.getItem(var3) == null)

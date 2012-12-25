@@ -43,15 +43,13 @@ import mcpc.com.google.common.collect.Iterables;
 import mcpc.com.google.common.collect.LinkedHashMultimap;
 import mcpc.com.google.common.collect.Lists;
 import mcpc.com.google.common.collect.Maps;
-import mcpc.com.google.common.collect.Multiset;
-import mcpc.com.google.common.collect.Multisets;
-import mcpc.com.google.common.collect.Ordering;
 import mcpc.com.google.common.collect.SetMultimap;
 import mcpc.com.google.common.collect.Sets;
-import mcpc.com.google.common.collect.TreeMultimap;
 import mcpc.com.google.common.collect.Multiset.Entry;
+import mcpc.com.google.common.collect.Multisets;
+import mcpc.com.google.common.collect.Ordering;
 import mcpc.com.google.common.collect.Sets.SetView;
-import mcpc.com.google.common.primitives.Ints;
+import mcpc.com.google.common.collect.TreeMultimap;
 
 import cpw.mods.fml.common.LoaderState.ModState;
 import cpw.mods.fml.common.discovery.ModDiscoverer;
@@ -479,6 +477,11 @@ public class Loader
         }
         modController.transition(LoaderState.CONSTRUCTING);
         modController.distributeStateMessage(LoaderState.CONSTRUCTING, modClassLoader, disc.getASMTable());
+        FMLLog.fine("Mod signature data:");
+        for (ModContainer mod : getActiveModList())
+        {
+            FMLLog.fine("\t%s(%s:%s): %s (%s)", mod.getModId(), mod.getName(), mod.getVersion(), mod.getSource().getName(), CertificateHelper.getFingerprint(mod.getSigningCertificate()));
+        }
         modController.transition(LoaderState.PREINITIALIZATION);
         modController.distributeStateMessage(LoaderState.PREINITIALIZATION, disc.getASMTable(), canonicalConfigDir);
         modController.transition(LoaderState.INITIALIZATION);

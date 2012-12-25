@@ -1,14 +1,17 @@
 package cpw.mods.fml.common.registry;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import java.util.Set;
+import java.util.concurrent.CountDownLatch;
 import java.util.logging.Level;
 
 import net.minecraft.server.BiomeBase;
 import net.minecraft.server.CraftingManager;
 import net.minecraft.server.EntityItem;
 import net.minecraft.server.EntityHuman;
+import net.minecraft.server.Item;
 import net.minecraft.server.RecipesFurnace;
 import net.minecraft.server.IChunkProvider;
 import net.minecraft.server.IInventory;
@@ -19,10 +22,15 @@ import net.minecraft.server.TileEntity;
 import net.minecraft.server.World;
 import net.minecraft.server.WorldType;
 
+import mcpc.com.google.common.base.Function;
 import mcpc.com.google.common.collect.ArrayListMultimap;
 import mcpc.com.google.common.collect.Lists;
+import mcpc.com.google.common.collect.MapDifference;
+import mcpc.com.google.common.collect.Maps;
 import mcpc.com.google.common.collect.Multimap;
+import mcpc.com.google.common.collect.Multimaps;
 import mcpc.com.google.common.collect.Sets;
+import mcpc.com.google.common.collect.Sets.SetView;
 
 import cpw.mods.fml.common.FMLLog;
 import cpw.mods.fml.common.ICraftingHandler;
@@ -41,11 +49,9 @@ import cpw.mods.fml.common.ModContainer;
 public class GameRegistry
 {
     private static Multimap<ModContainer, BlockProxy> blockRegistry = ArrayListMultimap.create();
-    private static Multimap<ModContainer, ItemProxy> itemRegistry = ArrayListMultimap.create();
     private static Set<IWorldGenerator> worldGenerators = Sets.newHashSet();
     private static List<IFuelHandler> fuelHandlers = Lists.newArrayList();
     private static List<ICraftingHandler> craftingHandlers = Lists.newArrayList();
-    private static List<IDispenserHandler> dispenserHandlers = Lists.newArrayList();
     private static List<IPickupNotifier> pickupHandlers = Lists.newArrayList();
     private static List<IPlayerTracker> playerTrackers = Lists.newArrayList();
 
@@ -145,21 +151,80 @@ public class GameRegistry
     }
 
     /**
+     * Register an item with the item registry with a custom name : this allows for easier server->client resolution
+     *
+     * @param item The item to register
+     * @param name The mod-unique name of the item
+     */
+    public static void registerItem(net.minecraft.server.Item item, String name)
+    {
+        registerItem(item, name, null);
+    }
+
+    /**
+     * Register the specified Item with a mod specific name : overrides the standard type based name
+     * @param item The item to register
+     * @param name The mod-unique name to register it as - null will remove a custom name
+     * @param modId An optional modId that will "own" this block - generally used by multi-mod systems
+     * where one mod should "own" all the blocks of all the mods, null defaults to the active mod
+     */
+    public static void registerItem(net.minecraft.server.Item item, String name, String modId)
+    {
+        GameData.setName(item, name, modId);
+    }
+
+    /**
      * Register a block with the world
      *
      */
+    @Deprecated
     public static void registerBlock(net.minecraft.server.Block block)
     {
         registerBlock(block, ItemBlock.class);
     }
 
+
+    /**
+     * Register a block with the specified mod specific name : overrides the standard type based name
+     * @param block The block to register
+     * @param name The mod-unique name to register it as
+     */
+    public static void registerBlock(net.minecraft.server.Block block, String name)
+    {
+        registerBlock(block, ItemBlock.class, name);
+    }
+
     /**
      * Register a block with the world, with the specified item class
      *
-     * @param block
-     * @param itemclass
+     * Deprecated in favour of named versions
+     *
+     * @param block The block to register
+     * @param itemclass The item type to register with it
      */
+    @Deprecated
     public static void registerBlock(net.minecraft.server.Block block, Class<? extends ItemBlock> itemclass)
+    {
+        registerBlock(block, itemclass, null);
+    }
+    /**
+     * Register a block with the world, with the specified item class and block name
+     * @param block The block to register
+     * @param itemclass The item type to register with it
+     * @param name The mod-unique name to register it with
+     */
+    public static void registerBlock(net.minecraft.server.Block block, Class<? extends ItemBlock> itemclass, String name)
+    {
+        registerBlock(block, itemclass, name, null);
+    }
+    /**
+     * Register a block with the world, with the specified item class, block name and owning modId
+     * @param block The block to register
+     * @param itemclass The iterm type to register with it
+     * @param name The mod-unique name to register it with
+     * @param modId The modId that will own the block name. null defaults to the active modId
+     */
+    public static void registerBlock(net.minecraft.server.Block block, Class<? extends ItemBlock> itemclass, String name, String modId)
     {
         if (Loader.instance().isInState(LoaderState.CONSTRUCTING))
         {
@@ -170,7 +235,8 @@ public class GameRegistry
             assert block != null : "registerBlock: block cannot be null";
             assert itemclass != null : "registerBlock: itemclass cannot be null";
             int blockItemId = block.id - 256;
-            itemclass.getConstructor(int.class).newInstance(blockItemId);
+            Item i = itemclass.getConstructor(int.class).newInstance(blockItemId);
+            GameRegistry.registerItem(i,name, modId);
         }
         catch (Exception e)
         {

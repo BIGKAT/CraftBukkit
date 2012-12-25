@@ -16,18 +16,18 @@ package cpw.mods.fml.common.modloader;
 
 import java.util.Random;
 
-import net.minecraft.server.Entity;
 import net.minecraft.server.EntityHuman;
 import net.minecraft.server.IInventory;
 import net.minecraft.server.ItemStack;
-import net.minecraft.server.NetHandler;
-import net.minecraft.server.NetServerHandler;
 import net.minecraft.server.INetworkManager;
+import net.minecraft.server.Connection;
+import net.minecraft.server.PlayerConnection;
 import net.minecraft.server.Packet250CustomPayload;
 import net.minecraft.server.World;
-import cpw.mods.fml.common.Side;
+
 import cpw.mods.fml.common.TickType;
-import cpw.mods.fml.common.asm.SideOnly;
+import cpw.mods.fml.relauncher.Side;
+import cpw.mods.fml.relauncher.SideOnly;
 
 /**
  *
@@ -62,7 +62,7 @@ public interface BaseModProxy
 
     public abstract void serverDisconnect();
 
-    public abstract void serverConnect(NetHandler handler);
+    public abstract void serverConnect(Connection connection);
 
     public abstract void receiveCustomPacket(Packet250CustomPayload packet);
 
@@ -70,7 +70,7 @@ public interface BaseModProxy
 
     public abstract void onItemPickup(EntityHuman player, ItemStack item);
 
-    public abstract void serverCustomPayload(NetServerHandler handler, Packet250CustomPayload packet);
+    public abstract void serverCustomPayload(PlayerConnection handler, Packet250CustomPayload packet);
 
-    public abstract void serverChat(NetServerHandler source, String message);
+    public abstract void serverChat(PlayerConnection source, String message);
 }

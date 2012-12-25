@@ -1,6 +1,8 @@
 package cpw.mods.fml.common.event;
 
 import java.io.File;
+import java.security.CodeSource;
+import java.security.cert.Certificate;
 import java.util.Properties;
 import java.util.logging.Logger;
 
@@ -87,5 +89,30 @@ public class FMLPreInitializationEvent extends FMLStateEvent
         Logger log = Logger.getLogger(modContainer.getModId());
         log.setParent(FMLLog.getLogger());
         return log;
+    }
+
+
+    /**
+     * Retrieve the FML signing certificates, if any. Validate these against the
+     * published FML certificates in your mod, if you wish.
+     *
+     * Deprecated because mods should <b>NOT</b> trust this code. Rather
+     * they should copy this, or something like this, into their own mods.
+     *
+     * @return Certificates used to sign FML and Forge
+     */
+    @Deprecated
+    public Certificate[] getFMLSigningCertificates()
+    {
+        CodeSource codeSource = getClass().getClassLoader().getParent().getClass().getProtectionDomain().getCodeSource();
+        Certificate[] certs = codeSource.getCertificates();
+        if (certs == null)
+        {
+            return new Certificate[0];
+        }
+        else
+        {
+            return certs;
+        }
     }
 }

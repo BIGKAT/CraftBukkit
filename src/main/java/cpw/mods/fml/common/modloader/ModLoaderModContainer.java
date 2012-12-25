@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
+import java.security.cert.Certificate;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
@@ -49,7 +50,6 @@ import cpw.mods.fml.common.ModClassLoader;
 import cpw.mods.fml.common.ModContainer;
 import cpw.mods.fml.common.ModMetadata;
 import cpw.mods.fml.common.ProxyInjector;
-import cpw.mods.fml.common.Side;
 import cpw.mods.fml.common.TickType;
 import cpw.mods.fml.common.discovery.ASMDataTable;
 import cpw.mods.fml.common.discovery.ASMDataTable.ASMData;
@@ -67,6 +67,7 @@ import cpw.mods.fml.common.registry.TickRegistry;
 import cpw.mods.fml.common.versioning.ArtifactVersion;
 import cpw.mods.fml.common.versioning.DefaultArtifactVersion;
 import cpw.mods.fml.common.versioning.VersionRange;
+import cpw.mods.fml.relauncher.Side;
 
 public class ModLoaderModContainer implements ModContainer
 {
@@ -616,5 +617,10 @@ public class ModLoaderModContainer implements ModContainer
     public VersionRange acceptableMinecraftVersionRange()
     {
         return Loader.instance().getMinecraftModContainer().getStaticVersionRange();
+    }
+    @Override
+    public Certificate getSigningCertificate()
+    {
+        return null;
     }
 }

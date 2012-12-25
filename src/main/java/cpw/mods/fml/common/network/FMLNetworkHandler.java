@@ -17,17 +17,17 @@ import net.minecraft.server.Entity;
 import net.minecraft.server.EntityHuman;
 import net.minecraft.server.EnumGamemode;
 import net.minecraft.server.Item;
-import net.minecraft.server.NetHandler;
-import net.minecraft.server.NetLoginHandler;
-import net.minecraft.server.NetServerHandler;
+import net.minecraft.server.Connection;
+import net.minecraft.server.PendingConnection;
 import net.minecraft.server.INetworkManager;
 import net.minecraft.server.Packet;
 import net.minecraft.server.Packet131ItemData;
 import net.minecraft.server.Packet1Login;
 import net.minecraft.server.Packet250CustomPayload;
 import net.minecraft.server.Packet3Chat;
-import net.minecraft.server.ServerConfigurationManager;
-import net.minecraft.server.ServerConfigurationManagerAbstract;
+import net.minecraft.server.DedicatedPlayerList;
+import net.minecraft.server.PlayerConnection;
+import net.minecraft.server.PlayerList;
 import net.minecraft.server.World;
 import net.minecraft.server.WorldType;
 
@@ -57,34 +57,34 @@ public class FMLNetworkHandler
     static final int FML_OUT_OF_DATE = -1;
     static final int MISSING_MODS_OR_VERSIONS = -2;
 
-    private Map<NetLoginHandler, Integer> loginStates = Maps.newHashMap();
+    private Map<PendingConnection, Integer> loginStates = Maps.newHashMap();
     private Map<ModContainer, NetworkModHandler> networkModHandlers = Maps.newHashMap();
 
     private Map<Integer, NetworkModHandler> networkIdLookup = Maps.newHashMap();
     
-    public static void handlePacket250Packet(Packet250CustomPayload packet, INetworkManager network, NetHandler handler)
+    public static void handlePacket250Packet(Packet250CustomPayload packet, INetworkManager network, Connection connection)
     {
         String target = packet.tag;
         if (target.startsWith("MC|"))
         {
-            handler.handleVanilla250Packet(packet);
+            connection.handleVanilla250Packet(packet);
         }
         if (target.equals("FML"))
         {
-            instance().handleFMLPacket(packet, network, handler);
+            instance().handleFMLPacket(packet, network, connection);
         }
         else
         {
-            NetworkRegistry.instance().handleCustomPacket(packet, network, handler);
+            NetworkRegistry.instance().handleCustomPacket(packet, network, connection);
         }
     }
 
-    public static void onConnectionEstablishedToServer(NetHandler clientHandler, INetworkManager manager, Packet1Login login)
+    public static void onConnectionEstablishedToServer(Connection clientHandler, INetworkManager manager, Packet1Login login)
     {
         NetworkRegistry.instance().clientLoggedIn(clientHandler, manager, login);
     }
 
-    private void handleFMLPacket(Packet250CustomPayload packet, INetworkManager network, NetHandler netHandler)
+    private void handleFMLPacket(Packet250CustomPayload packet, INetworkManager network, Connection netHandler)
     {
         FMLPacket pkt = FMLPacket.readPacket(network, packet.data);
         // Part of an incomplete multipart packet
@@ -93,9 +93,9 @@ public class FMLNetworkHandler
             return;
         }
         String userName = "";
-        if (netHandler instanceof NetLoginHandler)
+        if (netHandler instanceof PendingConnection)
         {
-            userName = ((NetLoginHandler) netHandler).h;
+            userName = ((PendingConnection) netHandler).h;
         }
         else
         {
@@ -109,12 +109,12 @@ public class FMLNetworkHandler
         	pkt.execute(network, this, netHandler, userName);
     }
 
-    public static void onConnectionReceivedFromClient(NetLoginHandler netLoginHandler, MinecraftServer server, SocketAddress address, String userName)
+    public static void onConnectionReceivedFromClient(PendingConnection netLoginHandler, MinecraftServer server, SocketAddress address, String userName)
     {
         instance().handleClientConnection(netLoginHandler, server, address, userName);
     }
 
-    private void handleClientConnection(NetLoginHandler netLoginHandler, MinecraftServer server, SocketAddress address, String userName)
+    private void handleClientConnection(PendingConnection netLoginHandler, MinecraftServer server, SocketAddress address, String userName)
     {
         if (!loginStates.containsKey(netLoginHandler))
         {
@@ -152,7 +152,7 @@ public class FMLNetworkHandler
                 return;
             }
             // Reset the "connection completed" flag so processing can continue
-            NetLoginHandler.a(netLoginHandler, false);
+            PendingConnection.a(netLoginHandler, false);
             // Send the mod list request packet to the client from the server
             netLoginHandler.networkManager.queue(getModListRequestPacket());
             loginStates.put(netLoginHandler, CONNECTION_VALID);
@@ -183,10 +183,10 @@ public class FMLNetworkHandler
      * @param userName
      * @return if the user can carry on
      */
-    private boolean handleVanillaLoginKick(NetLoginHandler netLoginHandler, MinecraftServer server, SocketAddress address, String userName)
+    private boolean handleVanillaLoginKick(PendingConnection netLoginHandler, MinecraftServer server, SocketAddress address, String userName)
     {
         // Vanilla reasons first
-        ServerConfigurationManagerAbstract playerList = server.getServerConfigurationManager();
+        PlayerList playerList = server.getPlayerList();
         EntityPlayer player = playerList.attemptLogin(netLoginHandler, netLoginHandler.h, netLoginHandler.hostname);
 
         //netLoginHandler.completeConnection(player);
@@ -194,7 +194,7 @@ public class FMLNetworkHandler
         return player != null;
     }
 
-    public static void handleLoginPacketOnServer(NetLoginHandler handler, Packet1Login login)
+    public static void handleLoginPacketOnServer(PendingConnection handler, Packet1Login login)
     {
         if (login.a == FML_HASH)
         {
@@ -216,7 +216,7 @@ public class FMLNetworkHandler
         }
     }
 
-    static void setHandlerState(NetLoginHandler handler, int state)
+    static void setHandlerState(PendingConnection handler, int state)
     {
         instance().loginStates.put(handler, state);
     }
@@ -282,7 +282,7 @@ public class FMLNetworkHandler
         return networkModHandlers.keySet();
     }
 
-    public static void handlePlayerLogin(EntityPlayer player, NetServerHandler netHandler, INetworkManager manager)
+    public static void handlePlayerLogin(EntityPlayer player, PlayerConnection netHandler, INetworkManager manager)
     {
         NetworkRegistry.instance().playerLoggedIn(player, netHandler, manager);
         GameRegistry.onPlayerLogin(player);
@@ -304,12 +304,12 @@ public class FMLNetworkHandler
         }
     }
 
-    public static void onClientConnectionToRemoteServer(NetHandler netClientHandler, String server, int port, INetworkManager networkManager)
+    public static void onClientConnectionToRemoteServer(Connection netClientHandler, String server, int port, INetworkManager networkManager)
     {
         NetworkRegistry.instance().connectionOpened(netClientHandler, server, port, networkManager);
     }
 
-    public static void onClientConnectionToIntegratedServer(NetHandler netClientHandler, MinecraftServer server, INetworkManager networkManager)
+    public static void onClientConnectionToIntegratedServer(Connection netClientHandler, MinecraftServer server, INetworkManager networkManager)
     {
         NetworkRegistry.instance().connectionOpened(netClientHandler, server, networkManager);
     }
@@ -363,7 +363,7 @@ public class FMLNetworkHandler
     public static void makeEntitySpawnAdjustment(int entityId, EntityPlayer player, int serverX, int serverY, int serverZ)
     {
         Packet250CustomPayload pkt = PacketDispatcher.getPacket("FML", FMLPacket.makePacket(Type.ENTITYSPAWNADJUSTMENT, entityId, serverX, serverY, serverZ));
-        player.netServerHandler.sendPacket(pkt);
+        player.playerConnection.sendPacket(pkt);
     }
 
     public static InetAddress computeLocalHost() throws IOException
@@ -401,22 +401,22 @@ public class FMLNetworkHandler
         return add;
     }
 
-    public static Packet3Chat handleChatMessage(NetHandler handler, Packet3Chat chat)
+    public static Packet3Chat handleChatMessage(Connection connection, Packet3Chat chat)
     {
-        return NetworkRegistry.instance().handleChat(handler, chat);
+        return NetworkRegistry.instance().handleChat(connection, chat);
     }
 
-    public static void handlePacket131Packet(NetHandler handler, Packet131ItemData mapData)
+    public static void handlePacket131Packet(Connection connection, Packet131ItemData mapData)
     {
-        if (handler instanceof NetServerHandler || mapData.a != Item.MAP.id)
+        if (connection instanceof PlayerConnection || mapData.a != Item.MAP.id)
         {
             // Server side and not "map" packets are always handled by us
-            NetworkRegistry.instance().handleTinyPacket(handler, mapData);
+            NetworkRegistry.instance().handleTinyPacket(connection, mapData);
         }
         else
         {
             // Fallback to the net client handler implementation
-            FMLCommonHandler.instance().handleTinyPacket(handler, mapData);
+            FMLCommonHandler.instance().handleTinyPacket(connection, mapData);
         }
     }
 

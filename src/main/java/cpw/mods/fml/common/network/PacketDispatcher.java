@@ -30,7 +30,7 @@ public class PacketDispatcher
     {
         if (player instanceof EntityPlayer)
         {
-            ((EntityPlayer)player).netServerHandler.sendPacket(packet);
+            ((EntityPlayer)player).playerConnection.sendPacket(packet);
         }
     }
 
@@ -39,7 +39,7 @@ public class PacketDispatcher
     	MinecraftServer server = FMLCommonHandler.instance().getMinecraftServerInstance();
         if (server != null)
         {
-            server.getServerConfigurationManager().sendPacketNearby(X, Y, Z, range, dimensionId, packet);
+            server.getPlayerList().sendPacketNearby(X, Y, Z, range, dimensionId, packet);
         }
         else
         {
@@ -52,7 +52,7 @@ public class PacketDispatcher
         MinecraftServer server = FMLCommonHandler.instance().getMinecraftServerInstance();
         if (server != null)
         {
-            server.getServerConfigurationManager().a(packet, dimId);
+            server.getPlayerList().a(packet, dimId);
         }
         else
         {
@@ -65,7 +65,7 @@ public class PacketDispatcher
         MinecraftServer server = FMLCommonHandler.instance().getMinecraftServerInstance();
         if (server != null)
         {
-            server.getServerConfigurationManager().sendAll(packet);
+            server.getPlayerList().sendAll(packet);
         }
         else
         {

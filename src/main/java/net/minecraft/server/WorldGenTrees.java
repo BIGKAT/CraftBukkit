@@ -32,7 +32,7 @@ public class WorldGenTrees extends WorldGenerator implements BlockSapling.TreeGe
         // CraftBukkit end
         int l = random.nextInt(3) + this.a;
         boolean flag = true;
-        World w = world instanceof World ? (World)world : null;   
+        World w = world instanceof World ? (World)world : null; // MCPC
 
         if (j >= 1 && j + l + 1 <= 256) {
             int i1;
@@ -56,7 +56,7 @@ public class WorldGenTrees extends WorldGenerator implements BlockSapling.TreeGe
                             k1 = world.getTypeId(l1, i1, j1);
                             // Forge start
                             Block block = Block.byId[k1];
-                            if (k1 != 0 && !block.isLeaves(w, l1, i1, j1) && k1 != Block.GRASS.id && k1 != Block.DIRT.id && !block.isWood(w, l1, i1, j1)) {
+                            if (k1 != 0 && !block.isLeaves(w, l1, i1, j1) && k1 != Block.GRASS.id && k1 != Block.DIRT.id && !block.isWood((World)world, l1, i1, j1)) {
                             // Forge end
                                 flag = false;
                             }

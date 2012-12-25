@@ -144,12 +144,12 @@ public class WorldGenStrongholdLibrary extends WorldGenStrongholdPiece {
             }
 
             ChestGenHooks var8 = ChestGenHooks.getInfo("strongholdLibrary");
-            this.a(var1, var3, var2, 3, 3, 5, var8.getItems(), var8.getCount(var2));
+            this.a(var1, var3, var2, 3, 3, 5, var8.getItems(var2), var8.getCount(var2));
 
             if (this.c)
             {
                 this.a(var1, 0, 0, 12, 9, 1, var3);
-                this.a(var1, var3, var2, 12, 8, 1, var8.getItems(), var8.getCount(var2));
+                this.a(var1, var3, var2, 12, 8, 1, var8.getItems(var2), var8.getCount(var2));
             }
 
             return true;

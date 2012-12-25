@@ -1,33 +1,33 @@
 package net.minecraft.server;
 
-public class ItemMilkBucket extends Item {
-
-    public ItemMilkBucket(int var1)
+public class ItemMilkBucket extends Item
+{
+    public ItemMilkBucket(int par1)
     {
-        super(var1);
+        super(par1);
         this.d(1);
         this.a(CreativeModeTab.f);
     }
 
-    public ItemStack b(ItemStack var1, World var2, EntityHuman var3)
+    public ItemStack b(ItemStack par1ItemStack, World par2World, EntityHuman par3EntityPlayer)
     {
-        if (!var3.abilities.canInstantlyBuild)
+        if (!par3EntityPlayer.abilities.canInstantlyBuild)
         {
-            --var1.count;
+            --par1ItemStack.count;
         }
 
-        if (!var2.isStatic)
+        if (!par2World.isStatic)
         {
-            var3.curePotionEffects(var1); // Forge
+            par3EntityPlayer.curePotionEffects(par1ItemStack); // Forge
         }
 
-        return var1.count <= 0 ? new ItemStack(Item.BUCKET) : var1;
+        return par1ItemStack.count <= 0 ? new ItemStack(Item.BUCKET) : par1ItemStack;
     }
 
     /**
      * How long it takes to use or consume an item
      */
-    public int a(ItemStack var1)
+    public int c_(ItemStack par1ItemStack)
     {
         return 32;
     }
@@ -35,7 +35,7 @@ public class ItemMilkBucket extends Item {
     /**
      * returns the action that specifies what animation to play when the items is being used
      */
-    public EnumAnimation d_(ItemStack var1)
+    public EnumAnimation b_(ItemStack par1ItemStack)
     {
         return EnumAnimation.c;
     }
@@ -43,9 +43,9 @@ public class ItemMilkBucket extends Item {
     /**
      * Called whenever this item is equipped and the right mouse button is pressed. Args: itemStack, world, entityPlayer
      */
-    public ItemStack a(ItemStack var1, World var2, EntityHuman var3)
+    public ItemStack a(ItemStack par1ItemStack, World par2World, EntityHuman par3EntityPlayer)
     {
-        var3.a(var1, this.a(var1));
-        return var1;
+        par3EntityPlayer.a(par1ItemStack, this.c_(par1ItemStack));
+        return par1ItemStack;
     }
 }

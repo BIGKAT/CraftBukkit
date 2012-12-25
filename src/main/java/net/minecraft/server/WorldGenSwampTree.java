@@ -16,7 +16,7 @@ public class WorldGenSwampTree extends WorldGenerator implements BlockSapling.Tr
     public boolean generate(BlockChangeDelegate world, Random random, int i, int j, int k) {
         // CraftBukkit end
         int l;
-        World w = world instanceof World ? (World)world : null;
+        World w = world instanceof World ? (World)world : null; // MCPC
 
         for (l = random.nextInt(4) + 5; world.getTypeId(i, j - 1, k) != 0 && Block.byId[world.getTypeId(i, j - 1, k)].material == Material.WATER; --j) { // CraftBukkit - bypass world.getMaterial
             ;

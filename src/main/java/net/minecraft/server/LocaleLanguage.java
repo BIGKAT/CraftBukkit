@@ -8,8 +8,8 @@ import java.util.IllegalFormatException;
 import java.util.Properties;
 import java.util.TreeMap;
 // Forge start
-import cpw.mods.fml.common.Side;
-import cpw.mods.fml.common.asm.SideOnly;
+import cpw.mods.fml.relauncher.Side;
+import cpw.mods.fml.relauncher.SideOnly;
 import cpw.mods.fml.common.registry.LanguageRegistry;
 // Forge end
 

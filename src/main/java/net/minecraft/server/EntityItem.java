@@ -13,37 +13,38 @@ import net.minecraftforge.event.entity.player.EntityItemPickupEvent;
 
 public class EntityItem extends Entity {
 
-    public ItemStack itemStack;
-    public int age = 0;
+    public int age;
     public int pickupDelay;
-    private int e = 5;
-    public float d = (float) (Math.random() * 3.141592653589793D * 2.0D);
+    private int d;
+    public float c;
     private int lastTick = (int) (System.currentTimeMillis() / 50); // CraftBukkit
     /**
      * The maximum age of this EntityItem.  The item is expired once this is reached.
      */
     public int lifespan = 6000; // Forge
 
-    public EntityItem(World world, double d0, double d1, double d2, ItemStack itemstack) {
+    public EntityItem(World world, double d0, double d1, double d2) {
         super(world);
+        this.age = 0;
+        this.d = 5;
+        this.c = (float) (Math.random() * 3.141592653589793D * 2.0D);
         this.a(0.25F, 0.25F);
         this.height = this.length / 2.0F;
         this.setPosition(d0, d1, d2);
-        this.itemStack = itemstack;
-
-        // CraftBukkit start - infinite item fix & nullcheck
-        if (this.itemStack == null) {
-            throw new IllegalArgumentException("Can't create an EntityItem for a null item");
-        }
-        if (this.itemStack.count <= -1) {
-            this.itemStack.count = 1;
-        }
-        // CraftBukkit end
-
         this.yaw = (float) (Math.random() * 360.0D);
         this.motX = (double) ((float) (Math.random() * 0.20000000298023224D - 0.10000000149011612D));
         this.motY = 0.20000000298023224D;
         this.motZ = (double) ((float) (Math.random() * 0.20000000298023224D - 0.10000000149011612D));
+    }
+
+    public EntityItem(World world, double d0, double d1, double d2, ItemStack itemstack) {
+        this(world, d0, d1, d2);
+        // CraftBukkit start - Can't set null items in the datawatcher
+        if (itemstack == null || itemstack.getItem() == null) {
+            return;
+        }
+        // CraftBukkit end
+        this.setItemStack(itemstack);
         this.lifespan = itemstack.getItem() == null ? 6000 : itemstack.getItem().getEntityLifespan(itemstack, world); // Forge
     }
 
@@ -53,11 +54,16 @@ public class EntityItem extends Entity {
 
     public EntityItem(World world) {
         super(world);
+        this.age = 0;
+        this.d = 5;
+        this.c = (float) (Math.random() * 3.141592653589793D * 2.0D);
         this.a(0.25F, 0.25F);
         this.height = this.length / 2.0F;
     }
 
-    protected void a() {}
+    protected void a() {
+        this.getDataWatcher().a(10, 5);
+    }
 
     public void j_() {
         super.j_();
@@ -76,7 +82,7 @@ public class EntityItem extends Entity {
         this.move(this.motX, this.motY, this.motZ);
         boolean flag = (int) this.lastX != (int) this.locX || (int) this.lastY != (int) this.locY || (int) this.lastZ != (int) this.locZ;
 
-        if (flag) {
+        if (flag || this.ticksLived % 25 == 0) {
             if (this.world.getMaterial(MathHelper.floor(this.locX), MathHelper.floor(this.locY), MathHelper.floor(this.locZ)) == Material.LAVA) {
                 this.motY = 0.20000000298023224D;
                 this.motX = (double) ((this.random.nextFloat() - this.random.nextFloat()) * 0.2F);
@@ -85,7 +91,7 @@ public class EntityItem extends Entity {
             }
 
             if (!this.world.isStatic) {
-                this.d();
+                this.g();
             }
         }
 
@@ -109,27 +115,33 @@ public class EntityItem extends Entity {
         } // Spigot
         ++this.age;
         // Forge start
+        ItemStack item = getDataWatcher().f(10);
         if (!this.world.isStatic && this.age >= this.lifespan) {
-            ItemExpireEvent event = new ItemExpireEvent(this, this.itemStack.getItem() == null ? 6000 : this.itemStack.getItem().getEntityLifespan(this.itemStack, this.world));
-            if (MinecraftForge.EVENT_BUS.post(event)) {
-                this.lifespan += event.extraLife;
-            } else {
-            // CraftBukkit start
-            if (org.bukkit.craftbukkit.event.CraftEventFactory.callItemDespawnEvent(this).isCancelled()) {
-                this.age = 0;
-                return;
+        	if (item != null) {
+                ItemExpireEvent event = new ItemExpireEvent(this, this.getItemStack().getItem() == null ? 6000 : this.getItemStack().getItem().getEntityLifespan(this.getItemStack(), this.world));
+                if (MinecraftForge.EVENT_BUS.post(event)) {
+                    this.lifespan += event.extraLife;
+                } else {
+                    // CraftBukkit start
+                    if (org.bukkit.craftbukkit.event.CraftEventFactory.callItemDespawnEvent(this).isCancelled()) {
+                        this.age = 0;
+                        return;
+                    }
+                    else this.die();
+                }
             }
-            this.die();
+        	else {
+                this.die();
             // CraftBukkit end
             }
             // Forge end
         }
 
-        if (this.itemStack == null || this.itemStack.count <= 0) // Forge
+        if (this.getItemStack() != null && this.getItemStack().count <= 0) // Forge
             this.die();
     }
 
-    private void d() {
+    private void g() {
         Iterator iterator = this.world.a(EntityItem.class, this.boundingBox.grow(0.5D, 0.0D, 0.5D)).iterator();
 
         while (iterator.hasNext()) {
@@ -143,26 +155,26 @@ public class EntityItem extends Entity {
         if (entityitem == this) {
             return false;
         } else if (entityitem.isAlive() && this.isAlive()) {
-            if (entityitem.itemStack.getItem() != this.itemStack.getItem()) {
+            ItemStack itemstack = this.getItemStack();
+            ItemStack itemstack1 = entityitem.getItemStack();
+
+            if (itemstack1.getItem() != itemstack.getItem()) {
                 return false;
-            } else if (entityitem.itemStack.hasTag() ^ this.itemStack.hasTag()) {
+            } else if (itemstack1.hasTag() ^ itemstack.hasTag()) {
                 return false;
-            } else if (entityitem.itemStack.hasTag() && !entityitem.itemStack.getTag().equals(this.itemStack.getTag())) {
+            } else if (itemstack1.hasTag() && !itemstack1.getTag().equals(itemstack.getTag())) {
                 return false;
-            } else if (entityitem.itemStack.getItem().l() && entityitem.itemStack.getData() != this.itemStack.getData()) {
+            } else if (itemstack1.getItem().l() && itemstack1.getData() != itemstack.getData()) {
                 return false;
-            } else if (entityitem.itemStack.count < this.itemStack.count) {
+            } else if (itemstack1.count < itemstack.count) {
                 return entityitem.a(this);
-            } else if (entityitem.itemStack.count + this.itemStack.count > entityitem.itemStack.getMaxStackSize()) {
+            } else if (itemstack1.count + itemstack.count > itemstack1.getMaxStackSize()) {
                 return false;
-            // CraftBukkit start - don't merge items with enchantments
-            } else if (entityitem.itemStack.hasEnchantments() || this.itemStack.hasEnchantments()) {
-                return false;
-                // CraftBukkit end
             } else {
-                entityitem.itemStack.count += this.itemStack.count;
+                itemstack1.count += itemstack.count;
                 entityitem.pickupDelay = Math.max(entityitem.pickupDelay, this.pickupDelay);
                 entityitem.age = Math.min(entityitem.age, this.age);
+                entityitem.setItemStack(itemstack1);
                 this.die();
                 return true;
             }
@@ -186,10 +198,12 @@ public class EntityItem extends Entity {
     public boolean damageEntity(DamageSource damagesource, int i) {
         if (this.isInvulnerable()) {
             return false;
+        } else if (this.getItemStack() != null && this.getItemStack().id == Item.NETHER_STAR.id && damagesource == DamageSource.EXPLOSION) {
+            return false;
         } else {
             this.K();
-            this.e -= i;
-            if (this.e <= 0) {
+            this.d -= i;
+            if (this.d <= 0) {
                 this.die();
             }
 
@@ -198,21 +212,33 @@ public class EntityItem extends Entity {
     }
 
     public void b(NBTTagCompound nbttagcompound) {
-        nbttagcompound.setShort("Health", (short) ((byte) this.e));
+        nbttagcompound.setShort("Health", (short) ((byte) this.d));
         nbttagcompound.setShort("Age", (short) this.age);
         nbttagcompound.setInt("Lifespan", this.lifespan); // Forge
-        if (this.itemStack != null) {
-            nbttagcompound.setCompound("Item", this.itemStack.save(new NBTTagCompound()));
+        if (this.getItemStack() != null) {
+            nbttagcompound.setCompound("Item", this.getItemStack().save(new NBTTagCompound()));
         }
     }
 
     public void a(NBTTagCompound nbttagcompound) {
-        this.e = nbttagcompound.getShort("Health") & 255;
+        this.d = nbttagcompound.getShort("Health") & 255;
         this.age = nbttagcompound.getShort("Age");
         NBTTagCompound nbttagcompound1 = nbttagcompound.getCompound("Item");
 
-        this.itemStack = ItemStack.a(nbttagcompound1);
-        if (this.itemStack == null || this.itemStack.count <= 0) { // Forge
+        // CraftBukkit start
+        if (nbttagcompound1 != null) {
+            ItemStack itemstack = ItemStack.a(nbttagcompound1);
+            if (itemstack != null) {
+                this.setItemStack(itemstack);
+            } else {
+                this.die();
+            }
+        } else {
+            this.die();
+        }
+        // CraftBukkit end
+        ItemStack item = getDataWatcher().f(10); // Forge
+        if (this.getItemStack() == null || this.getItemStack().count <= 0) { // Forge
             this.die();
         }
         // Forge start
@@ -223,7 +249,8 @@ public class EntityItem extends Entity {
     }
 
     public void c_(EntityHuman entityhuman) {
-        if ((!this.world.isStatic) && (this.itemStack != null)) { // CraftBukkit - nullcheck
+        if ((!this.world.isStatic) && (this.getItemStack() != null)) { // CraftBukkit - nullcheck
+        	ItemStack itemstack = this.getItemStack();
             // Forge start
             if (this.pickupDelay > 0)
                 return;
@@ -233,18 +260,18 @@ public class EntityItem extends Entity {
                 return;
             // Forge end
 
-            int i = this.itemStack.count;
+            int i = this.getItemStack().count;
 
             // CraftBukkit start
-            int canHold = entityhuman.inventory.canHold(this.itemStack);
-            int remaining = this.itemStack.count - canHold;
+            int canHold = entityhuman.inventory.canHold(itemstack);
+            int remaining = itemstack.count - canHold;
 
             if (this.pickupDelay <= 0 && canHold > 0) {
-                this.itemStack.count = canHold;
+                itemstack.count = canHold;
                 PlayerPickupItemEvent event = new PlayerPickupItemEvent((org.bukkit.entity.Player) entityhuman.getBukkitEntity(), (org.bukkit.entity.Item) this.getBukkitEntity(), remaining);
                 event.setCancelled(!entityhuman.canPickUpLoot);
                 this.world.getServer().getPluginManager().callEvent(event);
-                this.itemStack.count = canHold + remaining;
+                itemstack.count = canHold + remaining;
 
                 if (event.isCancelled()) {
                     return;
@@ -255,27 +282,27 @@ public class EntityItem extends Entity {
             }
             // CraftBukkit end
 
-            if (this.pickupDelay <= 0 && (var2.getResult() == Result.ALLOW || i <= 0 || entityhuman.inventory.pickup(this.itemStack))) { // Forge
-                if (this.itemStack.id == Block.LOG.id) {
+            if (this.pickupDelay <= 0 && (var2.getResult() == Result.ALLOW || i <= 0 || entityhuman.inventory.pickup(this.getItemStack()))) { // Forge
+                if (this.getItemStack().id == Block.LOG.id) {
                     entityhuman.a((Statistic) AchievementList.g);
                 }
 
-                if (this.itemStack.id == Item.LEATHER.id) {
+                if (itemstack.id == Item.LEATHER.id) {
                     entityhuman.a((Statistic) AchievementList.t);
                 }
 
-                if (this.itemStack.id == Item.DIAMOND.id) {
+                if (itemstack.id == Item.DIAMOND.id) {
                     entityhuman.a((Statistic) AchievementList.w);
                 }
 
-                if (this.itemStack.id == Item.BLAZE_ROD.id) {
+                if (itemstack.id == Item.BLAZE_ROD.id) {
                     entityhuman.a((Statistic) AchievementList.z);
                 }
 
                 GameRegistry.onPickupNotification(entityhuman, this); // Forge
                 this.makeSound("random.pop", 0.2F, ((this.random.nextFloat() - this.random.nextFloat()) * 0.7F + 1.0F) * 2.0F);
                 entityhuman.receive(this, i);
-                if (this.itemStack.count <= 0) {
+                if (itemstack.count <= 0) {
                     this.die();
                 }
             }
@@ -283,8 +310,7 @@ public class EntityItem extends Entity {
     }
 
     public String getLocalizedName() {
-        if (this.itemStack == null) return LocaleI18n.get("item.unknown"); // CraftBukkit - nullcheck
-        return LocaleI18n.get("item." + this.itemStack.a());
+        return LocaleI18n.get("item." + this.getItemStack().a());
     }
 
     public boolean aq() {
@@ -294,7 +320,23 @@ public class EntityItem extends Entity {
     public void b(int i) {
         super.b(i);
         if (!this.world.isStatic) {
-            this.d();
+            this.g();
         }
+    }
+
+    public ItemStack getItemStack() {
+        ItemStack itemstack = this.getDataWatcher().f(10);
+
+        if (itemstack == null) {
+            System.out.println("Item entity " + this.id + " has no item?!");
+            return new ItemStack(Block.STONE);
+        } else {
+            return itemstack;
+        }
+    }
+
+    public void setItemStack(ItemStack itemstack) {
+        this.getDataWatcher().watch(10, itemstack);
+        this.getDataWatcher().h(10);
     }
 }

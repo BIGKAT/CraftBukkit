@@ -1,12 +1,12 @@
 package cpw.mods.fml.common.modloader;
 
-import cpw.mods.fml.common.network.EntitySpawnPacket;
-import cpw.mods.fml.common.registry.EntityRegistry.EntityRegistration;
 import net.minecraft.server.Entity;
 import net.minecraft.server.EntityHuman;
-import net.minecraft.server.NetHandler;
+import net.minecraft.server.Connection;
 import net.minecraft.server.INetworkManager;
 import net.minecraft.server.Packet250CustomPayload;
+import cpw.mods.fml.common.network.EntitySpawnPacket;
+import cpw.mods.fml.common.registry.EntityRegistry.EntityRegistration;
 
 public interface IModLoaderSidedHelper
 {
@@ -19,7 +19,7 @@ public interface IModLoaderSidedHelper
 
     void sendClientPacket(BaseModProxy mod, Packet250CustomPayload packet);
 
-    void clientConnectionOpened(NetHandler netClientHandler, INetworkManager manager, BaseModProxy mod);
+    void clientConnectionOpened(Connection connection, INetworkManager manager, BaseModProxy mod);
 
     boolean clientConnectionClosed(INetworkManager manager, BaseModProxy mod);
 

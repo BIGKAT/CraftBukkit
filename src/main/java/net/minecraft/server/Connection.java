@@ -1,6 +1,6 @@
 package net.minecraft.server;
 
-public abstract class NetHandler {
+public abstract class Connection {
 
     /**
      * determine if it is a server handler
@@ -13,7 +13,7 @@ public abstract class NetHandler {
     public void a(Packet51MapChunk var1) {}
 
     /**
-     * Default handler called for packets that don't have their own handlers in NetServerHandler; kicks player from the
+     * Default handler called for packets that don't have their own handlers in PlayerConnection; kicks player from the
      * server.
      */
     public void onUnhandledPacket(Packet var1) {}
@@ -80,10 +80,10 @@ public abstract class NetHandler {
         this.onUnhandledPacket(var1);
     }
 
-    public void a(Packet21PickupSpawn var1)
+    /*public void a(Packet21PickupSpawn var1)
     {
         this.onUnhandledPacket(var1);
-    }
+    }*/
 
     public void a(Packet22Collect var1)
     {

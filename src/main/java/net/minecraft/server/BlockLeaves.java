@@ -204,4 +204,8 @@ public class BlockLeaves extends BlockTransparant implements IShearable { // For
         return true;
     }
     // Forge end
+
+    protected ItemStack f_(int i) {
+        return new ItemStack(this.id, 1, i & 3);
+    }
 }

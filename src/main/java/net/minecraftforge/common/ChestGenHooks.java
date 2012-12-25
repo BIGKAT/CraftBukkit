@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Random;
+
+import net.minecraft.server.Item;
 import net.minecraft.server.ItemStack;
 import net.minecraft.server.StructurePieceTreasure;
 import net.minecraft.server.WorldGenJungleTemple;
@@ -49,8 +51,17 @@ public class ChestGenHooks
         addInfo("strongholdLibrary", WorldGenStrongholdLibrary.b, 1, 5);
         addInfo("strongholdCrossing", WorldGenStrongholdRoomCrossing.c, 1, 5);
         addInfo("villageBlacksmith", WorldGenVillageBlacksmith.a, 3, 9);
-        addInfo("bonusChest", WorldServer.T, 10, 10);
-  }
+        addInfo("bonusChest", WorldServer.S, 10, 10);
+
+        ItemStack book = new ItemStack(Item.ENCHANTED_BOOK, 1, 0);
+        StructurePieceTreasure tmp = new StructurePieceTreasure(book, 1, 1, 1);
+        getInfo(MINESHAFT_CORRIDOR  ).addItem(tmp);
+        getInfo(PYRAMID_DESERT_CHEST).addItem(tmp);        
+        getInfo(PYRAMID_JUNGLE_CHEST).addItem(tmp);
+        getInfo(STRONGHOLD_CORRIDOR ).addItem(tmp);
+        getInfo(STRONGHOLD_LIBRARY  ).addItem(new StructurePieceTreasure(book, 1, 5, 2));
+        getInfo(STRONGHOLD_CROSSING ).addItem(tmp);
+    }
 
     private static void addInfo(String category, StructurePieceTreasure[] items, int min, int max)
     {
@@ -111,7 +122,7 @@ public class ChestGenHooks
     }
 
     //shortcut functions, See the non-static versions below
-    public static StructurePieceTreasure[] getItems(String category){ return getInfo(category).getItems(); }
+    public static StructurePieceTreasure[] getItems(String category, Random rnd){ return getInfo(category).getItems(rnd); }
     public static int getCount(String category, Random rand){ return getInfo(category).getCount(rand); }
     public static void addItem(String category, StructurePieceTreasure item){ getInfo(category).addItem(item); }
     public static void removeItem(String category, ItemStack item){ getInfo(category).removeItem(item); }
@@ -171,8 +182,23 @@ public class ChestGenHooks
      * 
      * @return The random objects
      */
-    public StructurePieceTreasure[] getItems()
+    public StructurePieceTreasure[] getItems(Random rnd)
     {
+        ArrayList<StructurePieceTreasure> ret = new ArrayList<StructurePieceTreasure>();
+        
+        for (StructurePieceTreasure orig : contents)
+        {
+            Item item = orig.itemStack.getItem();
+
+            if (item != null)
+            {
+                StructurePieceTreasure n = item.getChestGenBase(this, rnd, orig);
+                if (n != null)
+                {
+                    ret.add(n);
+                }
+            }
+        }
         return contents.toArray(new StructurePieceTreasure[contents.size()]);
     }
 

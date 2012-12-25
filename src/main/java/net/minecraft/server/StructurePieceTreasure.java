@@ -8,8 +8,8 @@ public class StructurePieceTreasure extends WeightedRandomChoice {
 
    private int b;
    private int c;
-   private int d;
-   private int e;
+   public int d; // Forge - private -> public
+   public int e; // Forge - private -> public
 
    public final ItemStack itemStack; // Forge
 

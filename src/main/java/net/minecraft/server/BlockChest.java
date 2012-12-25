@@ -3,8 +3,8 @@ package net.minecraft.server;
 import java.util.Iterator;
 import java.util.Random;
 // Forge start
-import cpw.mods.fml.common.Side;
-import cpw.mods.fml.common.asm.SideOnly;
+import cpw.mods.fml.relauncher.Side;
+import cpw.mods.fml.relauncher.SideOnly;
 import net.minecraftforge.common.ForgeDirection;
 import static net.minecraftforge.common.ForgeDirection.*;
 // Forge end
@@ -377,7 +377,7 @@ public class BlockChest extends BlockContainer
 
                         if (var9.hasTag())
                         {
-                            var12.itemStack.setTag((NBTTagCompound)var9.getTag().clone());
+                            var12.getItemStack().setTag((NBTTagCompound)var9.getTag().clone());
                         }
                     }
                 }

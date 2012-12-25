@@ -1,8 +1,12 @@
 package net.minecraft.server;
 
 import org.bukkit.craftbukkit.block.CraftBlockState; // CraftBukkit
+// Forge start
+import net.minecraftforge.common.EnumPlantType;
+import net.minecraftforge.common.IPlantable;
+// Forge end
 
-public class ItemSeedFood extends ItemFood {
+public class ItemSeedFood extends ItemFood implements IPlantable { // Forge
 
     private int b;
     private int c;
@@ -42,4 +46,24 @@ public class ItemSeedFood extends ItemFood {
             return false;
         }
     }
+    
+    // Forge start
+    @Override
+    public EnumPlantType getPlantType(World world, int x, int y, int z)
+    {
+        return EnumPlantType.Crop;
+    }
+
+    @Override
+    public int getPlantID(World world, int x, int y, int z)
+    {
+        return b;
+    }
+
+    @Override
+    public int getPlantMetadata(World world, int x, int y, int z)
+    {
+        return 0;
+    }
+    // Forge end
 }

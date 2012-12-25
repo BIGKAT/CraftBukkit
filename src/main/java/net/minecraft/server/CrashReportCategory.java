@@ -5,8 +5,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.Callable;
 // Forge start
-import cpw.mods.fml.common.Side;
-import cpw.mods.fml.common.asm.SideOnly;
+import cpw.mods.fml.relauncher.Side;
+import cpw.mods.fml.relauncher.SideOnly;
 // Forge end
 
 public class CrashReportCategory

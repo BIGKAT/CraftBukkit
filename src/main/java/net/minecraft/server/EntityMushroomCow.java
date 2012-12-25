@@ -44,7 +44,7 @@ public class EntityMushroomCow extends EntityCow implements IShearable { // Forg
 
     @Override
     public ArrayList<ItemStack> onSheared(ItemStack item, World world, int X, int Y, int Z, int fortune) {
-         ArrayList<ItemStack> ret = new ArrayList<ItemStack>();
+        ArrayList<ItemStack> ret = new ArrayList<ItemStack>();
 
         // CraftBukkit start
         PlayerShearEntityEvent event = new PlayerShearEntityEvent((org.bukkit.entity.Player) shearer.getBukkitEntity(), this.getBukkitEntity());
@@ -60,7 +60,7 @@ public class EntityMushroomCow extends EntityCow implements IShearable { // Forg
         EntityCow entitycow = new EntityCow(this.world);
         entitycow.setPositionRotation(this.locX, this.locY, this.locZ, this.yaw, this.pitch);
         entitycow.setHealth(this.getHealth());
-        entitycow.aw = this.aw;
+        entitycow.ax = this.ax;
         this.world.addEntity(entitycow);
         this.world.addParticle("largeexplode", this.locX, this.locY + (double)(this.length / 2.0F), this.locZ, 0.0D, 0.0D, 0.0D);
         

@@ -14,7 +14,7 @@ import net.minecraftforge.event.ForgeEventFactory;
 import net.minecraftforge.event.entity.player.PlayerDestroyItemEvent;
 // Forge end
 
-public class ItemInWorldManager {
+public class PlayerInteractManager {
 
     private double blockReachDistance = 5.0D; // Forge
     public World world;
@@ -33,14 +33,14 @@ public class ItemInWorldManager {
     private int n;
     private int o;
 
-    public ItemInWorldManager(World world) {
+    public PlayerInteractManager(World world) {
         this.gamemode = EnumGamemode.NONE;
         this.o = -1;
         this.world = world;
     }
 
     // CraftBukkit start - keep this for backwards compatibility
-    public ItemInWorldManager(WorldServer world) {
+    public PlayerInteractManager(WorldServer world) {
         this((World) world);
     }
     // CraftBukkit end
@@ -125,11 +125,11 @@ public class ItemInWorldManager {
             // CraftBukkit start
             if (event.isCancelled()) {
                 // Let the client know the block still exists
-                ((EntityPlayer) this.player).netServerHandler.sendPacket(new Packet53BlockChange(i, j, k, this.world));
+                ((EntityPlayer) this.player).playerConnection.sendPacket(new Packet53BlockChange(i, j, k, this.world));
                 // Update any tile entity data for this block
                 TileEntity tileentity = this.world.getTileEntity(i, j, k);
                 if (tileentity != null) {
-                    this.player.netServerHandler.sendPacket(tileentity.getUpdatePacket());
+                    this.player.playerConnection.sendPacket(tileentity.getUpdatePacket());
                 }
                 return;
             }
@@ -150,10 +150,10 @@ public class ItemInWorldManager {
                     if (i1 == Block.WOODEN_DOOR.id) {
                         // For some reason *BOTH* the bottom/top part have to be marked updated.
                         boolean bottom = (this.world.getData(i, j, k) & 8) == 0;
-                        ((EntityPlayer) this.player).netServerHandler.sendPacket(new Packet53BlockChange(i, j, k, this.world));
-                        ((EntityPlayer) this.player).netServerHandler.sendPacket(new Packet53BlockChange(i, j + (bottom ? 1 : -1), k, this.world));
+                        ((EntityPlayer) this.player).playerConnection.sendPacket(new Packet53BlockChange(i, j, k, this.world));
+                        ((EntityPlayer) this.player).playerConnection.sendPacket(new Packet53BlockChange(i, j + (bottom ? 1 : -1), k, this.world));
                     } else if (i1 == Block.TRAP_DOOR.id) {
-                        ((EntityPlayer) this.player).netServerHandler.sendPacket(new Packet53BlockChange(i, j, k, this.world));
+                        ((EntityPlayer) this.player).playerConnection.sendPacket(new Packet53BlockChange(i, j, k, this.world));
                     }
                 } else if (i1 > 0) {
                     Block.byId[i1].attack(this.world, i, j, k, this.player);
@@ -169,7 +169,7 @@ public class ItemInWorldManager {
                 if (event.useItemInHand() == Event.Result.DENY) {
                     // If we 'insta destroyed' then the client needs to be informed.
                     if (f > 1.0f) {
-                        ((EntityPlayer) this.player).netServerHandler.sendPacket(new Packet53BlockChange(i, j, k, this.world));
+                        ((EntityPlayer) this.player).playerConnection.sendPacket(new Packet53BlockChange(i, j, k, this.world));
                     }
                     return;
                 }
@@ -177,7 +177,7 @@ public class ItemInWorldManager {
 
                 if (blockEvent.isCancelled()) {
                     // Let the client know the block still exists
-                    ((EntityPlayer) this.player).netServerHandler.sendPacket(new Packet53BlockChange(i, j, k, this.world));
+                    ((EntityPlayer) this.player).playerConnection.sendPacket(new Packet53BlockChange(i, j, k, this.world));
                     return;
                 }
 
@@ -227,7 +227,7 @@ public class ItemInWorldManager {
             }
         // CraftBukkit start - force blockreset to client
         } else {
-            ((EntityPlayer) this.player).netServerHandler.sendPacket(new Packet53BlockChange(i, j, k, this.world));
+            ((EntityPlayer) this.player).playerConnection.sendPacket(new Packet53BlockChange(i, j, k, this.world));
             // CraftBukkit end
         }
     }
@@ -267,7 +267,7 @@ public class ItemInWorldManager {
 
                 packet.material = 0;
                 packet.data = 0;
-                ((EntityPlayer) this.player).netServerHandler.sendPacket(packet);
+                ((EntityPlayer) this.player).playerConnection.sendPacket(packet);
             }
 
             event = new BlockBreakEvent(block, this.player.getBukkitEntity());
@@ -292,17 +292,17 @@ public class ItemInWorldManager {
 
             if (event.isCancelled()) {
                 // Let the client know the block still exists
-                ((EntityPlayer) this.player).netServerHandler.sendPacket(new Packet53BlockChange(i, j, k, this.world));
+                ((EntityPlayer) this.player).playerConnection.sendPacket(new Packet53BlockChange(i, j, k, this.world));
                 // Update any tile entity data for this block
                 TileEntity tileentity = this.world.getTileEntity(i, j, k);
                 if (tileentity != null) {
-                    this.player.netServerHandler.sendPacket(tileentity.getUpdatePacket());
+                    this.player.playerConnection.sendPacket(tileentity.getUpdatePacket());
                 }
                 return false;
             }
         }
         // Forge start
-        ItemStack itemstack = this.player.bT();
+        ItemStack itemstack = this.player.bS();
         if (itemstack != null && itemstack.getItem().onBlockStartBreak(itemstack, i, j, k, this.player)) {
         // Forge end
             return false;
@@ -323,7 +323,7 @@ public class ItemInWorldManager {
 
             if (this.isCreative()) {
                 flag = this.d(i, j, k); // Forge
-                this.player.netServerHandler.sendPacket(new Packet53BlockChange(i, j, k, this.world));
+                this.player.playerConnection.sendPacket(new Packet53BlockChange(i, j, k, this.world));
             } else {
                 // Forge start
                 boolean flag1 = false;
@@ -337,8 +337,7 @@ public class ItemInWorldManager {
                 if (itemstack != null) {
                     itemstack.a(this.world, l, i, j, k, this.player);
                     if (itemstack.count == 0) {
-                        this.player.bU();
-                        MinecraftForge.EVENT_BUS.post(new PlayerDestroyItemEvent(this.player, itemstack)); // Forge
+                        this.player.bT();
                     }
                 }
 
@@ -408,10 +407,10 @@ public class ItemInWorldManager {
                 // If we denied a door from opening, we need to send a correcting update to the client, as it already opened the door.
                 if (i1 == Block.WOODEN_DOOR.id) {
                     boolean bottom = (world.getData(i, j, k) & 8) == 0;
-                    ((EntityPlayer) entityhuman).netServerHandler.sendPacket(new Packet53BlockChange(i, j + (bottom ? 1 : -1), k, world));
+                    ((EntityPlayer) entityhuman).playerConnection.sendPacket(new Packet53BlockChange(i, j + (bottom ? 1 : -1), k, world));
                 }
                 result = (event.useItemInHand() != Event.Result.ALLOW);
-            } else {
+            } else if (!entityhuman.isSneaking() || itemstack == null) {
                 result = Block.byId[i1].interact(world, i, j, k, entityhuman, l, f, f1, f2);
             }
 

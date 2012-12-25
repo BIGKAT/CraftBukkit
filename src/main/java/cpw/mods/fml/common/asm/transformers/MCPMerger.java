@@ -35,8 +35,8 @@ import mcpc.com.google.common.base.Objects;
 import mcpc.com.google.common.collect.Lists;
 import mcpc.com.google.common.collect.Sets;
 
-import cpw.mods.fml.common.Side;
-import cpw.mods.fml.common.asm.SideOnly;
+import cpw.mods.fml.relauncher.Side;
+import cpw.mods.fml.relauncher.SideOnly;
 
 public class MCPMerger
 {
@@ -135,7 +135,7 @@ public class MCPMerger
             String line;
             while ((line = br.readLine()) != null)
             {
-		line = line.split("#")[0];
+                line = line.split("#")[0];
                 char cmd = line.charAt(0);
                 line = line.substring(1).trim();
                 
@@ -234,12 +234,12 @@ public class MCPMerger
 
             for (Entry<String, ZipEntry> entry : sClasses.entrySet())
             {
-                    if (DEBUG)
-                    {
-                        System.out.println("Copy class s->c : " + entry.getKey());
-                    }
-                    copyClass(sInJar, entry.getValue(), cOutJar, sOutJar, false);
+                if (DEBUG)
+                {
+                    System.out.println("Copy class s->c : " + entry.getKey());
                 }
+                copyClass(sInJar, entry.getValue(), cOutJar, sOutJar, false);
+            }
 
             for (String name : new String[]{SideOnly.class.getName(), Side.class.getName()})
             {

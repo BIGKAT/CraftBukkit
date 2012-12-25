@@ -14,7 +14,6 @@
 package cpw.mods.fml.common;
 
 import java.util.EnumSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -31,7 +30,7 @@ import net.minecraft.server.Entity;
 import net.minecraft.server.EntityHuman;
 import net.minecraft.server.NBTBase;
 import net.minecraft.server.NBTTagCompound;
-import net.minecraft.server.NetHandler;
+import net.minecraft.server.Connection;
 import net.minecraft.server.Packet131ItemData;
 import net.minecraft.server.WorldNBTStorage;
 import net.minecraft.server.DedicatedServerConnectionThread;
@@ -54,6 +53,7 @@ import cpw.mods.fml.common.network.EntitySpawnPacket;
 import cpw.mods.fml.common.registry.EntityRegistry.EntityRegistration;
 import cpw.mods.fml.common.registry.ItemData;
 import cpw.mods.fml.common.registry.TickRegistry;
+import cpw.mods.fml.relauncher.Side;
 import cpw.mods.fml.server.FMLServerHandler;
 
 
@@ -399,18 +399,15 @@ public class FMLCommonHandler
         }
     }
 
-    public void handleTinyPacket(NetHandler handler, Packet131ItemData mapData)
+    public void handleTinyPacket(Connection connection, Packet131ItemData mapData)
     {
-        sidedDelegate.handleTinyPacket(handler, mapData);
+        sidedDelegate.handleTinyPacket(connection, mapData);
     }
 
     public void handleWorldDataSave(WorldNBTStorage handler, WorldData WorldData, NBTTagCompound tagCompound)
     {
-    	Iterator iterator = Loader.instance().getModList().iterator();
-        while (iterator.hasNext())
+        for (ModContainer mc : Loader.instance().getModList())
         {
-        	ModContainer mc = (ModContainer)iterator.next();
-        
             if (mc instanceof InjectedModContainer)
             {
                 WorldAccessContainer wac = ((InjectedModContainer)mc).getWrappedWorldAccessContainer();
@@ -436,11 +433,8 @@ public class FMLCommonHandler
         handlerSet.add(handler);
         Map<String,NBTBase> additionalProperties = Maps.newHashMap();
         WorldData.setAdditionalProperties(additionalProperties);
-        Iterator iterator = Loader.instance().getModList().iterator();
-        while (iterator.hasNext())
+        for (ModContainer mc : Loader.instance().getModList())
         {
-        	ModContainer mc = (ModContainer)iterator.next();
-        
             if (mc instanceof InjectedModContainer)
             {
                 WorldAccessContainer wac = ((InjectedModContainer)mc).getWrappedWorldAccessContainer();
@@ -457,7 +451,7 @@ public class FMLCommonHandler
         return sidedDelegate.shouldServerShouldBeKilledQuietly();
     }
 
-    public void disconnectIDMismatch(MapDifference<Integer, ItemData> serverDifference, NetHandler toKill, INetworkManager network)
+    public void disconnectIDMismatch(MapDifference<Integer, ItemData> serverDifference, Connection toKill, INetworkManager network)
     {
         sidedDelegate.disconnectIDMismatch(serverDifference, toKill, network);
     }

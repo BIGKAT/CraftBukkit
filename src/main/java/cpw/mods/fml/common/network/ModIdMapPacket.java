@@ -9,7 +9,7 @@ import net.minecraft.server.INetworkManager;
 import net.minecraft.server.NBTCompressedStreamTools;
 import net.minecraft.server.NBTTagCompound;
 import net.minecraft.server.NBTTagList;
-import net.minecraft.server.NetHandler;
+import net.minecraft.server.Connection;
 
 import mcpc.com.google.common.collect.MapDifference;
 import mcpc.com.google.common.io.ByteArrayDataInput;
@@ -74,7 +74,7 @@ public class ModIdMapPacket extends FMLPacket {
     }
 
     @Override
-    public void execute(INetworkManager network, FMLNetworkHandler handler, NetHandler netHandler, String userName)
+    public void execute(INetworkManager network, FMLNetworkHandler handler, Connection netHandler, String userName)
     {
         byte[] allData = Bytes.concat(partials);
         GameData.initializeServerGate(1);

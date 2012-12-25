@@ -1,5 +1,6 @@
 package net.minecraftforge.common;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.Hashtable;
@@ -298,6 +299,22 @@ public class DimensionManager
                     dimensionMap.set(i * Integer.SIZE + j, (intArray[i] & (1 << j)) != 0);
                 }
             }
+        }
+    }
+
+    /**
+     * Return the current root directory for the world save. Accesses getSaveHandler from the
+     * @return
+     */
+    public static File getCurrentSaveRootDirectory()
+    {
+        if (DimensionManager.getWorld(0) != null)
+        {
+            return ((WorldNBTStorage)DimensionManager.getWorld(0).getDataManager()).getDirectory();
+        }
+        else
+        {
+            return null;
         }
     }
 }

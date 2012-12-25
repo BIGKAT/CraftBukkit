@@ -7,8 +7,8 @@ import java.util.concurrent.Callable;
 import java.util.logging.Level;
 
 import cpw.mods.fml.common.FMLLog;
-import cpw.mods.fml.common.Side;
-import cpw.mods.fml.common.asm.SideOnly;
+import cpw.mods.fml.relauncher.Side;
+import cpw.mods.fml.relauncher.SideOnly;
 // Forge end
 
 import org.bukkit.inventory.InventoryHolder; // CraftBukkit

@@ -108,9 +108,9 @@ public class Packet1Login extends Packet {
     }
 
     /**
-     * Passes this Packet on to the NetHandler for processing.
+     * Passes this Packet on to the Connection for processing.
      */
-    public void handle(NetHandler var1)
+    public void handle(Connection var1)
     {
         var1.a(this);
     }

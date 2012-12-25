@@ -1,7 +1,7 @@
 package cpw.mods.fml.common.network;
 
-import net.minecraft.server.NetHandler;
-import net.minecraft.server.NetLoginHandler;
+import net.minecraft.server.Connection;
+import net.minecraft.server.PendingConnection;
 import net.minecraft.server.INetworkManager;
 import net.minecraft.server.Packet1Login;
 import net.minecraft.server.MinecraftServer;
@@ -16,7 +16,7 @@ public interface IConnectionHandler
      * @param netHandler
      * @param manager
      */
-    void playerLoggedIn(Player player, NetHandler netHandler, INetworkManager manager);
+    void playerLoggedIn(Player player, Connection netHandler, INetworkManager manager);
 
     /**
      * If you don't want the connection to continue, return a non-empty string here
@@ -28,7 +28,7 @@ public interface IConnectionHandler
      * @param netHandler
      * @param manager
      */
-    String connectionReceived(NetLoginHandler netHandler, INetworkManager manager);
+    String connectionReceived(PendingConnection netHandler, INetworkManager manager);
 
     /**
      * Fired when a remote connection is opened
@@ -38,7 +38,7 @@ public interface IConnectionHandler
      * @param server
      * @param port
      */
-    void connectionOpened(NetHandler netClientHandler, String server, int port, INetworkManager manager);
+    void connectionOpened(Connection netClientHandler, String server, int port, INetworkManager manager);
     /**
      *
      * Fired when a local connection is opened
@@ -48,7 +48,7 @@ public interface IConnectionHandler
      * @param netClientHandler
      * @param server
      */
-    void connectionOpened(NetHandler netClientHandler, MinecraftServer server, INetworkManager manager);
+    void connectionOpened(Connection netClientHandler, MinecraftServer server, INetworkManager manager);
 
     /**
      * Fired when a connection closes
@@ -67,6 +67,6 @@ public interface IConnectionHandler
      * @param manager
      * @param login
      */
-    void clientLoggedIn(NetHandler clientHandler, INetworkManager manager, Packet1Login login);
+    void clientLoggedIn(Connection clientHandler, INetworkManager manager, Packet1Login login);
 
 }

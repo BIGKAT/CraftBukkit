@@ -1,8 +1,7 @@
 package net.minecraftforge.event.terraingen;
 
-import cpw.mods.fml.common.Side;
-import cpw.mods.fml.common.asm.SideOnly;
-
+import cpw.mods.fml.relauncher.Side;
+import cpw.mods.fml.relauncher.SideOnly;
 import net.minecraft.server.BiomeDecorator;
 import net.minecraft.server.BiomeBase;
 import net.minecraftforge.event.*;

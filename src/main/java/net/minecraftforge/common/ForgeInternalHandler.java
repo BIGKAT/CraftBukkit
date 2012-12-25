@@ -29,12 +29,12 @@ public class ForgeInternalHandler
         Entity entity = event.entity;
         if (entity.getClass().equals(EntityItem.class))
         {
-            ItemStack stack = ((EntityItem)entity).itemStack;
+            ItemStack stack = ((EntityItem)entity).getDataWatcher().f(10);
 
             if (stack == null)
             {
-                entity.die();
-                event.setCanceled(true);
+                //entity.die();
+                //event.setCanceled(true);
                 return;
             }
 

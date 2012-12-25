@@ -90,7 +90,7 @@ public class LanguageRegistry
         } else if (objectToName instanceof Block) {
             objectName=((Block)objectToName).a();
         } else if (objectToName instanceof ItemStack) {
-            objectName=((ItemStack)objectToName).getItem().c_((ItemStack)objectToName);
+            objectName=((ItemStack)objectToName).getItem().d((ItemStack)objectToName);
         } else {
             throw new IllegalArgumentException(String.format("Illegal object for naming %s",objectToName));
         }

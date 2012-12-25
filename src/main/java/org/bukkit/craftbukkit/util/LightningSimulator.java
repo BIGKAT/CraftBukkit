@@ -74,7 +74,7 @@ public class LightningSimulator {
                         playerCountdown.put(player, getTicksBeforeNextLightning(world.random));
                     } else if (ticksLeft == 1) {
                         //weed out dc'd players
-                        if (!player.netServerHandler.disconnected) {
+                        if (!player.playerConnection.disconnected) {
                             toStrike.add(player);
                             playerCountdown.put(player, getTicksBeforeNextLightning(world.random));
                         }

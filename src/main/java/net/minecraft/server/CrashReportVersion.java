@@ -9,7 +9,7 @@ public class CrashReportVersion implements Callable<String> {
 
     public String a()
     {
-        return "1.4.5";
+        return "1.4.6";
     }
 
     @Override

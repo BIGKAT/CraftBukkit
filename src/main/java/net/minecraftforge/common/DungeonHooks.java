@@ -234,12 +234,12 @@ public class DungeonHooks
 
         public boolean equals(ItemStack item, int min, int max)
         {
-            return (min == minCount && max == maxCount && item.doMaterialsMatch(this.itemStack));
+            return (min == minCount && max == maxCount && item.doMaterialsMatch(this.itemStack)  && ItemStack.equals(item, this.itemStack));
         }
 
         public boolean equals(ItemStack item)
         {
-            return item.doMaterialsMatch(this.itemStack);
+            return item.doMaterialsMatch(this.itemStack) && ItemStack.equals(item, this.itemStack);
         }
     }
     
@@ -251,7 +251,7 @@ public class DungeonHooks
             super(weight);
             this.type = type;
         }
-        
+
         @Override
         public boolean equals(Object target)
         {
@@ -279,17 +279,17 @@ public class DungeonHooks
         addDungeonMob("Zombie",   200);
         addDungeonMob("Spider",   100);
 
-        addDungeonLoot(new ItemStack(Item.SADDLE), 100);
-        addDungeonLoot(new ItemStack(Item.IRON_INGOT), 100, 1, 4);
-        addDungeonLoot(new ItemStack(Item.BREAD), 100);
-        addDungeonLoot(new ItemStack(Item.WHEAT), 100, 1, 4);
-        addDungeonLoot(new ItemStack(Item.SULPHUR), 100, 1, 4);
-        addDungeonLoot(new ItemStack(Item.STRING), 100, 1, 4);
-        addDungeonLoot(new ItemStack(Item.BUCKET), 100);
-        addDungeonLoot(new ItemStack(Item.GOLDEN_APPLE), 1);
-        addDungeonLoot(new ItemStack(Item.REDSTONE), 50, 1, 4);
-        addDungeonLoot(new ItemStack(Item.RECORD_1), 5);
-        addDungeonLoot(new ItemStack(Item.RECORD_2), 5);
-        addDungeonLoot(new ItemStack(Item.INK_SACK, 1, 3), 100);
+        addDungeonLoot(new ItemStack(Item.SADDLE),          100      );
+        addDungeonLoot(new ItemStack(Item.IRON_INGOT),      100, 1, 4);
+        addDungeonLoot(new ItemStack(Item.BREAD),           100      );
+        addDungeonLoot(new ItemStack(Item.WHEAT),           100, 1, 4);
+        addDungeonLoot(new ItemStack(Item.SULPHUR),         100, 1, 4);
+        addDungeonLoot(new ItemStack(Item.STRING),          100, 1, 4);
+        addDungeonLoot(new ItemStack(Item.BUCKET),          100      );
+        addDungeonLoot(new ItemStack(Item.GOLDEN_APPLE),    001      );
+        addDungeonLoot(new ItemStack(Item.REDSTONE),        050, 1, 4);
+        addDungeonLoot(new ItemStack(Item.RECORD_1),        005      );
+        addDungeonLoot(new ItemStack(Item.RECORD_2),        005      );
+        addDungeonLoot(new ItemStack(Item.INK_SACK, 1, 3),  100      );
     }
 }

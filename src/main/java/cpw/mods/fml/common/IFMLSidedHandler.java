@@ -6,7 +6,7 @@ import mcpc.com.google.common.collect.MapDifference;
 
 import net.minecraft.server.Entity;
 import net.minecraft.server.INetworkManager;
-import net.minecraft.server.NetHandler;
+import net.minecraft.server.Connection;
 import net.minecraft.server.Packet;
 import net.minecraft.server.Packet131ItemData;
 import net.minecraft.server.MinecraftServer;
@@ -15,6 +15,7 @@ import cpw.mods.fml.common.network.EntitySpawnPacket;
 import cpw.mods.fml.common.network.ModMissingPacket;
 import cpw.mods.fml.common.registry.ItemData;
 import cpw.mods.fml.common.registry.EntityRegistry.EntityRegistration;
+import cpw.mods.fml.relauncher.Side;
 
 public interface IFMLSidedHandler
 {
@@ -40,7 +41,7 @@ public interface IFMLSidedHandler
 
     void displayMissingMods(ModMissingPacket modMissingPacket);
 
-    void handleTinyPacket(NetHandler handler, Packet131ItemData mapData);
+    void handleTinyPacket(Connection connection, Packet131ItemData mapData);
 
     void setClientCompatibilityLevel(byte compatibilityLevel);
 
@@ -48,5 +49,5 @@ public interface IFMLSidedHandler
 
     boolean shouldServerShouldBeKilledQuietly();
 
-    void disconnectIDMismatch(MapDifference<Integer, ItemData> s, NetHandler toKill, INetworkManager mgr);
+    void disconnectIDMismatch(MapDifference<Integer, ItemData> s, Connection toKill, INetworkManager mgr);
 }

@@ -241,12 +241,12 @@ public class WorldGenMineshaftCorridor extends StructurePiece {
 
                 if (var2.nextInt(100) == 0)
                 {
-                    this.a(var1, var3, var2, 2, 0, var6 - 1, var8.getItems(), var8.getCount(var2));
+                    this.a(var1, var3, var2, 2, 0, var6 - 1, var8.getItems(var2), var8.getCount(var2));
                 }
 
                 if (var2.nextInt(100) == 0)
                 {
-                    this.a(var1, var3, var2, 0, 0, var6 + 1, var8.getItems(), var8.getCount(var2));
+                    this.a(var1, var3, var2, 0, 0, var6 + 1, var8.getItems(var2), var8.getCount(var2));
                 }
 
                 if (this.b && !this.c)

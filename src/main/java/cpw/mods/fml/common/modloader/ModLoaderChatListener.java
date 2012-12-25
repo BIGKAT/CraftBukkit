@@ -1,7 +1,7 @@
 package cpw.mods.fml.common.modloader;
 
-import net.minecraft.server.NetHandler;
-import net.minecraft.server.NetServerHandler;
+import net.minecraft.server.Connection;
+import net.minecraft.server.PlayerConnection;
 import net.minecraft.server.Packet3Chat;
 import cpw.mods.fml.common.network.IChatListener;
 
@@ -16,14 +16,14 @@ public class ModLoaderChatListener implements IChatListener
     }
 
     @Override
-    public Packet3Chat serverChat(NetHandler handler, Packet3Chat message)
+    public Packet3Chat serverChat(Connection handler, Packet3Chat message)
     {
-        mod.serverChat((NetServerHandler)handler, message.message);
+        mod.serverChat((PlayerConnection)handler, message.message);
         return message;
     }
 
     @Override
-    public Packet3Chat clientChat(NetHandler handler, Packet3Chat message)
+    public Packet3Chat clientChat(Connection connection, Packet3Chat message)
     {
         mod.clientChat(message.message);
         return message;

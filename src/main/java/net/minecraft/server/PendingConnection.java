@@ -17,7 +17,7 @@ import java.io.IOException;
 import cpw.mods.fml.common.network.FMLNetworkHandler;
 // Forge end
 
-public class NetLoginHandler extends NetHandler {
+public class PendingConnection extends Connection {
 
     private byte[] d;
     public static Logger logger = Logger.getLogger("Minecraft");
@@ -29,11 +29,11 @@ public class NetLoginHandler extends NetHandler {
     public String h = null;
     private volatile boolean i = false;
     private String loginKey = Long.toString(random.nextLong(), 16); // CraftBukkit - Security fix
-    private SecretKey k = null;
+    private boolean k = false;
+    private SecretKey l = null;
     public String hostname = ""; // CraftBukkit - add field
-    private boolean login = false; // CraftBukkit
 
-    public NetLoginHandler(MinecraftServer minecraftserver, Socket socket, String s) throws java.io.IOException { // CraftBukkit - throws IOException
+    public PendingConnection(MinecraftServer minecraftserver, Socket socket, String s) throws java.io.IOException { // CraftBukkit - throws IOException
         this.server = minecraftserver;
         this.networkManager = new NetworkManager(socket, s, this, minecraftserver.F().getPrivate());
         this.networkManager.e = 0;
@@ -78,8 +78,8 @@ public class NetLoginHandler extends NetHandler {
         } else {
             PublicKey publickey = this.server.F().getPublic();
 
-            if (packet2handshake.d() != 49) {
-                if (packet2handshake.d() > 49) {
+            if (packet2handshake.d() != 51) {
+                if (packet2handshake.d() > 51) {
                     this.disconnect("Outdated server!");
                 } else {
                     this.disconnect("Outdated client!");
@@ -96,7 +96,7 @@ public class NetLoginHandler extends NetHandler {
     public void a(Packet252KeyResponse packet252keyresponse) {
         PrivateKey privatekey = this.server.F().getPrivate();
 
-        this.k = packet252keyresponse.a(privatekey);
+        this.l = packet252keyresponse.a(privatekey);
         if (!Arrays.equals(this.d, packet252keyresponse.b(privatekey))) {
             this.disconnect("Invalid client reply");
         }
@@ -107,13 +107,11 @@ public class NetLoginHandler extends NetHandler {
     public void a(Packet205ClientCommand packet205clientcommand) {
         if (packet205clientcommand.a == 0) {
             if (this.server.getOnlineMode()) {
-                // CraftBukkit start
-                if (this.login) {
+                if (this.k) {
                     this.disconnect("Duplicate login");
                     return;
                 }
-                this.login = true;
-                // CraftBukkit end
+                this.k = true;
                 (new ThreadLoginVerifier(this, server.server)).start(); // CraftBukkit - add CraftServer
             } else {
                 this.i = true;
@@ -132,16 +130,16 @@ public class NetLoginHandler extends NetHandler {
     public void completeConnection(String str) { // Forge
         if (str != null) this.disconnect(str);
         // CraftBukkit start
-        EntityPlayer s = this.server.getServerConfigurationManager().attemptLogin(this, this.h, this.hostname);
+        EntityPlayer s = this.server.getPlayerList().attemptLogin(this, this.h, this.hostname);
 
         if (s == null) {
             return;
             // CraftBukkit end
         } else {
-            EntityPlayer entityplayer = this.server.getServerConfigurationManager().processLogin(s); // CraftBukkit - this.h -> s
+            EntityPlayer entityplayer = this.server.getPlayerList().processLogin(s); // CraftBukkit - this.h -> s
 
             if (entityplayer != null) {
-                this.server.getServerConfigurationManager().a((INetworkManager) this.networkManager, entityplayer);
+                this.server.getPlayerList().a((INetworkManager) this.networkManager, entityplayer);
             }
         }
 
@@ -156,14 +154,14 @@ public class NetLoginHandler extends NetHandler {
     public void a(Packet254GetInfo packet254getinfo) {
         if (this.networkManager.getSocket() == null) return; // CraftBukkit - fix NPE when a client queries a server that is unable to handle it.
         try {
-            ServerConfigurationManagerAbstract serverconfigurationmanagerabstract = this.server.getServerConfigurationManager();
+            PlayerList playerlist = this.server.getPlayerList();
             String s = null;
             // CraftBukkit
-            org.bukkit.event.server.ServerListPingEvent pingEvent = org.bukkit.craftbukkit.event.CraftEventFactory.callServerListPingEvent(this.server.server, getSocket().getInetAddress(), this.server.getMotd(), serverconfigurationmanagerabstract.getPlayerCount(), serverconfigurationmanagerabstract.getMaxPlayers());
+            org.bukkit.event.server.ServerListPingEvent pingEvent = org.bukkit.craftbukkit.event.CraftEventFactory.callServerListPingEvent(this.server.server, getSocket().getInetAddress(), this.server.getMotd(), playerlist.getPlayerCount(), playerlist.getMaxPlayers());
 
             if (packet254getinfo.a == 1) {
                 // CraftBukkit start - fix decompile issues, don't create a list from an array
-                Object[] list = new Object[] { 1, 49, this.server.getVersion(), pingEvent.getMotd(), serverconfigurationmanagerabstract.getPlayerCount(), pingEvent.getMaxPlayers() };
+                Object[] list = new Object[] { 1, 51, this.server.getVersion(), pingEvent.getMotd(), playerlist.getPlayerCount(), pingEvent.getMaxPlayers() };
 
                 for (Object object : list) {
                     if (s == null) {
@@ -177,7 +175,7 @@ public class NetLoginHandler extends NetHandler {
                 // CraftBukkit end
             } else {
                 // CraftBukkit
-                s = pingEvent.getMotd() + "\u00A7" + serverconfigurationmanagerabstract.getPlayerCount() + "\u00A7" + pingEvent.getMaxPlayers();
+                s = pingEvent.getMotd() + "\u00A7" + playerlist.getPlayerCount() + "\u00A7" + pingEvent.getMaxPlayers();
             }
 
             InetAddress inetaddress = null;
@@ -210,25 +208,25 @@ public class NetLoginHandler extends NetHandler {
         return true;
     }
 
-    static String a(NetLoginHandler netloginhandler) {
-        return netloginhandler.loginKey;
+    static String a(PendingConnection pendingconnection) {
+        return pendingconnection.loginKey;
     }
 
-    static MinecraftServer b(NetLoginHandler netloginhandler) {
-        return netloginhandler.server;
+    static MinecraftServer b(PendingConnection pendingconnection) {
+        return pendingconnection.server;
     }
 
-    static SecretKey c(NetLoginHandler netloginhandler) {
-        return netloginhandler.k;
+    static SecretKey c(PendingConnection pendingconnection) {
+        return pendingconnection.l;
     }
 
-    static String d(NetLoginHandler netloginhandler) {
-        return netloginhandler.h;
+    static String d(PendingConnection pendingconnection) {
+        return pendingconnection.h;
     }
 
     // Forge start
-    public static boolean a(NetLoginHandler netloginhandler, boolean flag) {
-        return netloginhandler.i = flag;
+    public static boolean a(PendingConnection pendingconnection, boolean flag) {
+        return pendingconnection.i = flag;
     }
     
     public void a(Packet250CustomPayload var1) {

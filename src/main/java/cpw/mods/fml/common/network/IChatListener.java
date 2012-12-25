@@ -1,6 +1,6 @@
 package cpw.mods.fml.common.network;
 
-import net.minecraft.server.NetHandler;
+import net.minecraft.server.Connection;
 import net.minecraft.server.Packet3Chat;
 
 public interface IChatListener
@@ -10,7 +10,7 @@ public interface IChatListener
      * @param handler
      * @param message
      */
-    public Packet3Chat serverChat(NetHandler handler, Packet3Chat message);
+    public Packet3Chat serverChat(Connection connection, Packet3Chat message);
 
     /**
      * Called when there is a chat message recived on the client
@@ -18,5 +18,5 @@ public interface IChatListener
      * @param handler
      * @param message
      */
-    public Packet3Chat clientChat(NetHandler handler, Packet3Chat message);
+    public Packet3Chat clientChat(Connection connection, Packet3Chat message);
 }

@@ -1,11 +1,11 @@
 package cpw.mods.fml.common.modloader;
 
-import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.EntityHuman;
-import net.minecraft.server.NetHandler;
-import net.minecraft.server.NetLoginHandler;
+import net.minecraft.server.Connection;
+import net.minecraft.server.PendingConnection;
 import net.minecraft.server.INetworkManager;
 import net.minecraft.server.Packet1Login;
+import net.minecraft.server.MinecraftServer;
 import cpw.mods.fml.common.network.IConnectionHandler;
 import cpw.mods.fml.common.network.Player;
 
@@ -19,19 +19,19 @@ public class ModLoaderConnectionHandler implements IConnectionHandler
     }
 
     @Override
-    public void playerLoggedIn(Player player, NetHandler netHandler, INetworkManager manager)
+    public void playerLoggedIn(Player player, Connection netHandler, INetworkManager manager)
     {
         mod.onClientLogin((EntityHuman)player);
     }
 
     @Override
-    public String connectionReceived(NetLoginHandler netHandler, INetworkManager manager)
+    public String connectionReceived(PendingConnection netHandler, INetworkManager manager)
     {
         return null;
     }
 
     @Override
-    public void connectionOpened(NetHandler netClientHandler, String server, int port, INetworkManager manager)
+    public void connectionOpened(Connection netClientHandler, String server, int port, INetworkManager manager)
     {
         ModLoaderHelper.sidedHelper.clientConnectionOpened(netClientHandler, manager, mod);
     }
@@ -47,13 +47,13 @@ public class ModLoaderConnectionHandler implements IConnectionHandler
     }
 
     @Override
-    public void clientLoggedIn(NetHandler nh, INetworkManager manager, Packet1Login login)
+    public void clientLoggedIn(Connection nh, INetworkManager manager, Packet1Login login)
     {
         mod.serverConnect(nh);
     }
 
     @Override
-    public void connectionOpened(NetHandler netClientHandler, MinecraftServer server, INetworkManager manager)
+    public void connectionOpened(Connection netClientHandler, MinecraftServer server, INetworkManager manager)
     {
         ModLoaderHelper.sidedHelper.clientConnectionOpened(netClientHandler, manager, mod);
     }

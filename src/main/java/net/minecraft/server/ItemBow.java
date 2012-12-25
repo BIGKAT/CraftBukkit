@@ -17,7 +17,7 @@ public class ItemBow extends Item {
 
     public void a(ItemStack itemstack, World world, EntityHuman entityhuman, int i) {
         // Forge start
-        int j = this.a(itemstack) - i;
+        int j = this.c_(itemstack) - i;
         ArrowLooseEvent forgeEvent = new ArrowLooseEvent(entityhuman, itemstack, j);
         MinecraftForge.EVENT_BUS.post(forgeEvent);
 
@@ -29,7 +29,7 @@ public class ItemBow extends Item {
         boolean flag = entityhuman.abilities.canInstantlyBuild || EnchantmentManager.getEnchantmentLevel(Enchantment.ARROW_INFINITE.id, itemstack) > 0;
 
         if (flag || entityhuman.inventory.e(Item.ARROW.id)) {
-            j = this.a(itemstack) - i;
+            j = this.c_(itemstack) - i;
             float f = (float) j / 20.0F;
 
             f = (f * f + f * 2.0F) / 3.0F;
@@ -90,11 +90,11 @@ public class ItemBow extends Item {
         return itemstack;
     }
 
-    public int a(ItemStack itemstack) {
+    public int c_(ItemStack itemstack) {
         return 72000;
     }
 
-    public EnumAnimation d_(ItemStack itemstack) {
+    public EnumAnimation b_(ItemStack itemstack) {
         return EnumAnimation.e;
     }
 
@@ -108,7 +108,7 @@ public class ItemBow extends Item {
         }
         // Forge end
         if (entityhuman.abilities.canInstantlyBuild || entityhuman.inventory.e(Item.ARROW.id)) {
-            entityhuman.a(itemstack, this.a(itemstack));
+            entityhuman.a(itemstack, this.c_(itemstack));
         }
 
         return itemstack;

@@ -24,13 +24,13 @@ public class BlockMinecartTrack extends Block
     public static final boolean e_(World var0, int var1, int var2, int var3)
     {
         int var4 = var0.getTypeId(var1, var2, var3);
-        return d(var4); // Forge
+        return e(var4); // Forge
     }
 
     /**
      * Return true if the parameter is a blockID for a valid rail block (current is rail, powered or detector).
      */
-    public static final boolean d(int var0)
+    public static final boolean e(int var0)
     {
         return Block.byId[var0] instanceof BlockMinecartTrack; // Forge
     }

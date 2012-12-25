@@ -11,8 +11,8 @@ import java.util.Map.Entry;
 import java.util.logging.Logger;
 
 import net.minecraft.server.NBTTagList;
-import net.minecraft.server.NetHandler;
-import net.minecraft.server.NetLoginHandler;
+import net.minecraft.server.Connection;
+import net.minecraft.server.PendingConnection;
 import net.minecraft.server.INetworkManager;
 import net.minecraft.server.Packet1Login;
 import net.minecraft.server.Packet250CustomPayload;
@@ -83,7 +83,7 @@ public class ModListResponsePacket extends FMLPacket
     }
 
     @Override
-    public void execute(INetworkManager network, FMLNetworkHandler handler, NetHandler netHandler, String userName)
+    public void execute(INetworkManager network, FMLNetworkHandler handler, Connection netHandler, String userName)
     {
         Map<String, ModContainer> indexedModList = Maps.newHashMap(Loader.instance().getIndexedModList());
         List<String> missingClientMods = Lists.newArrayList();
@@ -117,7 +117,7 @@ public class ModListResponsePacket extends FMLPacket
             Logger.getLogger("Minecraft").info(String.format("User %s connection failed: missing %s, bad versions %s", userName, missingClientMods, versionIncorrectMods));
             FMLLog.info("User %s connection failed: missing %s, bad versions %s", userName, missingClientMods, versionIncorrectMods);
             // Mark this as bad
-           	FMLNetworkHandler.setHandlerState((NetLoginHandler) netHandler, FMLNetworkHandler.MISSING_MODS_OR_VERSIONS);
+           	FMLNetworkHandler.setHandlerState((PendingConnection) netHandler, FMLNetworkHandler.MISSING_MODS_OR_VERSIONS);
             pkt.length = pkt.data.length;
             network.queue(pkt);
         }
@@ -138,7 +138,7 @@ public class ModListResponsePacket extends FMLPacket
         }
        
         // reset the continuation flag - we have completed extra negotiation and the login should complete now
-       	NetLoginHandler.a((NetLoginHandler) netHandler, true);
+       	PendingConnection.a((PendingConnection) netHandler, true);
     }
 
 }

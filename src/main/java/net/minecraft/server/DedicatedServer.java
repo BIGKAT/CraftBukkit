@@ -48,7 +48,7 @@ public class DedicatedServer extends MinecraftServer implements IMinecraftServer
         System.setErr(new PrintStream(new LoggerOutputStream(log, Level.SEVERE), true));
         // CraftBukkit end
 
-        log.info("Starting minecraft server version 1.4.5");
+        log.info("Starting minecraft server version 1.4.6");
         if (Runtime.getRuntime().maxMemory() / 1024L / 1024L < 512L) {
             log.warning("To start the server with more ram, launch it as \"java -Xmx1024M -Xms1024M -jar minecraft_server.jar\"");
         }
@@ -103,6 +103,8 @@ public class DedicatedServer extends MinecraftServer implements IMinecraftServer
             return false;
         }
 
+        this.a((PlayerList) (new DedicatedPlayerList(this))); // CraftBukkit
+
         if (!this.getOnlineMode()) {
             log.warning("**** SERVER IS RUNNING IN OFFLINE/INSECURE MODE!");
             log.warning("The server will make no attempt to authenticate usernames. Beware.");
@@ -111,7 +113,7 @@ public class DedicatedServer extends MinecraftServer implements IMinecraftServer
         }
 
         FMLCommonHandler.instance().onServerStarted(); // Forge
-        this.a((ServerConfigurationManagerAbstract) (new ServerConfigurationManager(this)));
+        // this.a((PlayerList) (new DedicatedPlayerList(this))); // CraftBukkit - moved up
         this.convertable = new WorldLoaderServer(server.getWorldContainer()); // CraftBukkit - moved from MinecraftServer constructor
         long j = System.nanoTime();
 
@@ -268,8 +270,8 @@ public class DedicatedServer extends MinecraftServer implements IMinecraftServer
         return true;
     }
 
-    public ServerConfigurationManager am() {
-        return (ServerConfigurationManager) super.getServerConfigurationManager();
+    public DedicatedPlayerList am() {
+        return (DedicatedPlayerList) super.getPlayerList();
     }
 
     public ServerConnection ae() {
@@ -323,7 +325,7 @@ public class DedicatedServer extends MinecraftServer implements IMinecraftServer
         return this.propertyManager.getInt("spawn-protection", super.getSpawnProtection());
     }
 
-    public ServerConfigurationManagerAbstract getServerConfigurationManager() {
+    public PlayerList getPlayerList() {
         return this.am();
     }
 }

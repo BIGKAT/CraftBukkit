@@ -8,8 +8,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 // Forge start
-import cpw.mods.fml.common.Side;
-import cpw.mods.fml.common.asm.SideOnly;
+import cpw.mods.fml.relauncher.Side;
+import cpw.mods.fml.relauncher.SideOnly;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.entity.EntityEvent.EnteringChunk;
 import net.minecraftforge.event.world.ChunkEvent.Load;
@@ -98,7 +98,7 @@ public class Chunk {
                         int k1 = j1 >> 4;
 
                         if (this.sections[k1] == null) {
-                            this.sections[k1] = new ChunkSection(k1 << 4);
+                            this.sections[k1] = new ChunkSection(k1 << 4, !world.worldProvider.f);
                         }
 
                         this.sections[k1].a(l, j1 & 15, i1, b0);
@@ -140,7 +140,7 @@ public class Chunk {
 
                         if (this.sections[storageBlock] == null)
                         {
-                            this.sections[storageBlock] = new ChunkSection(storageBlock << 4);
+                            this.sections[storageBlock] = new ChunkSection(storageBlock << 4, !world.worldProvider.f);
                         }
 
                         this.sections[storageBlock].a(x, y & 15, z, id);
@@ -182,7 +182,7 @@ public class Chunk {
                          int storageBlock = y >> 4;
 
                          if (this.sections[storageBlock] == null) {
-                                 this.sections[storageBlock] = new ChunkSection(storageBlock << 4);
+                                 this.sections[storageBlock] = new ChunkSection(storageBlock << 4, !world.worldProvider.f);
                          }
 
                          this.sections[storageBlock].a(x, y & 15, z, id);
@@ -500,7 +500,7 @@ public class Chunk {
                     return false;
                 }
 
-                chunksection = this.sections[j >> 4] = new ChunkSection(j >> 4 << 4);
+                chunksection = this.sections[j >> 4] = new ChunkSection(j >> 4 << 4, !world.worldProvider.f);
                 flag = j >= k1;
             }
 
@@ -611,7 +611,7 @@ public class Chunk {
     public int getBrightness(EnumSkyBlock enumskyblock, int i, int j, int k) {
         ChunkSection chunksection = j >> 4 >= this.sections.length || j >> 4 < 0 ? null : this.sections[j >> 4];
 
-        return chunksection == null ? (this.d(i, j, k) ? enumskyblock.c : 0) : (enumskyblock == EnumSkyBlock.SKY ? chunksection.c(i, j & 15, k) : (enumskyblock == EnumSkyBlock.BLOCK ? chunksection.d(i, j & 15, k) : enumskyblock.c));
+        return chunksection == null ? (this.d(i, j, k) ? enumskyblock.c : 0) : (enumskyblock == EnumSkyBlock.SKY ? (this.world.worldProvider.f ? 0 : chunksection.c(i, j & 15, k)) : (enumskyblock == EnumSkyBlock.BLOCK ? chunksection.d(i, j & 15, k) : enumskyblock.c));
     }
 
     public void a(EnumSkyBlock enumskyblock, int i, int j, int k, int l) {
@@ -619,7 +619,7 @@ public class Chunk {
         ChunkSection chunksection = this.sections[j >> 4];
 
         if (chunksection == null) {
-            chunksection = this.sections[j >> 4] = new ChunkSection(j >> 4 << 4);
+            chunksection = this.sections[j >> 4] = new ChunkSection(j >> 4 << 4, !world.worldProvider.f);
             this.initLighting();
         }
 

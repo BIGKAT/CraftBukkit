@@ -20,7 +20,7 @@ import mcpc.com.google.common.collect.MapDifference;
 import net.minecraft.server.Entity;
 import net.minecraft.server.INetworkManager;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.NetHandler;
+import net.minecraft.server.Connection;
 import net.minecraft.server.Packet;
 import net.minecraft.server.Packet131ItemData;
 import net.minecraft.server.World;
@@ -28,7 +28,6 @@ import cpw.mods.fml.common.FMLCommonHandler;
 import cpw.mods.fml.common.IFMLSidedHandler;
 import cpw.mods.fml.common.Loader;
 import cpw.mods.fml.common.ObfuscationReflectionHelper;
-import cpw.mods.fml.common.Side;
 import cpw.mods.fml.common.network.EntitySpawnAdjustmentPacket;
 import cpw.mods.fml.common.network.EntitySpawnPacket;
 import cpw.mods.fml.common.network.ModMissingPacket;
@@ -37,12 +36,13 @@ import cpw.mods.fml.common.registry.GameData;
 import cpw.mods.fml.common.registry.GameRegistry;
 import cpw.mods.fml.common.registry.ItemData;
 import cpw.mods.fml.common.registry.LanguageRegistry;
+import cpw.mods.fml.relauncher.Side;
 
 /**
  * Handles primary communication from hooked code into the system
  *
  * The FML entry point is {@link #beginServerLoading(MinecraftServer)} called from
- * {@link net.minecraft.src.DedicatedServer}
+ * {@link net.minecraft.server.DedicatedServer}
  *
  * Obfuscated code should focus on this class and other members of the "server"
  * (or "client") code
@@ -165,7 +165,7 @@ public class FMLServerHandler implements IFMLSidedHandler
         // NOOP on server
     }
     @Override
-    public void handleTinyPacket(NetHandler handler, Packet131ItemData mapData)
+    public void handleTinyPacket(Connection connection, Packet131ItemData mapData)
     {
         // NOOP on server
     }
@@ -186,7 +186,7 @@ public class FMLServerHandler implements IFMLSidedHandler
         return false;
     }
     @Override
-    public void disconnectIDMismatch(MapDifference<Integer, ItemData> s, NetHandler handler, INetworkManager mgr)
+    public void disconnectIDMismatch(MapDifference<Integer, ItemData> s, Connection connection, INetworkManager mgr)
     {
 
     }

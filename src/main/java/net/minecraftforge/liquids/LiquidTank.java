@@ -6,126 +6,137 @@ import net.minecraft.server.TileEntity;
  * Reference implementation of ILiquidTank. Use this or implement your own.
  */
 public class LiquidTank implements ILiquidTank {
-	private LiquidStack liquid;
-	private int capacity;
-	private int tankPressure;
-	private TileEntity tile;
+    private LiquidStack liquid;
+    private int capacity;
+    private int tankPressure;
+    private TileEntity tile;
 
-	public LiquidTank(int capacity) {
-		this(null, capacity);
-	}
+    public LiquidTank(int capacity)
+    {
+        this(null, capacity);
+    }
 
-	public LiquidTank(int liquidId, int quantity, int capacity) {
-		this(new LiquidStack(liquidId, quantity), capacity);
-	}
+    public LiquidTank(int liquidId, int quantity, int capacity)
+    {
+        this(new LiquidStack(liquidId, quantity), capacity);
+    }
 
-	public LiquidTank(int liquidId, int quantity, int capacity, TileEntity tile) {
-		this(liquidId, quantity, capacity);
-		this.tile = tile;
-	}
+    public LiquidTank(int liquidId, int quantity, int capacity, TileEntity tile)
+    {
+        this(liquidId, quantity, capacity);
+        this.tile = tile;
+    }
 
-	public LiquidTank(LiquidStack liquid, int capacity) {
-		this.liquid = liquid;
-		this.capacity = capacity;
-	}
+    public LiquidTank(LiquidStack liquid, int capacity)
+    {
+        this.liquid = liquid;
+        this.capacity = capacity;
+    }
 
-	public LiquidTank(LiquidStack liquid, int capacity, TileEntity tile)
-	{
-		this(liquid, capacity);
-		this.tile = tile;
-	}
-	@Override
-	public LiquidStack getLiquid() {
-		return this.liquid;
-	}
+    public LiquidTank(LiquidStack liquid, int capacity, TileEntity tile)
+    {
+        this(liquid, capacity);
+        this.tile = tile;
+    }
 
-	@Override
-	public void setLiquid(LiquidStack liquid) {
-		this.liquid = liquid;
-	}
+    @Override
+    public LiquidStack getLiquid()
+    {
+        return this.liquid;
+    }
 
-	@Override
-	public void setCapacity(int capacity) {
-		this.capacity = capacity;
-	}
+    @Override
+    public int getCapacity()
+    {
+        return this.capacity;
+    }
 
-	@Override
-	public int getCapacity() {
-		return this.capacity;
-	}
+    public void setLiquid(LiquidStack liquid)
+    {
+        this.liquid = liquid;
+    }
 
-	@Override
-	public int fill(LiquidStack resource, boolean doFill) {
-		if(resource == null || resource.itemID <= 0)
-			return 0;
+    public void setCapacity(int capacity)
+    {
+        this.capacity = capacity;
+    }
 
-		if(liquid == null || liquid.itemID <= 0) {
-			if(resource.amount <= capacity) {
-				if(doFill)
-					this.liquid = resource.copy();
-				return resource.amount;
-			} else {
-				if(doFill) {
-					this.liquid = resource.copy();
-					this.liquid.amount = capacity;
-					if (tile!=null)
-						LiquidEvent.fireEvent(new LiquidEvent.LiquidFillingEvent(liquid, tile.world, tile.x, tile.y, tile.z, this));
-				}
-				return capacity;
-			}
-		}
+    @Override
+    public int fill(LiquidStack resource, boolean doFill)
+    {
+        if (resource == null || resource.itemID <= 0) return 0;
 
-		if(!liquid.isLiquidEqual(resource))
-			return 0;
+        if (liquid == null || liquid.itemID <= 0)
+        {
+            if (resource.amount <= capacity)
+            {
+                if (doFill) this.liquid = resource.copy();
+                return resource.amount;
+            }
+            else
+            {
+                if (doFill)
+                {
+                    this.liquid = resource.copy();
+                    this.liquid.amount = capacity;
+                    if (tile!=null)
+                        LiquidEvent.fireEvent(new LiquidEvent.LiquidFillingEvent(liquid, tile.world, tile.x, tile.y, tile.z, this));
+                }
+                return capacity;
+            }
+        }
 
-		int space = capacity - liquid.amount;
-		if(resource.amount <= space) {
-			if(doFill)
-				this.liquid.amount += resource.amount;
-			return resource.amount;
-		} else {
+        if (!liquid.isLiquidEqual(resource)) return 0;
 
-			if(doFill)
-				this.liquid.amount = capacity;
-			return space;
-		}
+        int space = capacity - liquid.amount;
+        if (resource.amount <= space)
+        {
+            if (doFill) this.liquid.amount += resource.amount;
+            return resource.amount;
+        }
+        else
+        {
 
-	}
-	@Override
-	public LiquidStack drain(int maxDrain, boolean doDrain) {
-		if(liquid == null || liquid.itemID <= 0)
-			return null;
-		if(liquid.amount <= 0)
-			return null;
+            if (doFill) this.liquid.amount = capacity;
+            return space;
+        }
 
-		int used = maxDrain;
-		if(liquid.amount < used)
-			used = liquid.amount;
+    }
 
-		if(doDrain) {
-			liquid.amount -= used;
-		}
+    @Override
+    public LiquidStack drain(int maxDrain, boolean doDrain)
+    {
+        if (liquid == null || liquid.itemID <= 0) return null;
+        if (liquid.amount <= 0) return null;
 
-		LiquidStack drained = new LiquidStack(liquid.itemID, used, liquid.itemMeta);
+        int used = maxDrain;
+        if (liquid.amount < used) used = liquid.amount;
 
-		// Reset liquid if emptied
-		if(liquid.amount <= 0)
-			liquid = null;
+        if (doDrain)
+        {
+            liquid.amount -= used;
+        }
 
-		if (doDrain && tile!=null)
-			LiquidEvent.fireEvent(new LiquidEvent.LiquidDrainingEvent(drained, tile.world, tile.x, tile.y, tile.z, this));
+        LiquidStack drained = new LiquidStack(liquid.itemID, used, liquid.itemMeta);
 
-		return drained;
-	}
+        // Reset liquid if emptied
+        if (liquid.amount <= 0) liquid = null;
 
-	@Override
-	public int getTankPressure() {
-		return tankPressure;
-	}
+        if (doDrain && tile!=null)
+            LiquidEvent.fireEvent(new LiquidEvent.LiquidDrainingEvent(drained, tile.world, tile.x, tile.y, tile.z, this));
 
-	public void setTankPressure(int pressure)
-	{
-		this.tankPressure = pressure;
-	}
+        return drained;
+    }
+
+    @Override
+    public int getTankPressure()
+    {
+        return tankPressure;
+    }
+
+    public void setTankPressure(int pressure)
+    {
+        this.tankPressure = pressure;
+    }
 
 }

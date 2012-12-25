@@ -8,7 +8,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import net.minecraft.server.NetHandler;
+import net.minecraft.server.Connection;
 import net.minecraft.server.INetworkManager;
 import net.minecraft.server.Packet250CustomPayload;
 
@@ -73,10 +73,10 @@ public class ModListRequestPacket extends FMLPacket
      * This packet is executed on the client to evaluate the server's mod list against
      * the client
      *
-     * @see cpw.mods.fml.common.network.FMLPacket#execute(INetworkManager, FMLNetworkHandler, NetHandler, String)
+     * @see cpw.mods.fml.common.network.FMLPacket#execute(INetworkManager, FMLNetworkHandler, Connection, String)
      */
     @Override
-    public void execute(INetworkManager mgr, FMLNetworkHandler handler, NetHandler netHandler, String userName)
+    public void execute(INetworkManager mgr, FMLNetworkHandler handler, Connection netHandler, String userName)
     {
         List<String> missingMods = Lists.newArrayList();
         Map<String,String> modVersions = Maps.newHashMap();

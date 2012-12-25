@@ -4,7 +4,7 @@ import java.util.Arrays;
 import java.util.concurrent.ConcurrentMap;
 import java.util.logging.Level;
 
-import net.minecraft.server.NetHandler;
+import net.minecraft.server.Connection;
 import net.minecraft.server.INetworkManager;
 
 
@@ -146,5 +146,5 @@ public abstract class FMLPacket
 
     public abstract FMLPacket consumePacket(byte[] data);
 
-    public abstract void execute(INetworkManager network, FMLNetworkHandler handler, NetHandler netHandler, String userName);
+    public abstract void execute(INetworkManager network, FMLNetworkHandler handler, Connection netHandler, String userName);
 }

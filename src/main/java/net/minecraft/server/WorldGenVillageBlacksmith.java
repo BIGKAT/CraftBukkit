@@ -90,7 +90,7 @@ public class WorldGenVillageBlacksmith extends WorldGenVillagePiece {
             if (var3.b(var5, var4, var6))
             {
                 this.c = true;
-                this.a(var1, var3, var2, 5, 1, 5, ChestGenHooks.getItems("villageBlacksmith"), ChestGenHooks.getCount("villageBlacksmith", var2));
+                this.a(var1, var3, var2, 5, 1, 5, ChestGenHooks.getItems("villageBlacksmith", var2), ChestGenHooks.getCount("villageBlacksmith", var2)); // Forge
             }
         }
 

@@ -2,12 +2,12 @@ package cpw.mods.fml.common.modloader;
 
 import java.util.concurrent.Callable;
 
+import net.minecraft.server.Entity;
+
+import mcpc.com.google.common.base.Function;
 
 import cpw.mods.fml.common.network.EntitySpawnPacket;
 import cpw.mods.fml.common.registry.EntityRegistry.EntityRegistration;
-import mcpc.com.google.common.base.Function;
-
-import net.minecraft.server.Entity;
 
 public class ModLoaderEntitySpawnCallback implements Function<EntitySpawnPacket, Entity>
 {

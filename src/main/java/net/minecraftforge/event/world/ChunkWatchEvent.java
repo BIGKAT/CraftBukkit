@@ -3,7 +3,6 @@ package net.minecraftforge.event.world;
 import net.minecraft.server.EntityPlayer;
 import net.minecraft.server.ChunkCoordIntPair;
 import net.minecraft.server.EntityPlayer;
-import net.minecraft.server.PlayerInstance;
 import net.minecraft.server.WorldServer;
 import net.minecraftforge.event.Event;
 

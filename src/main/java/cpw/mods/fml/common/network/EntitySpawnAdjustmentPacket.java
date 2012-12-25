@@ -1,6 +1,6 @@
 package cpw.mods.fml.common.network;
 
-import net.minecraft.server.NetHandler;
+import net.minecraft.server.Connection;
 import net.minecraft.server.INetworkManager;
 
 
@@ -45,7 +45,7 @@ public class EntitySpawnAdjustmentPacket extends FMLPacket
     }
 
     @Override
-    public void execute(INetworkManager network, FMLNetworkHandler handler, NetHandler netHandler, String userName)
+    public void execute(INetworkManager network, FMLNetworkHandler handler, Connection netHandler, String userName)
     {
         FMLCommonHandler.instance().adjustEntityLocationOnClient(this);
     }

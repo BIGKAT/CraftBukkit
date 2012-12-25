@@ -1,9 +1,15 @@
 package cpw.mods.fml.common.registry;
 
-import java.util.HashMap;
+import java.util.HashMap; // MCPC
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.Map;
+import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
+import java.util.logging.Level;
 
 import net.minecraft.server.Block;
 import net.minecraft.server.Item;
@@ -13,7 +19,10 @@ import net.minecraft.server.NBTTagCompound;
 import net.minecraft.server.NBTTagList;
 
 import mcpc.com.google.common.base.Function;
+import mcpc.com.google.common.base.Throwables;
+import mcpc.com.google.common.collect.ImmutableMap;
 import mcpc.com.google.common.collect.MapDifference;
+import mcpc.com.google.common.collect.MapDifference.ValueDifference;
 import mcpc.com.google.common.collect.Maps;
 import mcpc.com.google.common.collect.Sets;
 
@@ -29,175 +38,212 @@ public class GameData {
     private static MapDifference<Integer, ItemData> difference;
     private static boolean shouldContinue = true;
     private static boolean isSaveValid = true;
+    private static Map<String,String> ignoredMods;
 
     // MCPC - bukkit to vanilla obfuscated mappings
     // used with ModIdMapPacket
     private static final Map<String, String> bukkitToVanilla = new HashMap<String, String>();
     static {
-    	// 1.4.5 mappings
-    	// blocks
-    	bukkitToVanilla.put("BlockAnvil", "ais");
-    	bukkitToVanilla.put("BlockStone", "ame");
-    	bukkitToVanilla.put("BlockGrass", "akc");
-    	bukkitToVanilla.put("BlockDirt", "ajo");
-    	bukkitToVanilla.put("Block", "amj");
-    	bukkitToVanilla.put("BlockFlowing", "akr");
-    	bukkitToVanilla.put("BlockStationary", "aks");
-    	bukkitToVanilla.put("BlockSand", "akg");
-    	bukkitToVanilla.put("BlockGravel", "akd");
-    	bukkitToVanilla.put("BlockOre", "ale");
-    	bukkitToVanilla.put("BlockSponge", "aly");
-    	bukkitToVanilla.put("BlockGlass", "akb");
-    	bukkitToVanilla.put("BlockDispenser", "ajp");
-    	bukkitToVanilla.put("BlockNote", "aky");
-    	bukkitToVanilla.put("BlockMinecartTrack", "alk");
-    	bukkitToVanilla.put("BlockBed", "aiu");
-    	bukkitToVanilla.put("BlockMinecartDetector", "ajl");
-    	bukkitToVanilla.put("BlockWeb", "amz");
-    	bukkitToVanilla.put("BlockPistonExtension", "ant");
-    	bukkitToVanilla.put("BlockDeadBush", "ajk");
-    	bukkitToVanilla.put("BlockFlower", "aix");
-    	bukkitToVanilla.put("BlockMushroom", "akx");
-    	bukkitToVanilla.put("BlockPistonMoving", "anu");
-    	bukkitToVanilla.put("BlockOreBlock", "akv");
-    	bukkitToVanilla.put("BlockTNT", "amo");
-    	bukkitToVanilla.put("BlockBookshelf", "aiv");
-    	bukkitToVanilla.put("BlockFire", "ajy");
-    	bukkitToVanilla.put("BlockTorch", "amq");
-    	bukkitToVanilla.put("BlockObsidian", "ald");
-    	bukkitToVanilla.put("BlockRedstoneWire", "alo");
-    	bukkitToVanilla.put("BlockChest", "ajd");
-    	bukkitToVanilla.put("BlockStairs", "ama");
-    	bukkitToVanilla.put("BlockMobSpawner", "akw");
-    	bukkitToVanilla.put("BlockCrops", "ajj");
-    	bukkitToVanilla.put("BlockWorkbench", "anc");
-    	bukkitToVanilla.put("BlockSign", "alu");
-    	bukkitToVanilla.put("BlockFurnace", "aka");
-    	bukkitToVanilla.put("BlockSoil", "ajv");
-    	bukkitToVanilla.put("BlockLever", "ako");
-    	bukkitToVanilla.put("BlockPressurePlate", "alh");
-    	bukkitToVanilla.put("BlockDoor", "ajq");
-    	bukkitToVanilla.put("BlockLadder", "akl");
-    	bukkitToVanilla.put("BlockRedstoneTorch", "alb");
-    	bukkitToVanilla.put("BlockButton", "aiy");
-    	bukkitToVanilla.put("BlockSnow", "amp");
-    	bukkitToVanilla.put("BlockIce", "akk");
-    	bukkitToVanilla.put("BlockRedstoneOre", "alp");
-    	bukkitToVanilla.put("BlockFence", "ajx");
-    	bukkitToVanilla.put("BlockJukeBox", "alm");
-    	bukkitToVanilla.put("BlockBloodStone", "aki");
-    	bukkitToVanilla.put("BlockPumpkin", "alj");
-    	bukkitToVanilla.put("BlockCactus", "aiz");
-    	bukkitToVanilla.put("BlockSnowBlock", "alx");
-    	bukkitToVanilla.put("BlockReed", "alr");
-    	bukkitToVanilla.put("BlockClay", "aje");
-    	bukkitToVanilla.put("BlockDiode", "ajm");
-    	bukkitToVanilla.put("BlockCake", "aja");
-    	bukkitToVanilla.put("BlockLockedChest", "akt");
-    	bukkitToVanilla.put("BlockLightStone", "akp");
-    	bukkitToVanilla.put("BlockSlowSand", "akh");
-    	bukkitToVanilla.put("BlockThinFence", "ami");
-    	bukkitToVanilla.put("BlockMelon", "aku");
-    	bukkitToVanilla.put("BlockHugeMushroom", "akj");
-    	bukkitToVanilla.put("BlockTrapdoor", "ams");
-    	bukkitToVanilla.put("BlockMycel", "akz");
-    	bukkitToVanilla.put("BlockFenceGate", "ajw");
-    	bukkitToVanilla.put("BlockStem", "amb");
-    	bukkitToVanilla.put("BlockEnderPortal", "amg");
-    	bukkitToVanilla.put("BlockCauldron", "ajc");
-    	bukkitToVanilla.put("BlockBrewingStand", "aiw");
-    	bukkitToVanilla.put("BlockEnchantmentTable", "ajs");
-    	bukkitToVanilla.put("BlockNetherWart", "ala");
-    	bukkitToVanilla.put("BlockCocoa", "ajg");
-    	bukkitToVanilla.put("BlockRedstoneLamp", "alq");
-    	bukkitToVanilla.put("BlockDragonEgg", "ajr");
-    	bukkitToVanilla.put("BlockEnderPortalFrame", "amh");
-    	bukkitToVanilla.put("BlockCommand", "ajh");
-    	bukkitToVanilla.put("BlockBeacon", "ait");
-    	bukkitToVanilla.put("BlockCarrots", "ajb");
-    	bukkitToVanilla.put("BlockFlowerPot", "ajz");
-    	bukkitToVanilla.put("BlockPotatoes", "alg");
-    	bukkitToVanilla.put("BlockTripwireHook", "amu");
-    	bukkitToVanilla.put("BlockEnderChest", "ajt");
-    	bukkitToVanilla.put("BlockTripwire", "");
-    	bukkitToVanilla.put("BlockSkull", "alv");
-    	bukkitToVanilla.put("BlockCloth", "ajf");
-    	bukkitToVanilla.put("BlockDirectional", "ajn");
-    	bukkitToVanilla.put("BlockContainer", "aju");
-    	bukkitToVanilla.put("BlockStepAbstract", "ake");
-    	bukkitToVanilla.put("BlockHalfTransparant", "akf");
-    	bukkitToVanilla.put("BlockLeaves", "akm");
-    	bukkitToVanilla.put("BlockFluids", "akq");
-    	bukkitToVanilla.put("BlockPortal", "alf");
-    	bukkitToVanilla.put("BlockSapling", "alt");
-    	bukkitToVanilla.put("BlockSmoothBrick", "alw");
-    	bukkitToVanilla.put("BlockMonsterEggs", "amc");
-    	bukkitToVanilla.put("BlockLongGrass", "amf");
-    	bukkitToVanilla.put("BlockLog", "amt");
-    	bukkitToVanilla.put("BlockVine", "amw");
-    	bukkitToVanilla.put("BlockCobbleWall", "amx");
-    	bukkitToVanilla.put("BlockWoodStep", "ana");
-    	bukkitToVanilla.put("BlockTripwire", "amv");
-    	
-    	// items
-    	bukkitToVanilla.put("Item", "uk");
-    	bukkitToVanilla.put("ItemAnvil", "ss");
-    	bukkitToVanilla.put("ItemArmor", "st");
-    	bukkitToVanilla.put("ItemAxe", "ui");
-    	bukkitToVanilla.put("ItemBed", "sw");
-    	bukkitToVanilla.put("ItemBlock", "vl");
-    	bukkitToVanilla.put("ItemBoat", "sx");
-    	bukkitToVanilla.put("ItemBookAndQuill", "vq");
-    	bukkitToVanilla.put("ItemBow", "sz");
-    	bukkitToVanilla.put("ItemBucket", "tb");
-    	bukkitToVanilla.put("ItemCarrotStick", "tc");
-    	bukkitToVanilla.put("ItemCoal", "te");
-    	bukkitToVanilla.put("ItemCloth", "td");
-    	bukkitToVanilla.put("ItemDoor", "tv");
-    	bukkitToVanilla.put("ItemDye", "tw");
-    	bukkitToVanilla.put("ItemEgg", "tx");
-    	bukkitToVanilla.put("ItemEnderEye", "tz");
-    	bukkitToVanilla.put("ItemEnderPearl", "ua");
-    	bukkitToVanilla.put("ItemExpBottle", "ub");
-    	bukkitToVanilla.put("ItemFireball", "uc");
-    	bukkitToVanilla.put("ItemFishingRod", "ud");
-    	bukkitToVanilla.put("ItemFlintAndSteel", "ue");
-    	bukkitToVanilla.put("ItemFood", "uf");
-    	bukkitToVanilla.put("ItemGlassBottle", "sy");
-    	bukkitToVanilla.put("ItemGoldenApple", "ug");
-    	bukkitToVanilla.put("ItemHanging", "uh");
-    	bukkitToVanilla.put("ItemHoe", "uj");
-    	bukkitToVanilla.put("ItemLeaves", "un");
-    	bukkitToVanilla.put("ItemMapEmpty", "ty");
-    	bukkitToVanilla.put("ItemMilkBucket", "up");
-    	bukkitToVanilla.put("ItemMinecart", "uq");
-    	bukkitToVanilla.put("ItemMonsterEgg", "ur");
-    	bukkitToVanilla.put("ItemMultiTexture", "us");
-    	bukkitToVanilla.put("ItemNetherStar", "vg");
-    	bukkitToVanilla.put("ItemPickaxe", "ut");
-    	bukkitToVanilla.put("ItemPiston", "uu");
-    	bukkitToVanilla.put("ItemPotion", "uv");
-    	bukkitToVanilla.put("ItemRecord", "ux");
-    	bukkitToVanilla.put("ItemRedstone", "uy");
-    	bukkitToVanilla.put("ItemReed", "vm");
-    	bukkitToVanilla.put("ItemSaddle", "uz");
-    	bukkitToVanilla.put("ItemSeedFood", "vb");
-    	bukkitToVanilla.put("ItemSeeds", "vc");
-    	bukkitToVanilla.put("ItemShears", "vd");
-    	bukkitToVanilla.put("ItemSign", "vf");
-    	bukkitToVanilla.put("ItemSnowball", "vi");
-    	bukkitToVanilla.put("ItemSkull", "vh");
-    	bukkitToVanilla.put("ItemSoup", "ta");
-    	bukkitToVanilla.put("ItemSpade", "ve");
-    	bukkitToVanilla.put("ItemStep", "vk");
-    	bukkitToVanilla.put("ItemSword", "vp");
-    	bukkitToVanilla.put("ItemWaterLily", "vo");
-    	bukkitToVanilla.put("ItemWorldMap", "uo");
-    	bukkitToVanilla.put("ItemWrittenBook", "vr");
-    	bukkitToVanilla.put("ItemWithAuxData", "tf");
+        // 1.4.6 mappings
+        // blocks
+        bukkitToVanilla.put("BlockAnvil", "aiz");
+        bukkitToVanilla.put("BlockStone", "aml");
+        bukkitToVanilla.put("BlockGrass", "akj");
+        bukkitToVanilla.put("BlockDirt", "ajv");
+        bukkitToVanilla.put("Block", "amq");
+        bukkitToVanilla.put("BlockFlowing", "aky");
+        bukkitToVanilla.put("BlockStationary", "akz");
+        bukkitToVanilla.put("BlockSand", "akn");
+        bukkitToVanilla.put("BlockGravel", "akk");
+        bukkitToVanilla.put("BlockOre", "all");
+        bukkitToVanilla.put("BlockSponge", "amf");
+        bukkitToVanilla.put("BlockGlass", "aki");
+        bukkitToVanilla.put("BlockDispenser", "ajw");
+        bukkitToVanilla.put("BlockNote", "alf");
+        bukkitToVanilla.put("BlockMinecartTrack", "alr");
+        bukkitToVanilla.put("BlockBed", "ajb");
+        bukkitToVanilla.put("BlockMinecartDetector", "ajs");
+        bukkitToVanilla.put("BlockWeb", "ang");
+        bukkitToVanilla.put("BlockPistonExtension", "aob");
+        bukkitToVanilla.put("BlockDeadBush", "ajr");
+        bukkitToVanilla.put("BlockFlower", "aje");
+        bukkitToVanilla.put("BlockMushroom", "ale");
+        bukkitToVanilla.put("BlockPistonMoving", "aoc");
+        bukkitToVanilla.put("BlockOreBlock", "alc");
+        bukkitToVanilla.put("BlockTNT", "amv");
+        bukkitToVanilla.put("BlockBookshelf", "ajc");
+        bukkitToVanilla.put("BlockFire", "akf");
+        bukkitToVanilla.put("BlockTorch", "amx");
+        bukkitToVanilla.put("BlockObsidian", "alk");
+        bukkitToVanilla.put("BlockRedstoneWire", "alv");
+        bukkitToVanilla.put("BlockChest", "ajk");
+        bukkitToVanilla.put("BlockStairs", "amh");
+        bukkitToVanilla.put("BlockMobSpawner", "ald");
+        bukkitToVanilla.put("BlockCrops", "ajq");
+        bukkitToVanilla.put("BlockWorkbench", "anj");
+        bukkitToVanilla.put("BlockSign", "amb");
+        bukkitToVanilla.put("BlockFurnace", "akh");
+        bukkitToVanilla.put("BlockSoil", "akc");
+        bukkitToVanilla.put("BlockLever", "akv");
+        bukkitToVanilla.put("BlockPressurePlate", "alo");
+        bukkitToVanilla.put("BlockDoor", "ajx");
+        bukkitToVanilla.put("BlockLadder", "aks");
+        bukkitToVanilla.put("BlockRedstoneTorch", "ali");
+        bukkitToVanilla.put("BlockButton", "ajf");
+        bukkitToVanilla.put("BlockSnow", "amw");
+        bukkitToVanilla.put("BlockIce", "akr");
+        bukkitToVanilla.put("BlockRedstoneOre", "alw");
+        bukkitToVanilla.put("BlockFence", "ake");
+        bukkitToVanilla.put("BlockJukeBox", "alt");
+        bukkitToVanilla.put("BlockBloodStone", "akp");
+        bukkitToVanilla.put("BlockPumpkin", "alq");
+        bukkitToVanilla.put("BlockCactus", "ajg");
+        bukkitToVanilla.put("BlockSnowBlock", "ame");
+        bukkitToVanilla.put("BlockReed", "aly");
+        bukkitToVanilla.put("BlockClay", "ajl");
+        bukkitToVanilla.put("BlockDiode", "ajt");
+        bukkitToVanilla.put("BlockCake", "ajh");
+        bukkitToVanilla.put("BlockLockedChest", "ala");
+        bukkitToVanilla.put("BlockLightStone", "akw");
+        bukkitToVanilla.put("BlockSlowSand", "ako");
+        bukkitToVanilla.put("BlockThinFence", "amp");
+        bukkitToVanilla.put("BlockMelon", "alb");
+        bukkitToVanilla.put("BlockHugeMushroom", "akq");
+        bukkitToVanilla.put("BlockTrapdoor", "amz");
+        bukkitToVanilla.put("BlockMycel", "alg");
+        bukkitToVanilla.put("BlockFenceGate", "akd");
+        bukkitToVanilla.put("BlockStem", "ami");
+        bukkitToVanilla.put("BlockEnderPortal", "amn");
+        bukkitToVanilla.put("BlockCauldron", "ajj");
+        bukkitToVanilla.put("BlockBrewingStand", "ajd");
+        bukkitToVanilla.put("BlockEnchantmentTable", "ajz");
+        bukkitToVanilla.put("BlockNetherWart", "alh");
+        bukkitToVanilla.put("BlockCocoa", "ajn");
+        bukkitToVanilla.put("BlockRedstoneLamp", "alx");
+        bukkitToVanilla.put("BlockDragonEgg", "ajy");
+        bukkitToVanilla.put("BlockEnderPortalFrame", "amo");
+        bukkitToVanilla.put("BlockCommand", "ajo");
+        bukkitToVanilla.put("BlockBeacon", "aja");
+        bukkitToVanilla.put("BlockCarrots", "aji");
+        bukkitToVanilla.put("BlockFlowerPot", "akg");
+        bukkitToVanilla.put("BlockPotatoes", "aln");
+        bukkitToVanilla.put("BlockTripwireHook", "anb");
+        bukkitToVanilla.put("BlockEnderChest", "aka");
+        bukkitToVanilla.put("BlockTripwire", "");
+        bukkitToVanilla.put("BlockSkull", "amc");
+        bukkitToVanilla.put("BlockCloth", "ajm");
+        bukkitToVanilla.put("BlockDirectional", "aju");
+        bukkitToVanilla.put("BlockContainer", "akb");
+        bukkitToVanilla.put("BlockStepAbstract", "akl");
+        bukkitToVanilla.put("BlockHalfTransparant", "akm");
+        bukkitToVanilla.put("BlockLeaves", "akt");
+        bukkitToVanilla.put("BlockFluids", "akx");
+        bukkitToVanilla.put("BlockPortal", "alm");
+        bukkitToVanilla.put("BlockSapling", "ama");
+        bukkitToVanilla.put("BlockSmoothBrick", "amd");
+        bukkitToVanilla.put("BlockMonsterEggs", "amj");
+        bukkitToVanilla.put("BlockLongGrass", "amm");
+        bukkitToVanilla.put("BlockLog", "ana");
+        bukkitToVanilla.put("BlockVine", "and");
+        bukkitToVanilla.put("BlockCobbleWall", "ane");
+        bukkitToVanilla.put("BlockWoodStep", "anh");
+        bukkitToVanilla.put("BlockTripwire", "anc");
+        
+        // items
+        bukkitToVanilla.put("Item", "up");
+        bukkitToVanilla.put("ItemBook", "sz");
+        bukkitToVanilla.put("ItemAnvil", "st");
+        bukkitToVanilla.put("ItemArmor", "su");
+        bukkitToVanilla.put("ItemAxe", "un");
+        bukkitToVanilla.put("ItemBed", "sx");
+        bukkitToVanilla.put("ItemBlock", "vq");
+        bukkitToVanilla.put("ItemBoat", "sy");
+        bukkitToVanilla.put("ItemBookAndQuill", "vv");
+        bukkitToVanilla.put("ItemBow", "tb");
+        bukkitToVanilla.put("ItemBucket", "td");
+        bukkitToVanilla.put("ItemCarrotStick", "te");
+        bukkitToVanilla.put("ItemCoal", "tg");
+        bukkitToVanilla.put("ItemCloth", "tf");
+        bukkitToVanilla.put("ItemDoor", "tx");
+        bukkitToVanilla.put("ItemDye", "ty");
+        bukkitToVanilla.put("ItemEgg", "tz");
+        bukkitToVanilla.put("ItemEnchantedBook", "ub");
+        bukkitToVanilla.put("ItemEnderEye", "uc");
+        bukkitToVanilla.put("ItemEnderPearl", "ud");
+        bukkitToVanilla.put("ItemExpBottle", "ue");
+        bukkitToVanilla.put("ItemFireball", "uf");
+        bukkitToVanilla.put("ItemFishingRod", "ui");
+        bukkitToVanilla.put("ItemFireworks", "uh");
+        bukkitToVanilla.put("ItemFireworksCharge", "ug");
+        bukkitToVanilla.put("ItemFlintAndSteel", "uj");
+        bukkitToVanilla.put("ItemFood", "uk");
+        bukkitToVanilla.put("ItemGlassBottle", "ta");
+        bukkitToVanilla.put("ItemGoldenApple", "ul");
+        bukkitToVanilla.put("ItemHanging", "um");
+        bukkitToVanilla.put("ItemHoe", "uo");
+        bukkitToVanilla.put("ItemLeaves", "us");
+        bukkitToVanilla.put("ItemMapEmpty", "ua");
+        bukkitToVanilla.put("ItemMilkBucket", "uu");
+        bukkitToVanilla.put("ItemMinecart", "uv");
+        bukkitToVanilla.put("ItemMonsterEgg", "uw");
+        bukkitToVanilla.put("ItemMultiTexture", "ux");
+        bukkitToVanilla.put("ItemNetherStar", "vl");
+        bukkitToVanilla.put("ItemPickaxe", "uy");
+        bukkitToVanilla.put("ItemPiston", "uz");
+        bukkitToVanilla.put("ItemPotion", "va");
+        bukkitToVanilla.put("ItemRecord", "vc");
+        bukkitToVanilla.put("ItemRedstone", "vd");
+        bukkitToVanilla.put("ItemReed", "vr");
+        bukkitToVanilla.put("ItemSaddle", "ve");
+        bukkitToVanilla.put("ItemSeedFood", "vg");
+        bukkitToVanilla.put("ItemSeeds", "vh");
+        bukkitToVanilla.put("ItemShears", "vi");
+        bukkitToVanilla.put("ItemSign", "vk");
+        bukkitToVanilla.put("ItemSnowball", "vn");
+        bukkitToVanilla.put("ItemSkull", "vm");
+        bukkitToVanilla.put("ItemSoup", "tc");
+        bukkitToVanilla.put("ItemSpade", "vj");
+        bukkitToVanilla.put("ItemStep", "vp");
+        bukkitToVanilla.put("ItemSword", "vu");
+        bukkitToVanilla.put("ItemWaterLily", "vt");
+        bukkitToVanilla.put("ItemWorldMap", "ut");
+        bukkitToVanilla.put("ItemWrittenBook", "vw");
+        bukkitToVanilla.put("ItemWithAuxData", "th");
+    }
+    // MCPC end
+
+    private static boolean isModIgnoredForIdValidation(String modId)
+    {
+        if (ignoredMods == null)
+        {
+            File f = new File(Loader.instance().getConfigDir(),"fmlIDChecking.properties");
+            if (f.exists())
+            {
+                Properties p = new Properties();
+                try
+                {
+                    p.load(new FileInputStream(f));
+                    ignoredMods = Maps.fromProperties(p);
+                    if (ignoredMods.size()>0)
+                    {
+                        FMLLog.warning("Using non-empty ignored mods configuration file %s", ignoredMods.keySet());
+                    }
+                }
+                catch (Exception e)
+                {
+                    Throwables.propagateIfPossible(e);
+                    FMLLog.log(Level.SEVERE, e, "Failed to read ignored ID checker mods properties file");
+                    ignoredMods = ImmutableMap.<String, String>of();
+                }
+            }
+            else
+            {
+                ignoredMods = ImmutableMap.<String, String>of();
+            }
+        }
+        return ignoredMods.containsKey(modId);
     }
 
-    
     public static void newItemAdded(Item item)
     {
         ModContainer mc = Loader.instance().activeModContainer();
@@ -252,7 +298,26 @@ public class GameData {
             FMLLog.severe("FML has detected item discrepancies");
             FMLLog.severe("Missing items : %s", difference.entriesOnlyOnLeft());
             FMLLog.severe("Mismatched items : %s", difference.entriesDiffering());
-            isSaveValid = false;
+            boolean foundNonIgnored = false;
+            for (ItemData diff : difference.entriesOnlyOnLeft().values())
+            {
+                if (!isModIgnoredForIdValidation(diff.getModId()))
+                {
+                    foundNonIgnored = true;
+                }
+            }
+            for (ValueDifference<ItemData> diff : difference.entriesDiffering().values())
+            {
+                if (! ( isModIgnoredForIdValidation(diff.leftValue().getModId()) || isModIgnoredForIdValidation(diff.rightValue().getModId()) ) )
+                {
+                    foundNonIgnored = true;
+                }
+            }
+            if (!foundNonIgnored)
+            {
+                FMLLog.severe("FML is ignoring these ID discrepancies because of configuration. YOUR GAME WILL NOW PROBABLY CRASH. HOPEFULLY YOU WON'T HAVE CORRUPTED YOUR WORLD. BLAME %s", ignoredMods.keySet());
+            }
+            isSaveValid = !foundNonIgnored;
             serverValidationLatch.countDown();
         }
         else
@@ -277,44 +342,43 @@ public class GameData {
     {
         for (ItemData dat : idMap.values())
         {
-	        // MCPC - some classes are used more then once and need to be handled
-	        if (dat.itemType.equalsIgnoreCase("net.minecraft.server.ItemWithAuxData"))
-	        {
-	        	switch(dat.itemId)
-	        	{
-	        		case 52: dat.itemType = "net.minecraft.server.BlockMobSpawner";
-	        				 dat.ordinal = 0;
-	        				 break;
-	        		case 99: dat.itemType = "net.minecraft.server.BlockHugeMushroom";
-	        				 dat.ordinal = 0;
-	        				 break;
-	        		case 100: dat.itemType = "net.minecraft.server.BlockHugeMushroom";
-	        				  dat.ordinal = 1;
-	        				  break;
-	        		case 31:
-	        		case 106: // ItemWithAuxData
-	        		default:
-	        	}
-	        }
+            // MCPC - some classes are used more then once and need to be handled
+            if (dat.itemType.equalsIgnoreCase("net.minecraft.server.ItemWithAuxData"))
+            {
+                switch(dat.itemId)
+                {
+                    case 52: dat.itemType = "net.minecraft.server.BlockMobSpawner";
+                             dat.ordinal = 0;
+                             break;
+                    case 99: dat.itemType = "net.minecraft.server.BlockHugeMushroom";
+                             dat.ordinal = 0;
+                             break;
+                    case 100: dat.itemType = "net.minecraft.server.BlockHugeMushroom";
+                              dat.ordinal = 1;
+                              break;
+                    case 31:
+                    case 106: // ItemWithAuxData
+                    default:
+                }
+            }
 
-	        // MCPC - strip out NMS so we can search id map
-	        String[] replace = dat.itemType.split("net\\.minecraft\\.server\\.v1_4_5.");
-	        
-	        // MCPC - if not a custom class, proceed
-	        if (replace.length > 1) // vanilla
-	        {
-	        	// MCPC - for any NMS match, convert to obfuscated vanilla mapping
-		        for(Map.Entry<String, String> entry : bukkitToVanilla.entrySet()){
-		        	if (entry.getKey().equals(replace[1]))
-		        	{
-		        		dat.itemType = replace[0] + entry.getValue();
-		        		break;
-		        	}
-		        }
-	        }
+            // MCPC - strip out NMS so we can search id map
+            String[] replace = dat.itemType.split("net\\.minecraft\\.server\\.v1_4_6.");
+            
+            // MCPC - if not a custom class, proceed
+            if (replace.length > 1) // vanilla
+            {
+                // MCPC - for any NMS match, convert to obfuscated vanilla mapping
+                for(Map.Entry<String, String> entry : bukkitToVanilla.entrySet()){
+                    if (entry.getKey().equals(replace[1]))
+                    {
+                        dat.itemType = replace[0] + entry.getValue();
+                        break;
+                    }
+                }
+            }
             itemList.add(dat.toNBT());
         }
-        
     }
 
     /**
@@ -364,6 +428,10 @@ public class GameData {
         return worldSaveItems;
     }
 
-
-
+    static void setName(Item item, String name, String modId)
+    {
+        int id = item.id;
+        ItemData itemData = idMap.get(id);
+        itemData.setName(name,modId);
+    }
 }

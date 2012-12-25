@@ -10,8 +10,8 @@ import org.bukkit.event.inventory.FurnaceSmeltEvent;
 import org.bukkit.craftbukkit.entity.CraftHumanEntity;
 // CraftBukkit end
 // Forge start
-import cpw.mods.fml.common.Side;
-import cpw.mods.fml.common.asm.SideOnly;
+import cpw.mods.fml.relauncher.Side;
+import cpw.mods.fml.relauncher.SideOnly;
 import cpw.mods.fml.common.registry.GameRegistry;
 import net.minecraftforge.common.ForgeDirection;
 import net.minecraftforge.common.ISidedInventory;
@@ -261,7 +261,7 @@ public class TileEntityFurnace extends TileEntity implements IInventory, ISidedI
 
             if (this.items[2] == null) {
                 this.items[2] = itemstack.cloneItemStack();
-            } else if (this.items[2].id == itemstack.id) {
+            } else if (this.items[2].doMaterialsMatch(itemstack)) { // Forge
                 // CraftBukkit - compare damage too
                 if (this.items[2].getData() == itemstack.getData()) {
                     this.items[2].count += itemstack.count;
@@ -294,8 +294,17 @@ public class TileEntityFurnace extends TileEntity implements IInventory, ISidedI
                     return 300;
                 }
             }
-
-            return item instanceof ItemTool && ((ItemTool) item).g().equals("WOOD") ? 200 : (item instanceof ItemSword && ((ItemSword) item).h().equals("WOOD") ? 200 : (item instanceof ItemHoe && ((ItemHoe) item).g().equals("WOOD") ? 200 : (i == Item.STICK.id ? 100 : (i == Item.COAL.id ? 1600 : (i == Item.LAVA_BUCKET.id ? 20000 : (i == Block.SAPLING.id ? 100 : (i == Item.BLAZE_ROD.id ? 2400 : GameRegistry.getFuelValue(itemstack))))))));        
+            // Forge start
+            if (item instanceof ItemTool && ((ItemTool) item).g().equals("WOOD")) return 200;
+            if (item instanceof ItemSword && ((ItemSword) item).h().equals("WOOD")) return 200;
+            if (item instanceof ItemHoe && ((ItemHoe) item).g().equals("WOOD")) return 200;
+            if (i == Item.STICK.id) return 100;
+            if (i == Item.COAL.id) return 1600;
+            if (i == Item.LAVA_BUCKET.id) return 20000;
+            if (i == Block.SAPLING.id) return 100;
+            if (i == Item.BLAZE_ROD.id) return 2400;
+            return GameRegistry.getFuelValue(itemstack);
+            // Forge end
         }
     }
 
@@ -311,11 +320,11 @@ public class TileEntityFurnace extends TileEntity implements IInventory, ISidedI
 
     public void f() {}
 
-    public int getStartInventorySide(ForgeDirection var1) {
-        return var1 == ForgeDirection.DOWN ? 1 : (var1 == ForgeDirection.UP ? 0 : 2);
+    public int getStartInventorySide(ForgeDirection side) {
+        return side == ForgeDirection.DOWN ? 1 : (side == ForgeDirection.UP ? 0 : 2);
     }
 
-    public int getSizeInventorySide(ForgeDirection var1) {
+    public int getSizeInventorySide(ForgeDirection side) {
         return 1;
     }
 }

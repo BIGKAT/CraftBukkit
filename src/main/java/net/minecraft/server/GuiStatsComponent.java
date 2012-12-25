@@ -7,8 +7,8 @@ import java.text.DecimalFormat;
 import javax.swing.JComponent;
 import javax.swing.Timer;
 // Forge start
-import cpw.mods.fml.common.Side;
-import cpw.mods.fml.common.asm.SideOnly;
+import cpw.mods.fml.relauncher.Side;
+import cpw.mods.fml.relauncher.SideOnly;
 import net.minecraftforge.common.DimensionManager;
 // Forge end
 

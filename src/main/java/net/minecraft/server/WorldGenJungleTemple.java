@@ -165,7 +165,7 @@ public class WorldGenJungleTemple extends WorldGenScatteredPiece {
 
             if (!this.field_74945_j)
             {
-                this.field_74945_j = this.a(var1, var3, var2, 3, -2, 1, 2, var11.getItems(), var11.getCount(var2));
+                this.field_74945_j = this.a(var1, var3, var2, 3, -2, 1, 2, var11.getItems(var2), var11.getCount(var2));
             }
 
             this.a(var1, Block.VINE.id, 15, 3, -2, 2, var3);
@@ -182,7 +182,7 @@ public class WorldGenJungleTemple extends WorldGenScatteredPiece {
 
             if (!this.field_74946_k)
             {
-                this.field_74946_k = this.a(var1, var3, var2, 9, -2, 3, 4, var11.getItems(), var11.getCount(var2));
+                this.field_74946_k = this.a(var1, var3, var2, 9, -2, 3, 4, var11.getItems(var2), var11.getCount(var2));
             }
 
             this.a(var1, Block.VINE.id, 15, 8, -1, 3, var3);
@@ -190,7 +190,7 @@ public class WorldGenJungleTemple extends WorldGenScatteredPiece {
 
             if (!this.field_74947_h)
             {
-                this.field_74947_h = this.a(var1, var3, var2, 8, -3, 3, var10.getItems(), var10.getCount(var2));
+                this.field_74947_h = this.a(var1, var3, var2, 8, -3, 3, var10.getItems(var2), var10.getCount(var2));
             }
 
             this.a(var1, Block.MOSSY_COBBLESTONE.id, 0, 9, -3, 2, var3);
@@ -207,9 +207,9 @@ public class WorldGenJungleTemple extends WorldGenScatteredPiece {
             this.a(var1, Block.SMOOTH_BRICK.id, 3, 8, -2, 11, var3);
             this.a(var1, Block.SMOOTH_BRICK.id, 3, 9, -2, 11, var3);
             this.a(var1, Block.SMOOTH_BRICK.id, 3, 10, -2, 11, var3);
-            this.a(var1, Block.LEVER.id, BlockLever.d(this.c(Block.LEVER.id, 2)), 8, -2, 12, var3);
-            this.a(var1, Block.LEVER.id, BlockLever.d(this.c(Block.LEVER.id, 2)), 9, -2, 12, var3);
-            this.a(var1, Block.LEVER.id, BlockLever.d(this.c(Block.LEVER.id, 2)), 10, -2, 12, var3);
+            this.a(var1, Block.LEVER.id, BlockLever.e(this.c(Block.LEVER.id, 2)), 8, -2, 12, var3);
+            this.a(var1, Block.LEVER.id, BlockLever.e(this.c(Block.LEVER.id, 2)), 9, -2, 12, var3);
+            this.a(var1, Block.LEVER.id, BlockLever.e(this.c(Block.LEVER.id, 2)), 10, -2, 12, var3);
             this.a(var1, var3, 8, -3, 8, 8, -3, 10, false, var2, n);
             this.a(var1, var3, 10, -3, 8, 10, -3, 10, false, var2, n);
             this.a(var1, Block.MOSSY_COBBLESTONE.id, 0, 10, -2, 9, var3);
@@ -223,7 +223,7 @@ public class WorldGenJungleTemple extends WorldGenScatteredPiece {
 
             if (!this.field_74948_i)
             {
-                this.field_74948_i = this.a(var1, var3, var2, 9, -3, 10, var10.getItems(), var10.getCount(var2));
+                this.field_74948_i = this.a(var1, var3, var2, 9, -3, 10, var10.getItems(var2), var10.getCount(var2));
             }
 
             return true;

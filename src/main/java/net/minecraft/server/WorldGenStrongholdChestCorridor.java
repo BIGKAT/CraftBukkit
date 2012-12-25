@@ -70,7 +70,7 @@ public class WorldGenStrongholdChestCorridor extends WorldGenStrongholdPiece {
                 if (var3.b(var5, var4, var6))
                 {
                     this.c = true;
-                    this.a(var1, var3, var2, 3, 2, 3, ChestGenHooks.getItems("strongholdCorridor"), ChestGenHooks.getCount("strongholdCorridor", var2));
+                    this.a(var1, var3, var2, 3, 2, 3, ChestGenHooks.getItems("strongholdCorridor", var2), ChestGenHooks.getCount("strongholdCorridor", var2));
                 }
             }
 

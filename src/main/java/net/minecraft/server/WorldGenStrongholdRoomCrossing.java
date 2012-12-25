@@ -144,7 +144,7 @@ public class WorldGenStrongholdRoomCrossing extends WorldGenStrongholdPiece {
                     this.a(var1, Block.LADDER.id, this.c(Block.LADDER.id, 4), 9, 1, 3, var3);
                     this.a(var1, Block.LADDER.id, this.c(Block.LADDER.id, 4), 9, 2, 3, var3);
                     this.a(var1, Block.LADDER.id, this.c(Block.LADDER.id, 4), 9, 3, 3, var3);
-                    this.a(var1, var3, var2, 3, 4, 8, ChestGenHooks.getItems("strongholdCrossing"), ChestGenHooks.getCount("strongholdCrossing", var2));
+                    this.a(var1, var3, var2, 3, 4, 8, ChestGenHooks.getItems("strongholdCrossing", var2), ChestGenHooks.getCount("strongholdCrossing", var2)); // Forge
             }
 
             return true;
