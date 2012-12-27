@@ -292,12 +292,13 @@ public class GameData {
 
         Map<Integer,ItemData> worldMap = Maps.uniqueIndex(worldSaveItems,idMapFunction);
         difference = Maps.difference(worldMap, idMap);
-        FMLLog.fine("The difference set is %s", difference);
+        // MCPC disable logging temporarily
+        //FMLLog.fine("The difference set is %s", difference);
         if (!difference.entriesDiffering().isEmpty() || !difference.entriesOnlyOnLeft().isEmpty())
         {
-            FMLLog.severe("FML has detected item discrepancies");
-            FMLLog.severe("Missing items : %s", difference.entriesOnlyOnLeft());
-            FMLLog.severe("Mismatched items : %s", difference.entriesDiffering());
+            //FMLLog.severe("FML has detected item discrepancies");
+            //FMLLog.severe("Missing items : %s", difference.entriesOnlyOnLeft());
+            //FMLLog.severe("Mismatched items : %s", difference.entriesDiffering());
             boolean foundNonIgnored = false;
             for (ItemData diff : difference.entriesOnlyOnLeft().values())
             {

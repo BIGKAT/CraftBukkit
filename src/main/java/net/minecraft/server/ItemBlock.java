@@ -10,6 +10,7 @@ public class ItemBlock extends Item {
         super(i);
         this.id = i + 256;
         this.c(Block.byId[i + 256].a(2));
+        isDefaultTexture = Block.byId[i + 256].isDefaultTexture; // Forge
     }
 
     public int g() {
@@ -22,7 +23,7 @@ public class ItemBlock extends Item {
 
         if (i1 == Block.SNOW.id) {
             l = 1;
-        } else if (i1 != Block.VINE.id && i1 != Block.LONG_GRASS.id && i1 != Block.DEAD_BUSH.id) {
+        } else if (i1 != Block.VINE.id && i1 != Block.LONG_GRASS.id && i1 != Block.DEAD_BUSH.id && (Block.byId[i1] == null || !Block.byId[i1].isBlockReplaceable(world, i, j, k))) { // Forge
             if (l == 0) {
                 --j;
             }

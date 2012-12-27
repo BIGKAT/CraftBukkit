@@ -56,7 +56,7 @@ public class WorldGenTrees extends WorldGenerator implements BlockSapling.TreeGe
                             k1 = world.getTypeId(l1, i1, j1);
                             // Forge start
                             Block block = Block.byId[k1];
-                            if (k1 != 0 && !block.isLeaves(w, l1, i1, j1) && k1 != Block.GRASS.id && k1 != Block.DIRT.id && !block.isWood((World)world, l1, i1, j1)) {
+                            if (k1 != 0 && !block.isLeaves(w, l1, i1, j1) && k1 != Block.GRASS.id && k1 != Block.DIRT.id && !block.isWood(w, l1, i1, j1)) {
                             // Forge end
                                 flag = false;
                             }
