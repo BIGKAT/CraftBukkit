@@ -25,8 +25,6 @@ import java.util.jar.Attributes;
 import java.util.jar.JarFile;
 import java.util.logging.Level;
 
-import sun.nio.ch.DirectBuffer;
-
 import cpw.mods.fml.relauncher.IFMLLoadingPlugin.TransformerExclusions;
 
 public class RelaunchLibraryManager
@@ -130,17 +128,8 @@ public class RelaunchLibraryManager
                     {
                         try
                         {
-                        	// MCPC start
-                        	if (libName == "guava-12.0.1.jar")
-                        	{
-                        		downloadFile(libFile, lib.getMCPCRootURL(), libName, checksum);
-                        		download = true;
-                        	}
-                        	else {
-                                // MCPC end
-                        		downloadFile(libFile, lib.getRootURL(), libName, checksum);
-                        		download = true;
-                        	}
+                            downloadFile(libFile, lib.getRootURL(), libName, checksum);
+                            download = true;
                         }
                         catch (Throwable e)
                         {
@@ -164,28 +153,7 @@ public class RelaunchLibraryManager
                             MappedByteBuffer mappedFile = chan.map(MapMode.READ_ONLY, 0, libFile.length());
                             String fileChecksum = generateChecksum(mappedFile);
                             fis.close();
-                            
-                            // MCPC start
-                            // check if original guava 12 jar exists and if so force a redownload
-                            if (fileChecksum.equals("b8e78b9af7bf45900e14c6f958486b6ca682195f"))
-                            {
-                            	try {
-                            		// Close channel and unmap the file currently being read
-                    	            chan.close();
-                    	            unmap(mappedFile);
-                    	            // delete original guava 12 jar
-                    	            libFile.delete(); 
-                            	} catch (IOException x) {
-                            	    // File permission problems are caught here.
-                            	    System.err.println(x);
-                            	}
-                            	// proceed to download the MCPC guava 12 jar
-                            	downloadFile(libFile, lib.getMCPCRootURL(), libName, checksum);
-                        		download = true;
-                            }
-                            // MCPC end
-                            // bad checksum and I did not download this file
-                            else if (!checksum.equals(fileChecksum))
+                            if (!checksum.equals(fileChecksum))
                             {
                                 caughtErrors.add(new RuntimeException(String.format("The file %s was found in your lib directory and has an invalid checksum %s (expecting %s) - it is unlikely to be the correct download, please move it out of the way and try again.", libName, fileChecksum, checksum)));
                                 continue;
@@ -584,9 +552,6 @@ public class RelaunchLibraryManager
             if (e instanceof RuntimeException) throw (RuntimeException)e;
             throw new RuntimeException(e);
         }
-
-
-
     }
 
     private static String generateChecksum(ByteBuffer buffer)
@@ -608,12 +573,4 @@ public class RelaunchLibraryManager
             return null;
         }
     }
-
-    // MCPC start
-    public static void unmap(MappedByteBuffer buffer)
-    {
-       sun.misc.Cleaner cleaner = ((DirectBuffer) buffer).cleaner();
-       cleaner.clean();
-    }
-    // MCPC end
 }
