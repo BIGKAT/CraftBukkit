@@ -13,7 +13,7 @@ import net.minecraft.server.EntityHuman;
 import net.minecraft.server.EntityLiving;
 import net.minecraft.server.ItemArmor;
 import net.minecraft.server.ItemStack;
-
+// MCPC - REMINDER UPDATE MAPPING
 /**
  * This interface is to be implemented by ItemArmor classes. It will allow to
  * modify computation of damage and health loss. Computation will be called
@@ -167,12 +167,12 @@ public interface ISpecialArmor
                 }
                 damage -= (damage * ratio);
             }
-            damage += entity.aS;
+            damage += entity.aT;
             if (DEBUG)
             {
                 System.out.println("Return: " + (int)(damage / 25D) + " " + damage);
             }
-            entity.aS = (int)damage % 25;
+            entity.aT = (int)damage % 25;
             return (int)(damage / 25D);
         }
 
