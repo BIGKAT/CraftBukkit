@@ -30,7 +30,7 @@ public abstract class Packet {
     }
     // CraftBukkit end
 
-    static void a(int i, boolean flag, boolean flag1, Class oclass) {
+    public static void a(int i, boolean flag, boolean flag1, Class oclass) { // MCPC
         if (l.b(i)) {
             throw new IllegalArgumentException("Duplicate packet id:" + i);
         } else if (a.containsKey(oclass)) {
