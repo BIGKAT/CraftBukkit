@@ -753,8 +753,11 @@ public abstract class EntityHuman extends EntityLiving implements ICommandListen
             if (!damagesource.ignoresArmor() && this.bh()) {
                 i = 1 + i >> 1;
             }
-
-            if (ArmorProperties.ApplyArmor(this, this.inventory.armor, damagesource, (double) i) <= 0) return;
+            // Forge start
+            i = ArmorProperties.ApplyArmor(this, this.inventory.armor, damagesource, (double) i);
+            if (i <= 0) 
+                return;
+            // Forge end
             i = this.c(damagesource, i);
             this.j(damagesource.d());
             this.health -= i;
