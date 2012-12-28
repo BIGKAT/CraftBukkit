@@ -195,11 +195,11 @@ public final class CraftServer implements Server {
 
         // Register all the Enchantments and PotionTypes now so we can stop new registration immediately after
         Enchantment.DAMAGE_ALL.getClass();
-        org.bukkit.enchantments.Enchantment.stopAcceptingRegistrations();
+        //org.bukkit.enchantments.Enchantment.stopAcceptingRegistrations(); // MCPC - allow registrations
 
         Potion.setPotionBrewer(new CraftPotionBrewer());
         MobEffectList.BLINDNESS.getClass();
-        PotionEffectType.stopAcceptingRegistrations();
+        //PotionEffectType.stopAcceptingRegistrations(); // MCPC - allow registrations
         // Ugly hack :(
 
         if (!Main.useConsole) {
