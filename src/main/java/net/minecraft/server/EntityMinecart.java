@@ -35,9 +35,9 @@ public class EntityMinecart extends Entity implements IInventory {
     public int type;
     public double b;
     public double c;
-    protected final IUpdatePlayerListBox g;
-    protected boolean h;
-    protected static final int[][][] matrix = new int[][][] { { { 0, 0, -1}, { 0, 0, 1}}, { { -1, 0, 0}, { 1, 0, 0}}, { { -1, -1, 0}, { 1, 0, 0}}, { { -1, 0, 0}, { 1, -1, 0}}, { { 0, 0, -1}, { 0, -1, 1}}, { { 0, -1, -1}, { 0, 0, 1}}, { { 0, 0, 1}, { 1, 0, 0}}, { { 0, 0, 1}, { -1, 0, 0}}, { { 0, 0, -1}, { -1, 0, 0}}, { { 0, 0, -1}, { 1, 0, 0}}};
+    private final IUpdatePlayerListBox g;
+    private boolean h;
+    private static final int[][][] matrix = new int[][][] { { { 0, 0, -1}, { 0, 0, 1}}, { { -1, 0, 0}, { 1, 0, 0}}, { { -1, -1, 0}, { 1, 0, 0}}, { { -1, 0, 0}, { 1, -1, 0}}, { { 0, 0, -1}, { 0, -1, 1}}, { { 0, -1, -1}, { 0, 0, 1}}, { { 0, 0, 1}, { 1, 0, 0}}, { { 0, 0, 1}, { -1, 0, 0}}, { { 0, 0, -1}, { -1, 0, 0}}, { { 0, 0, -1}, { 1, 0, 0}}};
     private int j;
     private double at;
     private double au;
@@ -148,7 +148,7 @@ public class EntityMinecart extends Entity implements IInventory {
     }
 
     public AxisAlignedBB E() {
-        return getCollisionHandler() != null ? getCollisionHandler().getBoundingBox(this) : null;
+        return getCollisionHandler() != null ? getCollisionHandler().getBoundingBox(this) : null; // Forge
     }
 
     public boolean M() {
@@ -381,17 +381,17 @@ public class EntityMinecart extends Entity implements IInventory {
             double d5 = 0.0078125D;
             int l = this.world.getTypeId(j, i, k);
 
-            if (BlockMinecartTrack.e(l)) {
+            if (canUseRail() && BlockMinecartTrack.e(l)) { // Forge
                 this.fallDistance = 0.0F;
                 Vec3D vec3d = this.a(this.locX, this.locY, this.locZ);
-                int i1 = this.world.getData(j, i, k);
+                int i1 = ((BlockMinecartTrack)Block.byId[l]).getBasicRailMetadata(world, this, j, i, k); // Forge
 
                 this.locY = (double) i;
                 boolean flag = false;
                 boolean flag1 = false;
 
                 if (l == Block.GOLDEN_RAIL.id) {
-                    flag = (i1 & 8) != 0;
+                    flag = (world.getData(j, i, k) & 8) != 0; // Forge
                     flag1 = !flag;
                 }
 
@@ -472,7 +472,7 @@ public class EntityMinecart extends Entity implements IInventory {
                 this.locX = d11 + d6 * d12;
                 this.locZ = d13 + d7 * d12;
                 this.setPosition(this.locX, this.locY + (double) this.height, this.locZ);
-                this.moveMinecartOnRail(i, j, k); // Forge
+                this.moveMinecartOnRail(j, i, k); // Forge
                 if (aint[0][1] != 0 && MathHelper.floor(this.locX) - j == aint[0][0] && MathHelper.floor(this.locZ) - k == aint[0][2]) {
                     this.setPosition(this.locX, this.locY + (double) aint[0][1], this.locZ);
                 } else if (aint[1][1] != 0 && MathHelper.floor(this.locX) - j == aint[1][0] && MathHelper.floor(this.locZ) - k == aint[1][2]) {
@@ -534,7 +534,7 @@ public class EntityMinecart extends Entity implements IInventory {
                     }
                 }
             } else {
-                this.moveMinecartOffRail(i, j, k); // Forge
+                this.moveMinecartOffRail(j, i, k); // Forge
             }
 
             this.D();

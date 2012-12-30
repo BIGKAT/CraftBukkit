@@ -5,7 +5,7 @@ import org.bukkit.craftbukkit.block.CraftBlockState; // CraftBukkit
 public class ItemBlock extends Item {
 
     private int id;
-    private int localId;
+    private int localId; // Forge
 
     public ItemBlock(int i) {
         super(i);
@@ -78,7 +78,7 @@ public class ItemBlock extends Item {
             world.suppressPhysics = true;
             world.setTypeIdAndData(i, j, k, id, k1);
             org.bukkit.event.block.BlockPlaceEvent event = org.bukkit.craftbukkit.event.CraftEventFactory.callBlockPlaceEvent(world, entityhuman, replacedBlockState, clickedX, clickedY, clickedZ);
-            localId = world.getTypeId(i, j, k);
+            localId = world.getTypeId(i, j, k); // Forge
             int data = world.getData(i, j, k);
             replacedBlockState.update(true);
             world.suppressPhysics = false;
@@ -86,7 +86,7 @@ public class ItemBlock extends Item {
             if (event.isCancelled() || !event.canBuild()) {
                 return true;
             }
-                    // CraftBukkit end
+            // CraftBukkit end
 
             if(placeBlockAt(itemstack, entityhuman, world, i, j, k, l, f, f1, f2, data)) { // Forge
                 world.makeSound((double) ((float) i + 0.5F), (double) ((float) j + 0.5F), (double) ((float) k + 0.5F), block.stepSound.getPlaceSound(), (block.stepSound.getVolume1() + 1.0F) / 2.0F, block.stepSound.getVolume2() * 0.8F);
