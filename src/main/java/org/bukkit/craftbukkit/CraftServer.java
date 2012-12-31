@@ -164,6 +164,8 @@ public final class CraftServer implements Server {
     private int animalSpawn = -1;
     private int waterAnimalSpawn = -1;
     private int ambientSpawn = -1;
+    public int chunkGCPeriod = -1;
+    public int chunkGCLoadThresh = 0;
     private File container;
     private WarningState warningState = WarningState.DEFAULT;
     public String whitelistMessage = "You are not white-listed on this server!"; // Spigot
@@ -172,8 +174,7 @@ public final class CraftServer implements Server {
     public boolean ipFilter = false; // Spigot
     public boolean commandComplete = true; // Spigot
     public List<String> spamGuardExclusions; // Spigot
-    public int chunkGCPeriod = -1; // Spigot
-    public int chunkGCLoadThresh = 0; // Spigot
+
     private final BooleanWrapper online = new BooleanWrapper();
 
     private final class BooleanWrapper {
@@ -217,8 +218,8 @@ public final class CraftServer implements Server {
         ambientSpawn = configuration.getInt("spawn-limits.ambient");
         console.autosavePeriod = configuration.getInt("ticks-per.autosave");
         warningState = WarningState.value(configuration.getString("settings.deprecated-verbose"));
-        chunkGCPeriod = configuration.getInt("chunk-gc.period-in-ticks"); // Spigot
-        chunkGCLoadThresh = configuration.getInt("chunk-gc.load-threshold"); // Spigot
+        chunkGCPeriod = configuration.getInt("chunk-gc.period-in-ticks");
+        chunkGCLoadThresh = configuration.getInt("chunk-gc.load-threshold");
 
         updater = new AutoUpdater(new BukkitDLUpdaterService(configuration.getString("auto-updater.host")), getLogger(), configuration.getString("auto-updater.preferred-channel"));
         updater.setEnabled(false);
@@ -579,6 +580,8 @@ public final class CraftServer implements Server {
         ambientSpawn = configuration.getInt("spawn-limits.ambient");
         warningState = WarningState.value(configuration.getString("settings.deprecated-verbose"));
         console.autosavePeriod = configuration.getInt("ticks-per.autosave");
+        chunkGCPeriod = configuration.getInt("chunk-gc.period-in-ticks");
+        chunkGCLoadThresh = configuration.getInt("chunk-gc.load-threshold");
 
         for (WorldServer world : console.worlds) {
             world.difficulty = difficulty;

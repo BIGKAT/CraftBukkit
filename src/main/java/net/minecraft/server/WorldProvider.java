@@ -127,7 +127,7 @@ public abstract class WorldProvider {
 
     public static WorldProvider byDimension(int var0)
     {
-        return DimensionManager.createProviderFor(var0);
+        return DimensionManager.createProviderFor(var0); // Forge
     }
 
     /**
@@ -148,31 +148,55 @@ public abstract class WorldProvider {
      */
     public abstract String getName();
 
-    public void setDimension(int var1)
+    /*======================================= Forge Start =========================================*/
+
+    /**
+     * Sets the providers current dimension ID, used in default getSaveFolder()
+     * Added to allow default providers to be registered for multiple dimensions.
+     * 
+     * @param dim Dimension ID
+     */
+    public void setDimension(int dim)
     {
-        this.dimension = var1;
-    }
-    
-    public boolean isForgeOnlyWorld()
-    {
-    	return this.a instanceof SecondaryWorldServer && (this.dimension < -1 || this.dimension > 1);
+        this.dimension = dim;
     }
 
+    /**
+     * Returns the sub-folder of the world folder that this WorldProvider saves to.
+     * EXA: DIM1, DIM-1
+     * @return The sub-folder name to save this world's chunks to.
+     */
     public String getSaveFolder()
     {
-        return isForgeOnlyWorld() ? "DIM" + this.dimension : null;
+        return (dimension == 0 ? null : "DIM" + dimension);
     }
 
+    /**
+     * A message to display to the user when they transfer to this dimension.
+     *
+     * @return The message to be displayed
+     */
     public String getWelcomeMessage()
     {
         return this instanceof WorldProviderTheEnd ? "Entering the End" : (this instanceof WorldProviderHell ? "Entering the Nether" : null);
     }
 
+    /**
+     * A Message to display to the user when they transfer out of this dismension.
+     *
+     * @return The message to be displayed
+     */
     public String getDepartMessage()
     {
         return this instanceof WorldProviderTheEnd ? "Leaving the End" : (this instanceof WorldProviderHell ? "Leaving the Nether" : null);
     }
 
+    /**
+     * The dimensions movement factor. Relative to normal overworld.
+     * It is applied to the players position when they transfer dimensions.
+     * Exa: Nether movement is 8.0
+     * @return The movement factor
+     */
     public double getMovementFactor()
     {
         return this instanceof WorldProviderHell ? 8.0D : 1.0D;
@@ -181,24 +205,51 @@ public abstract class WorldProvider {
 
     public ChunkCoordinates getRandomizedSpawnPoint()
     {
-        ChunkCoordinates var1 = new ChunkCoordinates(this.a.getSpawn());
-        boolean var2 = this.a.getWorldData().getGameType() != EnumGamemode.ADVENTURE;
-        int var3 = this.type.getSpawnFuzz();
-        int var4 = var3 / 2;
+        ChunkCoordinates chunkCoords = new ChunkCoordinates(this.a.getSpawn());
+        boolean isAdventure = this.a.getWorldData().getGameType() != EnumGamemode.ADVENTURE;
+        int spawnFuzz = this.type.getSpawnFuzz();
+        int spawnFuzzHalf = spawnFuzz / 2;
 
-        if (!this.f && !var2)
+        if (!this.f && !isAdventure)
         {
-            var1.x += this.a.random.nextInt(var3) - var4;
-            var1.z += this.a.random.nextInt(var3) - var4;
-            var1.y = this.a.i(var1.x, var1.z);
+            chunkCoords.x += this.a.random.nextInt(spawnFuzz) - spawnFuzzHalf;
+            chunkCoords.z += this.a.random.nextInt(spawnFuzz) - spawnFuzzHalf;
+            chunkCoords.y = this.a.i(chunkCoords.x, chunkCoords.z);
         }
 
-        return var1;
+        return chunkCoords;
     }
 
-    public BiomeBase getBiomeGenForCoords(int var1, int var2)
+    /**
+     * Determine if the cusor on the map should 'spin' when rendered, like it does for the player in the nether.
+     * 
+     * @param entity The entity holding the map, playername, or frame-ENTITYID
+     * @param x X Position
+     * @param y Y Position
+     * @param z Z Postion
+     * @return True to 'spin' the cursor
+     */
+    public boolean shouldMapSpin(String entity, double x, double y, double z)
     {
-        return this.a.getBiomeGenForCoordsBody(var1, var2);
+        return dimension < 0;
+    }
+
+    /**
+     * Determines the dimension the player will be respawned in, typically this brings them back to the overworld.
+     * 
+     * @param player The player that is respawning
+     * @return The dimension to respawn the player in
+     */
+    public int getRespawnDimension(EntityPlayer player)
+    {
+        return 0;
+    }
+
+    /*======================================= Start Moved From World =========================================*/
+
+    public BiomeBase getBiomeGenForCoords(int x, int z)
+    {
+        return this.a.getBiomeGenForCoordsBody(x, z);
     }
 
     public boolean isDaytime()
@@ -206,11 +257,10 @@ public abstract class WorldProvider {
         return this.a.j < 4;
     }
 
-
-    public void setAllowedSpawnTypes(boolean var1, boolean var2)
+    public void setAllowedSpawnTypes(boolean allowHostile, boolean allowPeaceful)
     {
-        this.a.allowMonsters = var1;
-        this.a.allowAnimals = var2;
+        this.a.allowMonsters = allowHostile;
+        this.a.allowAnimals = allowPeaceful;
     }
 
     public void calculateInitialWeather()
@@ -228,19 +278,19 @@ public abstract class WorldProvider {
         this.a.worldData.setWeatherDuration(1);
     }
 
-    public boolean canBlockFreeze(int var1, int var2, int var3, boolean var4)
+    public boolean canBlockFreeze(int x, int y, int z, boolean byWater)
     {
-        return this.a.canBlockFreezeBody(var1, var2, var3, var4);
+        return this.a.canBlockFreezeBody(x, y, z, byWater);
     }
 
-    public boolean canSnowAt(int var1, int var2, int var3)
+    public boolean canSnowAt(int x, int y, int z)
     {
-        return this.a.canSnowAtBody(var1, var2, var3);
+        return this.a.canSnowAtBody(x, y, z);
     }
 
-    public void setWorldTime(long var1)
+    public void setWorldTime(long time)
     {
-        this.a.worldData.setDayTime(var1);
+        this.a.worldData.setDayTime(time);
     }
 
     public long getSeed()
@@ -255,23 +305,23 @@ public abstract class WorldProvider {
 
     public ChunkCoordinates getSpawnPoint()
     {
-        WorldData var1 = this.a.worldData;
-        return new ChunkCoordinates(var1.c(), var1.d(), var1.e());
+        WorldData info = this.a.worldData;
+        return new ChunkCoordinates(info.c(), info.d(), info.e());
     }
 
-    public void setSpawnPoint(int var1, int var2, int var3)
+    public void setSpawnPoint(int x, int y, int z)
     {
-        this.a.worldData.setSpawn(var1, var2, var3);
+        this.a.worldData.setSpawn(x, y, z);
     }
 
-    public boolean canMineBlock(EntityHuman var1, int var2, int var3, int var4)
+    public boolean canMineBlock(EntityHuman player, int x, int y, int z)
     {
-        return this.a.canMineBlockBody(var1, var2, var3, var4);
+        return this.a.canMineBlockBody(player, x, y, z);
     }
 
-    public boolean isBlockHighHumidity(int var1, int var2, int var3)
+    public boolean isBlockHighHumidity(int x, int y, int z)
     {
-        return this.a.getBiome(var1, var3).e();
+        return this.a.getBiome(x, z).e();
     }
 
     public int getHeight()
@@ -297,12 +347,12 @@ public abstract class WorldProvider {
         this.a.worldData.setThundering(false);
     }
 
-    public boolean canDoLightning(Chunk var1)
+    public boolean canDoLightning(Chunk chunk)
     {
         return true;
     }
 
-    public boolean canDoRainSnowIce(Chunk var1)
+    public boolean canDoRainSnowIce(Chunk chunk)
     {
         return true;
     }

@@ -26,45 +26,31 @@ public class CraftEnderDragonPart extends CraftComplexPart implements EnderDrago
         return "CraftEnderDragonPart";
     }
 
-	@Override
-	public void damage(int arg0) {
-		// TODO Auto-generated method stub
-		
-	}
+    public void damage(int amount) {
+        getParent().damage(amount);
+    }
 
-	@Override
-	public void damage(int arg0, Entity arg1) {
-		// TODO Auto-generated method stub
-		
-	}
+    public void damage(int amount, Entity source) {
+        getParent().damage(amount, source);
+    }
 
-	@Override
-	public int getHealth() {
-		// TODO Auto-generated method stub
-		return 0;
-	}
+    public int getHealth() {
+        return getParent().getHealth();
+    }
 
-	@Override
-	public int getMaxHealth() {
-		// TODO Auto-generated method stub
-		return 0;
-	}
+    public void setHealth(int health) {
+        getParent().setHealth(health);
+    }
 
-	@Override
-	public void resetMaxHealth() {
-		// TODO Auto-generated method stub
-		
-	}
+    public int getMaxHealth() {
+        return getParent().getMaxHealth();
+    }
 
-	@Override
-	public void setHealth(int arg0) {
-		// TODO Auto-generated method stub
-		
-	}
+    public void setMaxHealth(int health) {
+        getParent().setMaxHealth(health);
+    }
 
-	@Override
-	public void setMaxHealth(int arg0) {
-		// TODO Auto-generated method stub
-		
-	}
+    public void resetMaxHealth() {
+        getParent().resetMaxHealth();
+    }
 }

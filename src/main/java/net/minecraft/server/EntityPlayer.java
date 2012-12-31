@@ -61,7 +61,7 @@ public class EntityPlayer extends EntityHuman implements ICrafting {
         playerinteractmanager.player = this;
         this.playerInteractManager = playerinteractmanager;
         this.cq = minecraftserver.getPlayerList().o();
-        ChunkCoordinates chunkcoordinates = world.worldProvider.getRandomizedSpawnPoint();
+        ChunkCoordinates chunkcoordinates = world.worldProvider.getRandomizedSpawnPoint(); // Forge
         int i = chunkcoordinates.x;
         int j = chunkcoordinates.z;
         int k = chunkcoordinates.y;
@@ -191,7 +191,7 @@ public class EntityPlayer extends EntityHuman implements ICrafting {
                     Chunk chunk = (Chunk) iterator2.next();
 
                     this.p().getTracker().a(this, chunk);
-                    MinecraftForge.EVENT_BUS.post(new ChunkWatchEvent.Watch(chunk.l(), this));
+                    MinecraftForge.EVENT_BUS.post(new ChunkWatchEvent.Watch(chunk.l(), this)); // Forge
                 }
             }
         }
@@ -213,7 +213,8 @@ public class EntityPlayer extends EntityHuman implements ICrafting {
         }
 
         if (this.getHealth() != this.cl || this.cm != this.foodData.a() || this.foodData.e() == 0.0F != this.cn) {
-            this.playerConnection.sendPacket(new Packet8UpdateHealth(this.getHealth(), this.foodData.a(), this.foodData.e()));
+            // CraftBukkit - this.getHealth() -> this.getScaledHealth()
+            this.playerConnection.sendPacket(new Packet8UpdateHealth(this.getScaledHealth(), this.foodData.a(), this.foodData.e()));
             this.cl = this.getHealth();
             this.cm = this.foodData.a();
             this.cn = this.foodData.e() == 0.0F;
@@ -280,19 +281,19 @@ public class EntityPlayer extends EntityHuman implements ICrafting {
         }
 
         this.closeInventory();
+        // Forge start
         if (!keepInventory) {
-        	this.captureDrops = false;
+            this.captureDrops = false;
             PlayerDropsEvent var2 = new PlayerDropsEvent(this, damagesource, this.capturedDrops, this.lastDamageByPlayerTime > 0);
-
             if (!MinecraftForge.EVENT_BUS.post(var2)) {
                 Iterator var3 = this.capturedDrops.iterator();
-
                 while (var3.hasNext()) {
                     EntityItem var4 = (EntityItem)var3.next();
                     this.a(var4);
                 }
             }
         }
+        // Forge end
 
         // Update effects on player death
         this.updateEffects = true;
@@ -592,7 +593,7 @@ public class EntityPlayer extends EntityHuman implements ICrafting {
         this.playerConnection.sendPacket(new Packet104WindowItems(container.windowId, list));
         this.playerConnection.sendPacket(new Packet103SetSlot(-1, -1, this.inventory.getCarried()));
         // CraftBukkit start - send a Set Slot to update the crafting result slot
-        if (container.getBukkitView() == null) return;
+        if (container.getBukkitView() == null) return; // MCPC
         if (java.util.EnumSet.of(InventoryType.CRAFTING,InventoryType.WORKBENCH).contains(container.getBukkitView().getType())) {
             this.playerConnection.sendPacket(new Packet103SetSlot(container.windowId, 0, container.getSlot(0).getItem()));
         }
@@ -803,7 +804,7 @@ public class EntityPlayer extends EntityHuman implements ICrafting {
             this.newLevel = this.expLevel;
         }
 
-        this.health = 20;
+        this.health = this.maxHealth;
         this.fireTicks = 0;
         this.fallDistance = 0;
         this.foodData = new FoodMetaData();

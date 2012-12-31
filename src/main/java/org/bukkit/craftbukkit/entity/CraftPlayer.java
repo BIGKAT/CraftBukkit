@@ -212,15 +212,17 @@ public class CraftPlayer extends CraftHumanEntity implements Player {
     }
 
     public void kickPlayer(String message) {
+        // Spigot start
         kickPlayer(message, false);
     }
 
-    public void kickPlayer(String message, boolean async) {
+    public void kickPlayer(String message, boolean async){
         if (getHandle().playerConnection == null) return;
         if (!async && !Bukkit.isPrimaryThread()) throw new IllegalStateException("Cannot kick player from asynchronous thread!"); // Spigot
 
         getHandle().playerConnection.disconnect(message == null ? "" : message);
     }
+    // Spigot end
 
     public void setCompassTarget(Location loc) {
         if (getHandle().playerConnection == null) return;
@@ -352,6 +354,10 @@ public class CraftPlayer extends CraftHumanEntity implements Player {
     @Override
     public boolean teleport(Location location, PlayerTeleportEvent.TeleportCause cause) {
         EntityPlayer entity = getHandle();
+
+        if (getHealth() == 0 || entity.dead) {
+            return false;
+        }
 
         if (entity.playerConnection == null || entity.playerConnection.disconnected) {
             return false;
@@ -945,5 +951,15 @@ public class CraftPlayer extends CraftHumanEntity implements Player {
                 throw new IllegalArgumentException(value + " is too high");
             }
         }
+    }
+
+    public void setMaxHealth(int amount) {
+        super.setMaxHealth(amount);
+        getHandle().m(); // Update health
+    }
+
+    public void resetMaxHealth() {
+        super.resetMaxHealth();
+        getHandle().m(); // Update health
     }
 }

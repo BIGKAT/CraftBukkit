@@ -480,6 +480,7 @@ public class EntityMinecart extends Entity implements IInventory {
                 }
 
                 this.applyDragAndPushForces(); // Forge
+
                 Vec3D vec3d1 = this.a(this.locX, this.locY, this.locZ);
 
                 if (vec3d1 != null && vec3d != null) {
@@ -617,6 +618,7 @@ public class EntityMinecart extends Entity implements IInventory {
 
         if (BlockMinecartTrack.e(l)) {
             int i1= ((BlockMinecartTrack)Block.byId[l]).getBasicRailMetadata(this.world, this, i, j, k); // Forge
+
             d1 = (double) j;
 
             if (i1 >= 2 && i1 <= 5) {

@@ -37,7 +37,7 @@ import cpw.mods.fml.relauncher.SideOnly;
 public abstract class Entity {
 
     // CraftBukkit start
-    private static final int CURRENT_LEVEL = 1;
+    private static final int CURRENT_LEVEL = 2;
     static boolean isLevelAtLeast(NBTTagCompound tag, int level) {
         return tag.hasKey("Bukkit.updateLevel") && tag.getInt("Bukkit.updateLevel") >= level;
     }
@@ -1171,6 +1171,21 @@ public abstract class Entity {
         }
         // Forge end
             this.a(nbttagcompound);
+
+            // CraftBukkit start
+            if (this instanceof EntityLiving) {
+                EntityLiving entity = (EntityLiving) this;
+                // If the entity does not have a max health set yet, update it (it may have changed after loading the entity)
+                if (!nbttagcompound.hasKey("Bukkit.MaxHealth")) {
+                    entity.maxHealth = entity.getMaxHealth();
+                }
+
+                // Reset the persistence for tamed animals
+                if (entity instanceof EntityTameableAnimal && !isLevelAtLeast(nbttagcompound, 2) && !nbttagcompound.getBoolean("PersistenceRequired")) {
+                    entity.persistent = !entity.bj();
+                }
+            }
+            // CraftBukkit end
 
             // CraftBukkit start - exempt Vehicles from notch's sanity check
             if (!(this.getBukkitEntity() instanceof Vehicle)) {

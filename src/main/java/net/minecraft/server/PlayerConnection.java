@@ -61,7 +61,7 @@ public class PlayerConnection extends Connection {
     private MinecraftServer minecraftServer;
     public EntityPlayer player;
     private int f;
-    public int g;
+    public int g; // MCPC
     private boolean h;
     private int i;
     private long j;
@@ -173,7 +173,6 @@ public class PlayerConnection extends Connection {
             if (leaveMessage != null && leaveMessage.length() > 0) {
                 this.minecraftServer.getPlayerList().sendAll(new Packet3Chat(leaveMessage));
             }
-            getPlayer().disconnect(s);
             // CraftBukkit end
 
             this.minecraftServer.getPlayerList().disconnect(this.player);
@@ -377,8 +376,7 @@ public class PlayerConnection extends Connection {
                 // CraftBukkit end
                 double d11 = d8 * d8 + d9 * d9 + d10 * d10;
 
-                // forge - 100 to 150 because external stuff like ender dragons can push the player instantly around 120
-                if (d11 > 150.0D && this.checkMovement && (!this.minecraftServer.I() || !this.minecraftServer.H().equals(this.player.name))) { // CraftBukkit - Added this.checkMovement condition to solve this check being triggered by teleports
+                if (d11 > 100.0D && this.checkMovement && (!this.minecraftServer.I() || !this.minecraftServer.H().equals(this.player.name))) { // CraftBukkit - Added this.checkMovement condition to solve this check being triggered by teleports
                     logger.warning(this.player.name + " moved too quickly! " + d4 + "," + d6 + "," + d7 + " (" + d8 + ", " + d9 + ", " + d10 + ")");
                     this.a(this.y, this.z, this.q, this.player.yaw, this.player.pitch);
                     return;
@@ -569,10 +567,10 @@ public class PlayerConnection extends Connection {
 
             if (packet14blockdig.e == 0) {
                 // CraftBukkit start
-                if (i1 < this.server.getSpawnRadius() && !flag) {
-                    CraftEventFactory.callPlayerInteractEvent(this.player, Action.LEFT_CLICK_BLOCK, i, j, k, l, this.player.inventory.getItemInHand());
-                    ForgeEventFactory.onPlayerInteract(this.player, PlayerInteractEvent.Action.LEFT_CLICK_BLOCK, i, j, k, 0); // Forge
-                    this.player.playerConnection.sendPacket(new Packet53BlockChange(i, j, k, worldserver));
+                if (j1 < this.server.getSpawnRadius() && !flag) {
+                    CraftEventFactory.callPlayerInteractEvent(this.player, Action.LEFT_CLICK_BLOCK, j, k, l, i1, this.player.inventory.getItemInHand());
+                    ForgeEventFactory.onPlayerInteract(this.player, PlayerInteractEvent.Action.LEFT_CLICK_BLOCK, j, k, l, 0); // Forge
+                    this.player.playerConnection.sendPacket(new Packet53BlockChange(j, k, l, worldserver));
                     // Update any tile entity data for this block
                     TileEntity tileentity = worldserver.getTileEntity(j, k, l);
                     if (tileentity != null) {
@@ -1102,9 +1100,6 @@ public class PlayerConnection extends Connection {
     }
 
     public void a(Packet255KickDisconnect packet255kickdisconnect) {
-        // CraftBukkit start
-        getPlayer().disconnect("disconnect.quitting");
-        // CraftBukkit end
         this.networkManager.a("disconnect.quitting", new Object[0]);
     }
 

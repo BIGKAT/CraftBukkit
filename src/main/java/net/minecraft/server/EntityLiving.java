@@ -50,7 +50,7 @@ public abstract class EntityLiving extends Entity {
     public float aQ;
     protected int health = this.getMaxHealth();
     public int aS;
-    public int aT; // MCPC
+    public int aT; // MCPC - protected -> public
     public int aU;
     public int hurtTicks;
     public int aW;

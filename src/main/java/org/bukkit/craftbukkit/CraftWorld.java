@@ -1,6 +1,7 @@
 package org.bukkit.craftbukkit;
 
 import java.io.File;
+import java.util.Iterator;
 import java.util.Set;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -58,8 +59,8 @@ public class CraftWorld implements World {
     private int animalSpawn = -1;
     private int waterAnimalSpawn = -1;
     private int ambientSpawn = -1;
-    private int loadCnt = 0; // Spigot
-    private int chunkGCTickCount; // Spigot
+    private int chunkLoadCount = 0;
+    private int chunkGCTickCount;
 
     private static final Random rand = new Random();
 
@@ -68,6 +69,10 @@ public class CraftWorld implements World {
         this.generator = gen;
 
         environment = env;
+
+        if (server.chunkGCPeriod > 0) {
+            chunkGCTickCount = rand.nextInt(server.chunkGCPeriod);
+        }
         // Spigot Start
         org.bukkit.configuration.file.YamlConfiguration configuration = server.configuration;
         String name;
@@ -125,9 +130,6 @@ public class CraftWorld implements World {
         server.getLogger().info("Tree Growth Modifier: " + treeGrowthModifier);
         server.getLogger().info("Mushroom Growth Modifier: " + mushroomGrowthModifier);
         server.getLogger().info("-------------------------------------------------");
-        if(this.server.chunkGCPeriod > 0) {
-            chunkGCTickCount = rand.nextInt(this.server.chunkGCPeriod);
-        }
         // Spigot end
     }
     // Spigot Start
@@ -305,7 +307,7 @@ public class CraftWorld implements World {
     }
 
     public boolean loadChunk(int x, int z, boolean generate) {
-        this.loadCnt++; // Spigot
+        chunkLoadCount++;
         if (generate) {
             // Use the default variant of loadChunk when generate == true.
             return world.chunkProviderServer.getChunkAt(x, z) != null;
@@ -1313,28 +1315,34 @@ public class CraftWorld implements World {
     public boolean isGameRule(String rule) {
         return getHandle().getGameRules().e(rule);
     }
-    
-    // Spigot start
+
     public void processChunkGC() {
         chunkGCTickCount++;
-        if (((this.server.chunkGCLoadThresh > 0) && (loadCnt >= this.server.chunkGCLoadThresh)) ||
-                ((this.server.chunkGCPeriod > 0) && (chunkGCTickCount >= this.server.chunkGCPeriod))) {        
+
+        if (chunkLoadCount >= server.chunkGCLoadThresh && server.chunkGCLoadThresh > 0) {
+            chunkLoadCount = 0;
+        } else if (chunkGCTickCount >= server.chunkGCPeriod && server.chunkGCPeriod > 0) {
             chunkGCTickCount = 0;
-            loadCnt = 0;
-            ChunkProviderServer cps = this.world.chunkProviderServer;
-            java.util.Iterator<net.minecraft.server.Chunk> iter = cps.chunks.values().iterator();
-            while (iter.hasNext()) {
-                net.minecraft.server.Chunk c = iter.next();
-                /* If in use, skip it */
-                if (this.isChunkInUse(c.x, c.z)) {
-                    continue;
-                }
-                if (cps.unloadQueue.contains(c.x, c.z)) { /* Already unloading? */
-                    continue;
-                }
-                cps.queueUnload(c.x,  c.z); /* Add unload request */
+        } else {
+            return;
+        }
+
+        ChunkProviderServer cps = world.chunkProviderServer;
+        Iterator<net.minecraft.server.Chunk> iter = cps.chunks.values().iterator();
+        while (iter.hasNext()) {
+            net.minecraft.server.Chunk chunk = iter.next();
+            // If in use, skip it
+            if (isChunkInUse(chunk.x, chunk.z)) {
+                continue;
             }
+
+            // Already unloading?
+            if (cps.unloadQueue.contains(chunk.x, chunk.z)) {
+                continue;
+            }
+
+            // Add unload request
+            cps.queueUnload(chunk.x,  chunk.z);
         }
     }
-    // Spigot end
 }

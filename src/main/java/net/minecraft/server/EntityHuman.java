@@ -440,8 +440,8 @@ public abstract class EntityHuman extends EntityLiving implements ICommandListen
         ItemStack stack = this.inventory.getItemInHand();
         if (stack == null) return null;
         if (stack.getItem().onDroppedByPlayer(stack, this)) {
-        	int count = flag && this.inventory.getItemInHand() != null ? this.inventory.getItemInHand().count : 1;
-        	return ForgeHooks.onPlayerTossEvent(this, this.inventory.splitStack(this.inventory.itemInHandIndex, 1));
+            int count = flag && this.inventory.getItemInHand() != null ? this.inventory.getItemInHand().count : 1;
+            return ForgeHooks.onPlayerTossEvent(this, this.inventory.splitStack(this.inventory.itemInHandIndex, 1));
         }
         return null;
         // Forge end
@@ -521,10 +521,10 @@ public abstract class EntityHuman extends EntityLiving implements ICommandListen
         float f = stack == null ? 1.0F : stack.getItem().getStrVsBlock(stack, block, meta);
         // Forge end
         int i = EnchantmentManager.getDigSpeedEnchantmentLevel(this);
-        ItemStack itemstack = this.inventory.getItemInHand();
 
-        if (i > 0 && itemstack != null) {
-        	float f1 = (float) (i * i + 1);
+        ItemStack itemstack = this.inventory.getItemInHand(); // MCPC
+        if (i > 0 && itemstack != null) { // MCPC
+            float f1 = (float) (i * i + 1);
             // Forge start
             boolean canHarvest = ForgeHooks.canHarvestBlock(block, this, meta);
             ForgeHooks.canHarvestBlock(block, this, meta);
@@ -1103,9 +1103,9 @@ public abstract class EntityHuman extends EntityLiving implements ICommandListen
         this.e_();
         ChunkCoordinates chunkcoordinates = this.ca;
         ChunkCoordinates chunkcoordinates1 = this.ca;
+
         // Forge start
         Block block = chunkcoordinates == null ? null : Block.byId[this.world.getTypeId(chunkcoordinates.x, chunkcoordinates.y, chunkcoordinates.z)];
-
         if (chunkcoordinates != null && block != null && block.isBed(this.world, chunkcoordinates.x, chunkcoordinates.y, chunkcoordinates.z, this)) {
             block.setBedOccupied(this.world, chunkcoordinates.x, chunkcoordinates.y, chunkcoordinates.z, this, false);
             chunkcoordinates1 = block.getBedSpawnPosition(this.world, chunkcoordinates.x, chunkcoordinates.y, chunkcoordinates.z, this);
@@ -1402,7 +1402,7 @@ public abstract class EntityHuman extends EntityLiving implements ICommandListen
     }
 
     public boolean cd() {
-        return this.getHealth() > 0 && this.getHealth() < this.getMaxHealth();
+        return this.getHealth() > 0 && this.getHealth() < this.maxHealth; // CraftBukkit - this.getMaxHealth() -> this.maxHealth
     }
 
     public void a(ItemStack itemstack, int i) {

@@ -46,7 +46,7 @@ public class WorldServer extends World implements org.bukkit.BlockChangeDelegate
     private final PortalTravelAgent P;
     private NoteDataList[] Q = new NoteDataList[] { new NoteDataList((EmptyClass2) null), new NoteDataList((EmptyClass2) null)};
     private int R = 0;
-    public static final StructurePieceTreasure[] S = new StructurePieceTreasure[] { new StructurePieceTreasure(Item.STICK.id, 0, 1, 3, 10), new StructurePieceTreasure(Block.WOOD.id, 0, 1, 3, 10), new StructurePieceTreasure(Block.LOG.id, 0, 1, 3, 10), new StructurePieceTreasure(Item.STONE_AXE.id, 0, 1, 1, 3), new StructurePieceTreasure(Item.WOOD_AXE.id, 0, 1, 1, 5), new StructurePieceTreasure(Item.STONE_PICKAXE.id, 0, 1, 1, 3), new StructurePieceTreasure(Item.WOOD_PICKAXE.id, 0, 1, 1, 5), new StructurePieceTreasure(Item.APPLE.id, 0, 2, 3, 5), new StructurePieceTreasure(Item.BREAD.id, 0, 2, 3, 3)};
+    public static final StructurePieceTreasure[] S = new StructurePieceTreasure[] { new StructurePieceTreasure(Item.STICK.id, 0, 1, 3, 10), new StructurePieceTreasure(Block.WOOD.id, 0, 1, 3, 10), new StructurePieceTreasure(Block.LOG.id, 0, 1, 3, 10), new StructurePieceTreasure(Item.STONE_AXE.id, 0, 1, 1, 3), new StructurePieceTreasure(Item.WOOD_AXE.id, 0, 1, 1, 5), new StructurePieceTreasure(Item.STONE_PICKAXE.id, 0, 1, 1, 3), new StructurePieceTreasure(Item.WOOD_PICKAXE.id, 0, 1, 1, 5), new StructurePieceTreasure(Item.APPLE.id, 0, 2, 3, 5), new StructurePieceTreasure(Item.BREAD.id, 0, 2, 3, 3)}; // MCPC
     private IntHashMap entitiesById;
 
     // CraftBukkit start
@@ -195,6 +195,8 @@ public class WorldServer extends World implements org.bukkit.BlockChangeDelegate
         this.P.a(this.getTime());
         this.methodProfiler.b();
         this.V();
+
+        this.getWorld().processChunkGC(); // CraftBukkit
     }
 
     public BiomeMeta a(EnumCreatureType enumcreaturetype, int i, int j, int k) {
@@ -281,17 +283,15 @@ public class WorldServer extends World implements org.bukkit.BlockChangeDelegate
     protected void g() {
         // Spigot start
         this.aggregateTicks--;
-        if (this.aggregateTicks != 0)
-            return;
+        if (this.aggregateTicks != 0) return;
         aggregateTicks = this.getWorld().aggregateTicks;
         // Spigot end
         super.g();
         int i = 0;
         int j = 0;
         // CraftBukkit start
-        // Iterator iterator = this.chunkTickList.iterator(); // CraftBukkit
+        // Iterator iterator = this.chunkTickList.iterator();
 
-        // CraftBukkit start
         // Spigot start
         for (TLongShortIterator iter = chunkTickList.iterator(); iter.hasNext();) {
             iter.advance();
@@ -417,8 +417,10 @@ public class WorldServer extends World implements org.bukkit.BlockChangeDelegate
 
     public void a(int i, int j, int k, int l, int i1, int j1) {
         NextTickListEntry nextticklistentry = new NextTickListEntry(i, j, k, l);
+        // Forge start
         boolean persist = this.getPersistentChunks().containsKey(new ChunkCoordIntPair(nextticklistentry.a >> 4, nextticklistentry.c >> 4));
         int b0 = persist ? 0 : 8;
+        // Forge end
 
         if (this.d && l > 0) {
             if (Block.byId[l].l()) {
@@ -441,12 +443,13 @@ public class WorldServer extends World implements org.bukkit.BlockChangeDelegate
                 nextticklistentry.a((long) i1 + this.worldData.getTime());
                 nextticklistentry.a(j1);
             }
-
+            // Spigot start
             // if (!this.L.contains(nextticklistentry)) {
             // this.L.add(nextticklistentry);
             // this.M.add(nextticklistentry);
             // }
-            addNextTickIfNeeded(nextticklistentry); // CraftBukkit
+            addNextTickIfNeeded(nextticklistentry);
+            // Spigot end
         }
     }
 
@@ -456,17 +459,18 @@ public class WorldServer extends World implements org.bukkit.BlockChangeDelegate
         if (l > 0) {
             nextticklistentry.a((long) i1 + this.worldData.getTime());
         }
-
+        // Spigot start
         //if (!this.L.contains(nextticklistentry)) {
         //    this.L.add(nextticklistentry);
         //    this.M.add(nextticklistentry);
         //}
-        addNextTickIfNeeded(nextticklistentry); // CraftBukkit
+        addNextTickIfNeeded(nextticklistentry);
+        // Spigot end
     }
 
     public void tickEntities() {
-        if (this.players.isEmpty() && this.getPersistentChunks().isEmpty()) { // CraftBukkit - this prevents entity cleanup, other issues on servers with no players
-            if (this.emptyTime++ >= 1200) { // forge - enabled again with the extra check
+        if (this.players.isEmpty() && this.getPersistentChunks().isEmpty()) { // Forge
+            if (this.emptyTime++ >= 1200) {
                 return;
             }
         } else {
@@ -483,9 +487,9 @@ public class WorldServer extends World implements org.bukkit.BlockChangeDelegate
     public boolean a(boolean flag) {
         int i = this.M.size();
 
-        //if (i != this.L.size()) { // CraftBukkit
-        //    throw new IllegalStateException("TickNextTick list out of synch");
-        //} else { // CraftBukkit
+        //if (i != this.L.size()) { // Spigot
+        //    throw new IllegalStateException("TickNextTick list out of synch"); // Spigot
+        //} else { // Spigot
         if (i > 1000) {
             // CraftBukkit start - if the server has too much to process over time, try to alleviate that
             if (i > 20 * 1000) {
@@ -496,18 +500,22 @@ public class WorldServer extends World implements org.bukkit.BlockChangeDelegate
             // CraftBukkit end
         }
 
-        for (int j = 0; j < i; ++j) {
-            NextTickListEntry nextticklistentry = (NextTickListEntry) this.M.first();
+            for (int j = 0; j < i; ++j) {
+                NextTickListEntry nextticklistentry = (NextTickListEntry) this.M.first();
 
             if (!flag && nextticklistentry.e > this.worldData.getTime()) {
                 break;
             }
 
+            // Spigot start
             //this.M.remove(nextticklistentry);
             //this.L.remove(nextticklistentry);
-            this.removeNextTickIfNeeded(nextticklistentry); // CraftBukkit
+            this.removeNextTickIfNeeded(nextticklistentry);
+            // Spigot end
+            // Forge start
             boolean persist = this.getPersistentChunks().containsKey(new ChunkCoordIntPair(nextticklistentry.a >> 4, nextticklistentry.c >> 4));
             int b0 = persist ? 0 : 8;
+            // Forge end
 
             if (this.d(nextticklistentry.a - b0, nextticklistentry.b - b0, nextticklistentry.c - b0, nextticklistentry.a + b0, nextticklistentry.b + b0, nextticklistentry.c + b0)) {
                 int k = this.getTypeId(nextticklistentry.a, nextticklistentry.b, nextticklistentry.c);
@@ -527,20 +535,20 @@ public class WorldServer extends World implements org.bukkit.BlockChangeDelegate
                             l = -1;
                         }
 
-                        CrashReportSystemDetails.a(crashreportsystemdetails, nextticklistentry.a, nextticklistentry.b, nextticklistentry.c, k, l);
-                        throw new ReportedException(crashreport);
+                            CrashReportSystemDetails.a(crashreportsystemdetails, nextticklistentry.a, nextticklistentry.b, nextticklistentry.c, k, l);
+                            throw new ReportedException(crashreport);
+                        }
                     }
                 }
             }
-        }
 
-        return !this.M.isEmpty();
+            return !this.M.isEmpty();
         // } // Spigot
     }
 
     public List a(Chunk chunk, boolean flag) {
-        return this.getNextTickEntriesForChunk(chunk, flag); // CraftBukkit
-        /* CraftBukkit start
+        return this.getNextTickEntriesForChunk(chunk, flag); // Spigot
+        /* Spigot start
         ArrayList arraylist = null;
         ChunkCoordIntPair chunkcoordintpair = chunk.l();
         int i = chunkcoordintpair.x << 4;
@@ -567,7 +575,7 @@ public class WorldServer extends World implements org.bukkit.BlockChangeDelegate
         }
 
         return arraylist;
-        // CraftBukkit end */
+        // Spigot end */
     }
 
     public void entityJoinedWorld(Entity entity, boolean flag) {

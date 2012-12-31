@@ -184,7 +184,10 @@ public class BlockLeaves extends BlockTransparant implements IShearable { // For
     public int a(int i, int j) {
         return (j & 3) == 1 ? this.textureId + 80 : ((j & 3) == 3 ? this.textureId + 144 : this.textureId);
     }
-    
+
+    protected ItemStack f_(int i) {
+        return new ItemStack(this.id, 1, i & 3);
+    }
     // Forge start
     public boolean isShearable(ItemStack itemstack, World world, int i, int j, int k) {
         return true;
@@ -204,8 +207,4 @@ public class BlockLeaves extends BlockTransparant implements IShearable { // For
         return true;
     }
     // Forge end
-
-    protected ItemStack f_(int i) {
-        return new ItemStack(this.id, 1, i & 3);
-    }
 }

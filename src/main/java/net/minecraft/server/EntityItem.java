@@ -117,7 +117,7 @@ public class EntityItem extends Entity {
         // Forge start
         ItemStack item = getDataWatcher().f(10);
         if (!this.world.isStatic && this.age >= this.lifespan) {
-        	if (item != null) {
+            if (item != null) {
                 ItemExpireEvent event = new ItemExpireEvent(this, this.getItemStack().getItem() == null ? 6000 : this.getItemStack().getItem().getEntityLifespan(this.getItemStack(), this.world));
                 if (MinecraftForge.EVENT_BUS.post(event)) {
                     this.lifespan += event.extraLife;
@@ -127,12 +127,12 @@ public class EntityItem extends Entity {
                         this.age = 0;
                         return;
                     }
+                    // CraftBukkit end
                     else this.die();
                 }
             }
-        	else {
+            else {
                 this.die();
-            // CraftBukkit end
             }
             // Forge end
         }
@@ -237,8 +237,10 @@ public class EntityItem extends Entity {
             this.die();
         }
         // CraftBukkit end
-        ItemStack item = getDataWatcher().f(10); // Forge
-        if (this.getItemStack() == null || this.getItemStack().count <= 0) { // Forge
+        // Forge start
+        ItemStack item = getDataWatcher().f(10);
+        if (this.getItemStack() == null || this.getItemStack().count <= 0) {
+            // Forge end
             this.die();
         }
         // Forge start
@@ -249,8 +251,9 @@ public class EntityItem extends Entity {
     }
 
     public void c_(EntityHuman entityhuman) {
-        if ((!this.world.isStatic) && (this.getItemStack() != null)) { // CraftBukkit - nullcheck
-        	ItemStack itemstack = this.getItemStack();
+        if (!this.world.isStatic) {
+            ItemStack itemstack = this.getItemStack();
+            int i = itemstack.count;
             // Forge start
             if (this.pickupDelay > 0)
                 return;
@@ -259,8 +262,6 @@ public class EntityItem extends Entity {
             if (MinecraftForge.EVENT_BUS.post(var2))
                 return;
             // Forge end
-
-            int i = this.getItemStack().count;
 
             // CraftBukkit start
             int canHold = entityhuman.inventory.canHold(itemstack);

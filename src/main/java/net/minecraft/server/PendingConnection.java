@@ -26,7 +26,7 @@ public class PendingConnection extends Connection {
     public boolean c = false;
     private MinecraftServer server;
     private int g = 0;
-    public String h = null;
+    public String h = null; // MCPC
     private volatile boolean i = false;
     private String loginKey = Long.toString(random.nextLong(), 16); // CraftBukkit - Security fix
     private boolean k = false;
@@ -224,11 +224,10 @@ public class PendingConnection extends Connection {
         return pendingconnection.h;
     }
 
-    // Forge start
-    public static boolean a(PendingConnection pendingconnection, boolean flag) {
+    public static boolean a(PendingConnection pendingconnection, boolean flag) { // MCPC
         return pendingconnection.i = flag;
     }
-    
+    // Forge start    
     public void a(Packet250CustomPayload var1) {
         FMLNetworkHandler.handlePacket250Packet(var1, this.networkManager, this);
     }

@@ -328,6 +328,14 @@ public abstract class PlayerList {
     }
 
     public EntityPlayer moveToWorld(EntityPlayer entityplayer, int i, boolean flag, Location location) {
+        // Forge start
+        World world = this.server.getWorldServer(i);
+        if (world == null) {
+            i = 0;
+        } else if (!world.worldProvider.e()) {
+            i = world.worldProvider.getRespawnDimension(entityplayer);
+        }
+        // Forge end
         // CraftBukkit end
         entityplayer.p().getTracker().untrackPlayer(entityplayer);
         // entityplayer.p().getTracker().untrackEntity(entityplayer); // CraftBukkit
@@ -342,6 +350,7 @@ public abstract class PlayerList {
         org.bukkit.World fromWorld = entityplayer1.getBukkitEntity().getWorld();
         entityplayer1.viewingCredits = false;
         entityplayer1.copyTo(entityplayer, flag);
+        entityplayer1.dimension = i; // Forge
 
         ChunkCoordinates chunkcoordinates1;
 
@@ -425,7 +434,7 @@ public abstract class PlayerList {
         return entityplayer1;
     }
 
-    public void transferPlayerToDimension(EntityPlayer var1, int var2, PortalTravelAgent var3) {
+    public void changeDimension(EntityPlayer var1, int var2, PortalTravelAgent var3) {
         changeDimension(var1, var2); // Forge
     }
 

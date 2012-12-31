@@ -1,7 +1,6 @@
 package net.minecraft.server;
 
 import java.util.ArrayList;
-
 import mcpc.com.google.common.collect.ObjectArrays; // Forge
 
 public abstract class Enchantment {
@@ -99,7 +98,23 @@ public abstract class Enchantment {
     public boolean canEnchant(ItemStack itemstack) {
         return this.slot.canEnchant(itemstack.getItem());
     }
+    
+    static {
+        ArrayList arraylist = new ArrayList();
+        Enchantment[] aenchantment = byId;
+        int i = aenchantment.length;
 
+        for (int j = 0; j < i; ++j) {
+            Enchantment enchantment = aenchantment[j];
+
+
+            if (enchantment != null) {
+                arraylist.add(enchantment);
+            }
+        }
+
+        c = (Enchantment[]) arraylist.toArray(new Enchantment[0]);
+    }
     // Forge start
     /**
     * This applies specifically to applying at the enchanting table. The other method {@link #func_92037_a(ItemStack)}
@@ -122,21 +137,4 @@ public abstract class Enchantment {
         ObjectArrays.concat(c, enchantment);
     }
     // Forge end
-    
-    static {
-        ArrayList arraylist = new ArrayList();
-        Enchantment[] aenchantment = byId;
-        int i = aenchantment.length;
-
-        for (int j = 0; j < i; ++j) {
-            Enchantment enchantment = aenchantment[j];
-
-
-            if (enchantment != null) {
-                arraylist.add(enchantment);
-            }
-        }
-
-        c = (Enchantment[]) arraylist.toArray(new Enchantment[0]);
-    }
 }
