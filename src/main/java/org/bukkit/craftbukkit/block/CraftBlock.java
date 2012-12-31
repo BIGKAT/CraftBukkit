@@ -28,12 +28,15 @@ import org.bukkit.plugin.Plugin;
 import org.bukkit.util.BlockVector;
 
 public class CraftBlock implements Block {
+
     private final CraftChunk chunk;
     private final int x;
     private final int y;
     private final int z;
-    private static final Biome BIOME_MAPPING[];
-    private static final BiomeBase BIOMEBASE_MAPPING[];
+    // MCPC start - add support for ExtraBiomesXL
+    private static final Biome[] BIOME_MAPPING = new Biome[BiomeBase.biomes.length];
+    private static final BiomeBase[] BIOMEBASE_MAPPING = new BiomeBase[BiomeBase.biomes.length];
+    // MCPC end
 
     public CraftBlock(CraftChunk chunk, int x, int y, int z) {
         this.x = x;
@@ -147,7 +150,6 @@ public class CraftBlock implements Block {
         return (byte) chunk.getHandle().getBrightness(EnumSkyBlock.BLOCK, this.x & 0xF, this.y & 0xFF, this.z & 0xF);
     }
 
-
     public Block getFace(final BlockFace face) {
         return getRelative(face, 1);
     }
@@ -172,10 +174,7 @@ public class CraftBlock implements Block {
         BlockFace[] values = BlockFace.values();
 
         for (BlockFace face : values) {
-            if ((this.getX() + face.getModX() == block.getX()) &&
-                (this.getY() + face.getModY() == block.getY()) &&
-                (this.getZ() + face.getModZ() == block.getZ())
-            ) {
+            if ((this.getX() + face.getModX() == block.getX()) && (this.getY() + face.getModY() == block.getY()) && (this.getZ() + face.getModZ() == block.getZ())) {
                 return face;
             }
         }
@@ -303,8 +302,10 @@ public class CraftBlock implements Block {
 
     @Override
     public boolean equals(Object o) {
-        if (o == this) return true;
-        if (!(o instanceof CraftBlock)) return false;
+        if (o == this)
+            return true;
+        if (!(o instanceof CraftBlock))
+            return false;
         CraftBlock other = (CraftBlock) o;
 
         return this.x == other.x && this.y == other.y && this.z == other.z && this.getWorld().equals(other.getWorld());
@@ -327,12 +328,18 @@ public class CraftBlock implements Block {
         int power = 0;
         BlockRedstoneWire wire = (BlockRedstoneWire) net.minecraft.server.Block.REDSTONE_WIRE;
         net.minecraft.server.World world = chunk.getHandle().world;
-        if ((face == BlockFace.DOWN || face == BlockFace.SELF) && world.isBlockFacePowered(x, y - 1, z, 0)) power = wire.getPower(world, x, y - 1, z, power);
-        if ((face == BlockFace.UP || face == BlockFace.SELF) && world.isBlockFacePowered(x, y + 1, z, 1)) power = wire.getPower(world, x, y + 1, z, power);
-        if ((face == BlockFace.EAST || face == BlockFace.SELF) && world.isBlockFacePowered(x + 1, y, z, 2)) power = wire.getPower(world, x + 1, y, z, power);
-        if ((face == BlockFace.WEST || face == BlockFace.SELF) && world.isBlockFacePowered(x - 1, y, z, 3)) power = wire.getPower(world, x - 1, y, z, power);
-        if ((face == BlockFace.NORTH || face == BlockFace.SELF) && world.isBlockFacePowered(x, y, z - 1, 4)) power = wire.getPower(world, x, y, z - 1, power);
-        if ((face == BlockFace.SOUTH || face == BlockFace.SELF) && world.isBlockFacePowered(x, y, z + 1, 5)) power = wire.getPower(world, x, y, z - 1, power);
+        if ((face == BlockFace.DOWN || face == BlockFace.SELF) && world.isBlockFacePowered(x, y - 1, z, 0))
+            power = wire.getPower(world, x, y - 1, z, power);
+        if ((face == BlockFace.UP || face == BlockFace.SELF) && world.isBlockFacePowered(x, y + 1, z, 1))
+            power = wire.getPower(world, x, y + 1, z, power);
+        if ((face == BlockFace.EAST || face == BlockFace.SELF) && world.isBlockFacePowered(x + 1, y, z, 2))
+            power = wire.getPower(world, x + 1, y, z, power);
+        if ((face == BlockFace.WEST || face == BlockFace.SELF) && world.isBlockFacePowered(x - 1, y, z, 3))
+            power = wire.getPower(world, x - 1, y, z, power);
+        if ((face == BlockFace.NORTH || face == BlockFace.SELF) && world.isBlockFacePowered(x, y, z - 1, 4))
+            power = wire.getPower(world, x, y, z - 1, power);
+        if ((face == BlockFace.SOUTH || face == BlockFace.SELF) && world.isBlockFacePowered(x, y, z + 1, 5))
+            power = wire.getPower(world, x, y, z - 1, power);
         return power > 0 ? power : (face == BlockFace.SELF ? isBlockIndirectlyPowered() : isBlockFaceIndirectlyPowered(face)) ? 15 : 0;
     }
 
@@ -422,8 +429,6 @@ public class CraftBlock implements Block {
 
     /* Build biome index based lookup table for BiomeBase to Biome mapping */
     static {
-        BIOME_MAPPING = new Biome[BiomeBase.biomes.length];
-        BIOMEBASE_MAPPING = new BiomeBase[Biome.values().length];
         BIOME_MAPPING[BiomeBase.SWAMPLAND.id] = Biome.SWAMPLAND;
         BIOME_MAPPING[BiomeBase.FOREST.id] = Biome.FOREST;
         BIOME_MAPPING[BiomeBase.TAIGA.id] = Biome.TAIGA;
@@ -450,17 +455,16 @@ public class CraftBlock implements Block {
         /* Sanity check - we should have a record for each record in the BiomeBase.a table */
         /* Helps avoid missed biomes when we upgrade bukkit to new code with new biomes */
         for (int i = 0; i < BIOME_MAPPING.length; i++) {
-      if ((BiomeBase.biomes[i] != null) && (BIOME_MAPPING[i] == null)) 
-      {
-            String name = BiomeBase.biomes[i].y;
-            int id = BiomeBase.biomes[i].id;
+            if ((BiomeBase.biomes[i] != null) && (BIOME_MAPPING[i] == null)) {
+                String name = BiomeBase.biomes[i].y;
+                int id = BiomeBase.biomes[i].id;
 
-            System.out.println("Adding biome mapping " + BiomeBase.biomes[i].id + " " + name + " at BiomeBase[" + i + "]");
-            net.minecraftforge.common.EnumHelper.addBukkitBiome(name); // Forge
-            BIOME_MAPPING[BiomeBase.biomes[i].id] = ((Biome)Enum.valueOf(Biome.class, name));
+                System.out.println("Adding biome mapping " + BiomeBase.biomes[i].id + " " + name + " at BiomeBase[" + i + "]");
+                net.minecraftforge.common.EnumHelper.addBukkitBiome(name); // Forge
+                BIOME_MAPPING[BiomeBase.biomes[i].id] = ((Biome) Enum.valueOf(Biome.class, name));
             }
-      if (BIOME_MAPPING[i] != null)
-        BIOMEBASE_MAPPING[BIOME_MAPPING[i].ordinal()] = BiomeBase.biomes[i];
+            if (BIOME_MAPPING[i] != null)
+                BIOMEBASE_MAPPING[BIOME_MAPPING[i].ordinal()] = BiomeBase.biomes[i];
         }
     }
 
