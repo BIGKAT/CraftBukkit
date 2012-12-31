@@ -190,6 +190,11 @@ public abstract class MinecraftServer implements ICommandSender, Runnable, IPlay
     public java.util.Queue<Runnable> processQueue = new java.util.concurrent.ConcurrentLinkedQueue<Runnable>();
     public int autosavePeriod;
     // CraftBukkit end
+    // Spigot start
+    private static final int TPS = 20;
+    private static final int TICK_TIME = 1000000000 / TPS;
+    public static double currentTPS = 0;
+    // Spigot end
 
     public MinecraftServer(OptionSet options)   // CraftBukkit - signature file -> OptionSet
     {
@@ -592,94 +597,71 @@ public abstract class MinecraftServer implements ICommandSender, Runnable, IPlay
         {
             if (this.startServer())
             {
-                long var1 = System.currentTimeMillis();
-
-                for (long var50 = 0L; this.serverRunning; this.serverIsRunning = true)
+                // Spigot start
+                for (long lastTick = 0L; this.serverRunning; this.serverIsRunning = true)
                 {
-                    long var5 = System.currentTimeMillis();
-                    long var7 = var5 - var1;
+                    long curTime = System.nanoTime();
+                    long wait = TICK_TIME - (curTime - lastTick);
 
-                    if (var7 > 2000L && var1 - this.timeOfLastWarning >= 15000L)
+                    if (wait > 0)
                     {
-                        if (this.server.getWarnOnOverload()) // CraftBukkit - Added option to suppress warning messages
-                        {
-                            logger.warning("Can\'t keep up! Did the system time change, or is the server overloaded?");
-                        }
-
-                        var7 = 2000L;
-                        this.timeOfLastWarning = var1;
+                        Thread.sleep(wait / 1000000);
+                        continue;
                     }
 
-                    if (var7 < 0L)
-                    {
-                        logger.warning("Time ran backwards! Did the system time change?");
-                        var7 = 0L;
-                    }
-
-                    var50 += var7;
-                    var1 = var5;
-
-                    if (this.worlds.get(0).areAllPlayersAsleep())   // CraftBukkit
-                    {
-                        this.tick();
-                        var50 = 0L;
-                    }
-                    else
-                    {
-                        while (var50 > 50L)
-                        {
-                            MinecraftServer.currentTick = (int)(System.currentTimeMillis() / 50);  // CraftBukkit
-                            var50 -= 50L;
-                            this.tick();
-                        }
-                    }
-
-                    Thread.sleep(1L);
+                    currentTPS = (currentTPS * 0.95) + (1E9 / (curTime - lastTick) * 0.05);
+                    lastTick = curTime;
+                    MinecraftServer.currentTick++;
+                    this.tick();
                 }
+
+                // Spigot end
             }
             else
             {
                 this.finalTick((CrashReport)null);
             }
         }
-        catch (Throwable var48)
+        catch (Throwable var1)
         {
-            var48.printStackTrace();
-            logger.log(Level.SEVERE, "Encountered an unexpected exception " + var48.getClass().getSimpleName(), var48);
-            CrashReport var2 = null;
+            var1.printStackTrace();
+            logger.log(Level.SEVERE, "Encountered an unexpected exception " + var1.getClass().getSimpleName(), var1);
+            CrashReport var50 = null;
 
-            if (var48 instanceof ReportedException)
+            if (var1 instanceof ReportedException)
             {
-                var2 = this.addServerInfoToCrashReport(((ReportedException)var48).getCrashReport());
+                var50 = this.addServerInfoToCrashReport(((ReportedException) var1).getCrashReport());
             }
             else
             {
-                var2 = this.addServerInfoToCrashReport(new CrashReport("Exception in server tick loop", var48));
+                var50 = this.addServerInfoToCrashReport(new CrashReport("Exception in server tick loop", var1));
             }
 
-            File var3 = new File(new File(this.getDataDirectory(), "crash-reports"), "crash-" + (new SimpleDateFormat("yyyy-MM-dd_HH.mm.ss")).format(new Date()) + "-server.txt");
+            File var5 = new File(new File(this.getDataDirectory(), "crash-reports"), "crash-" + (new SimpleDateFormat("yyyy-MM-dd_HH.mm.ss")).format(new Date()) + "-server.txt");
 
-            if (var2.saveToFile(var3))
+            if (var50.saveToFile(var5))
             {
-                logger.severe("This crash report has been saved to: " + var3.getAbsolutePath());
+                logger.severe("This crash report has been saved to: " + var5.getAbsolutePath());
             }
             else
             {
                 logger.severe("We were unable to save this crash report to disk.");
             }
 
-            this.finalTick(var2);
+            this.finalTick(var50);
         }
         finally
         {
+            org.bukkit.craftbukkit.util.WatchdogThread.stopping(); // Spigot
+
             try
             {
                 this.stopServer();
                 this.serverStopped = true;
             }
-            catch (Throwable var46)
+            catch (Throwable var7)
             {
-                var46.printStackTrace();
+                var7.printStackTrace();
             }
             finally
             {
@@ -852,6 +834,7 @@ public abstract class MinecraftServer implements ICommandSender, Runnable, IPlay
         }
 
         this.theProfiler.endSection();
+        org.bukkit.craftbukkit.util.WatchdogThread.tick(); // Spigot
     }
 
     public boolean getAllowNether()
@@ -963,6 +946,7 @@ public abstract class MinecraftServer implements ICommandSender, Runnable, IPlay
                 dedicatedserver.an();
             }
             */
+            dedicatedserver.primaryThread.setUncaughtExceptionHandler(new org.bukkit.craftbukkit.util.ExceptionHandler()); // Spigot
             dedicatedserver.primaryThread.start();
             // Runtime.getRuntime().addShutdownHook(new ThreadShutdown(dedicatedserver));
             // CraftBukkit end

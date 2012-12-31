@@ -5,6 +5,7 @@ import java.io.InputStreamReader;
 import java.math.BigInteger;
 import java.net.URL;
 import java.net.URLEncoder;
+import net.minecraft.network.packet.Packet255KickDisconnect;
 import net.minecraft.util.CryptManager;
 
 // CraftBukkit start
@@ -33,6 +34,40 @@ class ThreadLoginVerifier extends Thread
     {
         try
         {
+            // Spigot start
+            if (((CraftServer) org.bukkit.Bukkit.getServer()).ipFilter)
+            {
+                try
+                {
+                    String ip = this.loginHandler.getSocket().getInetAddress().getHostAddress();
+                    String[] split = ip.split("\\.");
+                    StringBuilder lookup = new StringBuilder();
+
+                    for (int i = split.length - 1; i >= 0; i--)
+                    {
+                        lookup.append(split[i]);
+                        lookup.append(".");
+                    }
+
+                    if (!ip.contains("127.0.0.1"))
+                    {
+                        lookup.append("xbl.spamhaus.org.");
+
+                        if (java.net.InetAddress.getByName(lookup.toString()) != null)
+                        {
+                            this.loginHandler.myTCPConnection.addToSendQueue(new Packet255KickDisconnect("Your IP address (" + ip + ") is flagged as unsafe by spamhaus.org/xbl"));
+                            this.loginHandler.myTCPConnection.serverShutdown();
+                            this.loginHandler.connectionComplete = true;
+                            return;
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                }
+            }
+
+            // Spigot end
             String var1 = (new BigInteger(CryptManager.getServerIdHash(NetLoginHandler.getServerId(this.loginHandler), NetLoginHandler.getLoginMinecraftServer(this.loginHandler).getKeyPair().getPublic(), NetLoginHandler.getSharedKey(this.loginHandler)))).toString(16);
             URL var2 = new URL("http://session.minecraft.net/game/checkserver.jsp?user=" + URLEncoder.encode(NetLoginHandler.getClientUsername(this.loginHandler), "UTF-8") + "&serverId=" + URLEncoder.encode(var1, "UTF-8"));
             BufferedReader var3 = new BufferedReader(new InputStreamReader(var2.openStream()));

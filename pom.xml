@@ -51,8 +51,8 @@
 
   <dependencies>
     <dependency>
-      <groupId>org.bukkit</groupId>
-      <artifactId>bukkit</artifactId>
+      <groupId>org.spigotmc</groupId>
+      <artifactId>spigot-api</artifactId>
       <version>${project.version}</version>
       <type>jar</type>
       <scope>compile</scope>
@@ -156,6 +156,11 @@
       <version>1.3</version>
       <scope>test</scope>
     </dependency>
+    <dependency>
+      <groupId>net.sf.trove4j</groupId>
+      <artifactId>trove4j</artifactId>
+      <version>3.0.2</version>
+    </dependency>
   </dependencies>
 
   <!-- This builds a completely 'ready to start' jar with all dependencies inside -->
@@ -167,7 +172,7 @@
         <artifactId>gitdescribe-maven-plugin</artifactId>
         <version>1.3</version>
         <configuration>
-          <outputPrefix>git-Bukkit-</outputPrefix>
+          <outputPrefix>git-Spigot-</outputPrefix>
           <outputPostfix></outputPostfix>
         </configuration>
         <executions>

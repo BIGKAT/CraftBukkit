@@ -1,8 +1,6 @@
 package net.minecraft.entity.passive;
 
 import org.bukkit.craftbukkit.TrigMath; // CraftBukkit
-import net.minecraft.block.material.Material;
-import net.minecraft.entity.Entity;
 import net.minecraft.util.MathHelper;
 import net.minecraft.world.World;
 
@@ -97,15 +95,6 @@ public class EntitySquid extends EntityWaterMob
 
         org.bukkit.craftbukkit.event.CraftEventFactory.callEntityDeathEvent(this, loot);
         // CraftBukkit end
-    }
-
-    /**
-     * Checks if this entity is inside water (if inWater field is true as a result of handleWaterMovement() returning
-     * true)
-     */
-    public boolean isInWater()
-    {
-        return this.worldObj.handleMaterialAcceleration(this.boundingBox.expand(0.0D, -0.6000000238418579D, 0.0D), Material.water, (Entity) this);
     }
 
     /**

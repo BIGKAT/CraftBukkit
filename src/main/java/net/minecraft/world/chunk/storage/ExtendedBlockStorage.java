@@ -385,7 +385,7 @@ public class ExtendedBlockStorage
      */
     public void setBlockLSBArray(byte[] par1ArrayOfByte)
     {
-        this.blockLSBArray = par1ArrayOfByte;
+        this.blockLSBArray = validateByteArray(par1ArrayOfByte); // Spigot - validate
     }
 
     /**
@@ -411,7 +411,7 @@ public class ExtendedBlockStorage
         }
 
         // CraftBukkit end
-        this.blockMSBArray = par1NibbleArray;
+        this.blockMSBArray = validateNibbleArray(par1NibbleArray); // Spigot - validate
     }
 
     /**
@@ -419,7 +419,7 @@ public class ExtendedBlockStorage
      */
     public void setBlockMetadataArray(NibbleArray par1NibbleArray)
     {
-        this.blockMetadataArray = par1NibbleArray;
+        this.blockMetadataArray = validateNibbleArray(par1NibbleArray); // Spigot - validate
     }
 
     /**
@@ -427,7 +427,7 @@ public class ExtendedBlockStorage
      */
     public void setBlocklightArray(NibbleArray par1NibbleArray)
     {
-        this.blocklightArray = par1NibbleArray;
+        this.blocklightArray = validateNibbleArray(par1NibbleArray); // Spigot - validate
     }
 
     /**
@@ -435,6 +435,32 @@ public class ExtendedBlockStorage
      */
     public void setSkylightArray(NibbleArray par1NibbleArray)
     {
-        this.skylightArray = par1NibbleArray;
+        this.skylightArray = validateNibbleArray(par1NibbleArray); // Spigot - validate
     }
+
+    // Spigot start - validate/correct nibble array
+    private static final NibbleArray validateNibbleArray(NibbleArray na)
+    {
+        if ((na != null) && (na.data.length < 2048))
+        {
+            NibbleArray newna = new NibbleArray(4096, 4);
+            System.arraycopy(na.data, 0, newna.data, 0, na.data.length);
+            na = newna;
+        }
+
+        return na;
+    }
+    // Validate/correct byte array
+    private static final byte[] validateByteArray(byte[] ba)
+    {
+        if ((ba != null) && (ba.length < 4096))
+        {
+            byte[] newba = new byte[4096];
+            System.arraycopy(ba,  0,  newba,  0,  ba.length);
+            ba = newba;
+        }
+
+        return ba;
+    }
+    // Spigot end
 }

@@ -345,7 +345,7 @@ public abstract class ServerConfigurationManager
         }
         else if (!this.isAllowedToLogin(s))
         {
-            event.disallow(PlayerLoginEvent.Result.KICK_WHITELIST, "You are not white-listed on this server!");
+            event.disallow(PlayerLoginEvent.Result.KICK_WHITELIST, cserver.whitelistMessage); // Spigot
         }
         else
         {
@@ -1203,7 +1203,16 @@ public abstract class ServerConfigurationManager
     {
         while (!this.playerEntityList.isEmpty())
         {
-            ((EntityPlayerMP) this.playerEntityList.get(0)).playerNetServerHandler.kickPlayerFromServer(this.mcServer.server.getShutdownMessage()); // CraftBukkit - add custom shutdown message
+            // Spigot start
+            EntityPlayerMP p = (EntityPlayerMP) this.playerEntityList.get(0);
+            p.playerNetServerHandler.kickPlayerFromServer(this.mcServer.server.getShutdownMessage());
+
+            if ((!this.playerEntityList.isEmpty()) && (this.playerEntityList.get(0) == p))
+            {
+                this.playerEntityList.remove(0); // Prevent shutdown hang if already disconnected
+            }
+
+            // Spigot end
         }
     }
 

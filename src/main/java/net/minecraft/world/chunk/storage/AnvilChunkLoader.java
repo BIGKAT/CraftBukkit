@@ -27,8 +27,7 @@ import net.minecraft.world.storage.ThreadedFileIOBase;
 
 public class AnvilChunkLoader implements IThreadedFileIO, IChunkLoader
 {
-    private List chunksToRemove = new ArrayList();
-    private Set pendingAnvilChunksCoordinates = new HashSet();
+    private java.util.LinkedHashMap<ChunkCoordIntPair, AnvilChunkLoaderPending> pendingSaves = new java.util.LinkedHashMap<ChunkCoordIntPair, AnvilChunkLoaderPending>(); // Spigot
     private Object syncLockObject = new Object();
 
     /** Save directory for chunks using the Anvil format */
@@ -46,18 +45,14 @@ public class AnvilChunkLoader implements IThreadedFileIO, IChunkLoader
 
         synchronized (this.syncLockObject)
         {
-            if (this.pendingAnvilChunksCoordinates.contains(chunkcoordintpair))
+            // Spigot start
+            if (pendingSaves.containsKey(chunkcoordintpair))
             {
-                for (int k = 0; k < this.chunksToRemove.size(); ++k)
-                {
-                    if (((AnvilChunkLoaderPending) this.chunksToRemove.get(k)).chunkCoordinate.equals(chunkcoordintpair))
-                    {
-                        return true;
-                    }
-                }
+                return true;
             }
         }
 
+        // Spigot end
         return RegionFileCache.createOrLoadRegionFile(this.chunkSaveLocation, i, j).chunkExists(i & 31, j & 31);
     }
     // CraftBukkit end
@@ -87,17 +82,24 @@ public class AnvilChunkLoader implements IThreadedFileIO, IChunkLoader
 
         synchronized (this.syncLockObject)
         {
-            if (this.pendingAnvilChunksCoordinates.contains(chunkcoordintpair))
+            // Spigot start
+            AnvilChunkLoaderPending pendingchunktosave = pendingSaves.get(chunkcoordintpair);
+
+            if (pendingchunktosave != null)
             {
-                for (int k = 0; k < this.chunksToRemove.size(); ++k)
-                {
-                    if (((AnvilChunkLoaderPending) this.chunksToRemove.get(k)).chunkCoordinate.equals(chunkcoordintpair))
-                    {
-                        nbttagcompound = ((AnvilChunkLoaderPending) this.chunksToRemove.get(k)).nbtTags;
+                nbttagcompound = pendingchunktosave.nbtTags;
+            }
+
+            /*
+            if (this.b.contains(chunkcoordintpair)) {
+                for (int k = 0; k < this.a.size(); ++k) {
+                    if (((PendingChunkToSave) this.a.get(k)).a.equals(chunkcoordintpair)) {
+                        nbttagcompound = ((PendingChunkToSave) this.a.get(k)).b;
                         break;
                     }
                 }
             }
+            */// Spigot end
         }
 
         if (nbttagcompound == null)
@@ -192,20 +194,25 @@ public class AnvilChunkLoader implements IThreadedFileIO, IChunkLoader
 
         synchronized (this.syncLockObject)
         {
-            if (this.pendingAnvilChunksCoordinates.contains(par1ChunkCoordIntPair))
+            // Spigot start
+            if (this.pendingSaves.put(par1ChunkCoordIntPair, new AnvilChunkLoaderPending(par1ChunkCoordIntPair, par2NBTTagCompound)) != null)
             {
-                for (int var4 = 0; var4 < this.chunksToRemove.size(); ++var4)
-                {
-                    if (((AnvilChunkLoaderPending)this.chunksToRemove.get(var4)).chunkCoordinate.equals(par1ChunkCoordIntPair))
-                    {
-                        this.chunksToRemove.set(var4, new AnvilChunkLoaderPending(par1ChunkCoordIntPair, par2NBTTagCompound));
+                return;
+            }
+
+            /*
+            if (this.b.contains(chunkcoordintpair)) {
+                for (int i = 0; i < this.a.size(); ++i) {
+                    if (((PendingChunkToSave) this.a.get(i)).a.equals(chunkcoordintpair)) {
+                        this.a.set(i, new PendingChunkToSave(chunkcoordintpair, nbttagcompound));
                         return;
                     }
                 }
             }
 
-            this.chunksToRemove.add(new AnvilChunkLoaderPending(par1ChunkCoordIntPair, par2NBTTagCompound));
-            this.pendingAnvilChunksCoordinates.add(par1ChunkCoordIntPair);
+            this.a.add(new PendingChunkToSave(chunkcoordintpair, nbttagcompound));
+            this.b.add(chunkcoordintpair);
+            */// Spigot end
             ThreadedFileIOBase.threadedIOInstance.queueIO(this);
         }
     }
@@ -220,13 +227,22 @@ public class AnvilChunkLoader implements IThreadedFileIO, IChunkLoader
 
         synchronized (this.syncLockObject)
         {
-            if (this.chunksToRemove.isEmpty())
+            // Spigot start
+            if (this.pendingSaves.isEmpty())
             {
                 return false;
             }
 
-            var1 = (AnvilChunkLoaderPending)this.chunksToRemove.remove(0);
-            this.pendingAnvilChunksCoordinates.remove(var1.chunkCoordinate);
+            var1 = this.pendingSaves.values().iterator().next();
+            this.pendingSaves.remove(var1.chunkCoordinate);
+            /*
+            if (this.a.isEmpty()) {
+                return false;
+            }
+
+            pendingchunktosave = (PendingChunkToSave) this.a.remove(0);
+            this.b.remove(pendingchunktosave.a);
+            */// Spigot end
         }
 
         if (var1 != null)

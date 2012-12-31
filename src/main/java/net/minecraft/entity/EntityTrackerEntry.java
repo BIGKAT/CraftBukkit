@@ -154,6 +154,12 @@ public class EntityTrackerEntry
                 {
                     EntityPlayer var30 = (EntityPlayer)var29.next();
                     EntityPlayerMP var31 = (EntityPlayerMP)var30;
+
+                    if (var31.sentFrames.contains(var23.uniqueId))
+                    {
+                        continue;    // Spigot
+                    }
+
                     var26.updateVisiblePlayers(var31, var24);
 
                     if (var31.playerNetServerHandler.packetSize() <= 5)
@@ -163,6 +169,7 @@ public class EntityTrackerEntry
                         if (var32 != null)
                         {
                             var31.playerNetServerHandler.sendPacketToPlayer(var32);
+                            var31.sentFrames.add(var23.uniqueId); // Spigot
                         }
                     }
                 }

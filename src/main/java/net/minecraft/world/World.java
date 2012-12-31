@@ -21,6 +21,7 @@ import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLiving;
 import net.minecraft.entity.item.EntityItem;
 import net.minecraft.entity.item.EntityMinecart;
+import net.minecraft.entity.item.EntityXPOrb;
 import net.minecraft.entity.monster.EntityGhast;
 import net.minecraft.entity.monster.EntityGolem;
 import net.minecraft.entity.monster.EntityMob;
@@ -29,6 +30,7 @@ import net.minecraft.entity.passive.EntityAnimal;
 import net.minecraft.entity.passive.EntityWaterMob;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
+import net.minecraft.item.ItemStack;
 import net.minecraft.pathfinding.PathEntity;
 import net.minecraft.pathfinding.PathFinder;
 import net.minecraft.profiler.Profiler;
@@ -146,7 +148,8 @@ public abstract class World implements IBlockAccess
     // CraftBukkit start - public, longhashset
     public boolean spawnHostileMobs = true;
     public boolean spawnPeacefulMobs = true;
-    protected LongHashSet activeChunkSet = new LongHashSet();
+    protected gnu.trove.map.hash.TLongShortHashMap activeChunkSet; // Spigot
+    private org.bukkit.craftbukkit.util.LightningSimulator lightningSim = new org.bukkit.craftbukkit.util.LightningSimulator(this); // Spigot
     public long ticksPerAnimalSpawns;
     public long ticksPerMonsterSpawns;
     // CraftBukkit end
@@ -170,6 +173,23 @@ public abstract class World implements IBlockAccess
 
     /** This is set to true for client worlds, and false for server worlds. */
     public boolean isRemote;
+    // Spigot start
+
+    public static final long chunkToKey(int x, int z)
+    {
+        long k = ((((long)x) & 0xFFFF0000L) << 16) | ((((long)x) & 0x0000FFFFL) << 0);
+        k |= ((((long)z) & 0xFFFF0000L) << 32) | ((((long)z) & 0x0000FFFFL) << 16);
+        return k;
+    }
+    public static final int keyToX(long k)
+    {
+        return (int)(((k >> 16) & 0xFFFF0000) | (k & 0x0000FFFF));
+    }
+    public static final int keyToZ(long k)
+    {
+        return (int)(((k >> 32) & 0xFFFF0000L) | ((k >> 16) & 0x0000FFFF));
+    }
+    // Spigot end
 
     /**
      * Gets the biome for a given set of x/z coordinates
@@ -203,6 +223,7 @@ public abstract class World implements IBlockAccess
     int lastXAccessed = Integer.MIN_VALUE;
     int lastZAccessed = Integer.MIN_VALUE;
     final Object chunkLock = new Object();
+    private byte chunkTickRadius;
 
     public CraftWorld getWorld()
     {
@@ -218,10 +239,16 @@ public abstract class World implements IBlockAccess
     public World(ISaveHandler idatamanager, String s, WorldSettings worldsettings, WorldProvider worldprovider, Profiler methodprofiler, ChunkGenerator gen, org.bukkit.World.Environment env)
     {
         this.generator = gen;
+        this.worldInfo = idatamanager.loadWorldInfo(); // Spigot
         this.world = new CraftWorld((WorldServer) this, gen, env);
         this.ticksPerAnimalSpawns = this.getServer().getTicksPerAnimalSpawns(); // CraftBukkit
         this.ticksPerMonsterSpawns = this.getServer().getTicksPerMonsterSpawns(); // CraftBukkit
+        this.chunkTickRadius = (byte)((this.getServer().getViewDistance() < 7) ? this.getServer().getViewDistance() : 7); // CraftBukkit - don't tick chunks we don't load for player
         // CraftBukkit end
+        // Spigot start
+        this.activeChunkSet = new gnu.trove.map.hash.TLongShortHashMap(getWorld().growthPerTick * 5, 0.7f, Long.MIN_VALUE, Short.MIN_VALUE);
+        activeChunkSet.setAutoCompactionFactor(0.0F);
+        // Spigot end
         this.ambientTickCountdown = this.rand.nextInt(12000);
         this.lightUpdateBlockList = new int['\u8000'];
         this.entitiesWithinAABBExcludingEntity = new UnsafeList(); // CraftBukkit - ArrayList -> UnsafeList
@@ -229,8 +256,8 @@ public abstract class World implements IBlockAccess
         this.saveHandler = idatamanager;
         this.theProfiler = methodprofiler;
         this.mapStorage = new MapStorage(idatamanager);
-        this.worldInfo = idatamanager.loadWorldInfo();
 
+        // this.worldData = idatamanager.getWorldData(); Moved up
         if (worldprovider != null)
         {
             this.provider = worldprovider;
@@ -1452,6 +1479,69 @@ public abstract class World implements IBlockAccess
         else if (entity instanceof EntityItem)
         {
             event = CraftEventFactory.callItemSpawnEvent((EntityItem) entity);
+            // Spigot start
+            ItemStack item = ((EntityItem) entity).func_92014_d();
+            int maxSize = item.getMaxStackSize();
+
+            if (item.stackSize < maxSize)
+            {
+                double radius = this.getWorld().itemMergeRadius;
+
+                if (radius > 0)
+                {
+                    List<Entity> entities = this.getEntitiesWithinAABBExcludingEntity(entity, entity.boundingBox.expand(radius, radius, radius));
+
+                    for (Entity e : entities)
+                    {
+                        if (e instanceof EntityItem)
+                        {
+                            EntityItem loopItem = (EntityItem) e;
+                            ItemStack loopStack = loopItem.func_92014_d();
+
+                            if (!loopItem.isDead && loopStack.itemID == item.itemID && loopStack.getItemDamage() == item.getItemDamage())
+                            {
+                                if (loopStack.stackTagCompound == null || item.stackTagCompound == null || !loopStack.stackTagCompound.equals(item.stackTagCompound))
+                                {
+                                    int toAdd = Math.min(loopStack.stackSize, maxSize - item.stackSize);
+                                    item.stackSize += toAdd;
+                                    loopStack.stackSize -= toAdd;
+
+                                    if (loopStack.stackSize <= 0)
+                                    {
+                                        loopItem.setDead();
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        else if (entity instanceof EntityXPOrb)
+        {
+            EntityXPOrb xp = (EntityXPOrb) entity;
+            double radius = this.getWorld().expMergeRadius;
+
+            if (radius > 0)
+            {
+                List<Entity> entities = this.getEntitiesWithinAABBExcludingEntity(entity, entity.boundingBox.expand(radius, radius, radius));
+
+                for (Entity e : entities)
+                {
+                    if (e instanceof EntityXPOrb)
+                    {
+                        EntityXPOrb loopItem = (EntityXPOrb) e;
+
+                        if (!loopItem.isDead)
+                        {
+                            xp.xpValue += loopItem.xpValue;
+                            loopItem.setDead();
+                        }
+                    }
+                }
+            }
+
+            // Spigot end
         }
         else if (entity.getBukkitEntity() instanceof org.bukkit.entity.Projectile)
         {
@@ -1585,43 +1675,84 @@ public abstract class World implements IBlockAccess
         int var6 = MathHelper.floor_double(par2AxisAlignedBB.maxY + 1.0D);
         int var7 = MathHelper.floor_double(par2AxisAlignedBB.minZ);
         int var8 = MathHelper.floor_double(par2AxisAlignedBB.maxZ + 1.0D);
+        // Spigot start
+        int ystart = ((var5 - 1) < 0) ? 0 : (var5 - 1);
 
-        for (int var9 = var3; var9 < var4; ++var9)
+        for (int chunkx = (var3 >> 4); chunkx <= ((var4 - 1) >> 4); chunkx++)
         {
-            for (int var10 = var7; var10 < var8; ++var10)
-            {
-                if (this.blockExists(var9, 64, var10))
-                {
-                    for (int var11 = var5 - 1; var11 < var6; ++var11)
-                    {
-                        Block var12 = Block.blocksList[this.getBlockId(var9, var11, var10)];
+            int cx = chunkx << 4;
 
-                        if (var12 != null)
+            for (int chunkz = (var7 >> 4); chunkz <= ((var8 - 1) >> 4); chunkz++)
+            {
+                if (!this.chunkExists(chunkx, chunkz))
+                {
+                    continue;
+                }
+
+                int cz = chunkz << 4;
+                Chunk chunk = this.getChunkFromChunkCoords(chunkx, chunkz);
+                // Compute ranges within chunk
+                int xstart = (var3 < cx) ? cx : var3;
+                int xend = (var4 < (cx + 16)) ? var4 : (cx + 16);
+                int zstart = (var7 < cz) ? cz : var7;
+                int zend = (var8 < (cz + 16)) ? var8 : (cz + 16);
+
+                // Loop through blocks within chunk
+                for (int x = xstart; x < xend; x++)
+                {
+                    for (int z = zstart; z < zend; z++)
+                    {
+                        for (int y = ystart; y < var6; y++)
                         {
-                            var12.addCollidingBlockToList(this, var9, var11, var10, par2AxisAlignedBB, this.collidingBoundingBoxes, par1Entity);
+                            int blkid = chunk.getBlockID(x - cx, y, z - cz);
+
+                            if (blkid > 0)
+                            {
+                                Block block = Block.blocksList[blkid];
+
+                                if (block != null)
+                                {
+                                    block.addCollidingBlockToList(this, x, y, z, par2AxisAlignedBB, this.collidingBoundingBoxes, par1Entity);
+                                }
+                            }
                         }
                     }
                 }
             }
         }
 
-        double var14 = 0.25D;
-        List var16 = this.getEntitiesWithinAABBExcludingEntity(par1Entity, par2AxisAlignedBB.expand(var14, var14, var14));
+        /*
+        for (int k1 = i; k1 < j; ++k1) {
+            for (int l1 = i1; l1 < j1; ++l1) {
+                if (this.isLoaded(k1, 64, l1)) {
+                    for (int i2 = k - 1; i2 < l; ++i2) {
+                        Block block = Block.byId[this.getTypeId(k1, i2, l1)];
 
-        for (int var15 = 0; var15 < var16.size(); ++var15)
+                        if (block != null) {
+                            block.a(this, k1, i2, l1, axisalignedbb, this.L, entity);
+                        }
+                    }
+                }
+            }
+        }
+        */// Spigot end
+        double var9 = 0.25D;
+        List var10 = this.getEntitiesWithinAABBExcludingEntity(par1Entity, par2AxisAlignedBB.expand(var9, var9, var9));
+
+        for (int var11 = 0; var11 < var10.size(); ++var11)
         {
-            AxisAlignedBB var13 = ((Entity)var16.get(var15)).getBoundingBox();
+            AxisAlignedBB var12 = ((Entity) var10.get(var11)).getBoundingBox();
 
-            if (var13 != null && var13.intersectsWith(par2AxisAlignedBB))
+            if (var12 != null && var12.intersectsWith(par2AxisAlignedBB))
             {
-                this.collidingBoundingBoxes.add(var13);
+                this.collidingBoundingBoxes.add(var12);
             }
 
-            var13 = par1Entity.getCollisionBox((Entity)var16.get(var15));
+            var12 = par1Entity.getCollisionBox((Entity) var10.get(var11));
 
-            if (var13 != null && var13.intersectsWith(par2AxisAlignedBB))
+            if (var12 != null && var12.intersectsWith(par2AxisAlignedBB))
             {
-                this.collidingBoundingBoxes.add(var13);
+                this.collidingBoundingBoxes.add(var12);
             }
         }
 
@@ -2021,98 +2152,138 @@ public abstract class World implements IBlockAccess
         this.updateEntityWithOptionalForce(par1Entity, true);
     }
 
-    /**
-     * Will update the entity in the world if the chunk the entity is in is currently loaded or its forced to update.
-     * Args: entity, forceUpdate
-     */
-    public void updateEntityWithOptionalForce(Entity par1Entity, boolean par2)
+    // Spigot start
+    public int tickEntityExceptions = 0;
+    public void updateEntityWithOptionalForce(final Entity par1Entity, final boolean par2)
     {
-        int var3 = MathHelper.floor_double(par1Entity.posX);
-        int var4 = MathHelper.floor_double(par1Entity.posZ);
-        byte var5 = 32;
-
-        if (!par2 || this.checkChunksExist(var3 - var5, 0, var4 - var5, var3 + var5, 0, var4 + var5))
+        if (par1Entity == null)
         {
-            par1Entity.lastTickPosX = par1Entity.posX;
-            par1Entity.lastTickPosY = par1Entity.posY;
-            par1Entity.lastTickPosZ = par1Entity.posZ;
-            par1Entity.prevRotationYaw = par1Entity.rotationYaw;
-            par1Entity.prevRotationPitch = par1Entity.rotationPitch;
+            return;
+        }
 
-            if (par2 && par1Entity.addedToChunk)
+        try
+        {
+            tickEntity(par1Entity, par2);
+        }
+        catch (Exception var3)
+        {
+            try
             {
-                if (par1Entity.ridingEntity != null)
+                tickEntityExceptions++;
+                List<String> var4 = new ArrayList<String>();
+                var4.add("Spigot has detected an unexpected exception while handling");
+
+                if (!(par1Entity instanceof EntityPlayerMP))
                 {
-                    par1Entity.updateRidden();
+                    var4.add("entity " + par1Entity.toString() + " (id: " + par1Entity.entityId + ")");
+                    var4.add("Spigot will kill the entity from the game instead of crashing your server.");
+                    par1Entity.setDead();
                 }
                 else
                 {
-                    ++par1Entity.ticksExisted;
-                    par1Entity.onUpdate();
+                    var4.add("player '" + ((EntityPlayerMP) par1Entity).username + "'. They will be kicked instead of crashing your server.");
+                    ((EntityPlayerMP) par1Entity).getBukkitEntity().kickPlayer("The server experienced and error and was forced to kick you. Please re-login.");
+                }
+
+                org.bukkit.craftbukkit.util.ExceptionReporter.handle(var3, var4.toArray(new String[0]));
+            }
+            catch (Throwable var5)
+            {
+                org.bukkit.craftbukkit.util.ExceptionReporter.handle(var5, "Spigot has detected an unexpected exception while attempting to handle an exception (yes you read that correctly).");
+                Bukkit.shutdown();
+            }
+        }
+    }
+
+    public void tickEntity(Entity entity, boolean flag)
+    {
+        // Spigot end
+        int i = MathHelper.floor_double(entity.posX);
+        int j = MathHelper.floor_double(entity.posZ);
+        byte b0 = 32;
+
+        if (!flag || this.checkChunksExist(i - b0, 0, j - b0, i + b0, 0, j + b0))
+        {
+            entity.lastTickPosX = entity.posX;
+            entity.lastTickPosY = entity.posY;
+            entity.lastTickPosZ = entity.posZ;
+            entity.prevRotationYaw = entity.rotationYaw;
+            entity.prevRotationPitch = entity.rotationPitch;
+
+            if (flag && entity.addedToChunk)
+            {
+                if (entity.ridingEntity != null)
+                {
+                    entity.updateRidden();
+                }
+                else
+                {
+                    ++entity.ticksExisted;
+                    entity.onUpdate();
                 }
             }
 
             this.theProfiler.startSection("chunkCheck");
 
-            if (Double.isNaN(par1Entity.posX) || Double.isInfinite(par1Entity.posX))
+            if (Double.isNaN(entity.posX) || Double.isInfinite(entity.posX))
             {
-                par1Entity.posX = par1Entity.lastTickPosX;
+                entity.posX = entity.lastTickPosX;
             }
 
-            if (Double.isNaN(par1Entity.posY) || Double.isInfinite(par1Entity.posY))
+            if (Double.isNaN(entity.posY) || Double.isInfinite(entity.posY))
             {
-                par1Entity.posY = par1Entity.lastTickPosY;
+                entity.posY = entity.lastTickPosY;
             }
 
-            if (Double.isNaN(par1Entity.posZ) || Double.isInfinite(par1Entity.posZ))
+            if (Double.isNaN(entity.posZ) || Double.isInfinite(entity.posZ))
             {
-                par1Entity.posZ = par1Entity.lastTickPosZ;
+                entity.posZ = entity.lastTickPosZ;
             }
 
-            if (Double.isNaN((double)par1Entity.rotationPitch) || Double.isInfinite((double)par1Entity.rotationPitch))
+            if (Double.isNaN((double) entity.rotationPitch) || Double.isInfinite((double) entity.rotationPitch))
             {
-                par1Entity.rotationPitch = par1Entity.prevRotationPitch;
+                entity.rotationPitch = entity.prevRotationPitch;
             }
 
-            if (Double.isNaN((double)par1Entity.rotationYaw) || Double.isInfinite((double)par1Entity.rotationYaw))
+            if (Double.isNaN((double) entity.rotationYaw) || Double.isInfinite((double) entity.rotationYaw))
             {
-                par1Entity.rotationYaw = par1Entity.prevRotationYaw;
+                entity.rotationYaw = entity.prevRotationYaw;
             }
 
-            int var6 = MathHelper.floor_double(par1Entity.posX / 16.0D);
-            int var7 = MathHelper.floor_double(par1Entity.posY / 16.0D);
-            int var8 = MathHelper.floor_double(par1Entity.posZ / 16.0D);
+            int k = MathHelper.floor_double(entity.posX / 16.0D);
+            int l = MathHelper.floor_double(entity.posY / 16.0D);
+            int i1 = MathHelper.floor_double(entity.posZ / 16.0D);
 
-            if (!par1Entity.addedToChunk || par1Entity.chunkCoordX != var6 || par1Entity.chunkCoordY != var7 || par1Entity.chunkCoordZ != var8)
+            if (!entity.addedToChunk || entity.chunkCoordX != k || entity.chunkCoordY != l || entity.chunkCoordZ != i1)
             {
-                if (par1Entity.addedToChunk && this.chunkExists(par1Entity.chunkCoordX, par1Entity.chunkCoordZ))
+                if (entity.addedToChunk && this.chunkExists(entity.chunkCoordX, entity.chunkCoordZ))
                 {
-                    this.getChunkFromChunkCoords(par1Entity.chunkCoordX, par1Entity.chunkCoordZ).removeEntityAtIndex(par1Entity, par1Entity.chunkCoordY);
+                    this.getChunkFromChunkCoords(entity.chunkCoordX, entity.chunkCoordZ).removeEntityAtIndex(entity, entity.chunkCoordY);
                 }
 
-                if (this.chunkExists(var6, var8))
+                if (this.chunkExists(k, i1))
                 {
-                    par1Entity.addedToChunk = true;
-                    this.getChunkFromChunkCoords(var6, var8).addEntity(par1Entity);
+                    entity.addedToChunk = true;
+                    this.getChunkFromChunkCoords(k, i1).addEntity(entity);
                 }
                 else
                 {
-                    par1Entity.addedToChunk = false;
+                    entity.addedToChunk = false;
                 }
             }
 
             this.theProfiler.endSection();
 
-            if (par2 && par1Entity.addedToChunk && par1Entity.riddenByEntity != null)
+            if (flag && entity.addedToChunk && entity.riddenByEntity != null)
             {
-                if (!par1Entity.riddenByEntity.isDead && par1Entity.riddenByEntity.ridingEntity == par1Entity)
+                if (!entity.riddenByEntity.isDead && entity.riddenByEntity.ridingEntity == entity)
                 {
-                    this.updateEntity(par1Entity.riddenByEntity);
+                    this.updateEntity(entity.riddenByEntity);
                 }
                 else
                 {
-                    par1Entity.riddenByEntity.ridingEntity = null;
-                    par1Entity.riddenByEntity = null;
+                    entity.riddenByEntity.ridingEntity = null;
+                    entity.riddenByEntity = null;
                 }
             }
         }
@@ -2731,6 +2902,7 @@ public abstract class World implements IBlockAccess
     {
         if (!this.provider.hasNoSky)
         {
+            lightningSim.onTick(); // Spigot
             int var1 = this.worldInfo.getThunderTime();
 
             if (var1 <= 0)
@@ -2846,6 +3018,11 @@ public abstract class World implements IBlockAccess
         this.worldInfo.setRainTime(1);
     }
 
+    // Spigot start
+    public int aggregateTicks = 1;
+    protected float modifiedOdds = 100F;
+    public float growthOdds = 100F;
+
     protected void setActivePlayerChunksAndCheckLight()
     {
         // this.chunkTickList.clear(); // CraftBukkit - removed
@@ -2854,32 +3031,57 @@ public abstract class World implements IBlockAccess
         EntityPlayer var2;
         int var3;
         int var4;
+        final int var5 = this.getWorld().growthPerTick;
+
+        if (var5 <= 0)
+        {
+            return;
+        }
+
+        if (playerEntities.size() == 0)
+        {
+            return;
+        }
+
+        //Keep chunks with growth inside of the optimal chunk range
+        int var6 = Math.min(200, Math.max(1, (int)(((var5 - playerEntities.size()) / (double)playerEntities.size()) + 0.5)));
+        int var7 = 3 + var6 / 30;
+
+        if (var7 > chunkTickRadius)  // Limit to normal tick radius - including view distance
+        {
+            var7 = chunkTickRadius;
+        }
+
+        //odds of growth happening vs growth happening in vanilla
+        final float var8 = Math.max(35, Math.min(100, ((var6 + 1) * 100F) / 15F));
+        this.modifiedOdds = var8;
+        this.growthOdds = var8;
 
         for (var1 = 0; var1 < this.playerEntities.size(); ++var1)
         {
             var2 = (EntityPlayer)this.playerEntities.get(var1);
-            var3 = MathHelper.floor_double(var2.posX / 16.0D);
-            var4 = MathHelper.floor_double(var2.posZ / 16.0D);
-            byte var5 = 7;
+            int chunkX = MathHelper.floor_double(var2.posX / 16.0D);
+            int chunkZ = MathHelper.floor_double(var2.posZ / 16.0D);
+            //Always update the chunk the player is on
+            long key = chunkToKey(chunkX, chunkZ);
+            int existingPlayers = Math.max(0, activeChunkSet.get(key)); //filter out -1's
+            activeChunkSet.put(key, (short)(existingPlayers + 1));
 
-            for (int var6 = -var5; var6 <= var5; ++var6)
+            //Check and see if we update the chunks surrounding the player this tick
+            for (int chunk = 0; chunk < var6; chunk++)
             {
-                for (int var7 = -var5; var7 <= var5; ++var7)
+                int dx = (rand.nextBoolean() ? 1 : -1) * rand.nextInt(var7);
+                int dz = (rand.nextBoolean() ? 1 : -1) * rand.nextInt(var7);
+                long hash = chunkToKey(dx + chunkX, dz + chunkZ);
+
+                if (!activeChunkSet.contains(hash) && this.chunkExists(dx + chunkX, dz + chunkZ))
                 {
-                    // CraftBukkit start - don't tick chunks queued for unload
-                    ChunkProviderServer chunkProviderServer = ((WorldServer) var2.worldObj).theChunkProviderServer;
-
-                    if (chunkProviderServer.chunksToUnload.contains(var6 + var3, var7 + var4))
-                    {
-                        continue;
-                    }
-
-                    // CraftBukkit end
-                    this.activeChunkSet.add(org.bukkit.craftbukkit.util.LongHash.toLong(var6 + var3, var7 + var4)); // CraftBukkit
+                    activeChunkSet.put(hash, (short) - 1); //no players
                 }
             }
         }
 
+        // Spigot End
         this.theProfiler.endSection();
 
         if (this.ambientTickCountdown > 0)
@@ -2889,14 +3091,14 @@ public abstract class World implements IBlockAccess
 
         this.theProfiler.startSection("playerCheckLight");
 
-        if (!this.playerEntities.isEmpty())
+        if (!this.playerEntities.isEmpty() && this.getWorld().randomLightingUpdates)   // Spigot
         {
             var1 = this.rand.nextInt(this.playerEntities.size());
             var2 = (EntityPlayer)this.playerEntities.get(var1);
             var3 = MathHelper.floor_double(var2.posX) + this.rand.nextInt(11) - 5;
             var4 = MathHelper.floor_double(var2.posY) + this.rand.nextInt(11) - 5;
-            int var8 = MathHelper.floor_double(var2.posZ) + this.rand.nextInt(11) - 5;
-            this.updateAllLightTypes(var3, var4, var8);
+            int j1 = MathHelper.floor_double(var2.posZ) + this.rand.nextInt(11) - 5;
+            this.updateAllLightTypes(var3, var4, j1);
         }
 
         this.theProfiler.endSection();
@@ -2933,14 +3135,24 @@ public abstract class World implements IBlockAccess
         par3Chunk.enqueueRelightChecks();
     }
 
+    // Spigot start
+
     /**
      * plays random cave ambient sounds and runs updateTick on random blocks within each chunk in the vacinity of a
      * player
      */
     protected void tickBlocksAndAmbiance()
     {
-        this.setActivePlayerChunksAndCheckLight();
+        try
+        {
+            this.setActivePlayerChunksAndCheckLight();
+        }
+        catch (Exception e)
+        {
+            org.bukkit.craftbukkit.util.ExceptionReporter.handle(e, "Spigot has detected an unexpected exception while ticking chunks");
+        }
     }
+    // Spigot end
 
     /**
      * checks to see if a given block is both water and is cold enough to freeze
@@ -3381,7 +3593,10 @@ public abstract class World implements IBlockAccess
      */
     public List getEntitiesWithinAABBExcludingEntity(Entity par1Entity, AxisAlignedBB par2AxisAlignedBB)
     {
-        this.entitiesWithinAABBExcludingEntity.clear();
+        // Spigot start
+        // this.O.clear();
+        ArrayList<?> entities = new ArrayList();
+        // Spigot end
         int var3 = MathHelper.floor_double((par2AxisAlignedBB.minX - 2.0D) / 16.0D);
         int var4 = MathHelper.floor_double((par2AxisAlignedBB.maxX + 2.0D) / 16.0D);
         int var5 = MathHelper.floor_double((par2AxisAlignedBB.minZ - 2.0D) / 16.0D);
@@ -3393,12 +3608,12 @@ public abstract class World implements IBlockAccess
             {
                 if (this.chunkExists(var7, var8))
                 {
-                    this.getChunkFromChunkCoords(var7, var8).getEntitiesWithinAABBForEntity(par1Entity, par2AxisAlignedBB, this.entitiesWithinAABBExcludingEntity);
+                    this.getChunkFromChunkCoords(var7, var8).getEntitiesWithinAABBForEntity(par1Entity, par2AxisAlignedBB, entities); // Spigot
                 }
             }
         }
 
-        return this.entitiesWithinAABBExcludingEntity;
+        return entities; // Spigot
     }
 
     /**

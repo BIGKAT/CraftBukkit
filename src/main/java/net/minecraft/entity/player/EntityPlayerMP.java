@@ -154,6 +154,7 @@ public class EntityPlayerMP extends EntityPlayer implements ICrafting
     public int newTotalExp = 0;
     public boolean keepLevel = false;
     // CraftBukkit end
+    public java.util.Set<java.util.UUID> sentFrames = new java.util.HashSet<java.util.UUID>(); // Spigot
 
     public EntityPlayerMP(MinecraftServer par1MinecraftServer, World par2World, String par3Str, ItemInWorldManager par4ItemInWorldManager)
     {

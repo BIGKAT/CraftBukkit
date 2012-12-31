@@ -1136,10 +1136,25 @@ public class NetServerHandler extends NetHandler
                 }
 
                 this.chat(var2, par1Packet3Chat.canProcessAsync());
+                // Spigot start
+                boolean isCounted = true;
+
+                if (server.spamGuardExclusions != null)
+                {
+                    for (String excluded : server.spamGuardExclusions)
+                    {
+                        if (var2.startsWith(excluded))
+                        {
+                            isCounted = false;
+                            break;
+                        }
+                    }
+                }
 
                 // This section stays because it is only applicable to packets
-                if (chatSpamField.addAndGet(this, 20) > 200 && !this.mcServer.getConfigurationManager().areCommandsAllowed(this.playerEntity.username))   // CraftBukkit use thread-safe spam
+                if (isCounted && chatSpamField.addAndGet(this, 20) > 200 && !this.mcServer.getConfigurationManager().areCommandsAllowed(this.playerEntity.username))   // CraftBukkit use thread-safe spam
                 {
+                    // Spigot end
                     // CraftBukkit start
                     if (par1Packet3Chat.canProcessAsync())
                     {
@@ -1315,7 +1330,10 @@ public class NetServerHandler extends NetHandler
 
         try
         {
-            logger.info(event.getPlayer().getName() + " issued server command: " + event.getMessage()); // CraftBukkit
+            if (server.logCommands)
+            {
+                logger.info(event.getPlayer().getName() + " issued server command: " + event.getMessage());    // Spigot
+            }
 
             if (this.server.dispatchCommand(event.getPlayer(), event.getMessage().substring(1)))
             {
@@ -1854,9 +1872,10 @@ public class NetServerHandler extends NetHandler
                 {
                     for (var6 = 0; var6 < par1Packet130UpdateSign.signLines[var8].length(); ++var6)
                     {
-                        if (ChatAllowedCharacters.allowedCharacters.indexOf(par1Packet130UpdateSign.signLines[var8].charAt(var6)) < 0)
+                        if (!ChatAllowedCharacters.isAllowedCharacter(par1Packet130UpdateSign.signLines[var8].charAt(var6)))
                         {
                             var5 = false;
+                            break;
                         }
                     }
                 }
