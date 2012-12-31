@@ -80,7 +80,7 @@ public abstract class EntityLiving extends Entity {
     private ControllerJump jumpController;
     private EntityAIBodyControl senses;
     private Navigation navigation;
-    protected final PathfinderGoalSelector goalSelector;
+    public final PathfinderGoalSelector goalSelector; // MCPC - protected -> public - Required for Flan's Mod
     protected final PathfinderGoalSelector targetSelector;
     private EntityLiving bN;
     private EntitySenses bO;

@@ -14,6 +14,9 @@ import java.util.TreeSet;
 import gnu.trove.iterator.TLongShortIterator;
 
 import java.io.File;
+
+import net.minecraftforge.common.ChestGenHooks;
+import static net.minecraftforge.common.ChestGenHooks.*;
 import net.minecraftforge.common.DimensionManager;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.world.WorldEvent;
@@ -117,8 +120,7 @@ public class WorldServer extends World implements org.bukkit.BlockChangeDelegate
     }
 
     private TileEntity fixTileEntity(int x, int y, int z, int type, TileEntity found) {
-        getServer().getLogger().severe("Block at " + x + "," + y + "," + z + " is " + org.bukkit.Material.getMaterial(type).toString() + " but has " + found + ". "
-                + "Bukkit will attempt to fix this, but there may be additional damage that we cannot recover.");
+        getServer().getLogger().severe("Block at " + x + "," + y + "," + z + " is " + org.bukkit.Material.getMaterial(type).toString() + " but has " + found + ". " + "Bukkit will attempt to fix this, but there may be additional damage that we cannot recover.");
 
         if (Block.byId[type] instanceof BlockContainer) {
             TileEntity replacement = ((BlockContainer) Block.byId[type]).a(this);
@@ -168,7 +170,7 @@ public class WorldServer extends World implements org.bukkit.BlockChangeDelegate
             SpawnerCreature.spawnEntities(this, this.allowMonsters && (this.ticksPerMonsterSpawns != 0 && time % this.ticksPerMonsterSpawns == 0L), this.allowAnimals && (this.ticksPerAnimalSpawns != 0 && time % this.ticksPerAnimalSpawns == 0L), this.worldData.getTime() % 400L == 0L);
         }
         // CraftBukkit end
-        this.getWorld().processChunkGC();   // Spigot
+        this.getWorld().processChunkGC(); // Spigot
         this.methodProfiler.c("chunkSource");
         this.chunkProvider.unloadChunks();
         int j = this.a(1.0F);
@@ -277,9 +279,10 @@ public class WorldServer extends World implements org.bukkit.BlockChangeDelegate
     }
 
     protected void g() {
-    	 // Spigot start
+        // Spigot start
         this.aggregateTicks--;
-        if (this.aggregateTicks != 0) return;
+        if (this.aggregateTicks != 0)
+            return;
         aggregateTicks = this.getWorld().aggregateTicks;
         // Spigot end
         super.g();
@@ -296,7 +299,7 @@ public class WorldServer extends World implements org.bukkit.BlockChangeDelegate
             int chunkX = World.keyToX(chunkCoord);
             int chunkZ = World.keyToZ(chunkCoord);
             // If unloaded, or in procedd of being unloaded, drop it
-            if ((!this.isChunkLoaded(chunkX,  chunkZ)) || (this.chunkProviderServer.unloadQueue.contains(chunkX, chunkZ))) {
+            if ((!this.isChunkLoaded(chunkX, chunkZ)) || (this.chunkProviderServer.unloadQueue.contains(chunkX, chunkZ))) {
                 iter.remove();
                 continue;
             }
@@ -440,8 +443,8 @@ public class WorldServer extends World implements org.bukkit.BlockChangeDelegate
             }
 
             // if (!this.L.contains(nextticklistentry)) {
-                // this.L.add(nextticklistentry);
-                // this.M.add(nextticklistentry);
+            // this.L.add(nextticklistentry);
+            // this.M.add(nextticklistentry);
             // }
             addNextTickIfNeeded(nextticklistentry); // CraftBukkit
         }
@@ -483,55 +486,55 @@ public class WorldServer extends World implements org.bukkit.BlockChangeDelegate
         //if (i != this.L.size()) { // CraftBukkit
         //    throw new IllegalStateException("TickNextTick list out of synch");
         //} else { // CraftBukkit
-            if (i > 1000) {
-                // CraftBukkit start - if the server has too much to process over time, try to alleviate that
-                if (i > 20 * 1000) {
-                    i = i / 20;
-                } else {
-                    i = 1000;
-                }
-                // CraftBukkit end
+        if (i > 1000) {
+            // CraftBukkit start - if the server has too much to process over time, try to alleviate that
+            if (i > 20 * 1000) {
+                i = i / 20;
+            } else {
+                i = 1000;
+            }
+            // CraftBukkit end
+        }
+
+        for (int j = 0; j < i; ++j) {
+            NextTickListEntry nextticklistentry = (NextTickListEntry) this.M.first();
+
+            if (!flag && nextticklistentry.e > this.worldData.getTime()) {
+                break;
             }
 
-            for (int j = 0; j < i; ++j) {
-                NextTickListEntry nextticklistentry = (NextTickListEntry) this.M.first();
+            //this.M.remove(nextticklistentry);
+            //this.L.remove(nextticklistentry);
+            this.removeNextTickIfNeeded(nextticklistentry); // CraftBukkit
+            boolean persist = this.getPersistentChunks().containsKey(new ChunkCoordIntPair(nextticklistentry.a >> 4, nextticklistentry.c >> 4));
+            int b0 = persist ? 0 : 8;
 
-                if (!flag && nextticklistentry.e > this.worldData.getTime()) {
-                    break;
-                }
+            if (this.d(nextticklistentry.a - b0, nextticklistentry.b - b0, nextticklistentry.c - b0, nextticklistentry.a + b0, nextticklistentry.b + b0, nextticklistentry.c + b0)) {
+                int k = this.getTypeId(nextticklistentry.a, nextticklistentry.b, nextticklistentry.c);
 
-                //this.M.remove(nextticklistentry);
-                //this.L.remove(nextticklistentry);
-                this.removeNextTickIfNeeded(nextticklistentry); // CraftBukkit
-                boolean persist = this.getPersistentChunks().containsKey(new ChunkCoordIntPair(nextticklistentry.a >> 4, nextticklistentry.c >> 4));
-                int b0 = persist ? 0 : 8;
+                if (k == nextticklistentry.d && k > 0) {
+                    try {
+                        Block.byId[k].b(this, nextticklistentry.a, nextticklistentry.b, nextticklistentry.c, this.random);
+                    } catch (Throwable throwable) {
+                        CrashReport crashreport = CrashReport.a(throwable, "Exception while ticking a block");
+                        CrashReportSystemDetails crashreportsystemdetails = crashreport.a("Block being ticked");
 
-                if (this.d(nextticklistentry.a - b0, nextticklistentry.b - b0, nextticklistentry.c - b0, nextticklistentry.a + b0, nextticklistentry.b + b0, nextticklistentry.c + b0)) {
-                    int k = this.getTypeId(nextticklistentry.a, nextticklistentry.b, nextticklistentry.c);
+                        int l;
 
-                    if (k == nextticklistentry.d && k > 0) {
                         try {
-                            Block.byId[k].b(this, nextticklistentry.a, nextticklistentry.b, nextticklistentry.c, this.random);
-                        } catch (Throwable throwable) {
-                            CrashReport crashreport = CrashReport.a(throwable, "Exception while ticking a block");
-                            CrashReportSystemDetails crashreportsystemdetails = crashreport.a("Block being ticked");
-
-                            int l;
-
-                            try {
-                                l = this.getData(nextticklistentry.a, nextticklistentry.b, nextticklistentry.c);
-                            } catch (Throwable throwable1) {
-                                l = -1;
-                            }
-
-                            CrashReportSystemDetails.a(crashreportsystemdetails, nextticklistentry.a, nextticklistentry.b, nextticklistentry.c, k, l);
-                            throw new ReportedException(crashreport);
+                            l = this.getData(nextticklistentry.a, nextticklistentry.b, nextticklistentry.c);
+                        } catch (Throwable throwable1) {
+                            l = -1;
                         }
+
+                        CrashReportSystemDetails.a(crashreportsystemdetails, nextticklistentry.a, nextticklistentry.b, nextticklistentry.c, k, l);
+                        throw new ReportedException(crashreport);
                     }
                 }
             }
+        }
 
-            return !this.M.isEmpty();
+        return !this.M.isEmpty();
         // } // Spigot
     }
 
@@ -610,24 +613,41 @@ public class WorldServer extends World implements org.bukkit.BlockChangeDelegate
 
     public List getTileEntities(int i, int j, int k, int l, int i1, int j1) {
         ArrayList arraylist = new ArrayList();
-        // CraftBukkit start - use iterator
-        Iterator iterator = this.tileEntityList.iterator();
-
-        while (iterator.hasNext()) {
-            TileEntity tileentity = (TileEntity) iterator.next();
-            // CraftBukkit end
-
-            if (tileentity.x >= i && tileentity.y >= j && tileentity.z >= k && tileentity.x < l && tileentity.y < i1 && tileentity.z < j1) {
-                arraylist.add(tileentity);
+        // Forge start
+        for(int x = (i >> 4); x <= (l >> 4); x++)
+        {
+            for(int z = (k >> 4); z <= (j1 >> 4); z++)
+            {
+                Chunk chunk = getChunkAt(x, z);
+                if (chunk != null)
+                {
+                    for(Object obj : chunk.tileEntities.values())
+                    {
+                        TileEntity entity = (TileEntity)obj;
+                        if (!entity.r())
+                        {
+                            if (entity.x >= i && entity.y >= j && entity.z >= k &&
+                                entity.x <= l && entity.y <= i1 && entity.z <= j1)
+                            {
+                                arraylist.add(entity);
+                            }
+                        }
+                    }
+                }
             }
         }
-
+        // Forge end
         return arraylist;
     }
 
+    // Forge start
+    /**
+     * Called when checking if a certain block can be mined or not. The 'spawn safe zone' check is located here.
+     */
     public boolean a(EntityHuman entityhuman, int i, int j, int k) {
         return super.a(entityhuman, i, j, k);
     }
+    // Forge end
 
     public boolean canMineBlockBody(EntityHuman entityhuman, int i, int j, int k) {
         int l = MathHelper.a(i - this.worldData.c());
@@ -715,7 +735,7 @@ public class WorldServer extends World implements org.bukkit.BlockChangeDelegate
     }
 
     protected void k() {
-        WorldGenBonusChest worldgenbonuschest = new WorldGenBonusChest(S, 10);
+        WorldGenBonusChest worldgenbonuschest = new WorldGenBonusChest(ChestGenHooks.getItems(BONUS_CHEST, random), ChestGenHooks.getCount(BONUS_CHEST, random)); // Forge
 
         for (int i = 0; i < 10; ++i) {
             int j = this.worldData.c() + this.random.nextInt(6) - this.random.nextInt(6);
@@ -744,7 +764,7 @@ public class WorldServer extends World implements org.bukkit.BlockChangeDelegate
             }
 
             this.chunkProvider.saveChunks(flag, iprogressupdate);
-            MinecraftForge.EVENT_BUS.post(new WorldEvent.Save(this));
+            MinecraftForge.EVENT_BUS.post(new WorldEvent.Save(this)); // Forge
         }
     }
 
@@ -752,7 +772,7 @@ public class WorldServer extends World implements org.bukkit.BlockChangeDelegate
         this.D();
         this.dataManager.saveWorldData(this.worldData, this.server.getPlayerList().q());
         this.worldMaps.a();
-        this.perWorldStorage.a();
+        this.perWorldStorage.a(); // Forge
     }
 
     protected void a(Entity entity) {
@@ -967,7 +987,9 @@ public class WorldServer extends World implements org.bukkit.BlockChangeDelegate
     }
     // Spigot end
 
+    // Forge start
     public File getChunkSaveLocation() {
-        return ((ChunkRegionLoader)this.chunkProviderServer.e).d;
+        return ((ChunkRegionLoader) this.chunkProviderServer.e).d;
     }
+    // Forge end
 }
