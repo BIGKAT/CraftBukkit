@@ -117,7 +117,8 @@ public abstract class PlayerList {
     }
 
     public void setPlayerFileData(WorldServer[] aworldserver) {
-        if (this.playerFileData != null) return; // CraftBukkit
+        if (this.playerFileData != null)
+            return; // CraftBukkit
         this.playerFileData = aworldserver[0].getDataManager().getPlayerFileData();
     }
 
@@ -204,7 +205,8 @@ public abstract class PlayerList {
     }
 
     public String disconnect(EntityPlayer entityplayer) { // CraftBukkit - return string
-        if (entityplayer.playerConnection.disconnected) return null; // CraftBukkit - exploitsies fix
+        if (entityplayer.playerConnection.disconnected)
+            return null; // CraftBukkit - exploitsies fix
 
         // CraftBukkit start - quitting must be before we do final save of data, in case plugins need to modify it
         PlayerQuitEvent playerQuitEvent = new PlayerQuitEvent(this.cserver.getPlayer(entityplayer), "\u00A7e" + entityplayer.name + " left the game.");
@@ -328,14 +330,6 @@ public abstract class PlayerList {
     }
 
     public EntityPlayer moveToWorld(EntityPlayer entityplayer, int i, boolean flag, Location location) {
-        // Forge start
-        World world = this.server.getWorldServer(i);
-        if (world == null) {
-            i = 0;
-        } else if (!world.worldProvider.e()) {
-            i = world.worldProvider.getRespawnDimension(entityplayer);
-        }
-        // Forge end
         // CraftBukkit end
         entityplayer.p().getTracker().untrackPlayer(entityplayer);
         // entityplayer.p().getTracker().untrackEntity(entityplayer); // CraftBukkit
@@ -350,7 +344,6 @@ public abstract class PlayerList {
         org.bukkit.World fromWorld = entityplayer1.getBukkitEntity().getWorld();
         entityplayer1.viewingCredits = false;
         entityplayer1.copyTo(entityplayer, flag);
-        entityplayer1.dimension = i; // Forge
 
         ChunkCoordinates chunkcoordinates1;
 
@@ -434,7 +427,7 @@ public abstract class PlayerList {
         return entityplayer1;
     }
 
-    public void changeDimension(EntityPlayer var1, int var2, PortalTravelAgent var3) {
+    public void transferPlayerToDimension(EntityPlayer var1, int var2, PortalTravelAgent var3) {
         changeDimension(var1, var2); // Forge
     }
 
@@ -471,20 +464,20 @@ public abstract class PlayerList {
         TeleportCause cause = TeleportCause.UNKNOWN;
         int playerEnvironmentId = entityplayer.getBukkitEntity().getWorld().getEnvironment().getId();
         switch (dimension) {
-            case -1:
+        case -1:
+            cause = TeleportCause.NETHER_PORTAL;
+            break;
+        case 0:
+            if (playerEnvironmentId == -1) {
                 cause = TeleportCause.NETHER_PORTAL;
-                break;
-            case 0:
-                if (playerEnvironmentId == -1) {
-                    cause = TeleportCause.NETHER_PORTAL;
-                } else if (playerEnvironmentId == 1) {
-                    cause = TeleportCause.END_PORTAL;
-                }
-
-                break;
-            case 1:
+            } else if (playerEnvironmentId == 1) {
                 cause = TeleportCause.END_PORTAL;
-                break;
+            }
+
+            break;
+        case 1:
+            cause = TeleportCause.END_PORTAL;
+            break;
         }
 
         org.bukkit.craftbukkit.PortalTravelAgent pta = new org.bukkit.craftbukkit.PortalTravelAgent();
