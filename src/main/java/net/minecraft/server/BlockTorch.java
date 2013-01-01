@@ -55,7 +55,7 @@ public class BlockTorch extends Block
      */
     private boolean l(World var1, int var2, int var3, int var4)
     {
-        if (var1.t(var2, var3, var4))
+        if (var1.v(var2, var3, var4))
         {
             return true;
         }
@@ -133,28 +133,31 @@ public class BlockTorch extends Block
      */
     public void onPlace(World var1, int var2, int var3, int var4)
     {
-        // Forge start
-        if (var1.isBlockSolidOnSide(var2 - 1, var3, var4, EAST, true))
+        if (var1.getData(var2, var3, var4) == 0)
         {
-            var1.setData(var2, var3, var4, 1);
+            // Forge start
+            if (var1.isBlockSolidOnSide(var2 - 1, var3, var4, EAST, true))
+            {
+                var1.setData(var2, var3, var4, 1);
+            }
+            else if (var1.isBlockSolidOnSide(var2 + 1, var3, var4, WEST, true))
+            {
+                var1.setData(var2, var3, var4, 2);
+            }
+            else if (var1.isBlockSolidOnSide(var2, var3, var4 - 1, SOUTH, true))
+            {
+                var1.setData(var2, var3, var4, 3);
+            }
+            else if (var1.isBlockSolidOnSide(var2, var3, var4 + 1, NORTH, true))
+            {
+                var1.setData(var2, var3, var4, 4);
+            }
+            else if (this.l(var1, var2, var3 - 1, var4))
+            {
+                var1.setData(var2, var3, var4, 5);
+            }
+            // Forge end
         }
-        else if (var1.isBlockSolidOnSide(var2 + 1, var3, var4, WEST, true))
-        {
-            var1.setData(var2, var3, var4, 2);
-        }
-        else if (var1.isBlockSolidOnSide(var2, var3, var4 - 1, SOUTH, true))
-        {
-            var1.setData(var2, var3, var4, 3);
-        }
-        else if (var1.isBlockSolidOnSide(var2, var3, var4 + 1, NORTH, true))
-        {
-            var1.setData(var2, var3, var4, 4);
-        }
-        else if (this.l(var1, var2, var3 - 1, var4))
-        {
-            var1.setData(var2, var3, var4, 5);
-        }
-        // Forge end
         this.n(var1, var2, var3, var4);
     }
 
