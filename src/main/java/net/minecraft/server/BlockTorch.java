@@ -81,38 +81,38 @@ public class BlockTorch extends Block
     }
 
     /**
-     * called before onBlockPlacedBy by ItemBlock and ItemReed
+     * Called when a block is placed using its ItemBlock. Args: World, X, Y, Z, side, hitX, hitY, hitZ, block metadata
      */
-    public void postPlace(World var1, int var2, int var3, int var4, int var5, float var6, float var7, float var8)
+    public int getPlacedData(World var1, int var2, int var3, int var4, int var5, float var6, float var7, float var8, int var9)
     {
-        int var9 = var1.getData(var2, var3, var4);
+        int var10 = var9;
 
         if (var5 == 1 && this.l(var1, var2, var3 - 1, var4))
         {
-            var9 = 5;
+            var10 = 5;
         }
         // Forge start
         if (var5 == 2 && var1.isBlockSolidOnSide(var2, var3, var4 + 1, NORTH, true))
         {
-            var9 = 4;
+            var10 = 4;
         }
 
         if (var5 == 3 && var1.isBlockSolidOnSide(var2, var3, var4 - 1, SOUTH, true))
         {
-            var9 = 3;
+            var10 = 3;
         }
 
         if (var5 == 4 && var1.isBlockSolidOnSide(var2 + 1, var3, var4, WEST, true))
         {
-            var9 = 2;
+            var10 = 2;
         }
 
         if (var5 == 5 && var1.isBlockSolidOnSide(var2 - 1, var3, var4, EAST, true))
         {
-            var9 = 1;
+            var10= 1;
         }
         // Forge end
-        var1.setData(var2, var3, var4, var9);
+        return var10;
     }
 
     /**
@@ -133,6 +133,8 @@ public class BlockTorch extends Block
      */
     public void onPlace(World var1, int var2, int var3, int var4)
     {
+        if (var1.getData(var2, var3, var4) == 0)
+        {
     	// Forge start
         if (var1.isBlockSolidOnSide(var2 - 1, var3, var4, EAST, true))
         {
@@ -155,6 +157,7 @@ public class BlockTorch extends Block
             var1.setData(var2, var3, var4, 5);
         }
         // Forge end
+        }
         this.n(var1, var2, var3, var4);
     }
 
@@ -256,42 +259,5 @@ public class BlockTorch extends Block
         }
 
         return super.a(var1, var2, var3, var4, var5, var6);
-    }
-
-    @SideOnly(Side.CLIENT)
-    public void a(World var1, int var2, int var3, int var4, Random var5)
-    {
-        int var6 = var1.getData(var2, var3, var4);
-        double var7 = (double)((float)var2 + 0.5F);
-        double var9 = (double)((float)var3 + 0.7F);
-        double var11 = (double)((float)var4 + 0.5F);
-        double var13 = 0.2199999988079071D;
-        double var15 = 0.27000001072883606D;
-
-        if (var6 == 1)
-        {
-            var1.addParticle("smoke", var7 - var15, var9 + var13, var11, 0.0D, 0.0D, 0.0D);
-            var1.addParticle("flame", var7 - var15, var9 + var13, var11, 0.0D, 0.0D, 0.0D);
-        }
-        else if (var6 == 2)
-        {
-            var1.addParticle("smoke", var7 + var15, var9 + var13, var11, 0.0D, 0.0D, 0.0D);
-            var1.addParticle("flame", var7 + var15, var9 + var13, var11, 0.0D, 0.0D, 0.0D);
-        }
-        else if (var6 == 3)
-        {
-            var1.addParticle("smoke", var7, var9 + var13, var11 - var15, 0.0D, 0.0D, 0.0D);
-            var1.addParticle("flame", var7, var9 + var13, var11 - var15, 0.0D, 0.0D, 0.0D);
-        }
-        else if (var6 == 4)
-        {
-            var1.addParticle("smoke", var7, var9 + var13, var11 + var15, 0.0D, 0.0D, 0.0D);
-            var1.addParticle("flame", var7, var9 + var13, var11 + var15, 0.0D, 0.0D, 0.0D);
-        }
-        else
-        {
-            var1.addParticle("smoke", var7, var9, var11, 0.0D, 0.0D, 0.0D);
-            var1.addParticle("flame", var7, var9, var11, 0.0D, 0.0D, 0.0D);
-        }
     }
 }

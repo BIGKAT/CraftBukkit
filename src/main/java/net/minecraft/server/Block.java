@@ -395,13 +395,9 @@ public class Block implements BlockProxy {
                 for (ItemStack item : items) {
                 // CraftBukkit - <= to < to allow for plugins to completely disable block drops from explosions
                 if (world.random.nextFloat() < f) {
-                    int l1 = this.getDropType(l, world.random, i1);
-
-                    if (l1 > 0) {
                         this.b(world, i, j, k, item); // Forge
                     }
                 }
-            }
         }
     }
 

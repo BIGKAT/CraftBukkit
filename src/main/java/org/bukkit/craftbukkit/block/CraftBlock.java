@@ -30,8 +30,8 @@ public class CraftBlock implements Block {
     private final int x;
     private final int y;
     private final int z;
-    private static final Biome BIOME_MAPPING[];
-    private static final BiomeBase BIOMEBASE_MAPPING[];
+    private static final Biome[] BIOME_MAPPING = new Biome[BiomeBase.biomes.length];
+    private static final BiomeBase[] BIOMEBASE_MAPPING = new BiomeBase[BiomeBase.biomes.length];
 
     public CraftBlock(CraftChunk chunk, int x, int y, int z) {
         this.x = x;
@@ -405,8 +405,6 @@ public class CraftBlock implements Block {
 
     /* Build biome index based lookup table for BiomeBase to Biome mapping */
     static {
-        BIOME_MAPPING = new Biome[BiomeBase.biomes.length];
-        BIOMEBASE_MAPPING = new BiomeBase[Biome.values().length];
         BIOME_MAPPING[BiomeBase.SWAMPLAND.id] = Biome.SWAMPLAND;
         BIOME_MAPPING[BiomeBase.FOREST.id] = Biome.FOREST;
         BIOME_MAPPING[BiomeBase.TAIGA.id] = Biome.TAIGA;

@@ -14,6 +14,9 @@ import java.util.TreeSet;
 import gnu.trove.iterator.TLongShortIterator;
 
 import java.io.File;
+
+import net.minecraftforge.common.ChestGenHooks;
+import static net.minecraftforge.common.ChestGenHooks.*;
 import net.minecraftforge.common.DimensionManager;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.world.WorldEvent;
@@ -609,24 +612,41 @@ public class WorldServer extends World implements org.bukkit.BlockChangeDelegate
 
     public List getTileEntities(int i, int j, int k, int l, int i1, int j1) {
         ArrayList arraylist = new ArrayList();
-        // CraftBukkit start - use iterator
-        Iterator iterator = this.tileEntityList.iterator();
-
-        while (iterator.hasNext()) {
-            TileEntity tileentity = (TileEntity) iterator.next();
-            // CraftBukkit end
-
-            if (tileentity.x >= i && tileentity.y >= j && tileentity.z >= k && tileentity.x < l && tileentity.y < i1 && tileentity.z < j1) {
-                arraylist.add(tileentity);
+        // Forge start
+        for(int x = (i >> 4); x <= (l >> 4); x++)
+        {
+            for(int z = (k >> 4); z <= (j1 >> 4); z++)
+            {
+                Chunk chunk = getChunkAt(x, z);
+                if (chunk != null)
+                {
+                    for(Object obj : chunk.tileEntities.values())
+                    {
+                        TileEntity entity = (TileEntity)obj;
+                        if (!entity.r())
+                        {
+                            if (entity.x >= i && entity.y >= j && entity.z >= k &&
+                                entity.x <= l && entity.y <= i1 && entity.z <= j1)
+                            {
+                                arraylist.add(entity);
             }
         }
-
+                    }
+                }
+            }
+        }
+        // Forge end
         return arraylist;
     }
 
+    // Forge start
+    /**
+     * Called when checking if a certain block can be mined or not. The 'spawn safe zone' check is located here.
+     */
     public boolean a(EntityHuman entityhuman, int i, int j, int k) {
         return super.a(entityhuman, i, j, k);
     }
+    // Forge end
 
     public boolean canMineBlockBody(EntityHuman entityhuman, int i, int j, int k) {
         int l = MathHelper.a(i - this.worldData.c());
@@ -714,7 +734,7 @@ public class WorldServer extends World implements org.bukkit.BlockChangeDelegate
     }
 
     protected void k() {
-        WorldGenBonusChest worldgenbonuschest = new WorldGenBonusChest(T, 10);
+        WorldGenBonusChest worldgenbonuschest = new WorldGenBonusChest(ChestGenHooks.getItems(BONUS_CHEST), ChestGenHooks.getCount(BONUS_CHEST, random)); // Forge
 
         for (int i = 0; i < 10; ++i) {
             int j = this.worldData.c() + this.random.nextInt(6) - this.random.nextInt(6);
@@ -743,7 +763,7 @@ public class WorldServer extends World implements org.bukkit.BlockChangeDelegate
             }
 
             this.chunkProvider.saveChunks(flag, iprogressupdate);
-            MinecraftForge.EVENT_BUS.post(new WorldEvent.Save(this));
+            MinecraftForge.EVENT_BUS.post(new WorldEvent.Save(this)); // Forge
         }
     }
 
@@ -751,7 +771,7 @@ public class WorldServer extends World implements org.bukkit.BlockChangeDelegate
         this.D();
         this.dataManager.saveWorldData(this.worldData, this.server.getServerConfigurationManager().q());
         this.worldMaps.a();
-        this.perWorldStorage.a();
+        this.perWorldStorage.a(); // Forge
     }
 
     protected void a(Entity entity) {
