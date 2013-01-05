@@ -1407,9 +1407,8 @@ public class PlayerConnection extends Connection {
                     flag = false;
                 } else {
                     for (i = 0; i < packet130updatesign.lines[j].length(); ++i) {
-                        if (!SharedConstants.isAllowedChatCharacter(packet130updatesign.lines[j].charAt(i))) {
+                        if (SharedConstants.allowedCharacters.indexOf(packet130updatesign.lines[j].charAt(i)) < 0) {
                             flag = false;
-                            break;
                         }
                     }
                 }

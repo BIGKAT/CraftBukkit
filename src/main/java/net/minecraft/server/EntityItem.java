@@ -284,7 +284,7 @@ public class EntityItem extends Entity {
             // CraftBukkit end
 
             if (this.pickupDelay <= 0 && (var2.getResult() == Result.ALLOW || i <= 0 || entityhuman.inventory.pickup(this.getItemStack()))) { // Forge
-                if (this.getItemStack().id == Block.LOG.id) {
+                if (itemstack.id == Block.LOG.id) {
                     entityhuman.a((Statistic) AchievementList.g);
                 }
 

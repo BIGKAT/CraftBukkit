@@ -120,10 +120,10 @@ public class PlayerInteractManager {
         // CraftBukkit
         PlayerInteractEvent event = CraftEventFactory.callPlayerInteractEvent(this.player, Action.LEFT_CLICK_BLOCK, i, j, k, l, this.player.inventory.getItemInHand());
 
-        ForgeEventFactory.onPlayerInteract(this.player, net.minecraftforge.event.entity.player.PlayerInteractEvent.Action.LEFT_CLICK_BLOCK, i, j, k, l); // Forge
         if (!this.gamemode.isAdventure() || this.player.f(i, j, k)) {
+            net.minecraftforge.event.entity.player.PlayerInteractEvent forgeEvent = ForgeEventFactory.onPlayerInteract(this.player, net.minecraftforge.event.entity.player.PlayerInteractEvent.Action.LEFT_CLICK_BLOCK, i, j, k, l); // Forge
             // CraftBukkit start
-            if (event.isCancelled()) {
+            if (event.isCancelled() || forgeEvent.isCanceled()) { // Forge
                 // Let the client know the block still exists
                 ((EntityPlayer) this.player).playerConnection.sendPacket(new Packet53BlockChange(i, j, k, this.world));
                 // Update any tile entity data for this block
@@ -139,13 +139,15 @@ public class PlayerInteractManager {
                     this.breakBlock(i, j, k);
                 }
             } else {
-                this.world.douseFire(this.player, i, j, k, l);
+                //this.world.douseFire(this.player, i, j, k, l);  // Forge
                 this.lastDigTick = this.currentTick;
                 float f = 1.0F;
                 int i1 = this.world.getTypeId(i, j, k);
                 // CraftBukkit start - Swings at air do *NOT* exist.
-                if (Block.byId[i1]== null) return; // MCPC
-                if (event.useInteractedBlock() == Event.Result.DENY) {
+                Block block = Block.byId[i1]; // Forge
+                if (block != null)
+                {
+                    if (event.useInteractedBlock() == Event.Result.DENY || forgeEvent.useBlock == net.minecraftforge.event.Event.Result.DENY) { // MCPC
                     // If we denied a door from opening, we need to send a correcting update to the client, as it already opened the door.
                     if (i1 == Block.WOODEN_DOOR.id) {
                         // For some reason *BOTH* the bottom/top part have to be marked updated.
@@ -155,18 +157,16 @@ public class PlayerInteractManager {
                     } else if (i1 == Block.TRAP_DOOR.id) {
                         ((EntityPlayer) this.player).playerConnection.sendPacket(new Packet53BlockChange(i, j, k, this.world));
                     }
-                } else if (i1 > 0) {
-                    Block.byId[i1].attack(this.world, i, j, k, this.player);
-                    // Allow fire punching to be blocked
-                    this.world.douseFire((EntityHuman) null, i, j, k, l);
+                    } else {
+                        // Forge start
+                        block.attack(world, i, j, k, this.player);
+                        world.douseFire(this.player, i, j, k, l);
+                        f = block.getDamage(this.player, this.world, i, j, k);
+                        // Forge end
+                }
                 }
 
-                // Handle hitting a block
-                if (i1 > 0) {
-                    f = Block.byId[i1].getDamage(this.player, this.world, i, j, k);
-                }
-
-                if (event.useItemInHand() == Event.Result.DENY) {
+                if (event.useItemInHand() == Event.Result.DENY || forgeEvent.useItem == net.minecraftforge.event.Event.Result.DENY) { // Forge
                     // If we 'insta destroyed' then the client needs to be informed.
                     if (f > 1.0f) {
                         ((EntityPlayer) this.player).playerConnection.sendPacket(new Packet53BlockChange(i, j, k, this.world));
@@ -304,9 +304,9 @@ public class PlayerInteractManager {
         // Forge start
         ItemStack itemstack = this.player.bS();
         if (itemstack != null && itemstack.getItem().onBlockStartBreak(itemstack, i, j, k, this.player)) {
-        // Forge end
             return false;
-        } else {
+        }
+        // Forge end
             int l = this.world.getTypeId(i, j, k);
             if (Block.byId[l] == null) return false; // CraftBukkit - a plugin set block to air without cancelling
             int i1 = this.world.getData(i, j, k);
@@ -355,7 +355,6 @@ public class PlayerInteractManager {
 
             return flag;
         }
-    }
 
     public boolean useItem(EntityHuman entityhuman, World world, ItemStack itemstack) {
         int i = itemstack.count;

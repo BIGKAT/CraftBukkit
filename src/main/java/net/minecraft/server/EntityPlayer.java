@@ -170,7 +170,13 @@ public class EntityPlayer extends EntityHuman implements ICrafting {
                 iterator1.remove();
                 if (chunkcoordintpair != null && this.world.isLoaded(chunkcoordintpair.x << 4, 0, chunkcoordintpair.z << 4)) {
                     arraylist.add(this.world.getChunkAt(chunkcoordintpair.x, chunkcoordintpair.z));
-                    arraylist1.addAll(((WorldServer) this.world).getTileEntities(chunkcoordintpair.x * 16, 0, chunkcoordintpair.z * 16, chunkcoordintpair.x * 16 + 16, 256, chunkcoordintpair.z * 16 + 16));
+                    // Forge start
+                    // MCPC - fixes unable to locate sign bug, do not remove
+                    //BugFix: 16 makes it load an extra chunk, which isn't associated with a player, which makes it not unload unless a player walks near it.
+                    //ToDo: Find a way to efficiently clean abandoned chunks.
+                    //var8.addAll(((WorldServer)this.worldObj).getAllTileEntityInBox(var9.chunkXPos * 16, 0, var9.chunkZPos * 16, var9.chunkXPos * 16 + 16, 256, var9.chunkZPos * 16 + 16));
+                    arraylist1.addAll(((WorldServer)this.world).getTileEntities(chunkcoordintpair.x * 16, 0, chunkcoordintpair.z * 16, chunkcoordintpair.x * 16 + 15, 256, chunkcoordintpair.z * 16 + 15));
+                    // Forge end
                 }
             }
 
@@ -428,17 +434,10 @@ public class EntityPlayer extends EntityHuman implements ICrafting {
         super.a(d0, flag);
     }
 
-    public int nextContainerCounterGetInteger_CB() { // CraftBukkit - private void -> public int // CPCM - rename to ..GetInteger_CB
-        nextContainerCounter(); // CPCM - refactor
-        return this.containerCounter; // CraftBukkit
-    }
-
-    // CPCM start - vanilla-compatible (same signature) method
-    public int nextContainerCounter() { // CPCM - private void -> public int
+    public int nextContainerCounter() { // CraftBukkit - private void -> public int
         this.containerCounter = this.containerCounter % 100 + 1;
         return this.containerCounter; // CraftBukkit
     }
-    // CPCM end
 
     public void startCrafting(int i, int j, int k) {
         // CraftBukkit start - inventory open hook
@@ -593,7 +592,6 @@ public class EntityPlayer extends EntityHuman implements ICrafting {
         this.playerConnection.sendPacket(new Packet104WindowItems(container.windowId, list));
         this.playerConnection.sendPacket(new Packet103SetSlot(-1, -1, this.inventory.getCarried()));
         // CraftBukkit start - send a Set Slot to update the crafting result slot
-        if (container.getBukkitView() == null) return; // MCPC
         if (java.util.EnumSet.of(InventoryType.CRAFTING,InventoryType.WORKBENCH).contains(container.getBukkitView().getType())) {
             this.playerConnection.sendPacket(new Packet103SetSlot(container.windowId, 0, container.getSlot(0).getItem()));
         }

@@ -671,10 +671,9 @@ public class EntityVillager extends EntityAgeable implements NPC, IMerchant
         bO.put(Integer.valueOf(Item.ARROW.id), new Tuple(Integer.valueOf(-12), Integer.valueOf(-8)));
     }
 
-	@Override
-	public EntityAgeable createChild(EntityAgeable arg0)
-	{
-		// TODO Auto-generated method stub
-		return null;
-	}
+    @Override
+    public EntityAgeable createChild(EntityAgeable entityageable) {
+        // TODO Auto-generated method stub
+        return null;
+    }
 }

@@ -1,5 +1,7 @@
 package cpw.mods.fml.common.event;
 
+import org.bukkit.command.Command;
+
 import net.minecraft.server.CommandHandler;
 import net.minecraft.server.ICommand;
 import net.minecraft.server.MinecraftServer;
@@ -31,4 +33,13 @@ public class FMLServerStartingEvent extends FMLStateEvent
         CommandHandler ch = (CommandHandler) getServer().getCommandHandler();
         ch.a(command);
     }
+
+    // add support to register commands through Bukkit
+    // MCPC start
+    public void registerServerCommand(String fallbackPrefix, Command command)
+    {
+        org.bukkit.command.SimpleCommandMap commandMap = getServer().server.getCommandMap();
+        commandMap.register(fallbackPrefix, command);
+    }
+    // MCPC end
 }
