@@ -79,7 +79,8 @@ public class BlockSkull extends BlockContainer {
         return i;
     }
 
-    // CraftBukkit start - special case dropping so we can get info from the tile entity
+    // MCPC - not needed since we handle this below with getBlockDropped
+    /*// CraftBukkit start - special case dropping so we can get info from the tile entity
     public void dropNaturally(World world, int i, int j, int k, int l, float f, int i1) {
         if (world.random.nextFloat() < f) {
             ItemStack itemstack = new ItemStack(Item.SKULL.id, 1, this.getDropData(world, i, j, k));
@@ -92,8 +93,7 @@ public class BlockSkull extends BlockContainer {
 
             this.b(world, i, j, k, itemstack);
         }
-    }
-    // CraftBukkit end
+    }*/
 
     public void a(World world, int i, int j, int k, int l, EntityHuman entityhuman) {
         if (entityhuman.abilities.canInstantlyBuild) {

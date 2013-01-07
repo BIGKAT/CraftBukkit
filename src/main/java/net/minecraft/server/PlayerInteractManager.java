@@ -311,12 +311,13 @@ public class PlayerInteractManager {
             if (Block.byId[l] == null) return false; // CraftBukkit - a plugin set block to air without cancelling
             int i1 = this.world.getData(i, j, k);
 
-            // CraftBukkit start - special case skulls, their item data comes from a tile entity
-            if (l == Block.SKULL.id && !this.isCreative()) {
-                Block.SKULL.dropNaturally(world, i, j, k, i1, 1.0F, 0);
-                return this.d(i, j, k);
-            }
-            // CraftBukkit end
+        // MCPC - remove since forge handles this with getBlockDropped
+        // CraftBukkit start - special case skulls, their item data comes from a tile entity
+        /*if (l == Block.SKULL.id && !this.isCreative()) {
+            Block.SKULL.dropNaturally(world, i, j, k, i1, 1.0F, 0);
+            return this.d(i, j, k);
+        }*/
+        // CraftBukkit end
 
             this.world.a(this.player, 2001, i, j, k, l + (this.world.getData(i, j, k) << 12));
             boolean flag = false; // Forge
