@@ -48,6 +48,7 @@ import net.minecraft.world.WorldServer;
 
 // CraftBukkit start
 import org.bukkit.craftbukkit.event.CraftEventFactory;
+import org.bukkit.event.CustomTimingsHandler;
 import org.bukkit.event.entity.EntityDamageByBlockEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.EntityRegainHealthEvent;
@@ -250,6 +251,14 @@ public abstract class EntityLiving extends Entity
     public int expToDrop = 0;
     public int maxAirTicks = 300;
     public int maxHealth = this.getMaxHealth();
+    // Spigot Start
+    public static CustomTimingsHandler timerEntityBaseTick = new CustomTimingsHandler("** entityBaseTick");
+    public static CustomTimingsHandler timerEntityAI = new CustomTimingsHandler("** entityAI");
+    public static CustomTimingsHandler timerEntityAIJump = new CustomTimingsHandler("** entityAIJump");
+    public static CustomTimingsHandler timerEntityAIMove = new CustomTimingsHandler("** entityAIMove");
+    public static CustomTimingsHandler timerEntityAILoot = new CustomTimingsHandler("** entityAILoot");
+    public static CustomTimingsHandler timerEntityTickRest = new CustomTimingsHandler("** entityTickRest");
+    // Spigot End
     // CraftBukkit end
 
     public EntityLiving(World par1World)
@@ -807,6 +816,7 @@ public abstract class EntityLiving extends Entity
      */
     public void onUpdate()
     {
+        timerEntityBaseTick.startTiming(); // Spigot
         super.onUpdate();
 
         if (!this.worldObj.isRemote)
@@ -842,7 +852,9 @@ public abstract class EntityLiving extends Entity
             }
         }
 
+        timerEntityBaseTick.stopTiming(); // Spigot
         this.onLivingUpdate();
+        timerEntityTickRest.startTiming(); // Spigot
         double var12 = this.posX - this.prevPosX;
         double var3 = this.posZ - this.prevPosZ;
         float var5 = (float)(var12 * var12 + var3 * var3);
@@ -951,6 +963,7 @@ public abstract class EntityLiving extends Entity
 
         this.worldObj.theProfiler.endSection();
         this.field_70764_aw += var7;
+        timerEntityTickRest.stopTiming(); // Spigot
     }
 
     // CraftBukkit start - delegate so we can handle providing a reason for health being regained
@@ -1777,6 +1790,8 @@ public abstract class EntityLiving extends Entity
      */
     public void onLivingUpdate()
     {
+        timerEntityAI.startTiming(); // Spigot
+
         if (this.jumpTicks > 0)
         {
             --this.jumpTicks;
@@ -1842,8 +1857,10 @@ public abstract class EntityLiving extends Entity
             }
         }
 
+        timerEntityAI.stopTiming(); // Spigot
         this.worldObj.theProfiler.endSection();
         this.worldObj.theProfiler.startSection("jump");
+        timerEntityAIJump.startTiming(); // Spigot
 
         if (this.isJumping)
         {
@@ -1865,8 +1882,10 @@ public abstract class EntityLiving extends Entity
             this.jumpTicks = 0;
         }
 
+        timerEntityAIJump.stopTiming(); // Spigot
         this.worldObj.theProfiler.endSection();
         this.worldObj.theProfiler.startSection("travel");
+        timerEntityAIMove.startTiming(); // Spigot
         this.moveStrafing *= 0.98F;
         this.moveForward *= 0.98F;
         this.randomYawVelocity *= 0.9F;
@@ -1874,6 +1893,7 @@ public abstract class EntityLiving extends Entity
         this.landMovementFactor *= this.getSpeedModifier();
         this.moveEntityWithHeading(this.moveStrafing, this.moveForward);
         this.landMovementFactor = var11;
+        timerEntityAIMove.stopTiming(); // Spigot
         this.worldObj.theProfiler.endSection();
         this.worldObj.theProfiler.startSection("push");
 
@@ -1884,6 +1904,7 @@ public abstract class EntityLiving extends Entity
 
         this.worldObj.theProfiler.endSection();
         this.worldObj.theProfiler.startSection("looting");
+        timerEntityAILoot.startTiming(); // Spigot
 
         // CraftBukkit - Don't run mob pickup code on players
         if (!this.worldObj.isRemote && !(this instanceof EntityPlayerMP) && this.canPickUpLoot && !this.dead && this.worldObj.getGameRules().getGameRuleBooleanValue("mobGriefing"))
@@ -1974,6 +1995,7 @@ public abstract class EntityLiving extends Entity
             }
         }
 
+        timerEntityAILoot.stopTiming(); // Spigot
         this.worldObj.theProfiler.endSection();
     }
 

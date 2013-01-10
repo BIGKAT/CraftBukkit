@@ -31,6 +31,7 @@ import org.bukkit.craftbukkit.chunkio.ChunkIOExecutor;
 import org.bukkit.craftbukkit.util.LongHash;
 import org.bukkit.craftbukkit.util.LongHashSet;
 import org.bukkit.craftbukkit.util.LongObjectHashMap;
+import org.bukkit.event.CustomTimingsHandler;
 import org.bukkit.event.world.ChunkUnloadEvent;
 // CraftBukkit end
 
@@ -44,6 +45,7 @@ public class ChunkProviderServer implements IChunkProvider
     public boolean loadChunkOnProvideRequest = false; // true -> false
     public LongObjectHashMap<Chunk> loadedChunkHashMap = new LongObjectHashMap<Chunk>();
     public WorldServer worldObj;
+    static private CustomTimingsHandler syncChunkLoadTimer = new CustomTimingsHandler("syncChunkLoad"); // Spigot
     // CraftBukkit end
 
     public ChunkProviderServer(WorldServer par1WorldServer, IChunkLoader par2IChunkLoader, IChunkProvider par3IChunkProvider)
@@ -151,6 +153,7 @@ public class ChunkProviderServer implements IChunkProvider
 
         if (chunk == null)
         {
+            syncChunkLoadTimer.startTiming(); // Spigot
             chunk = this.safeLoadChunk(i, j);
 
             if (chunk == null)
@@ -201,6 +204,7 @@ public class ChunkProviderServer implements IChunkProvider
 
             // CraftBukkit end
             chunk.populateChunk(this, this, i, j);
+            syncChunkLoadTimer.stopTiming(); // Spigot
         }
 
         // CraftBukkit start - If we didn't need to load the chunk run the callback now

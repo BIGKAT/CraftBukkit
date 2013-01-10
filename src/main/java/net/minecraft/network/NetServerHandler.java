@@ -88,6 +88,7 @@ import org.bukkit.craftbukkit.util.Waitable;
 import org.bukkit.craftbukkit.entity.CraftPlayer;
 import org.bukkit.craftbukkit.event.CraftEventFactory;
 import org.bukkit.entity.Player;
+import org.bukkit.event.CustomTimingsHandler;
 import org.bukkit.event.Event;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.block.SignChangeEvent;
@@ -154,6 +155,7 @@ public class NetServerHandler extends NetHandler
     private double lastPosZ;
     public boolean hasMoved = true; // CraftBukkit - private -> public
     private IntHashMap field_72586_s = new IntHashMap();
+    static private CustomTimingsHandler playerCommandTimer = new CustomTimingsHandler("playerCommand"); // Spigot
 
     public NetServerHandler(MinecraftServer par1, INetworkManager par2, EntityPlayerMP par3)
     {
@@ -1318,6 +1320,7 @@ public class NetServerHandler extends NetHandler
      */
     private void handleSlashCommand(String par1Str)
     {
+        playerCommandTimer.startTiming(); // Spigot
         // CraftBukkit start
         CraftPlayer player = this.getPlayer();
         PlayerCommandPreprocessEvent event = new PlayerCommandPreprocessEvent(player, par1Str, new LazyPlayerSet());
@@ -1325,6 +1328,7 @@ public class NetServerHandler extends NetHandler
 
         if (event.isCancelled())
         {
+            playerCommandTimer.stopTiming(); // Spigot
             return;
         }
 
@@ -1337,6 +1341,7 @@ public class NetServerHandler extends NetHandler
 
             if (this.server.dispatchCommand(event.getPlayer(), event.getMessage().substring(1)))
             {
+                playerCommandTimer.stopTiming(); // Spigot
                 return;
             }
         }
@@ -1344,9 +1349,11 @@ public class NetServerHandler extends NetHandler
         {
             player.sendMessage(org.bukkit.ChatColor.RED + "An internal error occurred while attempting to perform this command");
             Logger.getLogger(NetServerHandler.class.getName()).log(Level.SEVERE, null, ex);
+            playerCommandTimer.stopTiming(); // Spigot
             return;
         }
 
+        playerCommandTimer.stopTiming(); // Spigot
         // CraftBukkit end
         /* CraftBukkit start - No longer needed as we have already handled it in server.dispatchServerCommand above.
         this.minecraftServer.getCommandHandler().a(this.player, s);

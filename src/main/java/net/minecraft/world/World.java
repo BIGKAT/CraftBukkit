@@ -58,6 +58,7 @@ import net.minecraft.world.storage.WorldInfo;
 import org.bukkit.Bukkit;
 import org.bukkit.craftbukkit.util.LongHashSet;
 import org.bukkit.craftbukkit.util.UnsafeList;
+import org.bukkit.event.WorldTimingsHandler;
 import org.bukkit.generator.ChunkGenerator;
 import org.bukkit.craftbukkit.CraftServer;
 import org.bukkit.craftbukkit.CraftWorld;
@@ -225,6 +226,7 @@ public abstract class World implements IBlockAccess
     final Object chunkLock = new Object();
     private byte chunkTickRadius;
 
+    public WorldTimingsHandler timings; // Spigot
     public CraftWorld getWorld()
     {
         return this.world;
@@ -324,6 +326,7 @@ public abstract class World implements IBlockAccess
         this.calculateInitialSkylight();
         this.calculateInitialWeather();
         this.getServer().addWorld(this.world); // CraftBukkit
+        timings = new WorldTimingsHandler(this); // Spigot
     }
 
     /**
@@ -1874,6 +1877,7 @@ public abstract class World implements IBlockAccess
         Entity var2;
         CrashReport var4;
         CrashReportCategory var5;
+        timings.entityBaseTick.startTiming(); // Spigot
 
         for (var1 = 0; var1 < this.weatherEffects.size(); ++var1)
         {
@@ -1946,6 +1950,8 @@ public abstract class World implements IBlockAccess
 
         this.unloadedEntityList.clear();
         this.theProfiler.endStartSection("regular");
+        timings.entityBaseTick.stopTiming(); // Spigot
+        timings.entityTick.startTiming(); // Spigot
 
         for (var1 = 0; var1 < this.loadedEntityList.size(); ++var1)
         {
@@ -2017,7 +2023,9 @@ public abstract class World implements IBlockAccess
             this.theProfiler.endSection();
         }
 
+        timings.entityTick.stopTiming(); // Spigot
         this.theProfiler.endStartSection("tileEntities");
+        timings.tileEntityTick.startTiming(); // Spigot
         this.scanningTileEntities = true;
         Iterator var14 = this.loadedTileEntityList.iterator();
 
@@ -2122,6 +2130,7 @@ public abstract class World implements IBlockAccess
             this.addedTileEntityList.clear();
         }
 
+        timings.tileEntityTick.stopTiming(); // Spigot
         this.theProfiler.endSection();
         this.theProfiler.endSection();
     }
