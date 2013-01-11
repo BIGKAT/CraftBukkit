@@ -65,7 +65,12 @@ public final class SpawnerAnimals
             // Spigot start - limit radius to spawn distance (chunks aren't loaded)
             if (spawnRadius == 0)
             {
-                spawnRadius = (byte) par0WorldServer.getServer().getViewDistance();
+                spawnRadius = (byte) par0WorldServer.getWorld().mobSpawnRange;
+
+                if (spawnRadius > (byte) par0WorldServer.getServer().getViewDistance())
+                {
+                    spawnRadius = (byte) par0WorldServer.getServer().getViewDistance();
+                }
 
                 if (spawnRadius > 8)
                 {
