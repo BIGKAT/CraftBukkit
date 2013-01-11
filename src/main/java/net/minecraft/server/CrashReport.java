@@ -14,7 +14,6 @@ import java.util.concurrent.Callable;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 // Forge start
-import net.minecraft.server.CrashReportCategory;
 import cpw.mods.fml.common.FMLCommonHandler;
 // Forge end
 
