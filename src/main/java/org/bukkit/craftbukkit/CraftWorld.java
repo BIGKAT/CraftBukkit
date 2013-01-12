@@ -113,6 +113,9 @@ public class CraftWorld implements World {
         treeGrowthModifier = configuration.getInt("world-settings." + name + ".tree-growth-modifier", treeGrowthModifier);
         mushroomGrowthModifier = configuration.getInt("world-settings." + name + ".mushroom-growth-modifier", mushroomGrowthModifier);
 
+        viewDistance = Bukkit.getServer().getViewDistance();
+        viewDistance = configuration.getInt("world-settings." + name + ".view-distance", viewDistance);
+
         server.getLogger().info("-------------- Spigot ----------------");
         server.getLogger().info("-------- World Settings For [" + name + "] --------");
         server.getLogger().info("Growth Per Chunk: " + growthPerTick);
@@ -128,6 +131,7 @@ public class CraftWorld implements World {
         server.getLogger().info("Sugar Growth Modifier: " + sugarGrowthModifier);
         server.getLogger().info("Tree Growth Modifier: " + treeGrowthModifier);
         server.getLogger().info("Mushroom Growth Modifier: " + mushroomGrowthModifier);
+        server.getLogger().info("View distance: " + viewDistance);
         server.getLogger().info("-------------------------------------------------");
         // Spigot end
     }
@@ -138,6 +142,7 @@ public class CraftWorld implements World {
     public boolean randomLightingUpdates = false;
     public int mobSpawnRange = 4;
     public int aggregateTicks = 4;
+    public int viewDistance;
     //Crop growth rates:
     public int wheatGrowthModifier = 100;
     public int cactusGrowthModifier = 100;
