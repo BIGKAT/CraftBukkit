@@ -835,6 +835,7 @@ public final class CraftServer implements Server {
             }
         }
         DimensionManager.unloadWorld(handle.dimension); // Forge
+        DimensionManager.unregisterDimension(handle.dimension); // Forge
 
         worlds.remove(world.getName().toLowerCase());
         console.worlds.remove(console.worlds.indexOf(handle));
