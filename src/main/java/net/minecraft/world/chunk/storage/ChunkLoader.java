@@ -110,9 +110,11 @@ public class ChunkLoader
                 NBTTagCompound var24 = new NBTTagCompound();
                 var24.setByte("Y", (byte)(var5 & 255));
                 var24.setByteArray("Blocks", var19);
-                var24.setByteArray("Data", var20.data);
-                var24.setByteArray("SkyLight", var21.data);
-                var24.setByteArray("BlockLight", var23.data);
+                // Spigot start - a -> getValueArray() accessor
+                var24.setByteArray("Data", var20.getValueArray());
+                var24.setByteArray("SkyLight", var21.getValueArray());
+                var24.setByteArray("BlockLight", var23.getValueArray());
+                // Spigot end
                 var16.appendTag(var24);
             }
         }
