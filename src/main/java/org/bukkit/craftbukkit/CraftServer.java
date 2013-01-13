@@ -834,12 +834,14 @@ public final class CraftServer implements Server {
                 getLogger().log(Level.SEVERE, null, ex);
             }
         }
-        DimensionManager.unloadWorld(handle.dimension); // Forge
-        DimensionManager.unregisterDimension(handle.dimension); // Forge
+
+        // Forge START
+        MinecraftForge.EVENT_BUS.post(new WorldEvent.Unload(handle));
+        DimensionManager.setWorld(handle.dimension, null);
+        DimensionManager.unregisterDimension(handle.dimension);
+        // Forge END
 
         worlds.remove(world.getName().toLowerCase());
-        console.worlds.remove(console.worlds.indexOf(handle));
-        MinecraftForge.EVENT_BUS.post(new WorldEvent.Unload(handle)); // Forge
 
         return true;
     }
