@@ -111,7 +111,7 @@ public class ItemBlock extends Item
     {
         org.bukkit.block.BlockState blockstate = org.bukkit.craftbukkit.block.CraftBlockState.getBlockState(world, x, y, z);
         world.editingBlocks = true;
-        world.setBlockAndMetadataWithNotify(x, y, z, id, data);
+        world.setBlockAndMetadata(x, y, z, id, data);
         org.bukkit.event.block.BlockPlaceEvent event = org.bukkit.craftbukkit.event.CraftEventFactory.callBlockPlaceEvent(world, entityhuman, blockstate, x, y, z);
 
         if (event.isCancelled() || !event.canBuild())
@@ -122,13 +122,21 @@ public class ItemBlock extends Item
         }
 
         world.editingBlocks = false;
-        world.notifyBlocksOfNeighborChange(x, y, z, world.getBlockId(x, y, z));
-        Block block = Block.blocksList[world.getBlockId(x, y, z)];
+        int newId = world.getBlockId(x, y, z);
+        int newData = world.getBlockMetadata(x, y, z);
+        Block block = Block.blocksList[newId];
+
+        if (block != null)
+        {
+            block.onBlockAdded(world, x, y, z);
+        }
+
+        world.notifyBlockChange(x, y, z, newId);
 
         if (block != null)
         {
             block.onBlockPlacedBy(world, x, y, z, entityhuman);
-            block.onPostBlockPlaced(world, x, y, z, world.getBlockMetadata(x, y, z));
+            block.onPostBlockPlaced(world, x, y, z, newData);
             world.playSoundEffect((double)((float) x + 0.5F), (double)((float) y + 0.5F), (double)((float) z + 0.5F), block.stepSound.getPlaceSound(), (block.stepSound.getVolume() + 1.0F) / 2.0F, block.stepSound.getPitch() * 0.8F);
         }
 

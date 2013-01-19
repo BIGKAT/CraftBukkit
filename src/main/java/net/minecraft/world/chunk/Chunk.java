@@ -636,8 +636,8 @@ public class Chunk
                 {
                     if (!this.worldObj.isRemote)
                     {
-                        // CraftBukkit start - Don't extend piston until data is set
-                        if (!(Block.blocksList[par4] instanceof BlockPistonBase) || var9 != 0)
+                        // CraftBukkit start - Don't extend piston until data is set, don't "place" if we're processing the event
+                        if (!this.worldObj.editingBlocks && (!(Block.blocksList[par4] instanceof BlockPistonBase) || var9 != 0))
                         {
                             Block.blocksList[par4].onBlockAdded(this.worldObj, var12, par2, var13);
                         }
