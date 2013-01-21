@@ -59,11 +59,19 @@
     </dependency>
     <dependency>
       <groupId>org.bukkit</groupId>
-      <!-- minecraft-server without NMS classes also in CB
-      To generate this file see https://github.com/agaricusb/MinecraftRemapping/blob/master/slim-jar.py
+      <!-- CBMCP - minecraft-server compiled with packaged FML/MCP mappings
+        To create this file:
+        1. Setup a MCP workspace with FML/MCP mappings, but *without* FML patches and client/server merge - see https://gist.github.com/4366333
+        2. Create archive:
+        cd bin/minecraft_server
+        cp -r ../../temp/bin/minecraft_server/{META-INF,achievement,font.txt,lang,org} .
+        zip -r ../../../minecraft-server-pkgmcp-1.4.7.jar *
+        4. Add to repository:
+        cd ~/CraftBukkit
+        mvn install:install-file -Dfile=../minecraft-server-pkgmcp-1.4.7.jar  -DgroupId=org.bukkit -DartifactId=minecraft-server-pkgmcp -Dpackaging=jar -Dversion=1.4.7
       -->
-      <artifactId>slim-minecraft-server</artifactId>
-      <version>${minecraft.version}</version>
+      <artifactId>minecraft-server-pkgmcp</artifactId>
+      <version>1.4.7</version>
       <type>jar</type>
       <scope>compile</scope>
     </dependency>
@@ -222,10 +230,12 @@
             </goals>
             <configuration>
               <relocations>
+              <!-- CBMCP - disable for reobfuscation
                 <relocation>
                   <pattern>org.bouncycastle</pattern>
                   <shadedPattern>net.minecraft.v${minecraft_version}.org.bouncycastle</shadedPattern>
                 </relocation>
+              -->
                 <relocation>
                   <pattern>joptsimple</pattern>
                   <shadedPattern>org.bukkit.craftbukkit.libs.joptsimple</shadedPattern>
@@ -267,10 +277,12 @@
                         <exclude>org.bukkit.craftbukkit.Main*</exclude>
                     </excludes>
                 </relocation>
+                <!-- disable NMS relocation since it is completely restructured in MCP; expect at unrelocated location for reobfuscation
                 <relocation>
                     <pattern>net.minecraft.server</pattern>
                     <shadedPattern>net.minecraft.server.v${minecraft_version}</shadedPattern>
                 </relocation>
+                -->
               </relocations>
             </configuration>
           </execution>
