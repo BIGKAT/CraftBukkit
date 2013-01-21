@@ -59,7 +59,10 @@
     </dependency>
     <dependency>
       <groupId>org.bukkit</groupId>
-      <artifactId>minecraft-server</artifactId>
+      <!-- minecraft-server without NMS classes also in CB
+      To generate this file see https://github.com/agaricusb/MinecraftRemapping/blob/master/slim-jar.py
+      -->
+      <artifactId>slim-minecraft-server</artifactId>
       <version>${minecraft.version}</version>
       <type>jar</type>
       <scope>compile</scope>
