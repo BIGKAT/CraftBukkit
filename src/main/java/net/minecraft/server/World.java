@@ -414,6 +414,36 @@ public abstract class World implements IBlockAccess {
         }
     }
 
+    // CBMCP start - the above methods are renamed to MCP names, but the BlockChangeDelegate
+    // interface of the Bukkit API requires the same names - so we have these wrapper methods
+    // which are themselves renamed to satisfy the BCD interface.
+    public boolean setRawTypeId__API_CB(int x, int y, int z, int typeId) {
+        return setRawTypeId(x, y, z, typeId);
+    }
+
+    public boolean setRawTypeIdAndData__API_CB(int x, int y, int z, int typeId, int data) {
+        return setRawTypeIdAndData(x, y, z, typeId, data);
+    }
+
+    public boolean setTypeId__API_CB(int x, int y, int z, int typeId) {
+        return setTypeId(x, y, z, typeId);
+    }
+
+    public boolean setTypeIdAndData__API_CB(int x, int y, int z, int typeId, int data) {
+        return setTypeIdAndData(x, y, z, typeId, data);
+    }
+
+    public int getTypeId__API_CB(int x, int y, int z) {
+        return getTypeId(x, y, z);
+    }
+
+    //public int getHeight(); // not renamed
+
+    public boolean isEmpty__API_CB(int x, int y, int z) {
+        return isEmpty(x, y, z);
+    }
+    // CBMCP end
+
     public void notify(int i, int j, int k) {
         for (int l = 0; l < this.v.size(); ++l) {
             ((IWorldAccess) this.v.get(l)).a(i, j, k);

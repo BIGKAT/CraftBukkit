@@ -60,7 +60,7 @@ public class PlayerConnection extends Connection {
     private long j;
     private static Random k = new Random();
     private long l;
-    private volatile int chatThrottle = 0; private static final AtomicIntegerFieldUpdater chatSpamField = AtomicIntegerFieldUpdater.newUpdater(PlayerConnection.class, "chatThrottle"); // CraftBukkit - multithreaded field
+    private volatile int chatThrottle = 0; private static final AtomicIntegerFieldUpdater chatSpamField = AtomicIntegerFieldUpdater.newUpdater(PlayerConnection.class, org.bukkit.craftbukkit.CraftServer.isUsingMappingMCP ? "chatSpamThresholdCount" : (org.bukkit.craftbukkit.CraftServer.isUsingMappingCB ? "chatThrottle" : "m")); // CraftBukkit - multithreaded field // CBMCP
     private int x = 0;
     private double y;
     private double z;

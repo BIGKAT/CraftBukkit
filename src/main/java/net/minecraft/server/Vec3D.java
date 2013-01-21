@@ -32,7 +32,7 @@ public class Vec3D {
         this.b = vec3dpool;
     }
 
-    protected Vec3D b(double d0, double d1, double d2) {
+    public Vec3D b(double d0, double d1, double d2) { // CBMCP - protected -> public, for repackaging
         this.c = d0;
         this.d = d1;
         this.e = d2;

@@ -206,7 +206,7 @@ public class CustomChunkGenerator extends InternalChunkGenerator {
         return generator.getDefaultPopulators(world);
     }
 
-    public List<?> getMobsFor(EnumCreatureType type, int x, int y, int z) {
+    public List getMobsFor(EnumCreatureType type, int x, int y, int z) { // CBMCP - return type List<?> -> List for matching remap
         BiomeBase biomebase = world.getBiome(x, z);
 
         return biomebase == null ? null : biomebase.getMobs(type);

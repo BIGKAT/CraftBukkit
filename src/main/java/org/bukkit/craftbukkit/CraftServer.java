@@ -307,6 +307,39 @@ public final class CraftServer implements Server {
         return bukkitVersion;
     }
 
+    // CBMCP start - fields to mark our symbol map environment
+    public static final boolean isUsingMappingCB;
+    public static final boolean isUsingMappingMCP;
+    public static final boolean isUsingMappingObf;
+
+    private static boolean classExists(String s) {
+        try {
+            Class.forName(s);
+            return true;
+        } catch (Exception ex) {
+            return false;
+        }
+    }
+
+    static {
+        // Detect based on what classes exist at runtime
+        // TODO: is there a better way to do this??
+        if (classExists("net.minecraft.server.ItemStack")) {
+            isUsingMappingCB = true;
+            isUsingMappingMCP = false;
+            isUsingMappingObf = false;
+        } else if (classExists("net.minecraft.item.ItemStack")) {
+            isUsingMappingCB = false;
+            isUsingMappingMCP = true;
+            isUsingMappingObf = false;
+        } else {
+            isUsingMappingCB = false;
+            isUsingMappingMCP = false;
+            isUsingMappingObf = true;
+        }
+    }
+    // CBMCP end
+
     @SuppressWarnings("unchecked")
     public Player[] getOnlinePlayers() {
         List<EntityPlayer> online = playerList.players;

@@ -271,7 +271,7 @@ public class PlayerInteractManager {
 
             if (nmsBlock != null && !event.isCancelled() && !this.isCreative() && this.player.b(nmsBlock)) {
                 // Copied from Block.a(world, entityhuman, int, int, int, int)
-                if (!(nmsBlock.s_() && EnchantmentManager.hasSilkTouchEnchantment(this.player))) {
+                if (!(Block.canSilkHarvest__Public_CB(nmsBlock) && EnchantmentManager.hasSilkTouchEnchantment(this.player))) { // CBMCP - use public wrapper for s_()
                     int data = block.getData();
                     int bonusLevel = EnchantmentManager.getBonusBlockLootEnchantmentLevel(this.player);
 
@@ -331,7 +331,7 @@ public class PlayerInteractManager {
 
             // CraftBukkit start - drop event experience
             if (flag && event != null) {
-                Block.byId[l].f(this.world, i, j, k, event.getExpToDrop());
+                Block.dropXpOnBlockBreak__Public_CB(Block.byId[l], this.world, i, j, k, event.getExpToDrop()); // CBMCP - use public accessor for f()
             }
             // CraftBukkit end
 

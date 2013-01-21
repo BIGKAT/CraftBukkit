@@ -77,7 +77,13 @@ public class ChunkRegionLoader implements IAsyncChunkSaver, IChunkLoader {
                 return null;
             }
 
-            nbttagcompound = NBTCompressedStreamTools.a((DataInput) datainputstream);
+            // CBMCP start - catch exception
+            try {
+                nbttagcompound = NBTCompressedStreamTools.a((DataInput) datainputstream);
+            } catch (Throwable ex) {
+                ex.printStackTrace();
+            }
+            // CBMCP end
         }
 
         return this.a(world, i, j, nbttagcompound);

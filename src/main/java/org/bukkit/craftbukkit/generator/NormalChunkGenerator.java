@@ -61,7 +61,7 @@ public class NormalChunkGenerator extends InternalChunkGenerator {
         return provider.canSave();
     }
 
-    public List<?> getMobsFor(EnumCreatureType ect, int i, int i1, int i2) {
+    public List getMobsFor(EnumCreatureType ect, int i, int i1, int i2) { // CBMCP - return type List<?> -> List for matching remap
         return provider.getMobsFor(ect, i, i1, i2);
     }
 

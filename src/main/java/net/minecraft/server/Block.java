@@ -408,6 +408,17 @@ public class Block {
         }
     }
 
+    // CBMCP start - public accessors for CB code added in PlayerInteractManager(ItemInWorldManager) that wants
+    // to call these methods, to cope with repackaging restricting protected access
+    public static boolean canSilkHarvest__Public_CB(Block block) {
+        return block.s_();
+    }
+
+    public static void dropXpOnBlockBreak__Public_CB(Block block, World world, int i, int j, int k, int l) {
+        block.f(world, i, j, k, l);
+    }
+    // CBMCP end
+
     public int getDropData(int i) {
         return 0;
     }

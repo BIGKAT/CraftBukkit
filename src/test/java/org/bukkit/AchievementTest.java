@@ -23,7 +23,7 @@ public class AchievementTest {
         for (net.minecraft.server.Achievement statistic : (List<net.minecraft.server.Achievement>) AchievementList.e) {
             int id = statistic.e;
 
-            String name = Util.getInternalState(Statistic.class, statistic, "a");
+            String name = Util.getInternalState(Statistic.class, statistic, org.bukkit.craftbukkit.CraftServer.isUsingMappingCB ? "a" : "statName"); // CBMCP
             String message = String.format("org.bukkit.Achievement is missing id: %d named: '%s'", id - Achievement.STATISTIC_OFFSET, name);
 
             Achievement subject = Achievement.getById(id);

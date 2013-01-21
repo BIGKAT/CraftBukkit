@@ -30,7 +30,7 @@ public class PerMaterialTest extends AbstractTestingBase {
 
     @BeforeClass
     public static void getFireValues() {
-        fireValues = Util.getInternalState(BlockFire.class, Block.FIRE, "a");
+        fireValues = Util.getInternalState(BlockFire.class, Block.FIRE, org.bukkit.craftbukkit.CraftServer.isUsingMappingCB ? "a" : "chanceToEncourageFire"); // CBMCP
     }
 
     @Parameters(name= "{index}: {0}")
