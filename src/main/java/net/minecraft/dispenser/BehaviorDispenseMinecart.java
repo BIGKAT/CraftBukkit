@@ -1,79 +1,105 @@
-package net.minecraft.server;
+package net.minecraft.dispenser;
 
 // CraftBukkit start
 import org.bukkit.craftbukkit.inventory.CraftItemStack;
 import org.bukkit.event.block.BlockDispenseEvent;
+import net.minecraft.block.BlockDispenser;
+import net.minecraft.block.BlockRail;
+import net.minecraft.entity.item.EntityMinecart;
+import net.minecraft.item.ItemMinecart;
+import net.minecraft.item.ItemStack;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.util.EnumFacing;
+import net.minecraft.world.World;
 // CraftBukkit end
 
-public class DispenseBehaviorMinecart extends DispenseBehaviorItem {
+public class BehaviorDispenseMinecart extends BehaviorDefaultDispenseItem
+{
+    /** Reference to the BehaviorDefaultDispenseItem object. */
+    private final BehaviorDefaultDispenseItem defaultItemDispenseBehavior;
 
-    private final DispenseBehaviorItem c;
+    final MinecraftServer mcServer;
 
-    final MinecraftServer b;
-
-    public DispenseBehaviorMinecart(MinecraftServer minecraftserver) {
-        this.b = minecraftserver;
-        this.c = new DispenseBehaviorItem();
+    public BehaviorDispenseMinecart(MinecraftServer par1MinecraftServer)
+    {
+        this.mcServer = par1MinecraftServer;
+        this.defaultItemDispenseBehavior = new BehaviorDefaultDispenseItem();
     }
 
-    public ItemStack b(ISourceBlock isourceblock, ItemStack itemstack) {
-        EnumFacing enumfacing = EnumFacing.a(isourceblock.h());
-        World world = isourceblock.k();
-        double d0 = isourceblock.getX() + (double) ((float) enumfacing.c() * 1.125F);
-        double d1 = isourceblock.getY();
-        double d2 = isourceblock.getZ() + (double) ((float) enumfacing.e() * 1.125F);
-        int i = isourceblock.getBlockX() + enumfacing.c();
-        int j = isourceblock.getBlockY();
-        int k = isourceblock.getBlockZ() + enumfacing.e();
-        int l = world.getTypeId(i, j, k);
-        double d3;
+    /**
+     * Dispense the specified stack, play the dispense sound and spawn particles.
+     */
+    public ItemStack dispenseStack(IBlockSource par1IBlockSource, ItemStack par2ItemStack)
+    {
+        EnumFacing var3 = EnumFacing.func_82600_a(par1IBlockSource.func_82620_h());
+        World var4 = par1IBlockSource.getWorld();
+        double var5 = par1IBlockSource.getX() + (double)((float)var3.func_82601_c() * 1.125F);
+        double var7 = par1IBlockSource.getY();
+        double var9 = par1IBlockSource.getZ() + (double)((float)var3.func_82599_e() * 1.125F);
+        int var11 = par1IBlockSource.getXInt() + var3.func_82601_c();
+        int var12 = par1IBlockSource.getYInt();
+        int var13 = par1IBlockSource.getZInt() + var3.func_82599_e();
+        int var14 = var4.getBlockId(var11, var12, var13);
+        double var15;
 
-        if (BlockMinecartTrack.e(l)) {
-            d3 = 0.0D;
-        } else {
-            if (l != 0 || !BlockMinecartTrack.e(world.getTypeId(i, j - 1, k))) {
-                return this.c.a(isourceblock, itemstack);
+        if (BlockRail.isRailBlock(var14))
+        {
+            var15 = 0.0D;
+        }
+        else
+        {
+            if (var14 != 0 || !BlockRail.isRailBlock(var4.getBlockId(var11, var12 - 1, var13)))
+            {
+                return this.defaultItemDispenseBehavior.dispense(par1IBlockSource, par2ItemStack);
             }
 
-            d3 = -1.0D;
+            var15 = -1.0D;
         }
 
         // CraftBukkit start
-        ItemStack itemstack1 = itemstack.a(1);
-        org.bukkit.block.Block block = world.getWorld().getBlockAt(isourceblock.getBlockX(), isourceblock.getBlockY(), isourceblock.getBlockZ());
+        ItemStack itemstack1 = par2ItemStack.splitStack(1);
+        org.bukkit.block.Block block = var4.getWorld().getBlockAt(par1IBlockSource.getXInt(), par1IBlockSource.getYInt(), par1IBlockSource.getZInt());
         CraftItemStack craftItem = CraftItemStack.asCraftMirror(itemstack1);
+        BlockDispenseEvent event = new BlockDispenseEvent(block, craftItem.clone(), new org.bukkit.util.Vector(var5, var7 + var15, var9));
 
-        BlockDispenseEvent event = new BlockDispenseEvent(block, craftItem.clone(), new org.bukkit.util.Vector(d0, d1 + d3, d2));
-        if (!BlockDispenser.eventFired) {
-            world.getServer().getPluginManager().callEvent(event);
+        if (!BlockDispenser.eventFired)
+        {
+            var4.getServer().getPluginManager().callEvent(event);
         }
 
-        if (event.isCancelled()) {
-            itemstack.count++;
-            return itemstack;
+        if (event.isCancelled())
+        {
+            par2ItemStack.stackSize++;
+            return par2ItemStack;
         }
 
-        if (!event.getItem().equals(craftItem)) {
-            itemstack.count++;
+        if (!event.getItem().equals(craftItem))
+        {
+            par2ItemStack.stackSize++;
             // Chain to handler for new item
             ItemStack eventStack = CraftItemStack.asNMSCopy(event.getItem());
-            IDispenseBehavior idispensebehavior = (IDispenseBehavior) BlockDispenser.a.a(eventStack.getItem());
-            if (idispensebehavior != IDispenseBehavior.a && idispensebehavior != this) {
-                idispensebehavior.a(isourceblock, eventStack);
-                return itemstack;
+            IBehaviorDispenseItem idispensebehavior = (IBehaviorDispenseItem) BlockDispenser.dispenseBehaviorRegistry.func_82594_a(eventStack.getItem());
+
+            if (idispensebehavior != IBehaviorDispenseItem.itemDispenseBehaviorProvider && idispensebehavior != this)
+            {
+                idispensebehavior.dispense(par1IBlockSource, eventStack);
+                return par2ItemStack;
             }
         }
 
         itemstack1 = CraftItemStack.asNMSCopy(event.getItem());
-        EntityMinecart entityminecart = new EntityMinecart(world, event.getVelocity().getX(), event.getVelocity().getY(), event.getVelocity().getZ(), ((ItemMinecart) itemstack1.getItem()).a);
+        EntityMinecart entityminecart = new EntityMinecart(var4, event.getVelocity().getX(), event.getVelocity().getY(), event.getVelocity().getZ(), ((ItemMinecart) itemstack1.getItem()).minecartType);
         // CraftBukkit end
-
-        world.addEntity(entityminecart);
+        var4.spawnEntityInWorld(entityminecart);
         // itemstack.a(1); // CraftBukkit - handled during event processing
-        return itemstack;
+        return par2ItemStack;
     }
 
-    protected void a(ISourceBlock isourceblock) {
-        isourceblock.k().triggerEffect(1000, isourceblock.getBlockX(), isourceblock.getBlockY(), isourceblock.getBlockZ(), 0);
+    /**
+     * Play the dispense sound from the specified block.
+     */
+    protected void playDispenseSound(IBlockSource par1IBlockSource)
+    {
+        par1IBlockSource.getWorld().playAuxSFX(1000, par1IBlockSource.getXInt(), par1IBlockSource.getYInt(), par1IBlockSource.getZInt(), 0);
     }
 }

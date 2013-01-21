@@ -1,181 +1,261 @@
-package net.minecraft.server;
+package net.minecraft.block;
 
 import java.util.Random;
+import net.minecraft.block.material.Material;
+import net.minecraft.creativetab.CreativeTabs;
+import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.item.Item;
+import net.minecraft.item.ItemStack;
+import net.minecraft.stats.StatList;
+import net.minecraft.util.AxisAlignedBB;
+import net.minecraft.util.Direction;
+import net.minecraft.world.IBlockAccess;
+import net.minecraft.world.World;
 
 import org.bukkit.craftbukkit.event.CraftEventFactory; // CraftBukkit
 
-public class BlockVine extends Block {
-
-    public BlockVine(int i) {
-        super(i, 143, Material.REPLACEABLE_PLANT);
-        this.b(true);
-        this.a(CreativeModeTab.c);
+public class BlockVine extends Block
+{
+    public BlockVine(int par1)
+    {
+        super(par1, 143, Material.vine);
+        this.setTickRandomly(true);
+        this.setCreativeTab(CreativeTabs.tabDecorations);
     }
 
-    public void f() {
-        this.a(0.0F, 0.0F, 0.0F, 1.0F, 1.0F, 1.0F);
+    /**
+     * Sets the block's bounds for rendering it as an item
+     */
+    public void setBlockBoundsForItemRender()
+    {
+        this.setBlockBounds(0.0F, 0.0F, 0.0F, 1.0F, 1.0F, 1.0F);
     }
 
-    public int d() {
+    /**
+     * The type of render function that is called for this block
+     */
+    public int getRenderType()
+    {
         return 20;
     }
 
-    public boolean c() {
+    /**
+     * Is this block (a) opaque and (b) a full 1m cube?  This determines whether or not to render the shared face of two
+     * adjacent blocks and also whether the player can attach torches, redstone wire, etc to this block.
+     */
+    public boolean isOpaqueCube()
+    {
         return false;
     }
 
-    public boolean b() {
+    /**
+     * If this block doesn't render as an ordinary block it will return False (examples: signs, buttons, stairs, etc)
+     */
+    public boolean renderAsNormalBlock()
+    {
         return false;
     }
 
-    public void updateShape(IBlockAccess iblockaccess, int i, int j, int k) {
-        int l = iblockaccess.getData(i, j, k);
-        float f = 1.0F;
-        float f1 = 1.0F;
-        float f2 = 1.0F;
-        float f3 = 0.0F;
-        float f4 = 0.0F;
-        float f5 = 0.0F;
-        boolean flag = l > 0;
+    /**
+     * Updates the blocks bounds based on its current state. Args: world, x, y, z
+     */
+    public void setBlockBoundsBasedOnState(IBlockAccess par1IBlockAccess, int par2, int par3, int par4)
+    {
+        int var6 = par1IBlockAccess.getBlockMetadata(par2, par3, par4);
+        float var7 = 1.0F;
+        float var8 = 1.0F;
+        float var9 = 1.0F;
+        float var10 = 0.0F;
+        float var11 = 0.0F;
+        float var12 = 0.0F;
+        boolean var13 = var6 > 0;
 
-        if ((l & 2) != 0) {
-            f3 = Math.max(f3, 0.0625F);
-            f = 0.0F;
-            f1 = 0.0F;
-            f4 = 1.0F;
-            f2 = 0.0F;
-            f5 = 1.0F;
-            flag = true;
+        if ((var6 & 2) != 0)
+        {
+            var10 = Math.max(var10, 0.0625F);
+            var7 = 0.0F;
+            var8 = 0.0F;
+            var11 = 1.0F;
+            var9 = 0.0F;
+            var12 = 1.0F;
+            var13 = true;
         }
 
-        if ((l & 8) != 0) {
-            f = Math.min(f, 0.9375F);
-            f3 = 1.0F;
-            f1 = 0.0F;
-            f4 = 1.0F;
-            f2 = 0.0F;
-            f5 = 1.0F;
-            flag = true;
+        if ((var6 & 8) != 0)
+        {
+            var7 = Math.min(var7, 0.9375F);
+            var10 = 1.0F;
+            var8 = 0.0F;
+            var11 = 1.0F;
+            var9 = 0.0F;
+            var12 = 1.0F;
+            var13 = true;
         }
 
-        if ((l & 4) != 0) {
-            f5 = Math.max(f5, 0.0625F);
-            f2 = 0.0F;
-            f = 0.0F;
-            f3 = 1.0F;
-            f1 = 0.0F;
-            f4 = 1.0F;
-            flag = true;
+        if ((var6 & 4) != 0)
+        {
+            var12 = Math.max(var12, 0.0625F);
+            var9 = 0.0F;
+            var7 = 0.0F;
+            var10 = 1.0F;
+            var8 = 0.0F;
+            var11 = 1.0F;
+            var13 = true;
         }
 
-        if ((l & 1) != 0) {
-            f2 = Math.min(f2, 0.9375F);
-            f5 = 1.0F;
-            f = 0.0F;
-            f3 = 1.0F;
-            f1 = 0.0F;
-            f4 = 1.0F;
-            flag = true;
+        if ((var6 & 1) != 0)
+        {
+            var9 = Math.min(var9, 0.9375F);
+            var12 = 1.0F;
+            var7 = 0.0F;
+            var10 = 1.0F;
+            var8 = 0.0F;
+            var11 = 1.0F;
+            var13 = true;
         }
 
-        if (!flag && this.e(iblockaccess.getTypeId(i, j + 1, k))) {
-            f1 = Math.min(f1, 0.9375F);
-            f4 = 1.0F;
-            f = 0.0F;
-            f3 = 1.0F;
-            f2 = 0.0F;
-            f5 = 1.0F;
+        if (!var13 && this.canBePlacedOn(par1IBlockAccess.getBlockId(par2, par3 + 1, par4)))
+        {
+            var8 = Math.min(var8, 0.9375F);
+            var11 = 1.0F;
+            var7 = 0.0F;
+            var10 = 1.0F;
+            var9 = 0.0F;
+            var12 = 1.0F;
         }
 
-        this.a(f, f1, f2, f3, f4, f5);
+        this.setBlockBounds(var7, var8, var9, var10, var11, var12);
     }
 
-    public AxisAlignedBB e(World world, int i, int j, int k) {
+    /**
+     * Returns a bounding box from the pool of bounding boxes (this means this box can change after the pool has been
+     * cleared to be reused)
+     */
+    public AxisAlignedBB getCollisionBoundingBoxFromPool(World par1World, int par2, int par3, int par4)
+    {
         return null;
     }
 
-    public boolean canPlace(World world, int i, int j, int k, int l) {
-        switch (l) {
-        case 1:
-            return this.e(world.getTypeId(i, j + 1, k));
+    /**
+     * checks to see if you can place this block can be placed on that side of a block: BlockLever overrides
+     */
+    public boolean canPlaceBlockOnSide(World par1World, int par2, int par3, int par4, int par5)
+    {
+        switch (par5)
+        {
+            case 1:
+                return this.canBePlacedOn(par1World.getBlockId(par2, par3 + 1, par4));
 
-        case 2:
-            return this.e(world.getTypeId(i, j, k + 1));
+            case 2:
+                return this.canBePlacedOn(par1World.getBlockId(par2, par3, par4 + 1));
 
-        case 3:
-            return this.e(world.getTypeId(i, j, k - 1));
+            case 3:
+                return this.canBePlacedOn(par1World.getBlockId(par2, par3, par4 - 1));
 
-        case 4:
-            return this.e(world.getTypeId(i + 1, j, k));
+            case 4:
+                return this.canBePlacedOn(par1World.getBlockId(par2 + 1, par3, par4));
 
-        case 5:
-            return this.e(world.getTypeId(i - 1, j, k));
+            case 5:
+                return this.canBePlacedOn(par1World.getBlockId(par2 - 1, par3, par4));
 
-        default:
-            return false;
+            default:
+                return false;
         }
     }
 
-    private boolean e(int i) {
-        if (i == 0) {
+    /**
+     * returns true if a vine can be placed on that block (checks for render as normal block and if it is solid)
+     */
+    private boolean canBePlacedOn(int par1)
+    {
+        if (par1 == 0)
+        {
             return false;
-        } else {
-            Block block = Block.byId[i];
-
-            return block.b() && block.material.isSolid();
+        }
+        else
+        {
+            Block var2 = Block.blocksList[par1];
+            return var2.renderAsNormalBlock() && var2.blockMaterial.blocksMovement();
         }
     }
 
-    private boolean l(World world, int i, int j, int k) {
-        int l = world.getData(i, j, k);
-        int i1 = l;
+    /**
+     * Returns if the vine can stay in the world. It also changes the metadata according to neighboring blocks.
+     */
+    private boolean canVineStay(World par1World, int par2, int par3, int par4)
+    {
+        int var5 = par1World.getBlockMetadata(par2, par3, par4);
+        int var6 = var5;
 
-        if (l > 0) {
-            for (int j1 = 0; j1 <= 3; ++j1) {
-                int k1 = 1 << j1;
+        if (var5 > 0)
+        {
+            for (int var7 = 0; var7 <= 3; ++var7)
+            {
+                int var8 = 1 << var7;
 
-                if ((l & k1) != 0 && !this.e(world.getTypeId(i + Direction.a[j1], j, k + Direction.b[j1])) && (world.getTypeId(i, j + 1, k) != this.id || (world.getData(i, j + 1, k) & k1) == 0)) {
-                    i1 &= ~k1;
+                if ((var5 & var8) != 0 && !this.canBePlacedOn(par1World.getBlockId(par2 + Direction.offsetX[var7], par3, par4 + Direction.offsetZ[var7])) && (par1World.getBlockId(par2, par3 + 1, par4) != this.blockID || (par1World.getBlockMetadata(par2, par3 + 1, par4) & var8) == 0))
+                {
+                    var6 &= ~var8;
                 }
             }
         }
 
-        if (i1 == 0 && !this.e(world.getTypeId(i, j + 1, k))) {
+        if (var6 == 0 && !this.canBePlacedOn(par1World.getBlockId(par2, par3 + 1, par4)))
+        {
             return false;
-        } else {
-            if (i1 != l) {
-                world.setData(i, j, k, i1);
+        }
+        else
+        {
+            if (var6 != var5)
+            {
+                par1World.setBlockMetadataWithNotify(par2, par3, par4, var6);
             }
 
             return true;
         }
     }
 
-    public void doPhysics(World world, int i, int j, int k, int l) {
-        if (!world.isStatic && !this.l(world, i, j, k)) {
-            this.c(world, i, j, k, world.getData(i, j, k), 0);
-            world.setTypeId(i, j, k, 0);
+    /**
+     * Lets the block know when one of its neighbor changes. Doesn't know which neighbor changed (coordinates passed are
+     * their own) Args: x, y, z, neighbor blockID
+     */
+    public void onNeighborBlockChange(World par1World, int par2, int par3, int par4, int par5)
+    {
+        if (!par1World.isRemote && !this.canVineStay(par1World, par2, par3, par4))
+        {
+            this.dropBlockAsItem(par1World, par2, par3, par4, par1World.getBlockMetadata(par2, par3, par4), 0);
+            par1World.setBlockWithNotify(par2, par3, par4, 0);
         }
     }
 
-    public void b(World world, int i, int j, int k, Random random) {
-        if (!world.isStatic && world.random.nextInt(4) == 0) {
-            byte b0 = 4;
-            int l = 5;
-            boolean flag = false;
-
-            int i1;
-            int j1;
-            int k1;
-
+    /**
+     * Ticks the block if it's been scheduled
+     */
+    public void updateTick(World par1World, int par2, int par3, int par4, Random par5Random)
+    {
+        if (!par1World.isRemote && par1World.rand.nextInt(4) == 0)
+        {
+            byte var6 = 4;
+            int var7 = 5;
+            boolean var8 = false;
+            int var9;
+            int var10;
+            int var11;
             label138:
-            for (i1 = i - b0; i1 <= i + b0; ++i1) {
-                for (j1 = k - b0; j1 <= k + b0; ++j1) {
-                    for (k1 = j - 1; k1 <= j + 1; ++k1) {
-                        if (world.getTypeId(i1, k1, j1) == this.id) {
-                            --l;
-                            if (l <= 0) {
-                                flag = true;
+
+            for (var9 = par2 - var6; var9 <= par2 + var6; ++var9)
+            {
+                for (var10 = par4 - var6; var10 <= par4 + var6; ++var10)
+                {
+                    for (var11 = par3 - 1; var11 <= par3 + 1; ++var11)
+                    {
+                        if (par1World.getBlockId(var9, var11, var10) == this.blockID)
+                        {
+                            --var7;
+
+                            if (var7 <= 0)
+                            {
+                                var8 = true;
                                 break label138;
                             }
                         }
@@ -183,83 +263,120 @@ public class BlockVine extends Block {
                 }
             }
 
-            i1 = world.getData(i, j, k);
-            j1 = world.random.nextInt(6);
-            k1 = Direction.e[j1];
-            int l1;
-            int i2;
+            var9 = par1World.getBlockMetadata(par2, par3, par4);
+            var10 = par1World.rand.nextInt(6);
+            var11 = Direction.vineGrowth[var10];
+            int var12;
+            int var13;
 
-            if (j1 == 1 && j < 255 && world.isEmpty(i, j + 1, k)) {
-                if (flag) {
+            if (var10 == 1 && par3 < 255 && par1World.isAirBlock(par2, par3 + 1, par4))
+            {
+                if (var8)
+                {
                     return;
                 }
 
-                l1 = world.random.nextInt(16) & i1;
-                if (l1 > 0) {
-                    for (i2 = 0; i2 <= 3; ++i2) {
-                        if (!this.e(world.getTypeId(i + Direction.a[i2], j + 1, k + Direction.b[i2]))) {
-                            l1 &= ~(1 << i2);
+                var12 = par1World.rand.nextInt(16) & var9;
+
+                if (var12 > 0)
+                {
+                    for (var13 = 0; var13 <= 3; ++var13)
+                    {
+                        if (!this.canBePlacedOn(par1World.getBlockId(par2 + Direction.offsetX[var13], par3 + 1, par4 + Direction.offsetZ[var13])))
+                        {
+                            var12 &= ~(1 << var13);
                         }
                     }
 
-                    if (l1 > 0) {
+                    if (var12 > 0)
+                    {
                         // CraftBukkit start - fire BlockSpreadEvent
-                        org.bukkit.block.Block source = world.getWorld().getBlockAt(i, j, k);
-                        org.bukkit.block.Block block = world.getWorld().getBlockAt(i, j + 1, k);
-                        CraftEventFactory.handleBlockSpreadEvent(block, source, this.id, i2);
+                        org.bukkit.block.Block source = par1World.getWorld().getBlockAt(par2, par3, par4);
+                        org.bukkit.block.Block block = par1World.getWorld().getBlockAt(par2, par3 + 1, par4);
+                        CraftEventFactory.handleBlockSpreadEvent(block, source, this.blockID, var13);
                         // CraftBukkit end
                     }
                 }
-            } else {
-                int j2;
+            }
+            else
+            {
+                int var14;
 
-                if (j1 >= 2 && j1 <= 5 && (i1 & 1 << k1) == 0) {
-                    if (flag) {
+                if (var10 >= 2 && var10 <= 5 && (var9 & 1 << var11) == 0)
+                {
+                    if (var8)
+                    {
                         return;
                     }
 
-                    l1 = world.getTypeId(i + Direction.a[k1], j, k + Direction.b[k1]);
-                    if (l1 != 0 && Block.byId[l1] != null) {
-                        if (Block.byId[l1].material.k() && Block.byId[l1].b()) {
-                            world.setData(i, j, k, i1 | 1 << k1);
+                    var12 = par1World.getBlockId(par2 + Direction.offsetX[var11], par3, par4 + Direction.offsetZ[var11]);
+
+                    if (var12 != 0 && Block.blocksList[var12] != null)
+                    {
+                        if (Block.blocksList[var12].blockMaterial.isOpaque() && Block.blocksList[var12].renderAsNormalBlock())
+                        {
+                            par1World.setBlockMetadataWithNotify(par2, par3, par4, var9 | 1 << var11);
                         }
-                    } else {
-                        i2 = k1 + 1 & 3;
-                        j2 = k1 + 3 & 3;
+                    }
+                    else
+                    {
+                        var13 = var11 + 1 & 3;
+                        var14 = var11 + 3 & 3;
                         // CraftBukkit start - fire BlockSpreadEvent
-                        org.bukkit.block.Block source = world.getWorld().getBlockAt(i, j, k);
-                        org.bukkit.block.Block block = world.getWorld().getBlockAt(i + Direction.a[k1], j, k + Direction.b[k1]);
-                        if ((i1 & 1 << i2) != 0 && this.e(world.getTypeId(i + Direction.a[k1] + Direction.a[i2], j, k + Direction.b[k1] + Direction.b[i2]))) {
-                            CraftEventFactory.handleBlockSpreadEvent(block, source, this.id, 1 << i2);
-                        } else if ((i1 & 1 << j2) != 0 && this.e(world.getTypeId(i + Direction.a[k1] + Direction.a[j2], j, k + Direction.b[k1] + Direction.b[j2]))) {
-                            CraftEventFactory.handleBlockSpreadEvent(block, source, this.id, 1 << j2);
-                        } else if ((i1 & 1 << i2) != 0 && world.isEmpty(i + Direction.a[k1] + Direction.a[i2], j, k + Direction.b[k1] + Direction.b[i2]) && this.e(world.getTypeId(i + Direction.a[i2], j, k + Direction.b[i2]))) {
-                            block = world.getWorld().getBlockAt(i + Direction.a[k1] + Direction.a[i2], j, k + Direction.b[k1] + Direction.b[i2]);
-                            CraftEventFactory.handleBlockSpreadEvent(block, source, this.id, 1 << (k1 + 2 & 3));
-                        } else if ((i1 & 1 << j2) != 0 && world.isEmpty(i + Direction.a[k1] + Direction.a[j2], j, k + Direction.b[k1] + Direction.b[j2]) && this.e(world.getTypeId(i + Direction.a[j2], j, k + Direction.b[j2]))) {
-                            block = world.getWorld().getBlockAt(i + Direction.a[k1] + Direction.a[j2], j, k + Direction.b[k1] + Direction.b[j2]);
-                            CraftEventFactory.handleBlockSpreadEvent(block, source, this.id, 1 << (k1 + 2 & 3));
-                        } else if (this.e(world.getTypeId(i + Direction.a[k1], j + 1, k + Direction.b[k1]))) {
-                            CraftEventFactory.handleBlockSpreadEvent(block, source, this.id, 0);
+                        org.bukkit.block.Block source = par1World.getWorld().getBlockAt(par2, par3, par4);
+                        org.bukkit.block.Block block = par1World.getWorld().getBlockAt(par2 + Direction.offsetX[var11], par3, par4 + Direction.offsetZ[var11]);
+
+                        if ((var9 & 1 << var13) != 0 && this.canBePlacedOn(par1World.getBlockId(par2 + Direction.offsetX[var11] + Direction.offsetX[var13], par3, par4 + Direction.offsetZ[var11] + Direction.offsetZ[var13])))
+                        {
+                            CraftEventFactory.handleBlockSpreadEvent(block, source, this.blockID, 1 << var13);
                         }
+                        else if ((var9 & 1 << var14) != 0 && this.canBePlacedOn(par1World.getBlockId(par2 + Direction.offsetX[var11] + Direction.offsetX[var14], par3, par4 + Direction.offsetZ[var11] + Direction.offsetZ[var14])))
+                        {
+                            CraftEventFactory.handleBlockSpreadEvent(block, source, this.blockID, 1 << var14);
+                        }
+                        else if ((var9 & 1 << var13) != 0 && par1World.isAirBlock(par2 + Direction.offsetX[var11] + Direction.offsetX[var13], par3, par4 + Direction.offsetZ[var11] + Direction.offsetZ[var13]) && this.canBePlacedOn(par1World.getBlockId(par2 + Direction.offsetX[var13], par3, par4 + Direction.offsetZ[var13])))
+                        {
+                            block = par1World.getWorld().getBlockAt(par2 + Direction.offsetX[var11] + Direction.offsetX[var13], par3, par4 + Direction.offsetZ[var11] + Direction.offsetZ[var13]);
+                            CraftEventFactory.handleBlockSpreadEvent(block, source, this.blockID, 1 << (var11 + 2 & 3));
+                        }
+                        else if ((var9 & 1 << var14) != 0 && par1World.isAirBlock(par2 + Direction.offsetX[var11] + Direction.offsetX[var14], par3, par4 + Direction.offsetZ[var11] + Direction.offsetZ[var14]) && this.canBePlacedOn(par1World.getBlockId(par2 + Direction.offsetX[var14], par3, par4 + Direction.offsetZ[var14])))
+                        {
+                            block = par1World.getWorld().getBlockAt(par2 + Direction.offsetX[var11] + Direction.offsetX[var14], par3, par4 + Direction.offsetZ[var11] + Direction.offsetZ[var14]);
+                            CraftEventFactory.handleBlockSpreadEvent(block, source, this.blockID, 1 << (var11 + 2 & 3));
+                        }
+                        else if (this.canBePlacedOn(par1World.getBlockId(par2 + Direction.offsetX[var11], par3 + 1, par4 + Direction.offsetZ[var11])))
+                        {
+                            CraftEventFactory.handleBlockSpreadEvent(block, source, this.blockID, 0);
+                        }
+
                         // CraftBukkit end
                     }
-                } else if (j > 1) {
-                    l1 = world.getTypeId(i, j - 1, k);
-                    if (l1 == 0) {
-                        i2 = world.random.nextInt(16) & i1;
-                        if (i2 > 0) {
+                }
+                else if (par3 > 1)
+                {
+                    var12 = par1World.getBlockId(par2, par3 - 1, par4);
+
+                    if (var12 == 0)
+                    {
+                        var13 = par1World.rand.nextInt(16) & var9;
+
+                        if (var13 > 0)
+                        {
                             // CraftBukkit start - fire BlockSpreadEvent
-                            org.bukkit.block.Block source = world.getWorld().getBlockAt(i, j, k);
-                            org.bukkit.block.Block block = world.getWorld().getBlockAt(i, j - 1, k);
-                            CraftEventFactory.handleBlockSpreadEvent(block, source, this.id, i2);
+                            org.bukkit.block.Block source = par1World.getWorld().getBlockAt(par2, par3, par4);
+                            org.bukkit.block.Block block = par1World.getWorld().getBlockAt(par2, par3 - 1, par4);
+                            CraftEventFactory.handleBlockSpreadEvent(block, source, this.blockID, var13);
                             // CraftBukkit end
                         }
-                    } else if (l1 == this.id) {
-                        i2 = world.random.nextInt(16) & i1;
-                        j2 = world.getData(i, j - 1, k);
-                        if (j2 != (j2 | i2)) {
-                            world.setData(i, j - 1, k, j2 | i2);
+                    }
+                    else if (var12 == this.blockID)
+                    {
+                        var13 = par1World.rand.nextInt(16) & var9;
+                        var14 = par1World.getBlockMetadata(par2, par3 - 1, par4);
+
+                        if (var14 != (var14 | var13))
+                        {
+                            par1World.setBlockMetadataWithNotify(par2, par3 - 1, par4, var14 | var13);
                         }
                     }
                 }
@@ -267,43 +384,64 @@ public class BlockVine extends Block {
         }
     }
 
-    public int getPlacedData(World world, int i, int j, int k, int l, float f, float f1, float f2, int i1) {
-        byte b0 = 0;
+    /**
+     * Called when a block is placed using its ItemBlock. Args: World, X, Y, Z, side, hitX, hitY, hitZ, block metadata
+     */
+    public int onBlockPlaced(World par1World, int par2, int par3, int par4, int par5, float par6, float par7, float par8, int par9)
+    {
+        byte var10 = 0;
 
-        switch (l) {
-        case 2:
-            b0 = 1;
-            break;
+        switch (par5)
+        {
+            case 2:
+                var10 = 1;
+                break;
 
-        case 3:
-            b0 = 4;
-            break;
+            case 3:
+                var10 = 4;
+                break;
 
-        case 4:
-            b0 = 8;
-            break;
+            case 4:
+                var10 = 8;
+                break;
 
-        case 5:
-            b0 = 2;
+            case 5:
+                var10 = 2;
         }
 
-        return b0 != 0 ? b0 : i1;
+        return var10 != 0 ? var10 : par9;
     }
 
-    public int getDropType(int i, Random random, int j) {
+    /**
+     * Returns the ID of the items to drop on destruction.
+     */
+    public int idDropped(int par1, Random par2Random, int par3)
+    {
         return 0;
     }
 
-    public int a(Random random) {
+    /**
+     * Returns the quantity of items to drop on block destruction.
+     */
+    public int quantityDropped(Random par1Random)
+    {
         return 0;
     }
 
-    public void a(World world, EntityHuman entityhuman, int i, int j, int k, int l) {
-        if (!world.isStatic && entityhuman.bS() != null && entityhuman.bS().id == Item.SHEARS.id) {
-            entityhuman.a(StatisticList.C[this.id], 1);
-            this.b(world, i, j, k, new ItemStack(Block.VINE, 1, 0));
-        } else {
-            super.a(world, entityhuman, i, j, k, l);
+    /**
+     * Called when the player destroys a block with an item that can harvest it. (i, j, k) are the coordinates of the
+     * block and l is the block's subtype/damage.
+     */
+    public void harvestBlock(World par1World, EntityPlayer par2EntityPlayer, int par3, int par4, int par5, int par6)
+    {
+        if (!par1World.isRemote && par2EntityPlayer.getCurrentEquippedItem() != null && par2EntityPlayer.getCurrentEquippedItem().itemID == Item.shears.itemID)
+        {
+            par2EntityPlayer.addStat(StatList.mineBlockStatArray[this.blockID], 1);
+            this.dropBlockAsItem_do(par1World, par3, par4, par5, new ItemStack(Block.vine, 1, 0));
+        }
+        else
+        {
+            super.harvestBlock(par1World, par2EntityPlayer, par3, par4, par5, par6);
         }
     }
 }

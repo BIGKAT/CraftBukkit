@@ -1,45 +1,66 @@
-package net.minecraft.server;
+package net.minecraft.item;
 
 import org.bukkit.craftbukkit.block.CraftBlockState; // CraftBukkit
+import net.minecraft.creativetab.CreativeTabs;
+import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.world.World;
 
-public class ItemSeeds extends Item {
+public class ItemSeeds extends Item
+{
+    /**
+     * The type of block this seed turns into (wheat or pumpkin stems for instance)
+     */
+    private int blockType;
 
-    private int id;
-    private int b;
+    /** BlockID of the block the seeds can be planted on. */
+    private int soilBlockID;
 
-    public ItemSeeds(int i, int j, int k) {
-        super(i);
-        this.id = j;
-        this.b = k;
-        this.a(CreativeModeTab.l);
+    public ItemSeeds(int par1, int par2, int par3)
+    {
+        super(par1);
+        this.blockType = par2;
+        this.soilBlockID = par3;
+        this.setCreativeTab(CreativeTabs.tabMaterials);
     }
 
-    public boolean interactWith(ItemStack itemstack, EntityHuman entityhuman, World world, int i, int j, int k, int l, float f, float f1, float f2) {
-        if (l != 1) {
+    /**
+     * Callback for item usage. If the item does something special on right clicking, he will have one of those. Return
+     * True if something happen and false if it don't. This is for ITEMS, not BLOCKS
+     */
+    public boolean onItemUse(ItemStack par1ItemStack, EntityPlayer par2EntityPlayer, World par3World, int par4, int par5, int par6, int par7, float par8, float par9, float par10)
+    {
+        if (par7 != 1)
+        {
             return false;
-        } else if (entityhuman.e(i, j, k) && entityhuman.e(i, j + 1, k)) {
-            int i1 = world.getTypeId(i, j, k);
+        }
+        else if (par2EntityPlayer.isWithinHomeDistance(par4, par5, par6) && par2EntityPlayer.isWithinHomeDistance(par4, par5 + 1, par6))
+        {
+            int var11 = par3World.getBlockId(par4, par5, par6);
 
-            if (i1 == this.b && world.isEmpty(i, j + 1, k)) {
-                CraftBlockState blockState = CraftBlockState.getBlockState(world, i, j + 1, k); // CraftBukkit
-
-                world.setTypeId(i, j + 1, k, this.id);
-
+            if (var11 == this.soilBlockID && par3World.isAirBlock(par4, par5 + 1, par6))
+            {
+                CraftBlockState blockState = CraftBlockState.getBlockState(par3World, par4, par5 + 1, par6); // CraftBukkit
+                par3World.setBlockWithNotify(par4, par5 + 1, par6, this.blockType);
                 // CraftBukkit start - seeds
-                org.bukkit.event.block.BlockPlaceEvent event = org.bukkit.craftbukkit.event.CraftEventFactory.callBlockPlaceEvent(world, entityhuman, blockState, i, j, k);
+                org.bukkit.event.block.BlockPlaceEvent event = org.bukkit.craftbukkit.event.CraftEventFactory.callBlockPlaceEvent(par3World, par2EntityPlayer, blockState, par4, par5, par6);
 
-                if (event.isCancelled() || !event.canBuild()) {
+                if (event.isCancelled() || !event.canBuild())
+                {
                     event.getBlockPlaced().setTypeId(0);
                     return false;
                 }
-                // CraftBukkit end
 
-                --itemstack.count;
+                // CraftBukkit end
+                --par1ItemStack.stackSize;
                 return true;
-            } else {
+            }
+            else
+            {
                 return false;
             }
-        } else {
+        }
+        else
+        {
             return false;
         }
     }

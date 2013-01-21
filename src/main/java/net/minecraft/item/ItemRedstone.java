@@ -1,68 +1,89 @@
-package net.minecraft.server;
+package net.minecraft.item;
 
 import org.bukkit.craftbukkit.block.CraftBlockState; // CraftBukkit
+import net.minecraft.block.Block;
+import net.minecraft.creativetab.CreativeTabs;
+import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.world.World;
 
-public class ItemRedstone extends Item {
-
-    public ItemRedstone(int i) {
-        super(i);
-        this.a(CreativeModeTab.d);
+public class ItemRedstone extends Item
+{
+    public ItemRedstone(int par1)
+    {
+        super(par1);
+        this.setCreativeTab(CreativeTabs.tabRedstone);
     }
 
-    public boolean interactWith(ItemStack itemstack, EntityHuman entityhuman, World world, int i, int j, int k, int l, float f, float f1, float f2) {
-        int clickedX = i, clickedY = j, clickedZ = k; // CraftBukkit
+    /**
+     * Callback for item usage. If the item does something special on right clicking, he will have one of those. Return
+     * True if something happen and false if it don't. This is for ITEMS, not BLOCKS
+     */
+    public boolean onItemUse(ItemStack par1ItemStack, EntityPlayer par2EntityPlayer, World par3World, int par4, int par5, int par6, int par7, float par8, float par9, float par10)
+    {
+        int clickedX = par4, clickedY = par5, clickedZ = par6; // CraftBukkit
 
-        if (world.getTypeId(i, j, k) != Block.SNOW.id) {
-            if (l == 0) {
-                --j;
+        if (par3World.getBlockId(par4, par5, par6) != Block.snow.blockID)
+        {
+            if (par7 == 0)
+            {
+                --par5;
             }
 
-            if (l == 1) {
-                ++j;
+            if (par7 == 1)
+            {
+                ++par5;
             }
 
-            if (l == 2) {
-                --k;
+            if (par7 == 2)
+            {
+                --par6;
             }
 
-            if (l == 3) {
-                ++k;
+            if (par7 == 3)
+            {
+                ++par6;
             }
 
-            if (l == 4) {
-                --i;
+            if (par7 == 4)
+            {
+                --par4;
             }
 
-            if (l == 5) {
-                ++i;
+            if (par7 == 5)
+            {
+                ++par4;
             }
 
-            if (!world.isEmpty(i, j, k)) {
+            if (!par3World.isAirBlock(par4, par5, par6))
+            {
                 return false;
             }
         }
 
-        if (!entityhuman.a(i, j, k, l, itemstack)) {
+        if (!par2EntityPlayer.canPlayerEdit(par4, par5, par6, par7, par1ItemStack))
+        {
             return false;
-        } else {
-            if (Block.REDSTONE_WIRE.canPlace(world, i, j, k)) {
+        }
+        else
+        {
+            if (Block.redstoneWire.canPlaceBlockAt(par3World, par4, par5, par6))
+            {
                 // CraftBukkit start
-                CraftBlockState blockState = CraftBlockState.getBlockState(world, i, j, k);
-
-                world.suppressPhysics = true;
-                world.setRawTypeId(i, j, k, Block.REDSTONE_WIRE.id); // We update after the event
-
-                org.bukkit.event.block.BlockPlaceEvent event = org.bukkit.craftbukkit.event.CraftEventFactory.callBlockPlaceEvent(world, entityhuman, blockState, clickedX, clickedY, clickedZ);
+                CraftBlockState blockState = CraftBlockState.getBlockState(par3World, par4, par5, par6);
+                par3World.editingBlocks = true;
+                par3World.setBlock(par4, par5, par6, Block.redstoneWire.blockID); // We update after the event
+                org.bukkit.event.block.BlockPlaceEvent event = org.bukkit.craftbukkit.event.CraftEventFactory.callBlockPlaceEvent(par3World, par2EntityPlayer, blockState, clickedX, clickedY, clickedZ);
                 blockState.update(true);
+                par3World.editingBlocks = false;
 
-                world.suppressPhysics = false;
-                if (event.isCancelled() || !event.canBuild()) {
+                if (event.isCancelled() || !event.canBuild())
+                {
                     return false;
                 }
-                // CraftBukkit end
 
-                --itemstack.count;
-                world.setTypeId(i, j, k, Block.REDSTONE_WIRE.id);
+                // CraftBukkit end
+                --par1ItemStack.stackSize;
+                par3World.setBlockWithNotify(par4, par5, par6, Block.redstoneWire.blockID);
             }
 
             return true;

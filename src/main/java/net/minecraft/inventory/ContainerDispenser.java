@@ -1,89 +1,118 @@
-package net.minecraft.server;
+package net.minecraft.inventory;
 
 // CraftBukkit start
 import org.bukkit.craftbukkit.inventory.CraftInventory;
 import org.bukkit.craftbukkit.inventory.CraftInventoryView;
+import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.entity.player.InventoryPlayer;
+import net.minecraft.item.ItemStack;
+import net.minecraft.tileentity.TileEntityDispenser;
 // CraftBukkit end
 
-public class ContainerDispenser extends Container {
-
-    public TileEntityDispenser items; // CraftBukkit - private -> public
+public class ContainerDispenser extends Container
+{
+    public TileEntityDispenser tileEntityDispenser; // CraftBukkit - private -> public
     // CraftBukkit start
     private CraftInventoryView bukkitEntity = null;
-    private PlayerInventory player;
+    private InventoryPlayer player;
     // CraftBukkit end
 
-    public ContainerDispenser(IInventory iinventory, TileEntityDispenser tileentitydispenser) {
-        this.items = tileentitydispenser;
+    public ContainerDispenser(IInventory par1IInventory, TileEntityDispenser par2TileEntityDispenser)
+    {
+        this.tileEntityDispenser = par2TileEntityDispenser;
         // CraftBukkit start - save player
         // TODO: Should we check to make sure it really is an InventoryPlayer?
-        this.player = (PlayerInventory)iinventory;
+        this.player = (InventoryPlayer)par1IInventory;
         // CraftBukkit end
+        int var3;
+        int var4;
 
-        int i;
-        int j;
-
-        for (i = 0; i < 3; ++i) {
-            for (j = 0; j < 3; ++j) {
-                this.a(new Slot(tileentitydispenser, j + i * 3, 62 + j * 18, 17 + i * 18));
+        for (var3 = 0; var3 < 3; ++var3)
+        {
+            for (var4 = 0; var4 < 3; ++var4)
+            {
+                this.addSlotToContainer(new Slot(par2TileEntityDispenser, var4 + var3 * 3, 62 + var4 * 18, 17 + var3 * 18));
             }
         }
 
-        for (i = 0; i < 3; ++i) {
-            for (j = 0; j < 9; ++j) {
-                this.a(new Slot(iinventory, j + i * 9 + 9, 8 + j * 18, 84 + i * 18));
+        for (var3 = 0; var3 < 3; ++var3)
+        {
+            for (var4 = 0; var4 < 9; ++var4)
+            {
+                this.addSlotToContainer(new Slot(par1IInventory, var4 + var3 * 9 + 9, 8 + var4 * 18, 84 + var3 * 18));
             }
         }
 
-        for (i = 0; i < 9; ++i) {
-            this.a(new Slot(iinventory, i, 8 + i * 18, 142));
+        for (var3 = 0; var3 < 9; ++var3)
+        {
+            this.addSlotToContainer(new Slot(par1IInventory, var3, 8 + var3 * 18, 142));
         }
     }
 
-    public boolean a(EntityHuman entityhuman) {
-        if (!this.checkReachable) return true; // CraftBukkit
-        return this.items.a_(entityhuman);
+    public boolean canInteractWith(EntityPlayer par1EntityPlayer)
+    {
+        if (!this.checkReachable)
+        {
+            return true;    // CraftBukkit
+        }
+
+        return this.tileEntityDispenser.isUseableByPlayer(par1EntityPlayer);
     }
 
-    public ItemStack b(EntityHuman entityhuman, int i) {
-        ItemStack itemstack = null;
-        Slot slot = (Slot) this.c.get(i);
+    /**
+     * Called when a player shift-clicks on a slot. You must override this or you will crash when someone does that.
+     */
+    public ItemStack transferStackInSlot(EntityPlayer par1EntityPlayer, int par2)
+    {
+        ItemStack var3 = null;
+        Slot var4 = (Slot)this.inventorySlots.get(par2);
 
-        if (slot != null && slot.d()) {
-            ItemStack itemstack1 = slot.getItem();
+        if (var4 != null && var4.getHasStack())
+        {
+            ItemStack var5 = var4.getStack();
+            var3 = var5.copy();
 
-            itemstack = itemstack1.cloneItemStack();
-            if (i < 9) {
-                if (!this.a(itemstack1, 9, 45, true)) {
+            if (par2 < 9)
+            {
+                if (!this.mergeItemStack(var5, 9, 45, true))
+                {
                     return null;
                 }
-            } else if (!this.a(itemstack1, 0, 9, false)) {
+            }
+            else if (!this.mergeItemStack(var5, 0, 9, false))
+            {
                 return null;
             }
 
-            if (itemstack1.count == 0) {
-                slot.set((ItemStack) null);
-            } else {
-                slot.e();
+            if (var5.stackSize == 0)
+            {
+                var4.putStack((ItemStack)null);
+            }
+            else
+            {
+                var4.onSlotChanged();
             }
 
-            if (itemstack1.count == itemstack.count) {
+            if (var5.stackSize == var3.stackSize)
+            {
                 return null;
             }
 
-            slot.a(entityhuman, itemstack1);
+            var4.onPickupFromSlot(par1EntityPlayer, var5);
         }
 
-        return itemstack;
+        return var3;
     }
 
     // CraftBukkit start
-    public CraftInventoryView getBukkitView() {
-        if (bukkitEntity != null) {
+    public CraftInventoryView getBukkitView()
+    {
+        if (bukkitEntity != null)
+        {
             return bukkitEntity;
         }
 
-        CraftInventory inventory = new CraftInventory(this.items);
+        CraftInventory inventory = new CraftInventory(this.tileEntityDispenser);
         bukkitEntity = new CraftInventoryView(this.player.player.getBukkitEntity(), inventory, this);
         return bukkitEntity;
     }

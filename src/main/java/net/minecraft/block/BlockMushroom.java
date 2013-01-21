@@ -1,6 +1,9 @@
-package net.minecraft.server;
+package net.minecraft.block;
 
 import java.util.Random;
+import net.minecraft.item.ItemStack;
+import net.minecraft.world.World;
+import net.minecraft.world.gen.feature.WorldGenBigMushroom;
 
 // CraftBukkit start
 import java.util.ArrayList;
@@ -12,31 +15,41 @@ import org.bukkit.event.block.BlockSpreadEvent;
 import org.bukkit.event.world.StructureGrowEvent;
 // CraftBukkit end
 
-public class BlockMushroom extends BlockFlower {
-
-    protected BlockMushroom(int i, int j) {
-        super(i, j);
-        float f = 0.2F;
-
-        this.a(0.5F - f, 0.0F, 0.5F - f, 0.5F + f, f * 2.0F, 0.5F + f);
-        this.b(true);
+public class BlockMushroom extends BlockFlower
+{
+    protected BlockMushroom(int par1, int par2)
+    {
+        super(par1, par2);
+        float var3 = 0.2F;
+        this.setBlockBounds(0.5F - var3, 0.0F, 0.5F - var3, 0.5F + var3, var3 * 2.0F, 0.5F + var3);
+        this.setTickRandomly(true);
     }
 
-    public void b(World world, int i, int j, int k, Random random) {
-        if (random.nextInt(25) == 0) {
-            byte b0 = 4;
-            int l = 5;
+    /**
+     * Ticks the block if it's been scheduled
+     */
+    public void updateTick(World par1World, int par2, int par3, int par4, Random par5Random)
+    {
+        if (par5Random.nextInt(25) == 0)
+        {
+            byte var6 = 4;
+            int var7 = 5;
+            int var8;
+            int var9;
+            int var10;
 
-            int i1;
-            int j1;
-            int k1;
+            for (var8 = par2 - var6; var8 <= par2 + var6; ++var8)
+            {
+                for (var9 = par4 - var6; var9 <= par4 + var6; ++var9)
+                {
+                    for (var10 = par3 - 1; var10 <= par3 + 1; ++var10)
+                    {
+                        if (par1World.getBlockId(var8, var10, var9) == this.blockID)
+                        {
+                            --var7;
 
-            for (i1 = i - b0; i1 <= i + b0; ++i1) {
-                for (j1 = k - b0; j1 <= k + b0; ++j1) {
-                    for (k1 = j - 1; k1 <= j + 1; ++k1) {
-                        if (world.getTypeId(i1, k1, j1) == this.id) {
-                            --l;
-                            if (l <= 0) {
+                            if (var7 <= 0)
+                            {
                                 return;
                             }
                         }
@@ -44,86 +57,114 @@ public class BlockMushroom extends BlockFlower {
                 }
             }
 
-            i1 = i + random.nextInt(3) - 1;
-            j1 = j + random.nextInt(2) - random.nextInt(2);
-            k1 = k + random.nextInt(3) - 1;
+            var8 = par2 + par5Random.nextInt(3) - 1;
+            var9 = par3 + par5Random.nextInt(2) - par5Random.nextInt(2);
+            var10 = par4 + par5Random.nextInt(3) - 1;
 
-            for (int l1 = 0; l1 < 4; ++l1) {
-                if (world.isEmpty(i1, j1, k1) && this.d(world, i1, j1, k1)) {
-                    i = i1;
-                    j = j1;
-                    k = k1;
+            for (int var11 = 0; var11 < 4; ++var11)
+            {
+                if (par1World.isAirBlock(var8, var9, var10) && this.canBlockStay(par1World, var8, var9, var10))
+                {
+                    par2 = var8;
+                    par3 = var9;
+                    par4 = var10;
                 }
 
-                i1 = i + random.nextInt(3) - 1;
-                j1 = j + random.nextInt(2) - random.nextInt(2);
-                k1 = k + random.nextInt(3) - 1;
+                var8 = par2 + par5Random.nextInt(3) - 1;
+                var9 = par3 + par5Random.nextInt(2) - par5Random.nextInt(2);
+                var10 = par4 + par5Random.nextInt(3) - 1;
             }
 
-            if (world.isEmpty(i1, j1, k1) && this.d(world, i1, j1, k1)) {
+            if (par1World.isAirBlock(var8, var9, var10) && this.canBlockStay(par1World, var8, var9, var10))
+            {
                 // CraftBukkit start
-                org.bukkit.World bworld = world.getWorld();
-                BlockState blockState = bworld.getBlockAt(i1, j1, k1).getState();
-                blockState.setTypeId(this.id);
+                org.bukkit.World bworld = par1World.getWorld();
+                BlockState blockState = bworld.getBlockAt(var8, var9, var10).getState();
+                blockState.setTypeId(this.blockID);
+                BlockSpreadEvent event = new BlockSpreadEvent(blockState.getBlock(), bworld.getBlockAt(par2, par3, par4), blockState);
+                par1World.getServer().getPluginManager().callEvent(event);
 
-                BlockSpreadEvent event = new BlockSpreadEvent(blockState.getBlock(), bworld.getBlockAt(i, j, k), blockState);
-                world.getServer().getPluginManager().callEvent(event);
-
-                if (!event.isCancelled()) {
+                if (!event.isCancelled())
+                {
                     blockState.update(true);
                 }
+
                 // CraftBukkit end
             }
         }
     }
 
-    public boolean canPlace(World world, int i, int j, int k) {
-        return super.canPlace(world, i, j, k) && this.d(world, i, j, k);
+    /**
+     * Checks to see if its valid to put this block at the specified coordinates. Args: world, x, y, z
+     */
+    public boolean canPlaceBlockAt(World par1World, int par2, int par3, int par4)
+    {
+        return super.canPlaceBlockAt(par1World, par2, par3, par4) && this.canBlockStay(par1World, par2, par3, par4);
     }
 
-    protected boolean d_(int i) {
-        return Block.q[i];
+    /**
+     * Gets passed in the blockID of the block below and supposed to return true if its allowed to grow on the type of
+     * blockID passed in. Args: blockID
+     */
+    protected boolean canThisPlantGrowOnThisBlockID(int par1)
+    {
+        return Block.opaqueCubeLookup[par1];
     }
 
-    public boolean d(World world, int i, int j, int k) {
-        if (j >= 0 && j < 256) {
-            int l = world.getTypeId(i, j - 1, k);
-
-            return l == Block.MYCEL.id || world.l(i, j, k) < 13 && this.d_(l);
-        } else {
+    /**
+     * Can this block stay at this position.  Similar to canPlaceBlockAt except gets checked often with plants.
+     */
+    public boolean canBlockStay(World par1World, int par2, int par3, int par4)
+    {
+        if (par3 >= 0 && par3 < 256)
+        {
+            int var5 = par1World.getBlockId(par2, par3 - 1, par4);
+            return var5 == Block.mycelium.blockID || par1World.getFullBlockLightValue(par2, par3, par4) < 13 && this.canThisPlantGrowOnThisBlockID(var5);
+        }
+        else
+        {
             return false;
         }
     }
 
     // CraftBukkit - added bonemeal, player and itemstack
-    public boolean grow(World world, int i, int j, int k, Random random, boolean bonemeal, org.bukkit.entity.Player player, ItemStack itemstack) {
-        int l = world.getData(i, j, k);
-
-        world.setRawTypeId(i, j, k, 0);
+    public boolean grow(World world, int i, int j, int k, Random random, boolean bonemeal, org.bukkit.entity.Player player, ItemStack itemstack)
+    {
+        int l = world.getBlockMetadata(i, j, k);
+        world.setBlock(i, j, k, 0);
         // CraftBukkit start
         boolean grown = false;
         StructureGrowEvent event = null;
         Location location = new Location(world.getWorld(), i, j, k);
-        WorldGenHugeMushroom worldgenhugemushroom = null;
+        WorldGenBigMushroom worldgenhugemushroom = null;
 
-        if (this.id == Block.BROWN_MUSHROOM.id) {
+        if (this.blockID == Block.mushroomBrown.blockID)
+        {
             event = new StructureGrowEvent(location, TreeType.BROWN_MUSHROOM, bonemeal, player, new ArrayList<BlockState>());
-            worldgenhugemushroom = new WorldGenHugeMushroom(0);
-        } else if (this.id == Block.RED_MUSHROOM.id) {
+            worldgenhugemushroom = new WorldGenBigMushroom(0);
+        }
+        else if (this.blockID == Block.mushroomRed.blockID)
+        {
             event = new StructureGrowEvent(location, TreeType.RED_MUSHROOM, bonemeal, player, new ArrayList<BlockState>());
-            worldgenhugemushroom = new WorldGenHugeMushroom(1);
+            worldgenhugemushroom = new WorldGenBigMushroom(1);
         }
 
-        if (worldgenhugemushroom != null && event != null) {
+        if (worldgenhugemushroom != null && event != null)
+        {
             grown = worldgenhugemushroom.grow((org.bukkit.BlockChangeDelegate)world, random, i, j, k, event, itemstack, world.getWorld());
-            if (event.isFromBonemeal() && itemstack != null) {
-                --itemstack.count;
+
+            if (event.isFromBonemeal() && itemstack != null)
+            {
+                --itemstack.stackSize;
             }
         }
-        if (!grown || event.isCancelled()) {
-            world.setRawTypeIdAndData(i, j, k, this.id, l);
+
+        if (!grown || event.isCancelled())
+        {
+            world.setBlockAndMetadata(i, j, k, this.blockID, l);
             return false;
         }
+
         return true;
         // CraftBukkit end
     }

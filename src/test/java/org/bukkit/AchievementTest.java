@@ -6,8 +6,6 @@ import static org.hamcrest.Matchers.*;
 import java.util.Collections;
 import java.util.List;
 
-import net.minecraft.server.AchievementList;
-import net.minecraft.server.Statistic;
 
 import org.bukkit.support.Util;
 import org.junit.Test;
@@ -20,10 +18,10 @@ public class AchievementTest {
     public void verifyMapping() throws Throwable {
         List<Achievement> achievements = Lists.newArrayList(Achievement.values());
 
-        for (net.minecraft.server.Achievement statistic : (List<net.minecraft.server.Achievement>) AchievementList.e) {
-            int id = statistic.e;
+        for (/*was:net.minecraft.server.*/net.minecraft.stats.Achievement/*was:Achievement*/ statistic : (List<net.minecraft.stats.Achievement/*was:Achievement*/>) net.minecraft.stats.AchievementList/*was:AchievementList*/.achievementList/*was:e*/) {
+            int id = statistic.statId/*was:e*/;
 
-            String name = Util.getInternalState(Statistic.class, statistic, org.bukkit.craftbukkit.CraftServer.isUsingMappingCB ? "a" : "statName"); // CBMCP
+            String name = Util.getInternalState(net.minecraft.stats.StatBase/*was:Statistic*/.class, statistic, org.bukkit.craftbukkit.CraftServer.isUsingMappingCB ? "a" : "statName"); // CBMCP
             String message = String.format("org.bukkit.Achievement is missing id: %d named: '%s'", id - Achievement.STATISTIC_OFFSET, name);
 
             Achievement subject = Achievement.getById(id);

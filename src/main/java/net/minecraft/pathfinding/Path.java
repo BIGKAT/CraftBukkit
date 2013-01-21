@@ -1,128 +1,176 @@
-package net.minecraft.server;
+package net.minecraft.pathfinding;
 
-public class Path {
+public class Path
+{
+    private PathPoint[] pathPoints = new PathPoint[128]; // CraftBukkit - reduce default size
 
-    private PathPoint[] a = new PathPoint[128]; // CraftBukkit - reduce default size
-    private int b = 0;
+    /** The number of points in this path */
+    private int count = 0;
 
     public Path() {}
 
-    public PathPoint a(PathPoint pathpoint) {
-        if (pathpoint.d >= 0) {
+    /**
+     * Adds a point to the path
+     */
+    public PathPoint addPoint(PathPoint par1PathPoint)
+    {
+        if (par1PathPoint.index >= 0)
+        {
             throw new IllegalStateException("OW KNOWS!");
-        } else {
-            if (this.b == this.a.length) {
-                PathPoint[] apathpoint = new PathPoint[this.b << 1];
-
-                System.arraycopy(this.a, 0, apathpoint, 0, this.b);
-                this.a = apathpoint;
+        }
+        else
+        {
+            if (this.count == this.pathPoints.length)
+            {
+                PathPoint[] var2 = new PathPoint[this.count << 1];
+                System.arraycopy(this.pathPoints, 0, var2, 0, this.count);
+                this.pathPoints = var2;
             }
 
-            this.a[this.b] = pathpoint;
-            pathpoint.d = this.b;
-            this.a(this.b++);
-            return pathpoint;
+            this.pathPoints[this.count] = par1PathPoint;
+            par1PathPoint.index = this.count;
+            this.sortBack(this.count++);
+            return par1PathPoint;
         }
     }
 
-    public void a() {
-        this.b = 0;
+    /**
+     * Clears the path
+     */
+    public void clearPath()
+    {
+        this.count = 0;
     }
 
-    public PathPoint c() {
-        PathPoint pathpoint = this.a[0];
+    /**
+     * Returns and removes the first point in the path
+     */
+    public PathPoint dequeue()
+    {
+        PathPoint var1 = this.pathPoints[0];
+        this.pathPoints[0] = this.pathPoints[--this.count];
+        this.pathPoints[this.count] = null;
 
-        this.a[0] = this.a[--this.b];
-        this.a[this.b] = null;
-        if (this.b > 0) {
-            this.b(0);
+        if (this.count > 0)
+        {
+            this.sortForward(0);
         }
 
-        pathpoint.d = -1;
-        return pathpoint;
+        var1.index = -1;
+        return var1;
     }
 
-    public void a(PathPoint pathpoint, float f) {
-        float f1 = pathpoint.g;
+    /**
+     * Changes the provided point's distance to target
+     */
+    public void changeDistance(PathPoint par1PathPoint, float par2)
+    {
+        float var3 = par1PathPoint.distanceToTarget;
+        par1PathPoint.distanceToTarget = par2;
 
-        pathpoint.g = f;
-        if (f < f1) {
-            this.a(pathpoint.d);
-        } else {
-            this.b(pathpoint.d);
+        if (par2 < var3)
+        {
+            this.sortBack(par1PathPoint.index);
+        }
+        else
+        {
+            this.sortForward(par1PathPoint.index);
         }
     }
 
-    private void a(int i) {
-        PathPoint pathpoint = this.a[i];
+    /**
+     * Sorts a point to the left
+     */
+    private void sortBack(int par1)
+    {
+        PathPoint var2 = this.pathPoints[par1];
+        int var4;
 
-        int j;
+        for (float var3 = var2.distanceToTarget; par1 > 0; par1 = var4)
+        {
+            var4 = par1 - 1 >> 1;
+            PathPoint var5 = this.pathPoints[var4];
 
-        for (float f = pathpoint.g; i > 0; i = j) {
-            j = i - 1 >> 1;
-            PathPoint pathpoint1 = this.a[j];
-
-            if (f >= pathpoint1.g) {
+            if (var3 >= var5.distanceToTarget)
+            {
                 break;
             }
 
-            this.a[i] = pathpoint1;
-            pathpoint1.d = i;
+            this.pathPoints[par1] = var5;
+            var5.index = par1;
         }
 
-        this.a[i] = pathpoint;
-        pathpoint.d = i;
+        this.pathPoints[par1] = var2;
+        var2.index = par1;
     }
 
-    private void b(int i) {
-        PathPoint pathpoint = this.a[i];
-        float f = pathpoint.g;
+    /**
+     * Sorts a point to the right
+     */
+    private void sortForward(int par1)
+    {
+        PathPoint var2 = this.pathPoints[par1];
+        float var3 = var2.distanceToTarget;
 
-        while (true) {
-            int j = 1 + (i << 1);
-            int k = j + 1;
+        while (true)
+        {
+            int var4 = 1 + (par1 << 1);
+            int var5 = var4 + 1;
 
-            if (j >= this.b) {
+            if (var4 >= this.count)
+            {
                 break;
             }
 
-            PathPoint pathpoint1 = this.a[j];
-            float f1 = pathpoint1.g;
-            PathPoint pathpoint2;
-            float f2;
+            PathPoint var6 = this.pathPoints[var4];
+            float var7 = var6.distanceToTarget;
+            PathPoint var8;
+            float var9;
 
-            if (k >= this.b) {
-                pathpoint2 = null;
-                f2 = Float.POSITIVE_INFINITY;
-            } else {
-                pathpoint2 = this.a[k];
-                f2 = pathpoint2.g;
+            if (var5 >= this.count)
+            {
+                var8 = null;
+                var9 = Float.POSITIVE_INFINITY;
+            }
+            else
+            {
+                var8 = this.pathPoints[var5];
+                var9 = var8.distanceToTarget;
             }
 
-            if (f1 < f2) {
-                if (f1 >= f) {
+            if (var7 < var9)
+            {
+                if (var7 >= var3)
+                {
                     break;
                 }
 
-                this.a[i] = pathpoint1;
-                pathpoint1.d = i;
-                i = j;
-            } else {
-                if (f2 >= f) {
+                this.pathPoints[par1] = var6;
+                var6.index = par1;
+                par1 = var4;
+            }
+            else
+            {
+                if (var9 >= var3)
+                {
                     break;
                 }
 
-                this.a[i] = pathpoint2;
-                pathpoint2.d = i;
-                i = k;
+                this.pathPoints[par1] = var8;
+                var8.index = par1;
+                par1 = var5;
             }
         }
 
-        this.a[i] = pathpoint;
-        pathpoint.d = i;
+        this.pathPoints[par1] = var2;
+        var2.index = par1;
     }
 
-    public boolean e() {
-        return this.b == 0;
+    /**
+     * Returns true if this path contains no points
+     */
+    public boolean isPathEmpty()
+    {
+        return this.count == 0;
     }
 }

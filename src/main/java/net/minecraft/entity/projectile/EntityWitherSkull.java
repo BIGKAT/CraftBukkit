@@ -1,98 +1,152 @@
-package net.minecraft.server;
+package net.minecraft.entity.projectile;
 
 // CraftBukkit start
 import org.bukkit.event.entity.EntityRegainHealthEvent;
 import org.bukkit.event.entity.ExplosionPrimeEvent;
+import net.minecraft.block.Block;
+import net.minecraft.entity.EntityLiving;
+import net.minecraft.potion.Potion;
+import net.minecraft.potion.PotionEffect;
+import net.minecraft.util.DamageSource;
+import net.minecraft.util.MovingObjectPosition;
+import net.minecraft.world.Explosion;
+import net.minecraft.world.World;
 // CraftBukkit end
 
-public class EntityWitherSkull extends EntityFireball {
-
-    public EntityWitherSkull(World world) {
-        super(world);
-        this.a(0.3125F, 0.3125F);
+public class EntityWitherSkull extends EntityFireball
+{
+    public EntityWitherSkull(World par1World)
+    {
+        super(par1World);
+        this.setSize(0.3125F, 0.3125F);
     }
 
-    public EntityWitherSkull(World world, EntityLiving entityliving, double d0, double d1, double d2) {
-        super(world, entityliving, d0, d1, d2);
-        this.a(0.3125F, 0.3125F);
+    public EntityWitherSkull(World par1World, EntityLiving par2EntityLiving, double par3, double par5, double par7)
+    {
+        super(par1World, par2EntityLiving, par3, par5, par7);
+        this.setSize(0.3125F, 0.3125F);
     }
 
-    protected float c() {
-        return this.d() ? 0.73F : super.c();
+    /**
+     * Return the motion factor for this projectile. The factor is multiplied by the original motion.
+     */
+    protected float getMotionFactor()
+    {
+        return this.isInvulnerable() ? 0.73F : super.getMotionFactor();
     }
 
-    public boolean isBurning() {
+    /**
+     * Returns true if the entity is on fire. Used by render to add the fire effect on rendering.
+     */
+    public boolean isBurning()
+    {
         return false;
     }
 
-    public float a(Explosion explosion, Block block, int i, int j, int k) {
-        float f = super.a(explosion, block, i, j, k);
+    public float func_82146_a(Explosion par1Explosion, Block par2Block, int par3, int par4, int par5)
+    {
+        float var6 = super.func_82146_a(par1Explosion, par2Block, par3, par4, par5);
 
-        if (this.d() && block != Block.BEDROCK && block != Block.ENDER_PORTAL && block != Block.ENDER_PORTAL_FRAME) {
-            f = Math.min(0.8F, f);
+        if (this.isInvulnerable() && par2Block != Block.bedrock && par2Block != Block.endPortal && par2Block != Block.endPortalFrame)
+        {
+            var6 = Math.min(0.8F, var6);
         }
 
-        return f;
+        return var6;
     }
 
-    protected void a(MovingObjectPosition movingobjectposition) {
-        if (!this.world.isStatic) {
-            if (movingobjectposition.entity != null) {
-                if (this.shooter != null) {
-                    if (movingobjectposition.entity.damageEntity(DamageSource.mobAttack(this.shooter), 8) && !movingobjectposition.entity.isAlive()) {
-                        this.shooter.heal(5, EntityRegainHealthEvent.RegainReason.WITHER); // CraftBukkit
+    /**
+     * Called when this EntityFireball hits a block or entity.
+     */
+    protected void onImpact(MovingObjectPosition par1MovingObjectPosition)
+    {
+        if (!this.worldObj.isRemote)
+        {
+            if (par1MovingObjectPosition.entityHit != null)
+            {
+                if (this.shootingEntity != null)
+                {
+                    if (par1MovingObjectPosition.entityHit.attackEntityFrom(DamageSource.causeMobDamage(this.shootingEntity), 8) && !par1MovingObjectPosition.entityHit.isEntityAlive())
+                    {
+                        this.shootingEntity.heal(5, EntityRegainHealthEvent.RegainReason.WITHER); // CraftBukkit
                     }
-                } else {
-                    movingobjectposition.entity.damageEntity(DamageSource.MAGIC, 5);
+                }
+                else
+                {
+                    par1MovingObjectPosition.entityHit.attackEntityFrom(DamageSource.magic, 5);
                 }
 
-                if (movingobjectposition.entity instanceof EntityLiving) {
-                    byte b0 = 0;
+                if (par1MovingObjectPosition.entityHit instanceof EntityLiving)
+                {
+                    byte var2 = 0;
 
-                    if (this.world.difficulty > 1) {
-                        if (this.world.difficulty == 2) {
-                            b0 = 10;
-                        } else if (this.world.difficulty == 3) {
-                            b0 = 40;
+                    if (this.worldObj.difficultySetting > 1)
+                    {
+                        if (this.worldObj.difficultySetting == 2)
+                        {
+                            var2 = 10;
+                        }
+                        else if (this.worldObj.difficultySetting == 3)
+                        {
+                            var2 = 40;
                         }
                     }
 
-                    if (b0 > 0) {
-                        ((EntityLiving) movingobjectposition.entity).addEffect(new MobEffect(MobEffectList.WITHER.id, 20 * b0, 1));
+                    if (var2 > 0)
+                    {
+                        ((EntityLiving)par1MovingObjectPosition.entityHit).addPotionEffect(new PotionEffect(Potion.wither.id, 20 * var2, 1));
                     }
                 }
             }
 
             // CraftBukkit start
             ExplosionPrimeEvent event = new ExplosionPrimeEvent(this.getBukkitEntity(), 1.0F, false);
-            this.world.getServer().getPluginManager().callEvent(event);
+            this.worldObj.getServer().getPluginManager().callEvent(event);
 
-            if (!event.isCancelled()) {
-                this.world.createExplosion(this, this.locX, this.locY, this.locZ, event.getRadius(), event.getFire(), this.world.getGameRules().getBoolean("mobGriefing"));
+            if (!event.isCancelled())
+            {
+                this.worldObj.newExplosion(this, this.posX, this.posY, this.posZ, event.getRadius(), event.getFire(), this.worldObj.getGameRules().getGameRuleBooleanValue("mobGriefing"));
             }
-            // CraftBukkit end
 
-            this.die();
+            // CraftBukkit end
+            this.setDead();
         }
     }
 
-    public boolean L() {
+    /**
+     * Returns true if other Entities should be prevented from moving through this Entity.
+     */
+    public boolean canBeCollidedWith()
+    {
         return false;
     }
 
-    public boolean damageEntity(DamageSource damagesource, int i) {
+    /**
+     * Called when the entity is attacked.
+     */
+    public boolean attackEntityFrom(DamageSource par1DamageSource, int par2)
+    {
         return false;
     }
 
-    protected void a() {
-        this.datawatcher.a(10, Byte.valueOf((byte) 0));
+    protected void entityInit()
+    {
+        this.dataWatcher.addObject(10, Byte.valueOf((byte)0));
     }
 
-    public boolean d() {
-        return this.datawatcher.getByte(10) == 1;
+    /**
+     * Return whether this skull comes from an invulnerable (aura) wither boss.
+     */
+    public boolean isInvulnerable()
+    {
+        return this.dataWatcher.getWatchableObjectByte(10) == 1;
     }
 
-    public void e(boolean flag) {
-        this.datawatcher.watch(10, Byte.valueOf((byte) (flag ? 1 : 0)));
+    /**
+     * Set whether this skull comes from an invulnerable (aura) wither boss.
+     */
+    public void setInvulnerable(boolean par1)
+    {
+        this.dataWatcher.updateObject(10, Byte.valueOf((byte)(par1 ? 1 : 0)));
     }
 }

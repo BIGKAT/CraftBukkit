@@ -1,71 +1,91 @@
-package net.minecraft.server;
+package net.minecraft.entity.ai;
 
-public class ControllerMove {
+import net.minecraft.entity.EntityLiving;
+import net.minecraft.util.MathHelper;
+public class EntityMoveHelper
+{
+    /** The EntityLiving that is being moved */
+    private EntityLiving entity;
+    private double posX;
+    private double posY;
+    private double posZ;
 
-    private EntityLiving a;
-    private double b;
-    private double c;
-    private double d;
-    private float e;
-    private boolean f = false;
+    /** The speed at which the entity should move */
+    private float speed;
+    private boolean field_75643_f = false;
 
-    public ControllerMove(EntityLiving entityliving) {
-        this.a = entityliving;
-        this.b = entityliving.locX;
-        this.c = entityliving.locY;
-        this.d = entityliving.locZ;
+    public EntityMoveHelper(EntityLiving par1EntityLiving)
+    {
+        this.entity = par1EntityLiving;
+        this.posX = par1EntityLiving.posX;
+        this.posY = par1EntityLiving.posY;
+        this.posZ = par1EntityLiving.posZ;
     }
 
-    public boolean a() {
-        return this.f;
+    public boolean func_75640_a()
+    {
+        return this.field_75643_f;
     }
 
-    public float b() {
-        return this.e;
+    public float getSpeed()
+    {
+        return this.speed;
     }
 
-    public void a(double d0, double d1, double d2, float f) {
-        this.b = d0;
-        this.c = d1;
-        this.d = d2;
-        this.e = f;
-        this.f = true;
+    /**
+     * Sets the speed and location to move to
+     */
+    public void setMoveTo(double par1, double par3, double par5, float par7)
+    {
+        this.posX = par1;
+        this.posY = par3;
+        this.posZ = par5;
+        this.speed = par7;
+        this.field_75643_f = true;
     }
 
-    public void c() {
-        this.a.f(0.0F);
-        if (this.f) {
-            this.f = false;
-            int i = MathHelper.floor(this.a.boundingBox.b + 0.5D);
-            double d0 = this.b - this.a.locX;
-            double d1 = this.d - this.a.locZ;
-            double d2 = this.c - (double) i;
-            double d3 = d0 * d0 + d2 * d2 + d1 * d1;
+    public void onUpdateMoveHelper()
+    {
+        this.entity.setMoveForward(0.0F);
 
-            if (d3 >= 2.500000277905201E-7D) {
+        if (this.field_75643_f)
+        {
+            this.field_75643_f = false;
+            int var1 = MathHelper.floor_double(this.entity.boundingBox.minY + 0.5D);
+            double var2 = this.posX - this.entity.posX;
+            double var4 = this.posZ - this.entity.posZ;
+            double var6 = this.posY - (double)var1;
+            double var8 = var2 * var2 + var6 * var6 + var4 * var4;
+
+            if (var8 >= 2.500000277905201E-7D)
+            {
                 // CraftBukkit - Math -> TrigMath
-                float f = (float) (org.bukkit.craftbukkit.TrigMath.atan2(d1, d0) * 180.0D / 3.1415927410125732D) - 90.0F;
+                float var10 = (float)(org.bukkit.craftbukkit.TrigMath.atan2(var4, var2) * 180.0D / 3.1415927410125732D) - 90.0F;
+                this.entity.rotationYaw = this.func_75639_a(this.entity.rotationYaw, var10, 30.0F);
+                this.entity.setAIMoveSpeed(this.speed * this.entity.getSpeedModifier());
 
-                this.a.yaw = this.a(this.a.yaw, f, 30.0F);
-                this.a.e(this.e * this.a.bB());
-                if (d2 > 0.0D && d0 * d0 + d1 * d1 < 1.0D) {
-                    this.a.getControllerJump().a();
+                if (var6 > 0.0D && var2 * var2 + var4 * var4 < 1.0D)
+                {
+                    this.entity.getJumpHelper().setJumping();
                 }
             }
         }
     }
 
-    private float a(float f, float f1, float f2) {
-        float f3 = MathHelper.g(f1 - f);
+    private float func_75639_a(float par1, float par2, float par3)
+    {
+        float var4 = MathHelper.wrapAngleTo180_float(par2 - par1);
 
-        if (f3 > f2) {
-            f3 = f2;
+        if (var4 > par3)
+        {
+            var4 = par3;
         }
 
-        if (f3 < -f2) {
-            f3 = -f2;
+        if (var4 < -par3)
+        {
+            var4 = -par3;
         }
 
-        return f + f3;
+        return par1 + var4;
     }
 }

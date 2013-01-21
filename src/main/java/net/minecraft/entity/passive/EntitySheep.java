@@ -1,230 +1,348 @@
-package net.minecraft.server;
+package net.minecraft.entity.passive;
 
 import java.util.Random;
+import net.minecraft.block.Block;
+import net.minecraft.entity.EntityAgeable;
+import net.minecraft.entity.ai.EntityAIEatGrass;
+import net.minecraft.entity.ai.EntityAIFollowParent;
+import net.minecraft.entity.ai.EntityAILookIdle;
+import net.minecraft.entity.ai.EntityAIMate;
+import net.minecraft.entity.ai.EntityAIPanic;
+import net.minecraft.entity.ai.EntityAISwimming;
+import net.minecraft.entity.ai.EntityAITempt;
+import net.minecraft.entity.ai.EntityAIWander;
+import net.minecraft.entity.ai.EntityAIWatchClosest;
+import net.minecraft.entity.item.EntityItem;
+import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.inventory.InventoryCraftResult;
+import net.minecraft.inventory.InventoryCrafting;
+import net.minecraft.item.Item;
+import net.minecraft.item.ItemStack;
+import net.minecraft.item.crafting.CraftingManager;
+import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.world.World;
 
 // CraftBukkit start
 import org.bukkit.event.entity.SheepRegrowWoolEvent;
 import org.bukkit.event.player.PlayerShearEntityEvent;
 // CraftBukkit end
 
-public class EntitySheep extends EntityAnimal {
+public class EntitySheep extends EntityAnimal
+{
+    private final InventoryCrafting field_90016_e = new InventoryCrafting(new ContainerSheep(this), 2, 1);
 
-    private final InventoryCrafting e = new InventoryCrafting(new ContainerSheepBreed(this), 2, 1);
-    public static final float[][] d = new float[][] { { 1.0F, 1.0F, 1.0F}, { 0.85F, 0.5F, 0.2F}, { 0.7F, 0.3F, 0.85F}, { 0.4F, 0.6F, 0.85F}, { 0.9F, 0.9F, 0.2F}, { 0.5F, 0.8F, 0.1F}, { 0.95F, 0.5F, 0.65F}, { 0.3F, 0.3F, 0.3F}, { 0.6F, 0.6F, 0.6F}, { 0.3F, 0.5F, 0.6F}, { 0.5F, 0.25F, 0.7F}, { 0.2F, 0.3F, 0.7F}, { 0.4F, 0.3F, 0.2F}, { 0.4F, 0.5F, 0.2F}, { 0.6F, 0.2F, 0.2F}, { 0.1F, 0.1F, 0.1F}};
-    private int f;
-    private PathfinderGoalEatTile g = new PathfinderGoalEatTile(this);
+    /**
+     * Holds the RGB table of the sheep colors - in OpenGL glColor3f values - used to render the sheep colored fleece.
+     */
+    public static final float[][] fleeceColorTable = new float[][] {{1.0F, 1.0F, 1.0F}, {0.85F, 0.5F, 0.2F}, {0.7F, 0.3F, 0.85F}, {0.4F, 0.6F, 0.85F}, {0.9F, 0.9F, 0.2F}, {0.5F, 0.8F, 0.1F}, {0.95F, 0.5F, 0.65F}, {0.3F, 0.3F, 0.3F}, {0.6F, 0.6F, 0.6F}, {0.3F, 0.5F, 0.6F}, {0.5F, 0.25F, 0.7F}, {0.2F, 0.3F, 0.7F}, {0.4F, 0.3F, 0.2F}, {0.4F, 0.5F, 0.2F}, {0.6F, 0.2F, 0.2F}, {0.1F, 0.1F, 0.1F}};
 
-    public EntitySheep(World world) {
-        super(world);
+    /**
+     * Used to control movement as well as wool regrowth. Set to 40 on handleHealthUpdate and counts down with each
+     * tick.
+     */
+    private int sheepTimer;
+
+    /** The eat grass AI task for this mob. */
+    private EntityAIEatGrass aiEatGrass = new EntityAIEatGrass(this);
+
+    public EntitySheep(World par1World)
+    {
+        super(par1World);
         this.texture = "/mob/sheep.png";
-        this.a(0.9F, 1.3F);
-        float f = 0.23F;
-
-        this.getNavigation().a(true);
-        this.goalSelector.a(0, new PathfinderGoalFloat(this));
-        this.goalSelector.a(1, new PathfinderGoalPanic(this, 0.38F));
-        this.goalSelector.a(2, new PathfinderGoalBreed(this, f));
-        this.goalSelector.a(3, new PathfinderGoalTempt(this, 0.25F, Item.WHEAT.id, false));
-        this.goalSelector.a(4, new PathfinderGoalFollowParent(this, 0.25F));
-        this.goalSelector.a(5, this.g);
-        this.goalSelector.a(6, new PathfinderGoalRandomStroll(this, f));
-        this.goalSelector.a(7, new PathfinderGoalLookAtPlayer(this, EntityHuman.class, 6.0F));
-        this.goalSelector.a(8, new PathfinderGoalRandomLookaround(this));
-        this.e.setItem(0, new ItemStack(Item.INK_SACK, 1, 0));
-        this.e.setItem(1, new ItemStack(Item.INK_SACK, 1, 0));
-        this.e.resultInventory = new InventoryCraftResult(); // CraftBukkit - add result slot for event
+        this.setSize(0.9F, 1.3F);
+        float var2 = 0.23F;
+        this.getNavigator().setAvoidsWater(true);
+        this.tasks.addTask(0, new EntityAISwimming(this));
+        this.tasks.addTask(1, new EntityAIPanic(this, 0.38F));
+        this.tasks.addTask(2, new EntityAIMate(this, var2));
+        this.tasks.addTask(3, new EntityAITempt(this, 0.25F, Item.wheat.itemID, false));
+        this.tasks.addTask(4, new EntityAIFollowParent(this, 0.25F));
+        this.tasks.addTask(5, this.aiEatGrass);
+        this.tasks.addTask(6, new EntityAIWander(this, var2));
+        this.tasks.addTask(7, new EntityAIWatchClosest(this, EntityPlayer.class, 6.0F));
+        this.tasks.addTask(8, new EntityAILookIdle(this));
+        this.field_90016_e.setInventorySlotContents(0, new ItemStack(Item.dyePowder, 1, 0));
+        this.field_90016_e.setInventorySlotContents(1, new ItemStack(Item.dyePowder, 1, 0));
+        this.field_90016_e.resultInventory = new InventoryCraftResult(); // CraftBukkit - add result slot for event
     }
 
-    protected boolean be() {
+    /**
+     * Returns true if the newer Entity AI code should be run
+     */
+    protected boolean isAIEnabled()
+    {
         return true;
     }
 
-    protected void bl() {
-        this.f = this.g.f();
-        super.bl();
+    protected void updateAITasks()
+    {
+        this.sheepTimer = this.aiEatGrass.getEatGrassTick();
+        super.updateAITasks();
     }
 
-    public void c() {
-        if (this.world.isStatic) {
-            this.f = Math.max(0, this.f - 1);
+    /**
+     * Called frequently so the entity can update its state every tick as required. For example, zombies and skeletons
+     * use this to react to sunlight and start to burn.
+     */
+    public void onLivingUpdate()
+    {
+        if (this.worldObj.isRemote)
+        {
+            this.sheepTimer = Math.max(0, this.sheepTimer - 1);
         }
 
-        super.c();
+        super.onLivingUpdate();
     }
 
-    public int getMaxHealth() {
+    public int getMaxHealth()
+    {
         return 8;
     }
 
-    protected void a() {
-        super.a();
-        this.datawatcher.a(16, new Byte((byte) 0));
+    protected void entityInit()
+    {
+        super.entityInit();
+        this.dataWatcher.addObject(16, new Byte((byte)0));
     }
 
-    protected void dropDeathLoot(boolean flag, int i) {
+    /**
+     * Drop 0-2 items of this living's type. @param par1 - Whether this entity has recently been hit by a player. @param
+     * par2 - Level of Looting used to kill this mob.
+     */
+    protected void dropFewItems(boolean par1, int par2)
+    {
         // CraftBukkit start - whole method
         java.util.List<org.bukkit.inventory.ItemStack> loot = new java.util.ArrayList<org.bukkit.inventory.ItemStack>();
 
-        if (!this.isSheared()) {
-            loot.add(new org.bukkit.inventory.ItemStack(org.bukkit.Material.WOOL, 1, (short) 0, (byte) this.getColor()));
+        if (!this.getSheared())
+        {
+            loot.add(new org.bukkit.inventory.ItemStack(org.bukkit.Material.WOOL, 1, (short) 0, (byte) this.getFleeceColor()));
         }
 
         org.bukkit.craftbukkit.event.CraftEventFactory.callEntityDeathEvent(this, loot);
         // CraftBukkit end
     }
 
-    protected int getLootId() {
-        return Block.WOOL.id;
+    /**
+     * Returns the item ID for the item the mob drops on death.
+     */
+    protected int getDropItemId()
+    {
+        return Block.cloth.blockID;
     }
 
-    public boolean a(EntityHuman entityhuman) {
-        ItemStack itemstack = entityhuman.inventory.getItemInHand();
+    /**
+     * Called when a player interacts with a mob. e.g. gets milk from a cow, gets into the saddle on a pig.
+     */
+    public boolean interact(EntityPlayer par1EntityPlayer)
+    {
+        ItemStack var2 = par1EntityPlayer.inventory.getCurrentItem();
 
-        if (itemstack != null && itemstack.id == Item.SHEARS.id && !this.isSheared() && !this.isBaby()) {
-            if (!this.world.isStatic) {
+        if (var2 != null && var2.itemID == Item.shears.itemID && !this.getSheared() && !this.isChild())
+        {
+            if (!this.worldObj.isRemote)
+            {
                 // CraftBukkit start
-                PlayerShearEntityEvent event = new PlayerShearEntityEvent((org.bukkit.entity.Player) entityhuman.getBukkitEntity(), this.getBukkitEntity());
-                this.world.getServer().getPluginManager().callEvent(event);
+                PlayerShearEntityEvent event = new PlayerShearEntityEvent((org.bukkit.entity.Player) par1EntityPlayer.getBukkitEntity(), this.getBukkitEntity());
+                this.worldObj.getServer().getPluginManager().callEvent(event);
 
-                if (event.isCancelled()) {
+                if (event.isCancelled())
+                {
                     return false;
                 }
+
                 // CraftBukkit end
-
                 this.setSheared(true);
-                int i = 1 + this.random.nextInt(3);
+                int var3 = 1 + this.rand.nextInt(3);
 
-                for (int j = 0; j < i; ++j) {
-                    EntityItem entityitem = this.a(new ItemStack(Block.WOOL.id, 1, this.getColor()), 1.0F);
-
-                    entityitem.motY += (double) (this.random.nextFloat() * 0.05F);
-                    entityitem.motX += (double) ((this.random.nextFloat() - this.random.nextFloat()) * 0.1F);
-                    entityitem.motZ += (double) ((this.random.nextFloat() - this.random.nextFloat()) * 0.1F);
+                for (int var4 = 0; var4 < var3; ++var4)
+                {
+                    EntityItem var5 = this.entityDropItem(new ItemStack(Block.cloth.blockID, 1, this.getFleeceColor()), 1.0F);
+                    var5.motionY += (double)(this.rand.nextFloat() * 0.05F);
+                    var5.motionX += (double)((this.rand.nextFloat() - this.rand.nextFloat()) * 0.1F);
+                    var5.motionZ += (double)((this.rand.nextFloat() - this.rand.nextFloat()) * 0.1F);
                 }
             }
 
-            itemstack.damage(1, entityhuman);
-            this.makeSound("mob.sheep.shear", 1.0F, 1.0F);
+            var2.damageItem(1, par1EntityPlayer);
+            this.playSound("mob.sheep.shear", 1.0F, 1.0F);
         }
 
-        return super.a(entityhuman);
+        return super.interact(par1EntityPlayer);
     }
 
-    public void b(NBTTagCompound nbttagcompound) {
-        super.b(nbttagcompound);
-        nbttagcompound.setBoolean("Sheared", this.isSheared());
-        nbttagcompound.setByte("Color", (byte) this.getColor());
+    /**
+     * (abstract) Protected helper method to write subclass entity data to NBT.
+     */
+    public void writeEntityToNBT(NBTTagCompound par1NBTTagCompound)
+    {
+        super.writeEntityToNBT(par1NBTTagCompound);
+        par1NBTTagCompound.setBoolean("Sheared", this.getSheared());
+        par1NBTTagCompound.setByte("Color", (byte)this.getFleeceColor());
     }
 
-    public void a(NBTTagCompound nbttagcompound) {
-        super.a(nbttagcompound);
-        this.setSheared(nbttagcompound.getBoolean("Sheared"));
-        this.setColor(nbttagcompound.getByte("Color"));
+    /**
+     * (abstract) Protected helper method to read subclass entity data from NBT.
+     */
+    public void readEntityFromNBT(NBTTagCompound par1NBTTagCompound)
+    {
+        super.readEntityFromNBT(par1NBTTagCompound);
+        this.setSheared(par1NBTTagCompound.getBoolean("Sheared"));
+        this.setFleeceColor(par1NBTTagCompound.getByte("Color"));
     }
 
-    protected String aY() {
+    /**
+     * Returns the sound this mob makes while it's alive.
+     */
+    protected String getLivingSound()
+    {
         return "mob.sheep.say";
     }
 
-    protected String aZ() {
+    /**
+     * Returns the sound this mob makes when it is hurt.
+     */
+    protected String getHurtSound()
+    {
         return "mob.sheep.say";
     }
 
-    protected String ba() {
+    /**
+     * Returns the sound this mob makes on death.
+     */
+    protected String getDeathSound()
+    {
         return "mob.sheep.say";
     }
 
-    protected void a(int i, int j, int k, int l) {
-        this.makeSound("mob.sheep.step", 0.15F, 1.0F);
+    /**
+     * Plays step sound at given x, y, z for the entity
+     */
+    protected void playStepSound(int par1, int par2, int par3, int par4)
+    {
+        this.playSound("mob.sheep.step", 0.15F, 1.0F);
     }
 
-    public int getColor() {
-        return this.datawatcher.getByte(16) & 15;
+    public int getFleeceColor()
+    {
+        return this.dataWatcher.getWatchableObjectByte(16) & 15;
     }
 
-    public void setColor(int i) {
-        byte b0 = this.datawatcher.getByte(16);
-
-        this.datawatcher.watch(16, Byte.valueOf((byte) (b0 & 240 | i & 15)));
+    public void setFleeceColor(int par1)
+    {
+        byte var2 = this.dataWatcher.getWatchableObjectByte(16);
+        this.dataWatcher.updateObject(16, Byte.valueOf((byte)(var2 & 240 | par1 & 15)));
     }
 
-    public boolean isSheared() {
-        return (this.datawatcher.getByte(16) & 16) != 0;
+    /**
+     * returns true if a sheeps wool has been sheared
+     */
+    public boolean getSheared()
+    {
+        return (this.dataWatcher.getWatchableObjectByte(16) & 16) != 0;
     }
 
-    public void setSheared(boolean flag) {
-        byte b0 = this.datawatcher.getByte(16);
+    /**
+     * make a sheep sheared if set to true
+     */
+    public void setSheared(boolean par1)
+    {
+        byte var2 = this.dataWatcher.getWatchableObjectByte(16);
 
-        if (flag) {
-            this.datawatcher.watch(16, Byte.valueOf((byte) (b0 | 16)));
-        } else {
-            this.datawatcher.watch(16, Byte.valueOf((byte) (b0 & -17)));
+        if (par1)
+        {
+            this.dataWatcher.updateObject(16, Byte.valueOf((byte)(var2 | 16)));
+        }
+        else
+        {
+            this.dataWatcher.updateObject(16, Byte.valueOf((byte)(var2 & -17)));
         }
     }
 
-    public static int a(Random random) {
-        int i = random.nextInt(100);
-
-        return i < 5 ? 15 : (i < 10 ? 7 : (i < 15 ? 8 : (i < 18 ? 12 : (random.nextInt(500) == 0 ? 6 : 0))));
+    /**
+     * This method is called when a sheep spawns in the world to select the color of sheep fleece.
+     */
+    public static int getRandomFleeceColor(Random par0Random)
+    {
+        int var1 = par0Random.nextInt(100);
+        return var1 < 5 ? 15 : (var1 < 10 ? 7 : (var1 < 15 ? 8 : (var1 < 18 ? 12 : (par0Random.nextInt(500) == 0 ? 6 : 0))));
     }
 
-    public EntitySheep b(EntityAgeable entityageable) {
-        EntitySheep entitysheep = (EntitySheep) entityageable;
-        EntitySheep entitysheep1 = new EntitySheep(this.world);
-        int i = this.a(this, entitysheep);
-
-        entitysheep1.setColor(15 - i);
-        return entitysheep1;
+    public EntitySheep func_90015_b(EntityAgeable par1EntityAgeable)
+    {
+        EntitySheep var2 = (EntitySheep)par1EntityAgeable;
+        EntitySheep var3 = new EntitySheep(this.worldObj);
+        int var4 = this.func_90014_a(this, var2);
+        var3.setFleeceColor(15 - var4);
+        return var3;
     }
 
-    public void aH() {
+    /**
+     * This function applies the benefits of growing back wool and faster growing up to the acting entity. (This
+     * function is used in the AIEatGrass)
+     */
+    public void eatGrassBonus()
+    {
         // CraftBukkit start
         SheepRegrowWoolEvent event = new SheepRegrowWoolEvent((org.bukkit.entity.Sheep) this.getBukkitEntity());
-        this.world.getServer().getPluginManager().callEvent(event);
+        this.worldObj.getServer().getPluginManager().callEvent(event);
 
-        if (!event.isCancelled()) {
+        if (!event.isCancelled())
+        {
             this.setSheared(false);
         }
+
         // CraftBukkit end
 
-        if (this.isBaby()) {
-            int i = this.getAge() + 1200;
+        if (this.isChild())
+        {
+            int var1 = this.getGrowingAge() + 1200;
 
-            if (i > 0) {
-                i = 0;
+            if (var1 > 0)
+            {
+                var1 = 0;
             }
 
-            this.setAge(i);
+            this.setGrowingAge(var1);
         }
     }
 
-    public void bG() {
-        this.setColor(a(this.world.random));
+    /**
+     * Initialize this creature.
+     */
+    public void initCreature()
+    {
+        this.setFleeceColor(getRandomFleeceColor(this.worldObj.rand));
     }
 
-    private int a(EntityAnimal entityanimal, EntityAnimal entityanimal1) {
-        int i = this.b(entityanimal);
-        int j = this.b(entityanimal1);
+    private int func_90014_a(EntityAnimal par1EntityAnimal, EntityAnimal par2EntityAnimal)
+    {
+        int var3 = this.func_90013_b(par1EntityAnimal);
+        int var4 = this.func_90013_b(par2EntityAnimal);
+        this.field_90016_e.getStackInSlot(0).setItemDamage(var3);
+        this.field_90016_e.getStackInSlot(1).setItemDamage(var4);
+        ItemStack var5 = CraftingManager.getInstance().findMatchingRecipe(this.field_90016_e, ((EntitySheep)par1EntityAnimal).worldObj);
+        int var6;
 
-        this.e.getItem(0).setData(i);
-        this.e.getItem(1).setData(j);
-        ItemStack itemstack = CraftingManager.getInstance().craft(this.e, ((EntitySheep) entityanimal).world);
-        int k;
-
-        if (itemstack != null && itemstack.getItem().id == Item.INK_SACK.id) {
-            k = itemstack.getData();
-        } else {
-            k = this.world.random.nextBoolean() ? i : j;
+        if (var5 != null && var5.getItem().itemID == Item.dyePowder.itemID)
+        {
+            var6 = var5.getItemDamage();
+        }
+        else
+        {
+            var6 = this.worldObj.rand.nextBoolean() ? var3 : var4;
         }
 
-        return k;
+        return var6;
     }
 
-    private int b(EntityAnimal entityanimal) {
-        return 15 - ((EntitySheep) entityanimal).getColor();
+    private int func_90013_b(EntityAnimal par1EntityAnimal)
+    {
+        return 15 - ((EntitySheep)par1EntityAnimal).getFleeceColor();
     }
 
-    public EntityAgeable createChild(EntityAgeable entityageable) {
-        return this.b(entityageable);
+    public EntityAgeable createChild(EntityAgeable par1EntityAgeable)
+    {
+        return this.func_90015_b(par1EntityAgeable);
     }
 }

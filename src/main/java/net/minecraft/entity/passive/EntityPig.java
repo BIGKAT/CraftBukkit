@@ -1,164 +1,279 @@
-package net.minecraft.server;
+package net.minecraft.entity.passive;
 
 import org.bukkit.craftbukkit.event.CraftEventFactory; // CraftBukkit
+import net.minecraft.entity.EntityAgeable;
+import net.minecraft.entity.ai.EntityAIControlledByPlayer;
+import net.minecraft.entity.ai.EntityAIFollowParent;
+import net.minecraft.entity.ai.EntityAILookIdle;
+import net.minecraft.entity.ai.EntityAIMate;
+import net.minecraft.entity.ai.EntityAIPanic;
+import net.minecraft.entity.ai.EntityAISwimming;
+import net.minecraft.entity.ai.EntityAITempt;
+import net.minecraft.entity.ai.EntityAIWander;
+import net.minecraft.entity.ai.EntityAIWatchClosest;
+import net.minecraft.entity.effect.EntityLightningBolt;
+import net.minecraft.entity.monster.EntityPigZombie;
+import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.item.Item;
+import net.minecraft.item.ItemStack;
+import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.stats.AchievementList;
+import net.minecraft.stats.StatBase;
+import net.minecraft.world.World;
 
-public class EntityPig extends EntityAnimal {
+public class EntityPig extends EntityAnimal
+{
+    /** AI task for player control. */
+    private final EntityAIControlledByPlayer aiControlledByPlayer;
 
-    private final PathfinderGoalPassengerCarrotStick d;
-
-    public EntityPig(World world) {
-        super(world);
+    public EntityPig(World par1World)
+    {
+        super(par1World);
         this.texture = "/mob/pig.png";
-        this.a(0.9F, 0.9F);
-        this.getNavigation().a(true);
-        float f = 0.25F;
-
-        this.goalSelector.a(0, new PathfinderGoalFloat(this));
-        this.goalSelector.a(1, new PathfinderGoalPanic(this, 0.38F));
-        this.goalSelector.a(2, this.d = new PathfinderGoalPassengerCarrotStick(this, 0.34F));
-        this.goalSelector.a(3, new PathfinderGoalBreed(this, f));
-        this.goalSelector.a(4, new PathfinderGoalTempt(this, 0.3F, Item.CARROT_STICK.id, false));
-        this.goalSelector.a(4, new PathfinderGoalTempt(this, 0.3F, Item.CARROT.id, false));
-        this.goalSelector.a(5, new PathfinderGoalFollowParent(this, 0.28F));
-        this.goalSelector.a(6, new PathfinderGoalRandomStroll(this, f));
-        this.goalSelector.a(7, new PathfinderGoalLookAtPlayer(this, EntityHuman.class, 6.0F));
-        this.goalSelector.a(8, new PathfinderGoalRandomLookaround(this));
+        this.setSize(0.9F, 0.9F);
+        this.getNavigator().setAvoidsWater(true);
+        float var2 = 0.25F;
+        this.tasks.addTask(0, new EntityAISwimming(this));
+        this.tasks.addTask(1, new EntityAIPanic(this, 0.38F));
+        this.tasks.addTask(2, this.aiControlledByPlayer = new EntityAIControlledByPlayer(this, 0.34F));
+        this.tasks.addTask(3, new EntityAIMate(this, var2));
+        this.tasks.addTask(4, new EntityAITempt(this, 0.3F, Item.carrotOnAStick.itemID, false));
+        this.tasks.addTask(4, new EntityAITempt(this, 0.3F, Item.carrot.itemID, false));
+        this.tasks.addTask(5, new EntityAIFollowParent(this, 0.28F));
+        this.tasks.addTask(6, new EntityAIWander(this, var2));
+        this.tasks.addTask(7, new EntityAIWatchClosest(this, EntityPlayer.class, 6.0F));
+        this.tasks.addTask(8, new EntityAILookIdle(this));
     }
 
-    public boolean be() {
+    /**
+     * Returns true if the newer Entity AI code should be run
+     */
+    public boolean isAIEnabled()
+    {
         return true;
     }
 
-    public int getMaxHealth() {
+    public int getMaxHealth()
+    {
         return 10;
     }
 
-    protected void bl() {
-        super.bl();
+    protected void updateAITasks()
+    {
+        super.updateAITasks();
     }
 
-    public boolean bI() {
-        ItemStack itemstack = ((EntityHuman) this.passenger).bD();
-
-        return itemstack != null && itemstack.id == Item.CARROT_STICK.id;
+    /**
+     * returns true if all the conditions for steering the entity are met. For pigs, this is true if it is being ridden
+     * by a player and the player is holding a carrot-on-a-stick
+     */
+    public boolean canBeSteered()
+    {
+        ItemStack var1 = ((EntityPlayer)this.riddenByEntity).getHeldItem();
+        return var1 != null && var1.itemID == Item.carrotOnAStick.itemID;
     }
 
-    protected void a() {
-        super.a();
-        this.datawatcher.a(16, Byte.valueOf((byte) 0));
+    protected void entityInit()
+    {
+        super.entityInit();
+        this.dataWatcher.addObject(16, Byte.valueOf((byte)0));
     }
 
-    public void b(NBTTagCompound nbttagcompound) {
-        super.b(nbttagcompound);
-        nbttagcompound.setBoolean("Saddle", this.hasSaddle());
+    /**
+     * (abstract) Protected helper method to write subclass entity data to NBT.
+     */
+    public void writeEntityToNBT(NBTTagCompound par1NBTTagCompound)
+    {
+        super.writeEntityToNBT(par1NBTTagCompound);
+        par1NBTTagCompound.setBoolean("Saddle", this.getSaddled());
     }
 
-    public void a(NBTTagCompound nbttagcompound) {
-        super.a(nbttagcompound);
-        this.setSaddle(nbttagcompound.getBoolean("Saddle"));
+    /**
+     * (abstract) Protected helper method to read subclass entity data from NBT.
+     */
+    public void readEntityFromNBT(NBTTagCompound par1NBTTagCompound)
+    {
+        super.readEntityFromNBT(par1NBTTagCompound);
+        this.setSaddled(par1NBTTagCompound.getBoolean("Saddle"));
     }
 
-    protected String aY() {
+    /**
+     * Returns the sound this mob makes while it's alive.
+     */
+    protected String getLivingSound()
+    {
         return "mob.pig.say";
     }
 
-    protected String aZ() {
+    /**
+     * Returns the sound this mob makes when it is hurt.
+     */
+    protected String getHurtSound()
+    {
         return "mob.pig.say";
     }
 
-    protected String ba() {
+    /**
+     * Returns the sound this mob makes on death.
+     */
+    protected String getDeathSound()
+    {
         return "mob.pig.death";
     }
 
-    protected void a(int i, int j, int k, int l) {
-        this.makeSound("mob.pig.step", 0.15F, 1.0F);
+    /**
+     * Plays step sound at given x, y, z for the entity
+     */
+    protected void playStepSound(int par1, int par2, int par3, int par4)
+    {
+        this.playSound("mob.pig.step", 0.15F, 1.0F);
     }
 
-    public boolean a(EntityHuman entityhuman) {
-        if (super.a(entityhuman)) {
+    /**
+     * Called when a player interacts with a mob. e.g. gets milk from a cow, gets into the saddle on a pig.
+     */
+    public boolean interact(EntityPlayer par1EntityPlayer)
+    {
+        if (super.interact(par1EntityPlayer))
+        {
             return true;
-        } else if (this.hasSaddle() && !this.world.isStatic && (this.passenger == null || this.passenger == entityhuman)) {
-            entityhuman.mount(this);
+        }
+        else if (this.getSaddled() && !this.worldObj.isRemote && (this.riddenByEntity == null || this.riddenByEntity == par1EntityPlayer))
+        {
+            par1EntityPlayer.mountEntity(this);
             return true;
-        } else {
+        }
+        else
+        {
             return false;
         }
     }
 
-    protected int getLootId() {
-        return this.isBurning() ? Item.GRILLED_PORK.id : Item.PORK.id;
+    /**
+     * Returns the item ID for the item the mob drops on death.
+     */
+    protected int getDropItemId()
+    {
+        return this.isBurning() ? Item.porkCooked.itemID : Item.porkRaw.itemID;
     }
 
-    protected void dropDeathLoot(boolean flag, int i) {
+    /**
+     * Drop 0-2 items of this living's type. @param par1 - Whether this entity has recently been hit by a player. @param
+     * par2 - Level of Looting used to kill this mob.
+     */
+    protected void dropFewItems(boolean par1, int par2)
+    {
         // CraftBukkit start
         java.util.List<org.bukkit.inventory.ItemStack> loot = new java.util.ArrayList<org.bukkit.inventory.ItemStack>();
-        int j = this.random.nextInt(3) + 1 + this.random.nextInt(1 + i);
+        int j = this.rand.nextInt(3) + 1 + this.rand.nextInt(1 + par2);
 
-        if (j > 0) {
-            if (this.isBurning()) {
-                loot.add(new org.bukkit.inventory.ItemStack(Item.GRILLED_PORK.id, j));
-            } else {
-                loot.add(new org.bukkit.inventory.ItemStack(Item.PORK.id, j));
+        if (j > 0)
+        {
+            if (this.isBurning())
+            {
+                loot.add(new org.bukkit.inventory.ItemStack(Item.porkCooked.itemID, j));
+            }
+            else
+            {
+                loot.add(new org.bukkit.inventory.ItemStack(Item.porkRaw.itemID, j));
             }
         }
 
-        if (this.hasSaddle()) {
-            loot.add(new org.bukkit.inventory.ItemStack(Item.SADDLE.id, 1));
+        if (this.getSaddled())
+        {
+            loot.add(new org.bukkit.inventory.ItemStack(Item.saddle.itemID, 1));
         }
 
         CraftEventFactory.callEntityDeathEvent(this, loot);
         // CraftBukkit end
     }
 
-    public boolean hasSaddle() {
-        return (this.datawatcher.getByte(16) & 1) != 0;
+    /**
+     * Returns true if the pig is saddled.
+     */
+    public boolean getSaddled()
+    {
+        return (this.dataWatcher.getWatchableObjectByte(16) & 1) != 0;
     }
 
-    public void setSaddle(boolean flag) {
-        if (flag) {
-            this.datawatcher.watch(16, Byte.valueOf((byte) 1));
-        } else {
-            this.datawatcher.watch(16, Byte.valueOf((byte) 0));
+    /**
+     * Set or remove the saddle of the pig.
+     */
+    public void setSaddled(boolean par1)
+    {
+        if (par1)
+        {
+            this.dataWatcher.updateObject(16, Byte.valueOf((byte)1));
+        }
+        else
+        {
+            this.dataWatcher.updateObject(16, Byte.valueOf((byte)0));
         }
     }
 
-    public void a(EntityLightning entitylightning) {
-        if (!this.world.isStatic) {
-            EntityPigZombie entitypigzombie = new EntityPigZombie(this.world);
+    /**
+     * Called when a lightning bolt hits the entity.
+     */
+    public void onStruckByLightning(EntityLightningBolt par1EntityLightningBolt)
+    {
+        if (!this.worldObj.isRemote)
+        {
+            EntityPigZombie var2 = new EntityPigZombie(this.worldObj);
 
             // CraftBukkit start
-            if (CraftEventFactory.callPigZapEvent(this, entitylightning, entitypigzombie).isCancelled()) {
+            if (CraftEventFactory.callPigZapEvent(this, par1EntityLightningBolt, var2).isCancelled())
+            {
                 return;
             }
+
             // CraftBukkit end
-
-            entitypigzombie.setPositionRotation(this.locX, this.locY, this.locZ, this.yaw, this.pitch);
+            var2.setLocationAndAngles(this.posX, this.posY, this.posZ, this.rotationYaw, this.rotationPitch);
             // CraftBukkit - added a reason for spawning this creature
-            this.world.addEntity(entitypigzombie, org.bukkit.event.entity.CreatureSpawnEvent.SpawnReason.LIGHTNING);
-            this.die();
+            this.worldObj.addEntity(var2, org.bukkit.event.entity.CreatureSpawnEvent.SpawnReason.LIGHTNING);
+            this.setDead();
         }
     }
 
-    protected void a(float f) {
-        super.a(f);
-        if (f > 5.0F && this.passenger instanceof EntityHuman) {
-            ((EntityHuman) this.passenger).a((Statistic) AchievementList.u);
+    /**
+     * Called when the mob is falling. Calculates and applies fall damage.
+     */
+    protected void fall(float par1)
+    {
+        super.fall(par1);
+
+        if (par1 > 5.0F && this.riddenByEntity instanceof EntityPlayer)
+        {
+            ((EntityPlayer) this.riddenByEntity).triggerAchievement((StatBase) AchievementList.flyPig);
         }
     }
 
-    public EntityPig b(EntityAgeable entityageable) {
-        return new EntityPig(this.world);
+    /**
+     * This function is used when two same-species animals in 'love mode' breed to generate the new baby animal.
+     */
+    public EntityPig spawnBabyAnimal(EntityAgeable par1EntityAgeable)
+    {
+        return new EntityPig(this.worldObj);
     }
 
-    public boolean c(ItemStack itemstack) {
-        return itemstack != null && itemstack.id == Item.CARROT.id;
+    /**
+     * Checks if the parameter is an item which this animal can be fed to breed it (wheat, carrots or seeds depending on
+     * the animal type)
+     */
+    public boolean isBreedingItem(ItemStack par1ItemStack)
+    {
+        return par1ItemStack != null && par1ItemStack.itemID == Item.carrot.itemID;
     }
 
-    public PathfinderGoalPassengerCarrotStick n() {
-        return this.d;
+    /**
+     * Return the AI task for player control.
+     */
+    public EntityAIControlledByPlayer getAIControlledByPlayer()
+    {
+        return this.aiControlledByPlayer;
     }
 
-    public EntityAgeable createChild(EntityAgeable entityageable) {
-        return this.b(entityageable);
+    public EntityAgeable createChild(EntityAgeable par1EntityAgeable)
+    {
+        return this.spawnBabyAnimal(par1EntityAgeable);
     }
 }

@@ -1,61 +1,97 @@
-package net.minecraft.server;
+package net.minecraft.entity.passive;
 
 import org.bukkit.craftbukkit.TrigMath; // CraftBukkit
+import net.minecraft.block.material.Material;
+import net.minecraft.entity.Entity;
+import net.minecraft.util.MathHelper;
+import net.minecraft.world.World;
 
-public class EntitySquid extends EntityWaterAnimal {
+public class EntitySquid extends EntityWaterMob
+{
+    public float field_70861_d = 0.0F;
+    public float field_70862_e = 0.0F;
+    public float field_70859_f = 0.0F;
+    public float field_70860_g = 0.0F;
+    public float field_70867_h = 0.0F;
+    public float field_70868_i = 0.0F;
 
-    public float d = 0.0F;
-    public float e = 0.0F;
-    public float f = 0.0F;
-    public float g = 0.0F;
-    public float h = 0.0F;
-    public float i = 0.0F;
-    public float j = 0.0F;
-    public float bJ = 0.0F;
-    private float bK = 0.0F;
-    private float bL = 0.0F;
-    private float bM = 0.0F;
-    private float bN = 0.0F;
-    private float bO = 0.0F;
-    private float bP = 0.0F;
+    /** angle of the tentacles in radians */
+    public float tentacleAngle = 0.0F;
 
-    public EntitySquid(World world) {
-        super(world);
+    /** the last calculated angle of the tentacles in radians */
+    public float lastTentacleAngle = 0.0F;
+    private float randomMotionSpeed = 0.0F;
+    private float field_70864_bA = 0.0F;
+    private float field_70871_bB = 0.0F;
+    private float randomMotionVecX = 0.0F;
+    private float randomMotionVecY = 0.0F;
+    private float randomMotionVecZ = 0.0F;
+
+    public EntitySquid(World par1World)
+    {
+        super(par1World);
         this.texture = "/mob/squid.png";
-        this.a(0.95F, 0.95F);
-        this.bL = 1.0F / (this.random.nextFloat() + 1.0F) * 0.2F;
+        this.setSize(0.95F, 0.95F);
+        this.field_70864_bA = 1.0F / (this.rand.nextFloat() + 1.0F) * 0.2F;
     }
 
-    public int getMaxHealth() {
+    public int getMaxHealth()
+    {
         return 10;
     }
 
-    protected String aY() {
+    /**
+     * Returns the sound this mob makes while it's alive.
+     */
+    protected String getLivingSound()
+    {
         return null;
     }
 
-    protected String aZ() {
+    /**
+     * Returns the sound this mob makes when it is hurt.
+     */
+    protected String getHurtSound()
+    {
         return null;
     }
 
-    protected String ba() {
+    /**
+     * Returns the sound this mob makes on death.
+     */
+    protected String getDeathSound()
+    {
         return null;
     }
 
-    protected float aX() {
+    /**
+     * Returns the volume for the sounds this mob makes.
+     */
+    protected float getSoundVolume()
+    {
         return 0.4F;
     }
 
-    protected int getLootId() {
+    /**
+     * Returns the item ID for the item the mob drops on death.
+     */
+    protected int getDropItemId()
+    {
         return 0;
     }
 
-    protected void dropDeathLoot(boolean flag, int i) {
+    /**
+     * Drop 0-2 items of this living's type. @param par1 - Whether this entity has recently been hit by a player. @param
+     * par2 - Level of Looting used to kill this mob.
+     */
+    protected void dropFewItems(boolean par1, int par2)
+    {
         // CraftBukkit start - whole method
         java.util.List<org.bukkit.inventory.ItemStack> loot = new java.util.ArrayList<org.bukkit.inventory.ItemStack>();
+        int count = this.rand.nextInt(3 + par2) + 1;
 
-        int count = this.random.nextInt(3 + i) + 1;
-        if (count > 0) {
+        if (count > 0)
+        {
             loot.add(new org.bukkit.inventory.ItemStack(org.bukkit.Material.INK_SACK, count));
         }
 
@@ -63,88 +99,127 @@ public class EntitySquid extends EntityWaterAnimal {
         // CraftBukkit end
     }
 
-    public boolean H() {
-        return this.world.a(this.boundingBox.grow(0.0D, -0.6000000238418579D, 0.0D), Material.WATER, (Entity) this);
+    /**
+     * Checks if this entity is inside water (if inWater field is true as a result of handleWaterMovement() returning
+     * true)
+     */
+    public boolean isInWater()
+    {
+        return this.worldObj.handleMaterialAcceleration(this.boundingBox.expand(0.0D, -0.6000000238418579D, 0.0D), Material.water, (Entity) this);
     }
 
-    public void c() {
-        super.c();
-        this.e = this.d;
-        this.g = this.f;
-        this.i = this.h;
-        this.bJ = this.j;
-        this.h += this.bL;
-        if (this.h > 6.2831855F) {
-            this.h -= 6.2831855F;
-            if (this.random.nextInt(10) == 0) {
-                this.bL = 1.0F / (this.random.nextFloat() + 1.0F) * 0.2F;
+    /**
+     * Called frequently so the entity can update its state every tick as required. For example, zombies and skeletons
+     * use this to react to sunlight and start to burn.
+     */
+    public void onLivingUpdate()
+    {
+        super.onLivingUpdate();
+        this.field_70862_e = this.field_70861_d;
+        this.field_70860_g = this.field_70859_f;
+        this.field_70868_i = this.field_70867_h;
+        this.lastTentacleAngle = this.tentacleAngle;
+        this.field_70867_h += this.field_70864_bA;
+
+        if (this.field_70867_h > 6.2831855F)
+        {
+            this.field_70867_h -= 6.2831855F;
+
+            if (this.rand.nextInt(10) == 0)
+            {
+                this.field_70864_bA = 1.0F / (this.rand.nextFloat() + 1.0F) * 0.2F;
             }
         }
 
-        if (this.H()) {
-            float f;
+        if (this.isInWater())
+        {
+            float var1;
 
-            if (this.h < 3.1415927F) {
-                f = this.h / 3.1415927F;
-                this.j = MathHelper.sin(f * f * 3.1415927F) * 3.1415927F * 0.25F;
-                if ((double) f > 0.75D) {
-                    this.bK = 1.0F;
-                    this.bM = 1.0F;
-                } else {
-                    this.bM *= 0.8F;
+            if (this.field_70867_h < 3.1415927F)
+            {
+                var1 = this.field_70867_h / 3.1415927F;
+                this.tentacleAngle = MathHelper.sin(var1 * var1 * 3.1415927F) * 3.1415927F * 0.25F;
+
+                if ((double)var1 > 0.75D)
+                {
+                    this.randomMotionSpeed = 1.0F;
+                    this.field_70871_bB = 1.0F;
                 }
-            } else {
-                this.j = 0.0F;
-                this.bK *= 0.9F;
-                this.bM *= 0.99F;
+                else
+                {
+                    this.field_70871_bB *= 0.8F;
+                }
+            }
+            else
+            {
+                this.tentacleAngle = 0.0F;
+                this.randomMotionSpeed *= 0.9F;
+                this.field_70871_bB *= 0.99F;
             }
 
-            if (!this.world.isStatic) {
-                this.motX = (double) (this.bN * this.bK);
-                this.motY = (double) (this.bO * this.bK);
-                this.motZ = (double) (this.bP * this.bK);
+            if (!this.worldObj.isRemote)
+            {
+                this.motionX = (double)(this.randomMotionVecX * this.randomMotionSpeed);
+                this.motionY = (double)(this.randomMotionVecY * this.randomMotionSpeed);
+                this.motionZ = (double)(this.randomMotionVecZ * this.randomMotionSpeed);
             }
 
-            f = MathHelper.sqrt(this.motX * this.motX + this.motZ * this.motZ);
+            var1 = MathHelper.sqrt_double(this.motionX * this.motionX + this.motionZ * this.motionZ);
             // CraftBukkit - Math -> TrigMath
-            this.ax += (-((float) TrigMath.atan2(this.motX, this.motZ)) * 180.0F / 3.1415927F - this.ax) * 0.1F;
-            this.yaw = this.ax;
-            this.f += 3.1415927F * this.bM * 1.5F;
+            this.renderYawOffset += (-((float) TrigMath.atan2(this.motionX, this.motionZ)) * 180.0F / 3.1415927F - this.renderYawOffset) * 0.1F;
+            this.rotationYaw = this.renderYawOffset;
+            this.field_70859_f += 3.1415927F * this.field_70871_bB * 1.5F;
             // CraftBukkit - Math -> TrigMath
-            this.d += (-((float) TrigMath.atan2((double) f, this.motY)) * 180.0F / 3.1415927F - this.d) * 0.1F;
-        } else {
-            this.j = MathHelper.abs(MathHelper.sin(this.h)) * 3.1415927F * 0.25F;
-            if (!this.world.isStatic) {
-                this.motX = 0.0D;
-                this.motY -= 0.08D;
-                this.motY *= 0.9800000190734863D;
-                this.motZ = 0.0D;
+            this.field_70861_d += (-((float) TrigMath.atan2((double) var1, this.motionY)) * 180.0F / 3.1415927F - this.field_70861_d) * 0.1F;
+        }
+        else
+        {
+            this.tentacleAngle = MathHelper.abs(MathHelper.sin(this.field_70867_h)) * 3.1415927F * 0.25F;
+
+            if (!this.worldObj.isRemote)
+            {
+                this.motionX = 0.0D;
+                this.motionY -= 0.08D;
+                this.motionY *= 0.9800000190734863D;
+                this.motionZ = 0.0D;
             }
 
-            this.d = (float) ((double) this.d + (double) (-90.0F - this.d) * 0.02D);
+            this.field_70861_d = (float)((double)this.field_70861_d + (double)(-90.0F - this.field_70861_d) * 0.02D);
         }
     }
 
-    public void e(float f, float f1) {
-        this.move(this.motX, this.motY, this.motZ);
+    /**
+     * Moves the entity based on the specified heading.  Args: strafe, forward
+     */
+    public void moveEntityWithHeading(float par1, float par2)
+    {
+        this.moveEntity(this.motionX, this.motionY, this.motionZ);
     }
 
-    protected void bn() {
-        ++this.bB;
-        if (this.bB > 100) {
-            this.bN = this.bO = this.bP = 0.0F;
-        } else if (this.random.nextInt(50) == 0 || !this.ad || this.bN == 0.0F && this.bO == 0.0F && this.bP == 0.0F) {
-            float f = this.random.nextFloat() * 3.1415927F * 2.0F;
+    protected void updateEntityActionState()
+    {
+        ++this.entityAge;
 
-            this.bN = MathHelper.cos(f) * 0.2F;
-            this.bO = -0.1F + this.random.nextFloat() * 0.2F;
-            this.bP = MathHelper.sin(f) * 0.2F;
+        if (this.entityAge > 100)
+        {
+            this.randomMotionVecX = this.randomMotionVecY = this.randomMotionVecZ = 0.0F;
+        }
+        else if (this.rand.nextInt(50) == 0 || !this.inWater || this.randomMotionVecX == 0.0F && this.randomMotionVecY == 0.0F && this.randomMotionVecZ == 0.0F)
+        {
+            float var1 = this.rand.nextFloat() * 3.1415927F * 2.0F;
+            this.randomMotionVecX = MathHelper.cos(var1) * 0.2F;
+            this.randomMotionVecY = -0.1F + this.rand.nextFloat() * 0.2F;
+            this.randomMotionVecZ = MathHelper.sin(var1) * 0.2F;
         }
 
-        this.bk();
+        this.despawnEntity();
     }
 
-    public boolean canSpawn() {
-        return this.locY > 45.0D && this.locY < 63.0D && super.canSpawn();
+    /**
+     * Checks if the entity's current position is a valid location to spawn this entity.
+     */
+    public boolean getCanSpawnHere()
+    {
+        return this.posY > 45.0D && this.posY < 63.0D && super.getCanSpawnHere();
     }
 }

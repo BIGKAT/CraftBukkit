@@ -1,78 +1,109 @@
-package net.minecraft.server;
+package net.minecraft.item.crafting;
 
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import net.minecraft.inventory.InventoryCrafting;
+import net.minecraft.item.ItemStack;
+import net.minecraft.world.World;
 
 // CraftBukkit start
 import org.bukkit.craftbukkit.inventory.CraftItemStack;
 import org.bukkit.craftbukkit.inventory.CraftShapelessRecipe;
 // CraftBukkit end
 
-public class ShapelessRecipes implements IRecipe {
+public class ShapelessRecipes implements IRecipe
+{
+    /** Is the ItemStack that you get when craft the recipe. */
+    private final ItemStack recipeOutput;
 
-    private final ItemStack result;
-    private final List ingredients;
+    /** Is a List of ItemStack that composes the recipe. */
+    private final List recipeItems;
 
-    public ShapelessRecipes(ItemStack itemstack, List list) {
-        this.result = itemstack;
-        this.ingredients = list;
+    public ShapelessRecipes(ItemStack par1ItemStack, List par2List)
+    {
+        this.recipeOutput = par1ItemStack;
+        this.recipeItems = par2List;
     }
 
     // CraftBukkit start
     @SuppressWarnings("unchecked")
-    public org.bukkit.inventory.ShapelessRecipe toBukkitRecipe() {
-        CraftItemStack result = CraftItemStack.asCraftMirror(this.result);
+    public org.bukkit.inventory.ShapelessRecipe toBukkitRecipe()
+    {
+        CraftItemStack result = CraftItemStack.asCraftMirror(this.recipeOutput);
         CraftShapelessRecipe recipe = new CraftShapelessRecipe(result, this);
-        for (ItemStack stack : (List<ItemStack>) this.ingredients) {
-            if (stack != null) {
-                recipe.addIngredient(org.bukkit.Material.getMaterial(stack.id), stack.getData());
+
+        for (ItemStack stack : (List<ItemStack>) this.recipeItems)
+        {
+            if (stack != null)
+            {
+                recipe.addIngredient(org.bukkit.Material.getMaterial(stack.itemID), stack.getItemDamage());
             }
         }
+
         return recipe;
     }
     // CraftBukkit end
 
-    public ItemStack b() {
-        return this.result;
+    public ItemStack getRecipeOutput()
+    {
+        return this.recipeOutput;
     }
 
-    public boolean a(InventoryCrafting inventorycrafting, World world) {
-        ArrayList arraylist = new ArrayList(this.ingredients);
+    /**
+     * Used to check if a recipe matches current crafting inventory
+     */
+    public boolean matches(InventoryCrafting par1InventoryCrafting, World par2World)
+    {
+        ArrayList var3 = new ArrayList(this.recipeItems);
 
-        for (int i = 0; i < 3; ++i) {
-            for (int j = 0; j < 3; ++j) {
-                ItemStack itemstack = inventorycrafting.b(j, i);
+        for (int var4 = 0; var4 < 3; ++var4)
+        {
+            for (int var5 = 0; var5 < 3; ++var5)
+            {
+                ItemStack var6 = par1InventoryCrafting.getStackInRowAndColumn(var5, var4);
 
-                if (itemstack != null) {
-                    boolean flag = false;
-                    Iterator iterator = arraylist.iterator();
+                if (var6 != null)
+                {
+                    boolean var7 = false;
+                    Iterator var8 = var3.iterator();
 
-                    while (iterator.hasNext()) {
-                        ItemStack itemstack1 = (ItemStack) iterator.next();
+                    while (var8.hasNext())
+                    {
+                        ItemStack var9 = (ItemStack)var8.next();
 
-                        if (itemstack.id == itemstack1.id && (itemstack1.getData() == -1 || itemstack.getData() == itemstack1.getData())) {
-                            flag = true;
-                            arraylist.remove(itemstack1);
+                        if (var6.itemID == var9.itemID && (var9.getItemDamage() == -1 || var6.getItemDamage() == var9.getItemDamage()))
+                        {
+                            var7 = true;
+                            var3.remove(var9);
                             break;
                         }
                     }
 
-                    if (!flag) {
+                    if (!var7)
+                    {
                         return false;
                     }
                 }
             }
         }
 
-        return arraylist.isEmpty();
+        return var3.isEmpty();
     }
 
-    public ItemStack a(InventoryCrafting inventorycrafting) {
-        return this.result.cloneItemStack();
+    /**
+     * Returns an Item that is the result of this recipe
+     */
+    public ItemStack getCraftingResult(InventoryCrafting par1InventoryCrafting)
+    {
+        return this.recipeOutput.copy();
     }
 
-    public int a() {
-        return this.ingredients.size();
+    /**
+     * Returns the size of the recipe area
+     */
+    public int getRecipeSize()
+    {
+        return this.recipeItems.size();
     }
 }

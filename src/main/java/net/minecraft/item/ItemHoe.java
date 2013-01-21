@@ -1,56 +1,75 @@
-package net.minecraft.server;
+package net.minecraft.item;
 
 import org.bukkit.craftbukkit.block.CraftBlockState; // CraftBukkit
+import net.minecraft.block.Block;
+import net.minecraft.creativetab.CreativeTabs;
+import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.world.World;
 
-public class ItemHoe extends Item {
+public class ItemHoe extends Item
+{
+    protected EnumToolMaterial theToolMaterial;
 
-    protected EnumToolMaterial a;
-
-    public ItemHoe(int i, EnumToolMaterial enumtoolmaterial) {
-        super(i);
-        this.a = enumtoolmaterial;
+    public ItemHoe(int par1, EnumToolMaterial par2EnumToolMaterial)
+    {
+        super(par1);
+        this.theToolMaterial = par2EnumToolMaterial;
         this.maxStackSize = 1;
-        this.setMaxDurability(enumtoolmaterial.a());
-        this.a(CreativeModeTab.i);
+        this.setMaxDamage(par2EnumToolMaterial.getMaxUses());
+        this.setCreativeTab(CreativeTabs.tabTools);
     }
 
-    public boolean interactWith(ItemStack itemstack, EntityHuman entityhuman, World world, int i, int j, int k, int l, float f, float f1, float f2) {
-        if (!entityhuman.a(i, j, k, l, itemstack)) {
+    /**
+     * Callback for item usage. If the item does something special on right clicking, he will have one of those. Return
+     * True if something happen and false if it don't. This is for ITEMS, not BLOCKS
+     */
+    public boolean onItemUse(ItemStack par1ItemStack, EntityPlayer par2EntityPlayer, World par3World, int par4, int par5, int par6, int par7, float par8, float par9, float par10)
+    {
+        if (!par2EntityPlayer.canPlayerEdit(par4, par5, par6, par7, par1ItemStack))
+        {
             return false;
-        } else {
-            int i1 = world.getTypeId(i, j, k);
-            int j1 = world.getTypeId(i, j + 1, k);
+        }
+        else
+        {
+            int var11 = par3World.getBlockId(par4, par5, par6);
+            int var12 = par3World.getBlockId(par4, par5 + 1, par6);
 
-            if ((l == 0 || j1 != 0 || i1 != Block.GRASS.id) && i1 != Block.DIRT.id) {
+            if ((par7 == 0 || var12 != 0 || var11 != Block.grass.blockID) && var11 != Block.dirt.blockID)
+            {
                 return false;
-            } else {
-                Block block = Block.SOIL;
+            }
+            else
+            {
+                Block var13 = Block.tilledField;
+                par3World.playSoundEffect((double)((float)par4 + 0.5F), (double)((float)par5 + 0.5F), (double)((float)par6 + 0.5F), var13.stepSound.getStepSound(), (var13.stepSound.getVolume() + 1.0F) / 2.0F, var13.stepSound.getPitch() * 0.8F);
 
-                world.makeSound((double) ((float) i + 0.5F), (double) ((float) j + 0.5F), (double) ((float) k + 0.5F), block.stepSound.getStepSound(), (block.stepSound.getVolume1() + 1.0F) / 2.0F, block.stepSound.getVolume2() * 0.8F);
-                if (world.isStatic) {
+                if (par3World.isRemote)
+                {
                     return true;
-                } else {
-                    CraftBlockState blockState = CraftBlockState.getBlockState(world, i, j, k); // CraftBukkit
-
-                    world.setTypeId(i, j, k, block.id);
-
+                }
+                else
+                {
+                    CraftBlockState blockState = CraftBlockState.getBlockState(par3World, par4, par5, par6); // CraftBukkit
+                    par3World.setBlockWithNotify(par4, par5, par6, var13.blockID);
                     // CraftBukkit start - Hoes - blockface -1 for 'SELF'
-                    org.bukkit.event.block.BlockPlaceEvent event = org.bukkit.craftbukkit.event.CraftEventFactory.callBlockPlaceEvent(world, entityhuman, blockState, i, j, k);
+                    org.bukkit.event.block.BlockPlaceEvent event = org.bukkit.craftbukkit.event.CraftEventFactory.callBlockPlaceEvent(par3World, par2EntityPlayer, blockState, par4, par5, par6);
 
-                    if (event.isCancelled() || !event.canBuild()) {
+                    if (event.isCancelled() || !event.canBuild())
+                    {
                         event.getBlockPlaced().setTypeId(blockState.getTypeId());
                         return false;
                     }
-                    // CraftBukkit end
 
-                    itemstack.damage(1, entityhuman);
+                    // CraftBukkit end
+                    par1ItemStack.damageItem(1, par2EntityPlayer);
                     return true;
                 }
             }
         }
     }
 
-    public String g() {
-        return this.a.toString();
+    public String func_77842_f()
+    {
+        return this.theToolMaterial.toString();
     }
 }

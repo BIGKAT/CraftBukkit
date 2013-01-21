@@ -1,107 +1,167 @@
-package net.minecraft.server;
+package net.minecraft.util;
 
 import org.bukkit.event.entity.EntityDamageEvent; // CraftBukkit
+import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.entity.player.EntityPlayerMP;
+import net.minecraft.item.ItemFood;
+import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.network.packet.Packet8UpdateHealth;
 
-public class FoodMetaData {
-
+public class FoodStats
+{
     // CraftBukkit start - all made public
     public int foodLevel = 20;
-    public float saturationLevel = 5.0F;
-    public float exhaustionLevel;
-    public int foodTickTimer = 0;
+    public float foodSaturationLevel = 5.0F;
+    public float foodExhaustionLevel;
+    public int foodTimer = 0;
     // CraftBukkit end
-    private int e = 20;
+    private int prevFoodLevel = 20;
 
-    public FoodMetaData() {}
+    public FoodStats() {}
 
-    public void eat(int i, float f) {
-        this.foodLevel = Math.min(i + this.foodLevel, 20);
-        this.saturationLevel = Math.min(this.saturationLevel + (float) i * f * 2.0F, (float) this.foodLevel);
+    /**
+     * Args: int foodLevel, float foodSaturationModifier
+     */
+    public void addStats(int par1, float par2)
+    {
+        this.foodLevel = Math.min(par1 + this.foodLevel, 20);
+        this.foodSaturationLevel = Math.min(this.foodSaturationLevel + (float)par1 * par2 * 2.0F, (float)this.foodLevel);
     }
 
-    public void a(ItemFood itemfood) {
-        this.eat(itemfood.getNutrition(), itemfood.getSaturationModifier());
+    /**
+     * Eat some food.
+     */
+    public void addStats(ItemFood par1ItemFood)
+    {
+        this.addStats(par1ItemFood.getHealAmount(), par1ItemFood.getSaturationModifier());
     }
 
-    public void a(EntityHuman entityhuman) {
-        int i = entityhuman.world.difficulty;
+    /**
+     * Handles the food game logic.
+     */
+    public void onUpdate(EntityPlayer par1EntityPlayer)
+    {
+        int var2 = par1EntityPlayer.worldObj.difficultySetting;
+        this.prevFoodLevel = this.foodLevel;
 
-        this.e = this.foodLevel;
-        if (this.exhaustionLevel > 4.0F) {
-            this.exhaustionLevel -= 4.0F;
-            if (this.saturationLevel > 0.0F) {
-                this.saturationLevel = Math.max(this.saturationLevel - 1.0F, 0.0F);
-            } else if (i > 0) {
+        if (this.foodExhaustionLevel > 4.0F)
+        {
+            this.foodExhaustionLevel -= 4.0F;
+
+            if (this.foodSaturationLevel > 0.0F)
+            {
+                this.foodSaturationLevel = Math.max(this.foodSaturationLevel - 1.0F, 0.0F);
+            }
+            else if (var2 > 0)
+            {
                 // CraftBukkit start
-                org.bukkit.event.entity.FoodLevelChangeEvent event = org.bukkit.craftbukkit.event.CraftEventFactory.callFoodLevelChangeEvent(entityhuman, Math.max(this.foodLevel - 1, 0));
+                org.bukkit.event.entity.FoodLevelChangeEvent event = org.bukkit.craftbukkit.event.CraftEventFactory.callFoodLevelChangeEvent(par1EntityPlayer, Math.max(this.foodLevel - 1, 0));
 
-                if (!event.isCancelled()) {
+                if (!event.isCancelled())
+                {
                     this.foodLevel = event.getFoodLevel();
                 }
 
-                ((EntityPlayer) entityhuman).playerConnection.sendPacket(new Packet8UpdateHealth(entityhuman.getHealth(), this.foodLevel, this.saturationLevel));
+                ((EntityPlayerMP) par1EntityPlayer).playerNetServerHandler.sendPacketToPlayer(new Packet8UpdateHealth(par1EntityPlayer.getHealth(), this.foodLevel, this.foodSaturationLevel));
                 // CraftBukkit end
             }
         }
 
-        if (this.foodLevel >= 18 && entityhuman.cd()) {
-            ++this.foodTickTimer;
-            if (this.foodTickTimer >= 80) {
-                // CraftBukkit - added RegainReason
-                entityhuman.heal(1, org.bukkit.event.entity.EntityRegainHealthEvent.RegainReason.SATIATED);
-                this.foodTickTimer = 0;
-            }
-        } else if (this.foodLevel <= 0) {
-            ++this.foodTickTimer;
-            if (this.foodTickTimer >= 80) {
-                if (entityhuman.getHealth() > 10 || i >= 3 || entityhuman.getHealth() > 1 && i >= 2) {
-                    // CraftBukkit start
-                    EntityDamageEvent event = new EntityDamageEvent(entityhuman.getBukkitEntity(), EntityDamageEvent.DamageCause.STARVATION, 1);
-                    entityhuman.world.getServer().getPluginManager().callEvent(event);
+        if (this.foodLevel >= 18 && par1EntityPlayer.shouldHeal())
+        {
+            ++this.foodTimer;
 
-                    if (!event.isCancelled()) {
+            if (this.foodTimer >= 80)
+            {
+                // CraftBukkit - added RegainReason
+                par1EntityPlayer.heal(1, org.bukkit.event.entity.EntityRegainHealthEvent.RegainReason.SATIATED);
+                this.foodTimer = 0;
+            }
+        }
+        else if (this.foodLevel <= 0)
+        {
+            ++this.foodTimer;
+
+            if (this.foodTimer >= 80)
+            {
+                if (par1EntityPlayer.getHealth() > 10 || var2 >= 3 || par1EntityPlayer.getHealth() > 1 && var2 >= 2)
+                {
+                    // CraftBukkit start
+                    EntityDamageEvent event = new EntityDamageEvent(par1EntityPlayer.getBukkitEntity(), EntityDamageEvent.DamageCause.STARVATION, 1);
+                    par1EntityPlayer.worldObj.getServer().getPluginManager().callEvent(event);
+
+                    if (!event.isCancelled())
+                    {
                         event.getEntity().setLastDamageCause(event);
-                        entityhuman.damageEntity(DamageSource.STARVE, event.getDamage());
+                        par1EntityPlayer.attackEntityFrom(DamageSource.starve, event.getDamage());
                     }
+
                     // CraftBukkit end
                 }
 
-                this.foodTickTimer = 0;
+                this.foodTimer = 0;
             }
-        } else {
-            this.foodTickTimer = 0;
+        }
+        else
+        {
+            this.foodTimer = 0;
         }
     }
 
-    public void a(NBTTagCompound nbttagcompound) {
-        if (nbttagcompound.hasKey("foodLevel")) {
-            this.foodLevel = nbttagcompound.getInt("foodLevel");
-            this.foodTickTimer = nbttagcompound.getInt("foodTickTimer");
-            this.saturationLevel = nbttagcompound.getFloat("foodSaturationLevel");
-            this.exhaustionLevel = nbttagcompound.getFloat("foodExhaustionLevel");
+    /**
+     * Reads food stats from an NBT object.
+     */
+    public void readNBT(NBTTagCompound par1NBTTagCompound)
+    {
+        if (par1NBTTagCompound.hasKey("foodLevel"))
+        {
+            this.foodLevel = par1NBTTagCompound.getInteger("foodLevel");
+            this.foodTimer = par1NBTTagCompound.getInteger("foodTickTimer");
+            this.foodSaturationLevel = par1NBTTagCompound.getFloat("foodSaturationLevel");
+            this.foodExhaustionLevel = par1NBTTagCompound.getFloat("foodExhaustionLevel");
         }
     }
 
-    public void b(NBTTagCompound nbttagcompound) {
-        nbttagcompound.setInt("foodLevel", this.foodLevel);
-        nbttagcompound.setInt("foodTickTimer", this.foodTickTimer);
-        nbttagcompound.setFloat("foodSaturationLevel", this.saturationLevel);
-        nbttagcompound.setFloat("foodExhaustionLevel", this.exhaustionLevel);
+    /**
+     * Writes food stats to an NBT object.
+     */
+    public void writeNBT(NBTTagCompound par1NBTTagCompound)
+    {
+        par1NBTTagCompound.setInteger("foodLevel", this.foodLevel);
+        par1NBTTagCompound.setInteger("foodTickTimer", this.foodTimer);
+        par1NBTTagCompound.setFloat("foodSaturationLevel", this.foodSaturationLevel);
+        par1NBTTagCompound.setFloat("foodExhaustionLevel", this.foodExhaustionLevel);
     }
 
-    public int a() {
+    /**
+     * Get the player's food level.
+     */
+    public int getFoodLevel()
+    {
         return this.foodLevel;
     }
 
-    public boolean c() {
+    /**
+     * If foodLevel is not max.
+     */
+    public boolean needFood()
+    {
         return this.foodLevel < 20;
     }
 
-    public void a(float f) {
-        this.exhaustionLevel = Math.min(this.exhaustionLevel + f, 40.0F);
+    /**
+     * adds input to foodExhaustionLevel to a max of 40
+     */
+    public void addExhaustion(float par1)
+    {
+        this.foodExhaustionLevel = Math.min(this.foodExhaustionLevel + par1, 40.0F);
     }
 
-    public float e() {
-        return this.saturationLevel;
+    /**
+     * Get the player's food saturation level.
+     */
+    public float getSaturationLevel()
+    {
+        return this.foodSaturationLevel;
     }
 }

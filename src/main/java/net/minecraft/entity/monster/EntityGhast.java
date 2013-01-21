@@ -1,185 +1,256 @@
-package net.minecraft.server;
+package net.minecraft.entity.monster;
 
 // CraftBukkit start
 import org.bukkit.craftbukkit.entity.CraftEntity;
 import org.bukkit.craftbukkit.inventory.CraftItemStack;
 import org.bukkit.event.entity.EntityTargetEvent;
+import net.minecraft.entity.Entity;
+import net.minecraft.entity.EntityFlying;
+import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.entity.projectile.EntityLargeFireball;
+import net.minecraft.item.Item;
+import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.stats.AchievementList;
+import net.minecraft.stats.StatBase;
+import net.minecraft.util.AxisAlignedBB;
+import net.minecraft.util.DamageSource;
+import net.minecraft.util.MathHelper;
+import net.minecraft.util.Vec3;
+import net.minecraft.world.World;
 // CraftBukkit end
 
-public class EntityGhast extends EntityFlying implements IMonster {
+public class EntityGhast extends EntityFlying implements IMob
+{
+    public int courseChangeCooldown = 0;
+    public double waypointX;
+    public double waypointY;
+    public double waypointZ;
+    private Entity targetedEntity = null;
 
-    public int b = 0;
-    public double c;
-    public double d;
-    public double e;
-    private Entity target = null;
-    private int i = 0;
-    public int f = 0;
-    public int g = 0;
-    private int explosionPower = 1;
+    /** Cooldown time between target loss and new target aquirement. */
+    private int aggroCooldown = 0;
+    public int prevAttackCounter = 0;
+    public int attackCounter = 0;
+    private int field_92009_j = 1;
 
-    public EntityGhast(World world) {
-        super(world);
+    public EntityGhast(World par1World)
+    {
+        super(par1World);
         this.texture = "/mob/ghast.png";
-        this.a(4.0F, 4.0F);
-        this.fireProof = true;
-        this.bd = 5;
+        this.setSize(4.0F, 4.0F);
+        this.isImmuneToFire = true;
+        this.experienceValue = 5;
     }
 
-    public boolean damageEntity(DamageSource damagesource, int i) {
-        if (this.isInvulnerable()) {
+    /**
+     * Called when the entity is attacked.
+     */
+    public boolean attackEntityFrom(DamageSource par1DamageSource, int par2)
+    {
+        if (this.isEntityInvulnerable())
+        {
             return false;
-        } else if ("fireball".equals(damagesource.l()) && damagesource.getEntity() instanceof EntityHuman) {
-            super.damageEntity(damagesource, 1000);
-            ((EntityHuman) damagesource.getEntity()).a((Statistic) AchievementList.y);
+        }
+        else if ("fireball".equals(par1DamageSource.getDamageType()) && par1DamageSource.getEntity() instanceof EntityPlayer)
+        {
+            super.attackEntityFrom(par1DamageSource, 1000);
+            ((EntityPlayer) par1DamageSource.getEntity()).triggerAchievement((StatBase) AchievementList.ghast);
             return true;
-        } else {
-            return super.damageEntity(damagesource, i);
+        }
+        else
+        {
+            return super.attackEntityFrom(par1DamageSource, par2);
         }
     }
 
-    protected void a() {
-        super.a();
-        this.datawatcher.a(16, Byte.valueOf((byte) 0));
+    protected void entityInit()
+    {
+        super.entityInit();
+        this.dataWatcher.addObject(16, Byte.valueOf((byte)0));
     }
 
-    public int getMaxHealth() {
+    public int getMaxHealth()
+    {
         return 10;
     }
 
-    public void j_() {
-        super.j_();
-        byte b0 = this.datawatcher.getByte(16);
-
-        this.texture = b0 == 1 ? "/mob/ghast_fire.png" : "/mob/ghast.png";
+    /**
+     * Called to update the entity's position/logic.
+     */
+    public void onUpdate()
+    {
+        super.onUpdate();
+        byte var1 = this.dataWatcher.getWatchableObjectByte(16);
+        this.texture = var1 == 1 ? "/mob/ghast_fire.png" : "/mob/ghast.png";
     }
 
-    protected void bn() {
-        if (!this.world.isStatic && this.world.difficulty == 0) {
-            this.die();
+    protected void updateEntityActionState()
+    {
+        if (!this.worldObj.isRemote && this.worldObj.difficultySetting == 0)
+        {
+            this.setDead();
         }
 
-        this.bk();
-        this.f = this.g;
-        double d0 = this.c - this.locX;
-        double d1 = this.d - this.locY;
-        double d2 = this.e - this.locZ;
-        double d3 = d0 * d0 + d1 * d1 + d2 * d2;
+        this.despawnEntity();
+        this.prevAttackCounter = this.attackCounter;
+        double var1 = this.waypointX - this.posX;
+        double var3 = this.waypointY - this.posY;
+        double var5 = this.waypointZ - this.posZ;
+        double var7 = var1 * var1 + var3 * var3 + var5 * var5;
 
-        if (d3 < 1.0D || d3 > 3600.0D) {
-            this.c = this.locX + (double) ((this.random.nextFloat() * 2.0F - 1.0F) * 16.0F);
-            this.d = this.locY + (double) ((this.random.nextFloat() * 2.0F - 1.0F) * 16.0F);
-            this.e = this.locZ + (double) ((this.random.nextFloat() * 2.0F - 1.0F) * 16.0F);
+        if (var7 < 1.0D || var7 > 3600.0D)
+        {
+            this.waypointX = this.posX + (double)((this.rand.nextFloat() * 2.0F - 1.0F) * 16.0F);
+            this.waypointY = this.posY + (double)((this.rand.nextFloat() * 2.0F - 1.0F) * 16.0F);
+            this.waypointZ = this.posZ + (double)((this.rand.nextFloat() * 2.0F - 1.0F) * 16.0F);
         }
 
-        if (this.b-- <= 0) {
-            this.b += this.random.nextInt(5) + 2;
-            d3 = (double) MathHelper.sqrt(d3);
-            if (this.a(this.c, this.d, this.e, d3)) {
-                this.motX += d0 / d3 * 0.1D;
-                this.motY += d1 / d3 * 0.1D;
-                this.motZ += d2 / d3 * 0.1D;
-            } else {
-                this.c = this.locX;
-                this.d = this.locY;
-                this.e = this.locZ;
+        if (this.courseChangeCooldown-- <= 0)
+        {
+            this.courseChangeCooldown += this.rand.nextInt(5) + 2;
+            var7 = (double)MathHelper.sqrt_double(var7);
+
+            if (this.isCourseTraversable(this.waypointX, this.waypointY, this.waypointZ, var7))
+            {
+                this.motionX += var1 / var7 * 0.1D;
+                this.motionY += var3 / var7 * 0.1D;
+                this.motionZ += var5 / var7 * 0.1D;
+            }
+            else
+            {
+                this.waypointX = this.posX;
+                this.waypointY = this.posY;
+                this.waypointZ = this.posZ;
             }
         }
 
-        if (this.target != null && this.target.dead) {
+        if (this.targetedEntity != null && this.targetedEntity.isDead)
+        {
             // CraftBukkit start
             EntityTargetEvent event = new EntityTargetEvent(this.getBukkitEntity(), null, EntityTargetEvent.TargetReason.TARGET_DIED);
-            this.world.getServer().getPluginManager().callEvent(event);
+            this.worldObj.getServer().getPluginManager().callEvent(event);
 
-            if (!event.isCancelled()) {
-                if (event.getTarget() == null) {
-                    this.target = null;
-                } else {
-                    this.target = ((CraftEntity) event.getTarget()).getHandle();
+            if (!event.isCancelled())
+            {
+                if (event.getTarget() == null)
+                {
+                    this.targetedEntity = null;
+                }
+                else
+                {
+                    this.targetedEntity = ((CraftEntity) event.getTarget()).getHandle();
                 }
             }
+
             // CraftBukkit end
         }
 
-        if (this.target == null || this.i-- <= 0) {
+        if (this.targetedEntity == null || this.aggroCooldown-- <= 0)
+        {
             // CraftBukkit start
-            Entity target = this.world.findNearbyVulnerablePlayer(this, 100.0D);
-            if (target != null) {
-                EntityTargetEvent event = new EntityTargetEvent(this.getBukkitEntity(), target.getBukkitEntity(), EntityTargetEvent.TargetReason.CLOSEST_PLAYER);
-                this.world.getServer().getPluginManager().callEvent(event);
+            Entity target = this.worldObj.getClosestVulnerablePlayerToEntity(this, 100.0D);
 
-                if (!event.isCancelled()) {
-                    if (event.getTarget() == null) {
-                        this.target = null;
-                    } else {
-                        this.target = ((CraftEntity) event.getTarget()).getHandle();
+            if (target != null)
+            {
+                EntityTargetEvent event = new EntityTargetEvent(this.getBukkitEntity(), target.getBukkitEntity(), EntityTargetEvent.TargetReason.CLOSEST_PLAYER);
+                this.worldObj.getServer().getPluginManager().callEvent(event);
+
+                if (!event.isCancelled())
+                {
+                    if (event.getTarget() == null)
+                    {
+                        this.targetedEntity = null;
+                    }
+                    else
+                    {
+                        this.targetedEntity = ((CraftEntity) event.getTarget()).getHandle();
                     }
                 }
             }
+
             // CraftBukkit end
 
-            if (this.target != null) {
-                this.i = 20;
+            if (this.targetedEntity != null)
+            {
+                this.aggroCooldown = 20;
             }
         }
 
-        double d4 = 64.0D;
+        double var9 = 64.0D;
 
-        if (this.target != null && this.target.e((Entity) this) < d4 * d4) {
-            double d5 = this.target.locX - this.locX;
-            double d6 = this.target.boundingBox.b + (double) (this.target.length / 2.0F) - (this.locY + (double) (this.length / 2.0F));
-            double d7 = this.target.locZ - this.locZ;
+        if (this.targetedEntity != null && this.targetedEntity.getDistanceSqToEntity((Entity) this) < var9 * var9)
+        {
+            double var11 = this.targetedEntity.posX - this.posX;
+            double var13 = this.targetedEntity.boundingBox.minY + (double)(this.targetedEntity.height / 2.0F) - (this.posY + (double)(this.height / 2.0F));
+            double var15 = this.targetedEntity.posZ - this.posZ;
+            this.renderYawOffset = this.rotationYaw = -((float) Math.atan2(var11, var15)) * 180.0F / 3.1415927F;
 
-            this.ax = this.yaw = -((float) Math.atan2(d5, d7)) * 180.0F / 3.1415927F;
-            if (this.n(this.target)) {
-                if (this.g == 10) {
-                    this.world.a((EntityHuman) null, 1007, (int) this.locX, (int) this.locY, (int) this.locZ, 0);
+            if (this.canEntityBeSeen(this.targetedEntity))
+            {
+                if (this.attackCounter == 10)
+                {
+                    this.worldObj.playAuxSFXAtEntity((EntityPlayer)null, 1007, (int)this.posX, (int)this.posY, (int)this.posZ, 0);
                 }
 
-                ++this.g;
-                if (this.g == 20) {
-                    this.world.a((EntityHuman) null, 1008, (int) this.locX, (int) this.locY, (int) this.locZ, 0);
-                    EntityLargeFireball entitylargefireball = new EntityLargeFireball(this.world, this, d5, d6, d7);
+                ++this.attackCounter;
 
-                    entitylargefireball.e = this.explosionPower;
-                    double d8 = 4.0D;
-                    Vec3D vec3d = this.i(1.0F);
-
-                    entitylargefireball.locX = this.locX + vec3d.c * d8;
-                    entitylargefireball.locY = this.locY + (double) (this.length / 2.0F) + 0.5D;
-                    entitylargefireball.locZ = this.locZ + vec3d.e * d8;
-                    this.world.addEntity(entitylargefireball);
-                    this.g = -40;
+                if (this.attackCounter == 20)
+                {
+                    this.worldObj.playAuxSFXAtEntity((EntityPlayer)null, 1008, (int)this.posX, (int)this.posY, (int)this.posZ, 0);
+                    EntityLargeFireball var17 = new EntityLargeFireball(this.worldObj, this, var11, var13, var15);
+                    var17.field_92012_e = this.field_92009_j;
+                    double var18 = 4.0D;
+                    Vec3 var20 = this.getLook(1.0F);
+                    var17.posX = this.posX + var20.xCoord * var18;
+                    var17.posY = this.posY + (double)(this.height / 2.0F) + 0.5D;
+                    var17.posZ = this.posZ + var20.zCoord * var18;
+                    this.worldObj.spawnEntityInWorld(var17);
+                    this.attackCounter = -40;
                 }
-            } else if (this.g > 0) {
-                --this.g;
             }
-        } else {
-            this.ax = this.yaw = -((float) Math.atan2(this.motX, this.motZ)) * 180.0F / 3.1415927F;
-            if (this.g > 0) {
-                --this.g;
+            else if (this.attackCounter > 0)
+            {
+                --this.attackCounter;
+            }
+        }
+        else
+        {
+            this.renderYawOffset = this.rotationYaw = -((float) Math.atan2(this.motionX, this.motionZ)) * 180.0F / 3.1415927F;
+
+            if (this.attackCounter > 0)
+            {
+                --this.attackCounter;
             }
         }
 
-        if (!this.world.isStatic) {
-            byte b0 = this.datawatcher.getByte(16);
-            byte b1 = (byte) (this.g > 10 ? 1 : 0);
+        if (!this.worldObj.isRemote)
+        {
+            byte var21 = this.dataWatcher.getWatchableObjectByte(16);
+            byte var12 = (byte)(this.attackCounter > 10 ? 1 : 0);
 
-            if (b0 != b1) {
-                this.datawatcher.watch(16, Byte.valueOf(b1));
+            if (var21 != var12)
+            {
+                this.dataWatcher.updateObject(16, Byte.valueOf(var12));
             }
         }
     }
 
-    private boolean a(double d0, double d1, double d2, double d3) {
-        double d4 = (this.c - this.locX) / d3;
-        double d5 = (this.d - this.locY) / d3;
-        double d6 = (this.e - this.locZ) / d3;
-        AxisAlignedBB axisalignedbb = this.boundingBox.clone();
+    /**
+     * True if the ghast has an unobstructed line of travel to the waypoint.
+     */
+    private boolean isCourseTraversable(double par1, double par3, double par5, double par7)
+    {
+        double var9 = (this.waypointX - this.posX) / par7;
+        double var11 = (this.waypointY - this.posY) / par7;
+        double var13 = (this.waypointZ - this.posZ) / par7;
+        AxisAlignedBB var15 = this.boundingBox.copy();
 
-        for (int i = 1; (double) i < d3; ++i) {
-            axisalignedbb.d(d4, d5, d6);
-            if (!this.world.getCubes(this, axisalignedbb).isEmpty()) {
+        for (int var16 = 1; (double)var16 < par7; ++var16)
+        {
+            var15.offset(var9, var11, var13);
+
+            if (!this.worldObj.getCollidingBoundingBoxes(this, var15).isEmpty())
+            {
                 return false;
             }
         }
@@ -187,64 +258,108 @@ public class EntityGhast extends EntityFlying implements IMonster {
         return true;
     }
 
-    protected String aY() {
+    /**
+     * Returns the sound this mob makes while it's alive.
+     */
+    protected String getLivingSound()
+    {
         return "mob.ghast.moan";
     }
 
-    protected String aZ() {
+    /**
+     * Returns the sound this mob makes when it is hurt.
+     */
+    protected String getHurtSound()
+    {
         return "mob.ghast.scream";
     }
 
-    protected String ba() {
+    /**
+     * Returns the sound this mob makes on death.
+     */
+    protected String getDeathSound()
+    {
         return "mob.ghast.death";
     }
 
-    protected int getLootId() {
-        return Item.SULPHUR.id;
+    /**
+     * Returns the item ID for the item the mob drops on death.
+     */
+    protected int getDropItemId()
+    {
+        return Item.gunpowder.itemID;
     }
 
-    protected void dropDeathLoot(boolean flag, int i) {
+    /**
+     * Drop 0-2 items of this living's type. @param par1 - Whether this entity has recently been hit by a player. @param
+     * par2 - Level of Looting used to kill this mob.
+     */
+    protected void dropFewItems(boolean par1, int par2)
+    {
         // CraftBukkit start
         java.util.List<org.bukkit.inventory.ItemStack> loot = new java.util.ArrayList<org.bukkit.inventory.ItemStack>();
-        int j = this.random.nextInt(2) + this.random.nextInt(1 + i);
-
+        int j = this.rand.nextInt(2) + this.rand.nextInt(1 + par2);
         int k;
 
-        if (j > 0) {
-            loot.add(CraftItemStack.asNewCraftStack(Item.GHAST_TEAR, j));
+        if (j > 0)
+        {
+            loot.add(CraftItemStack.asNewCraftStack(Item.ghastTear, j));
         }
 
-        j = this.random.nextInt(3) + this.random.nextInt(1 + i);
+        j = this.rand.nextInt(3) + this.rand.nextInt(1 + par2);
 
-        if (j > 0) {
-            loot.add(CraftItemStack.asNewCraftStack(Item.SULPHUR, j));
+        if (j > 0)
+        {
+            loot.add(CraftItemStack.asNewCraftStack(Item.gunpowder, j));
         }
 
         org.bukkit.craftbukkit.event.CraftEventFactory.callEntityDeathEvent(this, loot);
         // CraftBukkit end
     }
 
-    protected float aX() {
+    /**
+     * Returns the volume for the sounds this mob makes.
+     */
+    protected float getSoundVolume()
+    {
         return 10.0F;
     }
 
-    public boolean canSpawn() {
-        return this.random.nextInt(20) == 0 && super.canSpawn() && this.world.difficulty > 0;
+    /**
+     * Checks if the entity's current position is a valid location to spawn this entity.
+     */
+    public boolean getCanSpawnHere()
+    {
+        return this.rand.nextInt(20) == 0 && super.getCanSpawnHere() && this.worldObj.difficultySetting > 0;
     }
 
-    public int bv() {
+    /**
+     * Will return how many at most can spawn in a chunk at once.
+     */
+    public int getMaxSpawnedInChunk()
+    {
         return 1;
     }
 
-    public void b(NBTTagCompound nbttagcompound) {
-        super.b(nbttagcompound);
-        nbttagcompound.setInt("ExplosionPower", this.explosionPower);
+    /**
+     * (abstract) Protected helper method to write subclass entity data to NBT.
+     */
+    public void writeEntityToNBT(NBTTagCompound par1NBTTagCompound)
+    {
+        super.writeEntityToNBT(par1NBTTagCompound);
+        par1NBTTagCompound.setInteger("ExplosionPower", this.field_92009_j);
     }
 
-    public void a(NBTTagCompound nbttagcompound) {
-        super.a(nbttagcompound);
-        if (nbttagcompound.hasKey("ExplosionPower")) {
-            this.explosionPower = nbttagcompound.getInt("ExplosionPower");
+    /**
+     * (abstract) Protected helper method to read subclass entity data from NBT.
+     */
+    public void readEntityFromNBT(NBTTagCompound par1NBTTagCompound)
+    {
+        super.readEntityFromNBT(par1NBTTagCompound);
+
+        if (par1NBTTagCompound.hasKey("ExplosionPower"))
+        {
+            this.field_92009_j = par1NBTTagCompound.getInteger("ExplosionPower");
         }
     }
 }

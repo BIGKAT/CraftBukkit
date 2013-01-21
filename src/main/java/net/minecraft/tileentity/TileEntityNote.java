@@ -1,60 +1,94 @@
-package net.minecraft.server;
+package net.minecraft.tileentity;
 
-public class TileEntityNote extends TileEntity {
-
+import net.minecraft.block.Block;
+import net.minecraft.block.material.Material;
+import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.world.World;
+public class TileEntityNote extends TileEntity
+{
+    /** Note to play */
     public byte note = 0;
-    public boolean b = false;
+
+    /** stores the latest redstone state */
+    public boolean previousRedstoneState = false;
 
     public TileEntityNote() {}
 
-    public void b(NBTTagCompound nbttagcompound) {
-        super.b(nbttagcompound);
-        nbttagcompound.setByte("note", this.note);
+    /**
+     * Writes a tile entity to NBT.
+     */
+    public void writeToNBT(NBTTagCompound par1NBTTagCompound)
+    {
+        super.writeToNBT(par1NBTTagCompound);
+        par1NBTTagCompound.setByte("note", this.note);
     }
 
-    public void a(NBTTagCompound nbttagcompound) {
-        super.a(nbttagcompound);
-        this.note = nbttagcompound.getByte("note");
-        if (this.note < 0) {
+    /**
+     * Reads a tile entity from NBT.
+     */
+    public void readFromNBT(NBTTagCompound par1NBTTagCompound)
+    {
+        super.readFromNBT(par1NBTTagCompound);
+        this.note = par1NBTTagCompound.getByte("note");
+
+        if (this.note < 0)
+        {
             this.note = 0;
         }
 
-        if (this.note > 24) {
+        if (this.note > 24)
+        {
             this.note = 24;
         }
     }
 
-    public void a() {
-        this.note = (byte) ((this.note + 1) % 25);
-        this.update();
+    /**
+     * change pitch by -> (currentPitch + 1) % 25
+     */
+    public void changePitch()
+    {
+        this.note = (byte)((this.note + 1) % 25);
+        this.onInventoryChanged();
     }
 
-    public void play(World world, int i, int j, int k) {
-        if (world.getMaterial(i, j + 1, k) == Material.AIR) {
-            Material material = world.getMaterial(i, j - 1, k);
-            byte b0 = 0;
+    /**
+     * plays the stored note
+     */
+    public void triggerNote(World par1World, int par2, int par3, int par4)
+    {
+        if (par1World.getBlockMaterial(par2, par3 + 1, par4) == Material.air)
+        {
+            Material var5 = par1World.getBlockMaterial(par2, par3 - 1, par4);
+            byte var6 = 0;
 
-            if (material == Material.STONE) {
-                b0 = 1;
+            if (var5 == Material.rock)
+            {
+                var6 = 1;
             }
 
-            if (material == Material.SAND) {
-                b0 = 2;
+            if (var5 == Material.sand)
+            {
+                var6 = 2;
             }
 
-            if (material == Material.SHATTERABLE) {
-                b0 = 3;
+            if (var5 == Material.glass)
+            {
+                var6 = 3;
             }
 
-            if (material == Material.WOOD) {
-                b0 = 4;
+            if (var5 == Material.wood)
+            {
+                var6 = 4;
             }
 
             // CraftBukkit start
-            org.bukkit.event.block.NotePlayEvent event = org.bukkit.craftbukkit.event.CraftEventFactory.callNotePlayEvent(this.world, i, j, k, b0, this.note);
-            if (!event.isCancelled()) {
-                this.world.playNote(i, j, k, Block.NOTE_BLOCK.id, event.getInstrument().getType(), event.getNote().getId());
+            org.bukkit.event.block.NotePlayEvent event = org.bukkit.craftbukkit.event.CraftEventFactory.callNotePlayEvent(this.worldObj, par2, par3, par4, var6, this.note);
+
+            if (!event.isCancelled())
+            {
+                this.worldObj.addBlockEvent(par2, par3, par4, Block.music.blockID, event.getInstrument().getType(), event.getNote().getId());
             }
+
             // CraftBukkit end
         }
     }

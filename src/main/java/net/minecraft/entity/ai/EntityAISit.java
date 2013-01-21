@@ -1,39 +1,64 @@
-package net.minecraft.server;
+package net.minecraft.entity.ai;
 
-public class PathfinderGoalSit extends PathfinderGoal {
-
-    private EntityTameableAnimal a;
+import net.minecraft.entity.EntityLiving;
+import net.minecraft.entity.passive.EntityTameable;
+public class EntityAISit extends EntityAIBase
+{
+    private EntityTameable a;
     private boolean b = false;
 
-    public PathfinderGoalSit(EntityTameableAnimal entitytameableanimal) {
-        this.a = entitytameableanimal;
-        this.a(5);
+    public EntityAISit(EntityTameable par1EntityTameable)
+    {
+        this.a = par1EntityTameable;
+        this.setMutexBits(5);
     }
 
-    public boolean a() {
-        if (!this.a.isTamed()) {
-            return this.b && this.a.getGoalTarget() == null; // CraftBukkit - Allow sitting for wild animals
-        } else if (this.a.H()) {
+    /**
+     * Returns whether the EntityAIBase should begin execution.
+     */
+    public boolean shouldExecute()
+    {
+        if (!this.a.isTamed())
+        {
+            return this.b && this.a.getAttackTarget() == null; // CraftBukkit - Allow sitting for wild animals
+        }
+        else if (this.a.isInWater())
+        {
             return false;
-        } else if (!this.a.onGround) {
+        }
+        else if (!this.a.onGround)
+        {
             return false;
-        } else {
-            EntityLiving entityliving = this.a.getOwner();
-
-            return entityliving == null ? true : (this.a.e(entityliving) < 144.0D && entityliving.aC() != null ? false : this.b);
+        }
+        else
+        {
+            EntityLiving var1 = this.a.getOwner();
+            return var1 == null ? true : (this.a.getDistanceSqToEntity(var1) < 144.0D && var1.getAITarget() != null ? false : this.b);
         }
     }
 
-    public void c() {
-        this.a.getNavigation().g();
+    /**
+     * Execute a one shot task or start executing a continuous task
+     */
+    public void startExecuting()
+    {
+        this.a.getNavigator().clearPathEntity();
         this.a.setSitting(true);
     }
 
-    public void d() {
+    /**
+     * Resets the task
+     */
+    public void resetTask()
+    {
         this.a.setSitting(false);
     }
 
-    public void setSitting(boolean flag) {
-        this.b = flag;
+    /**
+     * Sets the sitting flag.
+     */
+    public void setSitting(boolean par1)
+    {
+        this.b = par1;
     }
 }

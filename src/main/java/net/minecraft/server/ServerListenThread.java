@@ -10,120 +10,154 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import net.minecraft.network.NetLoginHandler;
+import net.minecraft.network.NetworkListenThread;
 
-public class DedicatedServerConnectionThread extends Thread {
+public class ServerListenThread extends Thread
+{
+    private static Logger logger = Logger.getLogger("Minecraft");
+    private final List pendingConnections = Collections.synchronizedList(new ArrayList());
 
-    private static Logger a = Logger.getLogger("Minecraft");
-    private final List b = Collections.synchronizedList(new ArrayList());
-    private final HashMap c = new HashMap();
-    private int d = 0;
-    private final ServerSocket e;
-    private ServerConnection f;
-    private final InetAddress g;
-    private final int h;
+    /**
+     * This map stores a list of InetAddresses and the last time which they connected at
+     */
+    private final HashMap recentConnections = new HashMap();
+    private int connectionCounter = 0;
+    private final ServerSocket myServerSocket;
+    private NetworkListenThread myNetworkListenThread;
+    private final InetAddress myServerAddress;
+    private final int myPort;
 
     long connectionThrottle; // CraftBukkit
 
-    public DedicatedServerConnectionThread(ServerConnection serverconnection, InetAddress inetaddress, int i) throws IOException { // CraftBukkit - added throws
+    public ServerListenThread(NetworkListenThread par1NetworkListenThread, InetAddress par2InetAddress, int par3) throws IOException   // CraftBukkit - added throws
+    {
         super("Listen thread");
-        this.f = serverconnection;
-        this.h = i;
-        this.e = new ServerSocket(i, 0, inetaddress);
-        this.g = inetaddress == null ? this.e.getInetAddress() : inetaddress;
-        this.e.setPerformancePreferences(0, 2, 1);
+        this.myNetworkListenThread = par1NetworkListenThread;
+        this.myPort = par3;
+        this.myServerSocket = new ServerSocket(par3, 0, par2InetAddress);
+        this.myServerAddress = par2InetAddress == null ? this.myServerSocket.getInetAddress() : par2InetAddress;
+        this.myServerSocket.setPerformancePreferences(0, 2, 1);
     }
 
-    public void a() {
-        List list = this.b;
+    public void processPendingConnections()
+    {
+        List var1 = this.pendingConnections;
 
-        synchronized (this.b) {
-            for (int i = 0; i < this.b.size(); ++i) {
-                PendingConnection pendingconnection = (PendingConnection) this.b.get(i);
+        synchronized (this.pendingConnections)
+        {
+            for (int var2 = 0; var2 < this.pendingConnections.size(); ++var2)
+            {
+                NetLoginHandler var3 = (NetLoginHandler)this.pendingConnections.get(var2);
 
-                try {
-                    pendingconnection.c();
-                } catch (Exception exception) {
-                    pendingconnection.disconnect("Internal server error");
-                    a.log(Level.WARNING, "Failed to handle packet for " + pendingconnection.getName() + ": " + exception, exception);
+                try
+                {
+                    var3.tryLogin();
+                }
+                catch (Exception var6)
+                {
+                    var3.raiseErrorAndDisconnect("Internal server error");
+                    logger.log(Level.WARNING, "Failed to handle packet for " + var3.getUsernameAndAddress() + ": " + var6, var6);
                 }
 
-                if (pendingconnection.c) {
-                    this.b.remove(i--);
+                if (var3.connectionComplete)
+                {
+                    this.pendingConnections.remove(var2--);
                 }
 
-                pendingconnection.networkManager.a();
+                var3.myTCPConnection.wakeThreads();
             }
         }
     }
 
-    public void run() {
-        while (this.f.b) {
-            try {
-                Socket socket = this.e.accept();
-                InetAddress inetaddress = socket.getInetAddress();
-                long i = System.currentTimeMillis();
-                HashMap hashmap = this.c;
+    public void run()
+    {
+        while (this.myNetworkListenThread.isListening)
+        {
+            try
+            {
+                Socket var1 = this.myServerSocket.accept();
+                InetAddress var2 = var1.getInetAddress();
+                long var3 = System.currentTimeMillis();
+                HashMap var5 = this.recentConnections;
 
                 // CraftBukkit start
-                if (((MinecraftServer) this.f.d()).server == null) {
-                    socket.close();
+                if (((MinecraftServer) this.myNetworkListenThread.getServer()).server == null)
+                {
+                    var1.close();
                     continue;
                 }
 
-                connectionThrottle = ((MinecraftServer) this.f.d()).server.getConnectionThrottle();
+                connectionThrottle = ((MinecraftServer) this.myNetworkListenThread.getServer()).server.getConnectionThrottle();
                 // CraftBukkit end
 
-                synchronized (this.c) {
-                    if (this.c.containsKey(inetaddress) && !b(inetaddress) && i - ((Long) this.c.get(inetaddress)).longValue() < connectionThrottle) {
-                        this.c.put(inetaddress, Long.valueOf(i));
-                        socket.close();
+                synchronized (this.recentConnections)
+                {
+                    if (this.recentConnections.containsKey(var2) && !isLocalHost(var2) && var3 - ((Long) this.recentConnections.get(var2)).longValue() < connectionThrottle)
+                    {
+                        this.recentConnections.put(var2, Long.valueOf(var3));
+                        var1.close();
                         continue;
                     }
 
-                    this.c.put(inetaddress, Long.valueOf(i));
+                    this.recentConnections.put(var2, Long.valueOf(var3));
                 }
 
-                PendingConnection pendingconnection = new PendingConnection(this.f.d(), socket, "Connection #" + this.d++);
-
-                this.a(pendingconnection);
-            } catch (IOException ioexception) {
-                a.warning("DSCT: " + ioexception.getMessage()); // CraftBukkit
+                NetLoginHandler var9 = new NetLoginHandler(this.myNetworkListenThread.getServer(), var1, "Connection #" + this.connectionCounter++);
+                this.addPendingConnection(var9);
+            }
+            catch (IOException var8)
+            {
+                logger.warning("DSCT: " + var8.getMessage()); // CraftBukkit
             }
         }
 
         System.out.println("Closing listening thread");
     }
 
-    private void a(PendingConnection pendingconnection) {
-        if (pendingconnection == null) {
+    private void addPendingConnection(NetLoginHandler par1NetLoginHandler)
+    {
+        if (par1NetLoginHandler == null)
+        {
             throw new IllegalArgumentException("Got null pendingconnection!");
-        } else {
-            List list = this.b;
+        }
+        else
+        {
+            List var2 = this.pendingConnections;
 
-            synchronized (this.b) {
-                this.b.add(pendingconnection);
+            synchronized (this.pendingConnections)
+            {
+                this.pendingConnections.add(par1NetLoginHandler);
             }
         }
     }
 
-    private static boolean b(InetAddress inetaddress) {
-        return "127.0.0.1".equals(inetaddress.getHostAddress());
+    private static boolean isLocalHost(InetAddress par0InetAddress)
+    {
+        return "127.0.0.1".equals(par0InetAddress.getHostAddress());
     }
 
-    public void a(InetAddress inetaddress) {
-        if (inetaddress != null) {
-            HashMap hashmap = this.c;
+    public void func_71769_a(InetAddress par1InetAddress)
+    {
+        if (par1InetAddress != null)
+        {
+            HashMap var2 = this.recentConnections;
 
-            synchronized (this.c) {
-                this.c.remove(inetaddress);
+            synchronized (this.recentConnections)
+            {
+                this.recentConnections.remove(par1InetAddress);
             }
         }
     }
 
-    public void b() {
-        try {
-            this.e.close();
-        } catch (Throwable throwable) {
+    public void func_71768_b()
+    {
+        try
+        {
+            this.myServerSocket.close();
+        }
+        catch (Throwable var2)
+        {
             ;
         }
     }

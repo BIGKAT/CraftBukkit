@@ -1,46 +1,64 @@
-package net.minecraft.server;
+package net.minecraft.network.packet;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 
 import java.io.IOException; // CraftBukkit
 
-public class Packet2Handshake extends Packet {
+public class Packet2ClientProtocol extends Packet
+{
+    private int protocolVersion;
+    private String username;
+    public String serverHost; // CraftBukkit private -> public
+    public int serverPort; // CraftBukkit private -> public
 
-    private int a;
-    private String b;
-    public String c; // CraftBukkit private -> public
-    public int d; // CraftBukkit private -> public
+    public Packet2ClientProtocol() {}
 
-    public Packet2Handshake() {}
-
-    public void a(DataInputStream datainputstream) throws IOException { // CraftBukkit - throws IOException
-        this.a = datainputstream.readByte();
-        this.b = a(datainputstream, 16);
-        this.c = a(datainputstream, 255);
-        this.d = datainputstream.readInt();
+    public void readPacketData(DataInputStream par1DataInputStream) throws IOException   // CraftBukkit - throws IOException
+    {
+        this.protocolVersion = par1DataInputStream.readByte();
+        this.username = readString(par1DataInputStream, 16);
+        this.serverHost = readString(par1DataInputStream, 255);
+        this.serverPort = par1DataInputStream.readInt();
     }
 
-    public void a(DataOutputStream dataoutputstream) throws IOException { // CraftBukkit - throws IOException
-        dataoutputstream.writeByte(this.a);
-        a(this.b, dataoutputstream);
-        a(this.c, dataoutputstream);
-        dataoutputstream.writeInt(this.d);
+    public void writePacketData(DataOutputStream par1DataOutputStream) throws IOException   // CraftBukkit - throws IOException
+    {
+        par1DataOutputStream.writeByte(this.protocolVersion);
+        writeString(this.username, par1DataOutputStream);
+        writeString(this.serverHost, par1DataOutputStream);
+        par1DataOutputStream.writeInt(this.serverPort);
     }
 
-    public void handle(Connection connection) {
-        connection.a(this);
+    /**
+     * Passes this Packet on to the NetHandler for processing.
+     */
+    public void processPacket(NetHandler par1NetHandler)
+    {
+        par1NetHandler.handleClientProtocol(this);
     }
 
-    public int a() {
-        return 3 + 2 * this.b.length();
+    /**
+     * Abstract. Return the size of the packet (not counting the header).
+     */
+    public int getPacketSize()
+    {
+        return 3 + 2 * this.username.length();
     }
 
-    public int d() {
-        return this.a;
+    /**
+     * Returns the protocol version.
+     */
+    public int getProtocolVersion()
+    {
+        return this.protocolVersion;
     }
 
-    public String f() {
-        return this.b;
+    /**
+     * Returns the username.
+     */
+    public String getUsername()
+    {
+        return this.username;
     }
 }

@@ -1,73 +1,101 @@
-package net.minecraft.server;
+package net.minecraft.entity.item;
 
 import java.util.ArrayList;
+import net.minecraft.entity.EntityHanging;
+import net.minecraft.item.Item;
+import net.minecraft.item.ItemStack;
+import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.util.EnumArt;
+import net.minecraft.world.World;
 
-public class EntityPainting extends EntityHanging {
-
+public class EntityPainting extends EntityHanging
+{
     public EnumArt art;
 
-    public EntityPainting(World world) {
-        super(world);
-        this.art = EnumArt.values()[this.random.nextInt(EnumArt.values().length)]; // CraftBukkit - generate a non-null painting
+    public EntityPainting(World par1World)
+    {
+        super(par1World);
+        this.art = EnumArt.values()[this.rand.nextInt(EnumArt.values().length)]; // CraftBukkit - generate a non-null painting
     }
 
-    public EntityPainting(World world, int i, int j, int k, int l) {
-        super(world, i, j, k, l);
-        ArrayList arraylist = new ArrayList();
-        EnumArt[] aenumart = EnumArt.values();
-        int i1 = aenumart.length;
+    public EntityPainting(World par1World, int par2, int par3, int par4, int par5)
+    {
+        super(par1World, par2, par3, par4, par5);
+        ArrayList var6 = new ArrayList();
+        EnumArt[] var7 = EnumArt.values();
+        int var8 = var7.length;
 
-        for (int j1 = 0; j1 < i1; ++j1) {
-            EnumArt enumart = aenumart[j1];
+        for (int var9 = 0; var9 < var8; ++var9)
+        {
+            EnumArt var10 = var7[var9];
+            this.art = var10;
+            this.setDirection(par5);
 
-            this.art = enumart;
-            this.setDirection(l);
-            if (this.survives()) {
-                arraylist.add(enumart);
+            if (this.onValidSurface())
+            {
+                var6.add(var10);
             }
         }
 
-        if (!arraylist.isEmpty()) {
-            this.art = (EnumArt) arraylist.get(this.random.nextInt(arraylist.size()));
+        if (!var6.isEmpty())
+        {
+            this.art = (EnumArt)var6.get(this.rand.nextInt(var6.size()));
         }
 
-        this.setDirection(l);
+        this.setDirection(par5);
     }
 
-    public void b(NBTTagCompound nbttagcompound) {
-        nbttagcompound.setString("Motive", this.art.B);
-        super.b(nbttagcompound);
+    /**
+     * (abstract) Protected helper method to write subclass entity data to NBT.
+     */
+    public void writeEntityToNBT(NBTTagCompound par1NBTTagCompound)
+    {
+        par1NBTTagCompound.setString("Motive", this.art.title);
+        super.writeEntityToNBT(par1NBTTagCompound);
     }
 
-    public void a(NBTTagCompound nbttagcompound) {
-        String s = nbttagcompound.getString("Motive");
-        EnumArt[] aenumart = EnumArt.values();
-        int i = aenumart.length;
+    /**
+     * (abstract) Protected helper method to read subclass entity data from NBT.
+     */
+    public void readEntityFromNBT(NBTTagCompound par1NBTTagCompound)
+    {
+        String var2 = par1NBTTagCompound.getString("Motive");
+        EnumArt[] var3 = EnumArt.values();
+        int var4 = var3.length;
 
-        for (int j = 0; j < i; ++j) {
-            EnumArt enumart = aenumart[j];
+        for (int var5 = 0; var5 < var4; ++var5)
+        {
+            EnumArt var6 = var3[var5];
 
-            if (enumart.B.equals(s)) {
-                this.art = enumart;
+            if (var6.title.equals(var2))
+            {
+                this.art = var6;
             }
         }
 
-        if (this.art == null) {
-            this.art = EnumArt.KEBAB;
+        if (this.art == null)
+        {
+            this.art = EnumArt.Kebab;
         }
 
-        super.a(nbttagcompound);
+        super.readEntityFromNBT(par1NBTTagCompound);
     }
 
-    public int d() {
-        return this.art.C;
+    public int func_82329_d()
+    {
+        return this.art.sizeX;
     }
 
-    public int g() {
-        return this.art.D;
+    public int func_82330_g()
+    {
+        return this.art.sizeY;
     }
 
-    public void h() {
-        this.a(new ItemStack(Item.PAINTING), 0.0F);
+    /**
+     * Drop the item currently on this item frame.
+     */
+    public void dropItemStack()
+    {
+        this.entityDropItem(new ItemStack(Item.painting), 0.0F);
     }
 }

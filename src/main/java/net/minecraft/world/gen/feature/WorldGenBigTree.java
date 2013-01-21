@@ -1,383 +1,523 @@
-package net.minecraft.server;
+package net.minecraft.world.gen.feature;
 
 import java.util.Random;
+import net.minecraft.block.Block;
+import net.minecraft.block.BlockSapling.TreeGenerator;
+import net.minecraft.util.MathHelper;
+import net.minecraft.world.World;
 
 import org.bukkit.BlockChangeDelegate; // CraftBukkit
 
-public class WorldGenBigTree extends WorldGenerator implements BlockSapling.TreeGenerator { // CraftBukkit add interface
+public class WorldGenBigTree extends WorldGenerator implements net.minecraft.block.BlockSapling.TreeGenerator   // CraftBukkit add interface
+{
+    /**
+     * Contains three sets of two values that provide complimentary indices for a given 'major' index - 1 and 2 for 0, 0
+     * and 2 for 1, and 0 and 1 for 2.
+     */
+    static final byte[] otherCoordPairs = new byte[] {(byte)2, (byte)0, (byte)0, (byte)1, (byte)2, (byte)1};
 
-    static final byte[] a = new byte[] { (byte) 2, (byte) 0, (byte) 0, (byte) 1, (byte) 2, (byte) 1};
-    Random b = new Random();
-    BlockChangeDelegate world; // CraftBukkit
-    int[] d = new int[] { 0, 0, 0};
-    int e = 0;
-    int f;
-    double g = 0.618D;
-    double h = 1.0D;
-    double i = 0.381D;
-    double j = 1.0D;
-    double k = 1.0D;
-    int l = 1;
-    int m = 12;
-    int n = 4;
-    int[][] o;
+    /** random seed for GenBigTree */
+    Random rand = new Random();
+    BlockChangeDelegate worldObj; // CraftBukkit
+    int[] basePos = new int[] {0, 0, 0};
+    int heightLimit = 0;
+    int height;
+    double heightAttenuation = 0.618D;
+    double branchDensity = 1.0D;
+    double branchSlope = 0.381D;
+    double scaleWidth = 1.0D;
+    double leafDensity = 1.0D;
 
-    public WorldGenBigTree(boolean flag) {
-        super(flag);
+    /**
+     * Currently always 1, can be set to 2 in the class constructor to generate a double-sized tree trunk for big trees.
+     */
+    int trunkSize = 1;
+
+    /**
+     * Sets the limit of the random value used to initialize the height limit.
+     */
+    int heightLimitLimit = 12;
+
+    /**
+     * Sets the distance limit for how far away the generator will populate leaves from the base leaf node.
+     */
+    int leafDistanceLimit = 4;
+
+    /** Contains a list of a points at which to generate groups of leaves. */
+    int[][] leafNodes;
+
+    public WorldGenBigTree(boolean par1)
+    {
+        super(par1);
     }
 
-    void a() {
-        this.f = (int) ((double) this.e * this.g);
-        if (this.f >= this.e) {
-            this.f = this.e - 1;
+    /**
+     * Generates a list of leaf nodes for the tree, to be populated by generateLeaves.
+     */
+    void generateLeafNodeList()
+    {
+        this.height = (int)((double)this.heightLimit * this.heightAttenuation);
+
+        if (this.height >= this.heightLimit)
+        {
+            this.height = this.heightLimit - 1;
         }
 
-        int i = (int) (1.382D + Math.pow(this.k * (double) this.e / 13.0D, 2.0D));
+        int var1 = (int)(1.382D + Math.pow(this.leafDensity * (double)this.heightLimit / 13.0D, 2.0D));
 
-        if (i < 1) {
-            i = 1;
+        if (var1 < 1)
+        {
+            var1 = 1;
         }
 
-        int[][] aint = new int[i * this.e][4];
-        int j = this.d[1] + this.e - this.n;
-        int k = 1;
-        int l = this.d[1] + this.f;
-        int i1 = j - this.d[1];
+        int[][] var2 = new int[var1 * this.heightLimit][4];
+        int var3 = this.basePos[1] + this.heightLimit - this.leafDistanceLimit;
+        int var4 = 1;
+        int var5 = this.basePos[1] + this.height;
+        int var6 = var3 - this.basePos[1];
+        var2[0][0] = this.basePos[0];
+        var2[0][1] = var3;
+        var2[0][2] = this.basePos[2];
+        var2[0][3] = var5;
+        --var3;
 
-        aint[0][0] = this.d[0];
-        aint[0][1] = j;
-        aint[0][2] = this.d[2];
-        aint[0][3] = l;
-        --j;
+        while (var6 >= 0)
+        {
+            int var7 = 0;
+            float var8 = this.layerSize(var6);
 
-        while (i1 >= 0) {
-            int j1 = 0;
-            float f = this.a(i1);
+            if (var8 < 0.0F)
+            {
+                --var3;
+                --var6;
+            }
+            else
+            {
+                for (double var9 = 0.5D; var7 < var1; ++var7)
+                {
+                    double var11 = this.scaleWidth * (double)var8 * ((double)this.rand.nextFloat() + 0.328D);
+                    double var13 = (double) this.rand.nextFloat() * 2.0D * 3.14159D;
+                    int var15 = MathHelper.floor_double(var11 * Math.sin(var13) + (double)this.basePos[0] + var9);
+                    int var16 = MathHelper.floor_double(var11 * Math.cos(var13) + (double)this.basePos[2] + var9);
+                    int[] var17 = new int[] {var15, var3, var16};
+                    int[] var18 = new int[] {var15, var3 + this.leafDistanceLimit, var16};
 
-            if (f < 0.0F) {
-                --j;
-                --i1;
-            } else {
-                for (double d0 = 0.5D; j1 < i; ++j1) {
-                    double d1 = this.j * (double) f * ((double) this.b.nextFloat() + 0.328D);
-                    double d2 = (double) this.b.nextFloat() * 2.0D * 3.14159D;
-                    int k1 = MathHelper.floor(d1 * Math.sin(d2) + (double) this.d[0] + d0);
-                    int l1 = MathHelper.floor(d1 * Math.cos(d2) + (double) this.d[2] + d0);
-                    int[] aint1 = new int[] { k1, j, l1};
-                    int[] aint2 = new int[] { k1, j + this.n, l1};
+                    if (this.checkBlockLine(var17, var18) == -1)
+                    {
+                        int[] var19 = new int[] {this.basePos[0], this.basePos[1], this.basePos[2]};
+                        double var20 = Math.sqrt(Math.pow((double)Math.abs(this.basePos[0] - var17[0]), 2.0D) + Math.pow((double)Math.abs(this.basePos[2] - var17[2]), 2.0D));
+                        double var22 = var20 * this.branchSlope;
 
-                    if (this.a(aint1, aint2) == -1) {
-                        int[] aint3 = new int[] { this.d[0], this.d[1], this.d[2]};
-                        double d3 = Math.sqrt(Math.pow((double) Math.abs(this.d[0] - aint1[0]), 2.0D) + Math.pow((double) Math.abs(this.d[2] - aint1[2]), 2.0D));
-                        double d4 = d3 * this.i;
-
-                        if ((double) aint1[1] - d4 > (double) l) {
-                            aint3[1] = l;
-                        } else {
-                            aint3[1] = (int) ((double) aint1[1] - d4);
+                        if ((double)var17[1] - var22 > (double)var5)
+                        {
+                            var19[1] = var5;
+                        }
+                        else
+                        {
+                            var19[1] = (int)((double)var17[1] - var22);
                         }
 
-                        if (this.a(aint3, aint1) == -1) {
-                            aint[k][0] = k1;
-                            aint[k][1] = j;
-                            aint[k][2] = l1;
-                            aint[k][3] = aint3[1];
-                            ++k;
+                        if (this.checkBlockLine(var19, var17) == -1)
+                        {
+                            var2[var4][0] = var15;
+                            var2[var4][1] = var3;
+                            var2[var4][2] = var16;
+                            var2[var4][3] = var19[1];
+                            ++var4;
                         }
                     }
                 }
 
-                --j;
-                --i1;
+                --var3;
+                --var6;
             }
         }
 
-        this.o = new int[k][4];
-        System.arraycopy(aint, 0, this.o, 0, k);
+        this.leafNodes = new int[var4][4];
+        System.arraycopy(var2, 0, this.leafNodes, 0, var4);
     }
 
-    void a(int i, int j, int k, float f, byte b0, int l) {
-        int i1 = (int) ((double) f + 0.618D);
-        byte b1 = a[b0];
-        byte b2 = a[b0 + 3];
-        int[] aint = new int[] { i, j, k};
-        int[] aint1 = new int[] { 0, 0, 0};
-        int j1 = -i1;
-        int k1 = -i1;
+    void genTreeLayer(int par1, int par2, int par3, float par4, byte par5, int par6)
+    {
+        int var7 = (int)((double)par4 + 0.618D);
+        byte var8 = otherCoordPairs[par5];
+        byte var9 = otherCoordPairs[par5 + 3];
+        int[] var10 = new int[] {par1, par2, par3};
+        int[] var11 = new int[] {0, 0, 0};
+        int var12 = -var7;
+        int var13 = -var7;
 
-        for (aint1[b0] = aint[b0]; j1 <= i1; ++j1) {
-            aint1[b1] = aint[b1] + j1;
-            k1 = -i1;
+        for (var11[par5] = var10[par5]; var12 <= var7; ++var12)
+        {
+            var11[var8] = var10[var8] + var12;
+            var13 = -var7;
 
-            while (k1 <= i1) {
-                double d0 = Math.pow((double) Math.abs(j1) + 0.5D, 2.0D) + Math.pow((double) Math.abs(k1) + 0.5D, 2.0D);
+            while (var13 <= var7)
+            {
+                double var15 = Math.pow((double)Math.abs(var12) + 0.5D, 2.0D) + Math.pow((double)Math.abs(var13) + 0.5D, 2.0D);
 
-                if (d0 > (double) (f * f)) {
-                    ++k1;
-                } else {
-                    aint1[b2] = aint[b2] + k1;
-                    int l1 = this.world.getTypeId(aint1[0], aint1[1], aint1[2]);
+                if (var15 > (double)(par4 * par4))
+                {
+                    ++var13;
+                }
+                else
+                {
+                    var11[var9] = var10[var9] + var13;
+                    int var14 = this.worldObj.getTypeId(var11[0], var11[1], var11[2]);
 
-                    if (l1 != 0 && l1 != Block.LEAVES.id) {
-                        ++k1;
-                    } else {
-                        this.setTypeAndData(this.world, aint1[0], aint1[1], aint1[2], l, 0);
-                        ++k1;
+                    if (var14 != 0 && var14 != Block.leaves.blockID)
+                    {
+                        ++var13;
+                    }
+                    else
+                    {
+                        this.setTypeAndData(this.worldObj, var11[0], var11[1], var11[2], par6, 0);
+                        ++var13;
                     }
                 }
             }
         }
     }
 
-    float a(int i) {
-        if ((double) i < (double) ((float) this.e) * 0.3D) {
+    /**
+     * Gets the rough size of a layer of the tree.
+     */
+    float layerSize(int par1)
+    {
+        if ((double)par1 < (double)((float)this.heightLimit) * 0.3D)
+        {
             return -1.618F;
-        } else {
-            float f = (float) this.e / 2.0F;
-            float f1 = (float) this.e / 2.0F - (float) i;
-            float f2;
+        }
+        else
+        {
+            float var2 = (float)this.heightLimit / 2.0F;
+            float var3 = (float)this.heightLimit / 2.0F - (float)par1;
+            float var4;
 
-            if (f1 == 0.0F) {
-                f2 = f;
-            } else if (Math.abs(f1) >= f) {
-                f2 = 0.0F;
-            } else {
-                f2 = (float) Math.sqrt(Math.pow((double) Math.abs(f), 2.0D) - Math.pow((double) Math.abs(f1), 2.0D));
+            if (var3 == 0.0F)
+            {
+                var4 = var2;
+            }
+            else if (Math.abs(var3) >= var2)
+            {
+                var4 = 0.0F;
+            }
+            else
+            {
+                var4 = (float)Math.sqrt(Math.pow((double)Math.abs(var2), 2.0D) - Math.pow((double)Math.abs(var3), 2.0D));
             }
 
-            f2 *= 0.5F;
-            return f2;
+            var4 *= 0.5F;
+            return var4;
         }
     }
 
-    float b(int i) {
-        return i >= 0 && i < this.n ? (i != 0 && i != this.n - 1 ? 3.0F : 2.0F) : -1.0F;
+    float leafSize(int par1)
+    {
+        return par1 >= 0 && par1 < this.leafDistanceLimit ? (par1 != 0 && par1 != this.leafDistanceLimit - 1 ? 3.0F : 2.0F) : -1.0F;
     }
 
-    void a(int i, int j, int k) {
-        int l = j;
+    /**
+     * Generates the leaves surrounding an individual entry in the leafNodes list.
+     */
+    void generateLeafNode(int par1, int par2, int par3)
+    {
+        int var4 = par2;
 
-        for (int i1 = j + this.n; l < i1; ++l) {
-            float f = this.b(l - j);
-
-            this.a(i, l, k, f, (byte) 1, Block.LEAVES.id);
+        for (int var5 = par2 + this.leafDistanceLimit; var4 < var5; ++var4)
+        {
+            float var6 = this.leafSize(var4 - par2);
+            this.genTreeLayer(par1, var4, par3, var6, (byte)1, Block.leaves.blockID);
         }
     }
 
-    void a(int[] aint, int[] aint1, int i) {
-        int[] aint2 = new int[] { 0, 0, 0};
-        byte b0 = 0;
+    /**
+     * Places a line of the specified block ID into the world from the first coordinate triplet to the second.
+     */
+    void placeBlockLine(int[] par1ArrayOfInteger, int[] par2ArrayOfInteger, int par3)
+    {
+        int[] var4 = new int[] {0, 0, 0};
+        byte var5 = 0;
+        byte var6;
 
-        byte b1;
+        for (var6 = 0; var5 < 3; ++var5)
+        {
+            var4[var5] = par2ArrayOfInteger[var5] - par1ArrayOfInteger[var5];
 
-        for (b1 = 0; b0 < 3; ++b0) {
-            aint2[b0] = aint1[b0] - aint[b0];
-            if (Math.abs(aint2[b0]) > Math.abs(aint2[b1])) {
-                b1 = b0;
+            if (Math.abs(var4[var5]) > Math.abs(var4[var6]))
+            {
+                var6 = var5;
             }
         }
 
-        if (aint2[b1] != 0) {
-            byte b2 = a[b1];
-            byte b3 = a[b1 + 3];
-            byte b4;
+        if (var4[var6] != 0)
+        {
+            byte var7 = otherCoordPairs[var6];
+            byte var8 = otherCoordPairs[var6 + 3];
+            byte var9;
 
-            if (aint2[b1] > 0) {
-                b4 = 1;
-            } else {
-                b4 = -1;
+            if (var4[var6] > 0)
+            {
+                var9 = 1;
+            }
+            else
+            {
+                var9 = -1;
             }
 
-            double d0 = (double) aint2[b2] / (double) aint2[b1];
-            double d1 = (double) aint2[b3] / (double) aint2[b1];
-            int[] aint3 = new int[] { 0, 0, 0};
-            int j = 0;
+            double var10 = (double)var4[var7] / (double)var4[var6];
+            double var12 = (double)var4[var8] / (double)var4[var6];
+            int[] var14 = new int[] {0, 0, 0};
+            int var15 = 0;
 
-            for (int k = aint2[b1] + b4; j != k; j += b4) {
-                aint3[b1] = MathHelper.floor((double) (aint[b1] + j) + 0.5D);
-                aint3[b2] = MathHelper.floor((double) aint[b2] + (double) j * d0 + 0.5D);
-                aint3[b3] = MathHelper.floor((double) aint[b3] + (double) j * d1 + 0.5D);
-                byte b5 = 0;
-                int l = Math.abs(aint3[0] - aint[0]);
-                int i1 = Math.abs(aint3[2] - aint[2]);
-                int j1 = Math.max(l, i1);
+            for (int var16 = var4[var6] + var9; var15 != var16; var15 += var9)
+            {
+                var14[var6] = MathHelper.floor_double((double)(par1ArrayOfInteger[var6] + var15) + 0.5D);
+                var14[var7] = MathHelper.floor_double((double)par1ArrayOfInteger[var7] + (double)var15 * var10 + 0.5D);
+                var14[var8] = MathHelper.floor_double((double)par1ArrayOfInteger[var8] + (double)var15 * var12 + 0.5D);
+                byte var17 = 0;
+                int var18 = Math.abs(var14[0] - par1ArrayOfInteger[0]);
+                int var19 = Math.abs(var14[2] - par1ArrayOfInteger[2]);
+                int var20 = Math.max(var18, var19);
 
-                if (j1 > 0) {
-                    if (l == j1) {
-                        b5 = 4;
-                    } else if (i1 == j1) {
-                        b5 = 8;
+                if (var20 > 0)
+                {
+                    if (var18 == var20)
+                    {
+                        var17 = 4;
+                    }
+                    else if (var19 == var20)
+                    {
+                        var17 = 8;
                     }
                 }
 
-                this.setTypeAndData(this.world, aint3[0], aint3[1], aint3[2], i, b5);
+                this.setTypeAndData(this.worldObj, var14[0], var14[1], var14[2], par3, var17);
             }
         }
     }
 
-    void b() {
-        int i = 0;
+    /**
+     * Generates the leaf portion of the tree as specified by the leafNodes list.
+     */
+    void generateLeaves()
+    {
+        int var1 = 0;
 
-        for (int j = this.o.length; i < j; ++i) {
-            int k = this.o[i][0];
-            int l = this.o[i][1];
-            int i1 = this.o[i][2];
-
-            this.a(k, l, i1);
+        for (int var2 = this.leafNodes.length; var1 < var2; ++var1)
+        {
+            int var3 = this.leafNodes[var1][0];
+            int var4 = this.leafNodes[var1][1];
+            int var5 = this.leafNodes[var1][2];
+            this.generateLeafNode(var3, var4, var5);
         }
     }
 
-    boolean c(int i) {
-        return (double) i >= (double) this.e * 0.2D;
+    /**
+     * Indicates whether or not a leaf node requires additional wood to be added to preserve integrity.
+     */
+    boolean leafNodeNeedsBase(int par1)
+    {
+        return (double)par1 >= (double)this.heightLimit * 0.2D;
     }
 
-    void c() {
-        int i = this.d[0];
-        int j = this.d[1];
-        int k = this.d[1] + this.f;
-        int l = this.d[2];
-        int[] aint = new int[] { i, j, l};
-        int[] aint1 = new int[] { i, k, l};
+    /**
+     * Places the trunk for the big tree that is being generated. Able to generate double-sized trunks by changing a
+     * field that is always 1 to 2.
+     */
+    void generateTrunk()
+    {
+        int var1 = this.basePos[0];
+        int var2 = this.basePos[1];
+        int var3 = this.basePos[1] + this.height;
+        int var4 = this.basePos[2];
+        int[] var5 = new int[] {var1, var2, var4};
+        int[] var6 = new int[] {var1, var3, var4};
+        this.placeBlockLine(var5, var6, Block.wood.blockID);
 
-        this.a(aint, aint1, Block.LOG.id);
-        if (this.l == 2) {
-            ++aint[0];
-            ++aint1[0];
-            this.a(aint, aint1, Block.LOG.id);
-            ++aint[2];
-            ++aint1[2];
-            this.a(aint, aint1, Block.LOG.id);
-            aint[0] += -1;
-            aint1[0] += -1;
-            this.a(aint, aint1, Block.LOG.id);
+        if (this.trunkSize == 2)
+        {
+            ++var5[0];
+            ++var6[0];
+            this.placeBlockLine(var5, var6, Block.wood.blockID);
+            ++var5[2];
+            ++var6[2];
+            this.placeBlockLine(var5, var6, Block.wood.blockID);
+            var5[0] += -1;
+            var6[0] += -1;
+            this.placeBlockLine(var5, var6, Block.wood.blockID);
         }
     }
 
-    void d() {
-        int i = 0;
-        int j = this.o.length;
+    /**
+     * Generates additional wood blocks to fill out the bases of different leaf nodes that would otherwise degrade.
+     */
+    void generateLeafNodeBases()
+    {
+        int var1 = 0;
+        int var2 = this.leafNodes.length;
 
-        for (int[] aint = new int[] { this.d[0], this.d[1], this.d[2]}; i < j; ++i) {
-            int[] aint1 = this.o[i];
-            int[] aint2 = new int[] { aint1[0], aint1[1], aint1[2]};
+        for (int[] var3 = new int[] {this.basePos[0], this.basePos[1], this.basePos[2]}; var1 < var2; ++var1)
+        {
+            int[] var4 = this.leafNodes[var1];
+            int[] var5 = new int[] {var4[0], var4[1], var4[2]};
+            var3[1] = var4[3];
+            int var6 = var3[1] - this.basePos[1];
 
-            aint[1] = aint1[3];
-            int k = aint[1] - this.d[1];
-
-            if (this.c(k)) {
-                this.a(aint, aint2, (byte) Block.LOG.id);
+            if (this.leafNodeNeedsBase(var6))
+            {
+                this.placeBlockLine(var3, var5, (byte)Block.wood.blockID);
             }
         }
     }
 
-    int a(int[] aint, int[] aint1) {
-        int[] aint2 = new int[] { 0, 0, 0};
-        byte b0 = 0;
+    /**
+     * Checks a line of blocks in the world from the first coordinate to triplet to the second, returning the distance
+     * (in blocks) before a non-air, non-leaf block is encountered and/or the end is encountered.
+     */
+    int checkBlockLine(int[] par1ArrayOfInteger, int[] par2ArrayOfInteger)
+    {
+        int[] var3 = new int[] {0, 0, 0};
+        byte var4 = 0;
+        byte var5;
 
-        byte b1;
+        for (var5 = 0; var4 < 3; ++var4)
+        {
+            var3[var4] = par2ArrayOfInteger[var4] - par1ArrayOfInteger[var4];
 
-        for (b1 = 0; b0 < 3; ++b0) {
-            aint2[b0] = aint1[b0] - aint[b0];
-            if (Math.abs(aint2[b0]) > Math.abs(aint2[b1])) {
-                b1 = b0;
+            if (Math.abs(var3[var4]) > Math.abs(var3[var5]))
+            {
+                var5 = var4;
             }
         }
 
-        if (aint2[b1] == 0) {
+        if (var3[var5] == 0)
+        {
             return -1;
-        } else {
-            byte b2 = a[b1];
-            byte b3 = a[b1 + 3];
-            byte b4;
+        }
+        else
+        {
+            byte var6 = otherCoordPairs[var5];
+            byte var7 = otherCoordPairs[var5 + 3];
+            byte var8;
 
-            if (aint2[b1] > 0) {
-                b4 = 1;
-            } else {
-                b4 = -1;
+            if (var3[var5] > 0)
+            {
+                var8 = 1;
+            }
+            else
+            {
+                var8 = -1;
             }
 
-            double d0 = (double) aint2[b2] / (double) aint2[b1];
-            double d1 = (double) aint2[b3] / (double) aint2[b1];
-            int[] aint3 = new int[] { 0, 0, 0};
-            int i = 0;
+            double var9 = (double)var3[var6] / (double)var3[var5];
+            double var11 = (double)var3[var7] / (double)var3[var5];
+            int[] var13 = new int[] {0, 0, 0};
+            int var14 = 0;
+            int var15;
 
-            int j;
+            for (var15 = var3[var5] + var8; var14 != var15; var14 += var8)
+            {
+                var13[var5] = par1ArrayOfInteger[var5] + var14;
+                var13[var6] = MathHelper.floor_double((double)par1ArrayOfInteger[var6] + (double)var14 * var9);
+                var13[var7] = MathHelper.floor_double((double)par1ArrayOfInteger[var7] + (double)var14 * var11);
+                int var16 = this.worldObj.getTypeId(var13[0], var13[1], var13[2]);
 
-            for (j = aint2[b1] + b4; i != j; i += b4) {
-                aint3[b1] = aint[b1] + i;
-                aint3[b2] = MathHelper.floor((double) aint[b2] + (double) i * d0);
-                aint3[b3] = MathHelper.floor((double) aint[b3] + (double) i * d1);
-                int k = this.world.getTypeId(aint3[0], aint3[1], aint3[2]);
-
-                if ((k != 0 && k != Block.LEAVES.id) || aint3[1] >= 256) { // CraftBukkit - fix trees wrapping around
+                if ((var16 != 0 && var16 != Block.leaves.blockID) || var13[1] >= 256)   // CraftBukkit - fix trees wrapping around
+                {
                     break;
                 }
             }
 
-            return i == j ? -1 : Math.abs(i);
+            return var14 == var15 ? -1 : Math.abs(var14);
         }
     }
 
-    boolean e() {
-        int[] aint = new int[] { this.d[0], this.d[1], this.d[2]};
-        int[] aint1 = new int[] { this.d[0], this.d[1] + this.e - 1, this.d[2]};
-        int i = this.world.getTypeId(this.d[0], this.d[1] - 1, this.d[2]);
+    /**
+     * Returns a boolean indicating whether or not the current location for the tree, spanning basePos to to the height
+     * limit, is valid.
+     */
+    boolean validTreeLocation()
+    {
+        int[] var1 = new int[] {this.basePos[0], this.basePos[1], this.basePos[2]};
+        int[] var2 = new int[] {this.basePos[0], this.basePos[1] + this.heightLimit - 1, this.basePos[2]};
+        int var3 = this.worldObj.getTypeId(this.basePos[0], this.basePos[1] - 1, this.basePos[2]);
 
-        if (i != 2 && i != 3) {
+        if (var3 != 2 && var3 != 3)
+        {
             return false;
-        } else {
-            int j = this.a(aint, aint1);
+        }
+        else
+        {
+            int var4 = this.checkBlockLine(var1, var2);
 
-            if (j == -1) {
+            if (var4 == -1)
+            {
                 return true;
-            } else if (j < 6) {
+            }
+            else if (var4 < 6)
+            {
                 return false;
-            } else {
-                this.e = j;
+            }
+            else
+            {
+                this.heightLimit = var4;
                 return true;
             }
         }
     }
 
-    public void a(double d0, double d1, double d2) {
-        this.m = (int) (d0 * 12.0D);
-        if (d0 > 0.5D) {
-            this.n = 5;
+    /**
+     * Rescales the generator settings, only used in WorldGenBigTree
+     */
+    public void setScale(double par1, double par3, double par5)
+    {
+        this.heightLimitLimit = (int)(par1 * 12.0D);
+
+        if (par1 > 0.5D)
+        {
+            this.leafDistanceLimit = 5;
         }
 
-        this.j = d1;
-        this.k = d2;
+        this.scaleWidth = par3;
+        this.leafDensity = par5;
     }
 
-    public boolean a(World world, Random random, int i, int j, int k) {
+    public boolean generate(World par1World, Random par2Random, int par3, int par4, int par5)
+    {
         // CraftBukkit start - moved to generate
         // sk: The idea is to have (our) WorldServer implement
         // BlockChangeDelegate and then we can implicitly cast World to
         // WorldServer (a safe cast, AFAIK) and no code will be broken. This
         // then allows plugins to catch manually-invoked generation events
-        return this.generate((BlockChangeDelegate) world, random, i, j, k);
+        return this.generate((BlockChangeDelegate) par1World, par2Random, par3, par4, par5);
     }
 
-    public boolean generate(BlockChangeDelegate world, Random random, int i, int j, int k) {
+    public boolean generate(BlockChangeDelegate world, Random random, int i, int j, int k)
+    {
         // CraftBukkit end
-        this.world = world;
+        this.worldObj = world;
         long l = random.nextLong();
+        this.rand.setSeed(l);
+        this.basePos[0] = i;
+        this.basePos[1] = j;
+        this.basePos[2] = k;
 
-        this.b.setSeed(l);
-        this.d[0] = i;
-        this.d[1] = j;
-        this.d[2] = k;
-        if (this.e == 0) {
-            this.e = 5 + this.b.nextInt(this.m);
+        if (this.heightLimit == 0)
+        {
+            this.heightLimit = 5 + this.rand.nextInt(this.heightLimitLimit);
         }
 
-        if (!this.e()) {
+        if (!this.validTreeLocation())
+        {
             return false;
-        } else {
-            this.a();
-            this.b();
-            this.c();
-            this.d();
+        }
+        else
+        {
+            this.generateLeafNodeList();
+            this.generateLeaves();
+            this.generateTrunk();
+            this.generateLeafNodeBases();
             return true;
         }
     }

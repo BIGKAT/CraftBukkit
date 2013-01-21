@@ -1,112 +1,149 @@
-package net.minecraft.server;
+package net.minecraft.util;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class Vec3DPool {
-
-    private final int a;
-    private final int b;
+public class Vec3Pool
+{
+    private final int truncateArrayResetThreshold;
+    private final int minimumSize;
     // CraftBukkit start
     // private final List pool = new ArrayList();
-    private Vec3D freelist = null;
-    private Vec3D alloclist = null;
-    private Vec3D freelisthead = null;
-    private Vec3D alloclisthead = null;
+    private Vec3 freelist = null;
+    private Vec3 alloclist = null;
+    private Vec3 freelisthead = null;
+    private Vec3 alloclisthead = null;
     private int total_size = 0;
     // CraftBukkit end
-    private int position = 0;
-    private int largestSize = 0;
-    private int resizeTime = 0;
+    private int nextFreeSpace = 0;
+    private int maximumSizeSinceLastTruncation = 0;
+    private int resetCount = 0;
 
-    public Vec3DPool(int i, int j) {
-        this.a = i;
-        this.b = j;
+    public Vec3Pool(int par1, int par2)
+    {
+        this.truncateArrayResetThreshold = par1;
+        this.minimumSize = par2;
     }
 
-    public final Vec3D create(double d0, double d1, double d2) { // CraftBukkit - add final
-        if (this.resizeTime == 0) return Vec3D.a(d0, d1, d2); // CraftBukkit - don't pool objects indefinitely if thread doesn't adhere to contract
-        Vec3D vec3d;
+    public final Vec3 getVecFromPool(double par1, double par3, double par5)   // CraftBukkit - add final
+    {
+        if (this.resetCount == 0)
+        {
+            return Vec3.createVectorHelper(par1, par3, par5);    // CraftBukkit - don't pool objects indefinitely if thread doesn't adhere to contract
+        }
 
-        if (this.freelist == null) { // CraftBukkit
-            vec3d = new Vec3D(this, d0, d1, d2);
+        Vec3 var7;
+
+        if (this.freelist == null)   // CraftBukkit
+        {
+            var7 = new Vec3(this, par1, par3, par5);
             this.total_size++; // CraftBukkit
-        } else {
+        }
+        else
+        {
             // CraftBukkit start
-            vec3d = this.freelist;
-            this.freelist = vec3d.next;
+            var7 = this.freelist;
+            this.freelist = var7.next;
             // CraftBukkit end
-            vec3d.b(d0, d1, d2);
+            var7.setComponents(par1, par3, par5);
         }
 
         // CraftBukkit start
-        if (this.alloclist == null) {
-            this.alloclisthead = vec3d;
+        if (this.alloclist == null)
+        {
+            this.alloclisthead = var7;
         }
-        vec3d.next = this.alloclist; // add to allocated list
-        this.alloclist = vec3d;
+
+        var7.next = this.alloclist; // add to allocated list
+        this.alloclist = var7;
         // CraftBukkit end
-        ++this.position;
-        return vec3d;
+        ++this.nextFreeSpace;
+        return var7;
     }
 
     // CraftBukkit start - offer back vector (can save LOTS of unneeded bloat) - works about 90% of the time
-    public void release(Vec3D v) {
-        if (this.alloclist == v) {
+    public void release(Vec3 v)
+    {
+        if (this.alloclist == v)
+        {
             this.alloclist = v.next; // Pop off alloc list
+
             // Push on to free list
-            if (this.freelist == null) this.freelisthead = v;
+            if (this.freelist == null)
+            {
+                this.freelisthead = v;
+            }
+
             v.next = this.freelist;
             this.freelist = v;
-            this.position--;
+            this.nextFreeSpace--;
         }
     }
     // CraftBukkit end
 
-    public void a() {
-        if (this.position > this.largestSize) {
-            this.largestSize = this.position;
+    /**
+     * Will truncate the array everyN clears to the maximum size observed since the last truncation.
+     */
+    public void clear()
+    {
+        if (this.nextFreeSpace > this.maximumSizeSinceLastTruncation)
+        {
+            this.maximumSizeSinceLastTruncation = this.nextFreeSpace;
         }
 
         // CraftBukkit start - intelligent cache
         // Take any allocated blocks and put them on free list
-        if (this.alloclist != null) {
-            if (this.freelist == null) {
+        if (this.alloclist != null)
+        {
+            if (this.freelist == null)
+            {
                 this.freelist = this.alloclist;
                 this.freelisthead = this.alloclisthead;
             }
-            else {
+            else
+            {
                 this.alloclisthead.next = this.freelist;
                 this.freelist = this.alloclist;
                 this.freelisthead = this.alloclisthead;
             }
+
             this.alloclist = null;
         }
-        if ((this.resizeTime++ & 0xff) == 0) {
+
+        if ((this.resetCount++ & 0xff) == 0)
+        {
             int newSize = total_size - (total_size >> 3);
-            if (newSize > this.largestSize) { // newSize will be 87.5%, but if we were not in that range, we clear some of the cache
-                for (int i = total_size; i > newSize; i--) {
+
+            if (newSize > this.maximumSizeSinceLastTruncation)   // newSize will be 87.5%, but if we were not in that range, we clear some of the cache
+            {
+                for (int i = total_size; i > newSize; i--)
+                {
                     freelist = freelist.next;
                 }
+
                 total_size = newSize;
             }
-            this.largestSize = 0;
+
+            this.maximumSizeSinceLastTruncation = 0;
             // this.f = 0; // We do not reset to zero; it doubles for a flag
         }
-        // CraftBukkit end
 
-        this.position = 0;
+        // CraftBukkit end
+        this.nextFreeSpace = 0;
     }
 
-    public int c() {
+    public int getPoolSize()
+    {
         return this.total_size; // CraftBukkit
     }
 
-    public int d() {
-        return this.position;
+    public int func_82590_d()
+    {
+        return this.nextFreeSpace;
     }
 
-    private boolean e() {
-        return this.b < 0 || this.a < 0;
+    private boolean func_82589_e()
+    {
+        return this.minimumSize < 0 || this.truncateArrayResetThreshold < 0;
     }
 }

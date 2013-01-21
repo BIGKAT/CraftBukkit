@@ -1,167 +1,245 @@
-package net.minecraft.server;
+package net.minecraft.util;
 
 import java.util.HashSet;
 import java.util.Set;
 
-public class IntHashMap {
+public class IntHashMap
+{
+    /** An array of HashEntries representing the heads of hash slot lists */
+    private transient IntHashMapEntry[] slots = new IntHashMapEntry[16];
 
-    private transient IntHashMapEntry[] a = new IntHashMapEntry[16];
-    private transient int b;
-    private int c = 12;
-    private final float d = 0.75F;
-    private transient volatile int e;
+    /** The number of items stored in this map */
+    private transient int count;
+
+    /** The grow threshold */
+    private int threshold = 12;
+
+    /** The scale factor used to determine when to grow the table */
+    private final float growFactor = 0.75F;
+
+    /** A serial stamp used to mark changes */
+    private transient volatile int versionStamp;
     // private Set f = new HashSet(); // CraftBukkit - expensive and unused
 
     public IntHashMap() {}
 
-    private static int g(int i) {
-        i ^= i >>> 20 ^ i >>> 12;
-        return i ^ i >>> 7 ^ i >>> 4;
+    /**
+     * Makes the passed in integer suitable for hashing by a number of shifts
+     */
+    private static int computeHash(int par0)
+    {
+        par0 ^= par0 >>> 20 ^ par0 >>> 12;
+        return par0 ^ par0 >>> 7 ^ par0 >>> 4;
     }
 
-    private static int a(int i, int j) {
-        return i & j - 1;
+    /**
+     * Computes the index of the slot for the hash and slot count passed in.
+     */
+    private static int getSlotIndex(int par0, int par1)
+    {
+        return par0 & par1 - 1;
     }
 
-    public Object get(int i) {
-        int j = g(i);
+    /**
+     * Returns the object associated to a key
+     */
+    public Object lookup(int par1)
+    {
+        int var2 = computeHash(par1);
 
-        for (IntHashMapEntry inthashmapentry = this.a[a(j, this.a.length)]; inthashmapentry != null; inthashmapentry = inthashmapentry.c) {
-            if (inthashmapentry.a == i) {
-                return inthashmapentry.b;
+        for (IntHashMapEntry var3 = this.slots[getSlotIndex(var2, this.slots.length)]; var3 != null; var3 = var3.nextEntry)
+        {
+            if (var3.hashEntry == par1)
+            {
+                return var3.valueEntry;
             }
         }
 
         return null;
     }
 
-    public boolean b(int i) {
-        return this.c(i) != null;
+    /**
+     * Return true if an object is associated with the given key
+     */
+    public boolean containsItem(int par1)
+    {
+        return this.lookupEntry(par1) != null;
     }
 
-    final IntHashMapEntry c(int i) {
-        int j = g(i);
+    /**
+     * Returns the key/object mapping for a given key as a MCHashEntry
+     */
+    final IntHashMapEntry lookupEntry(int par1)
+    {
+        int var2 = computeHash(par1);
 
-        for (IntHashMapEntry inthashmapentry = this.a[a(j, this.a.length)]; inthashmapentry != null; inthashmapentry = inthashmapentry.c) {
-            if (inthashmapentry.a == i) {
-                return inthashmapentry;
+        for (IntHashMapEntry var3 = this.slots[getSlotIndex(var2, this.slots.length)]; var3 != null; var3 = var3.nextEntry)
+        {
+            if (var3.hashEntry == par1)
+            {
+                return var3;
             }
         }
 
         return null;
     }
 
-    public void a(int i, Object object) {
+    /**
+     * Adds a key and associated value to this map
+     */
+    public void addKey(int par1, Object par2Obj)
+    {
         // this.f.add(Integer.valueOf(i)); // CraftBukkit
-        int j = g(i);
-        int k = a(j, this.a.length);
+        int var3 = computeHash(par1);
+        int var4 = getSlotIndex(var3, this.slots.length);
 
-        for (IntHashMapEntry inthashmapentry = this.a[k]; inthashmapentry != null; inthashmapentry = inthashmapentry.c) {
-            if (inthashmapentry.a == i) {
-                inthashmapentry.b = object;
+        for (IntHashMapEntry var5 = this.slots[var4]; var5 != null; var5 = var5.nextEntry)
+        {
+            if (var5.hashEntry == par1)
+            {
+                var5.valueEntry = par2Obj;
                 return;
             }
         }
 
-        ++this.e;
-        this.a(j, i, object, k);
+        ++this.versionStamp;
+        this.insert(var3, par1, par2Obj, var4);
     }
 
-    private void h(int i) {
-        IntHashMapEntry[] ainthashmapentry = this.a;
-        int j = ainthashmapentry.length;
+    /**
+     * Increases the number of hash slots
+     */
+    private void grow(int par1)
+    {
+        IntHashMapEntry[] var2 = this.slots;
+        int var3 = var2.length;
 
-        if (j == 1073741824) {
-            this.c = Integer.MAX_VALUE;
-        } else {
-            IntHashMapEntry[] ainthashmapentry1 = new IntHashMapEntry[i];
-
-            this.a(ainthashmapentry1);
-            this.a = ainthashmapentry1;
-            this.c = (int) ((float) i * this.d);
+        if (var3 == 1073741824)
+        {
+            this.threshold = Integer.MAX_VALUE;
+        }
+        else
+        {
+            IntHashMapEntry[] var4 = new IntHashMapEntry[par1];
+            this.copyTo(var4);
+            this.slots = var4;
+            this.threshold = (int)((float)par1 * this.growFactor);
         }
     }
 
-    private void a(IntHashMapEntry[] ainthashmapentry) {
-        IntHashMapEntry[] ainthashmapentry1 = this.a;
-        int i = ainthashmapentry.length;
+    /**
+     * Copies the hash slots to a new array
+     */
+    private void copyTo(IntHashMapEntry[] par1ArrayOfIntHashMapEntry)
+    {
+        IntHashMapEntry[] var2 = this.slots;
+        int var3 = par1ArrayOfIntHashMapEntry.length;
 
-        for (int j = 0; j < ainthashmapentry1.length; ++j) {
-            IntHashMapEntry inthashmapentry = ainthashmapentry1[j];
+        for (int var4 = 0; var4 < var2.length; ++var4)
+        {
+            IntHashMapEntry var5 = var2[var4];
 
-            if (inthashmapentry != null) {
-                ainthashmapentry1[j] = null;
+            if (var5 != null)
+            {
+                var2[var4] = null;
+                IntHashMapEntry var6;
 
-                IntHashMapEntry inthashmapentry1;
-
-                do {
-                    inthashmapentry1 = inthashmapentry.c;
-                    int k = a(inthashmapentry.d, i);
-
-                    inthashmapentry.c = ainthashmapentry[k];
-                    ainthashmapentry[k] = inthashmapentry;
-                    inthashmapentry = inthashmapentry1;
-                } while (inthashmapentry1 != null);
+                do
+                {
+                    var6 = var5.nextEntry;
+                    int var7 = getSlotIndex(var5.slotHash, var3);
+                    var5.nextEntry = par1ArrayOfIntHashMapEntry[var7];
+                    par1ArrayOfIntHashMapEntry[var7] = var5;
+                    var5 = var6;
+                }
+                while (var6 != null);
             }
         }
     }
 
-    public Object d(int i) {
+    /**
+     * Removes the specified object from the map and returns it
+     */
+    public Object removeObject(int par1)
+    {
         // this.f.remove(Integer.valueOf(i)); // CraftBukkit
-        IntHashMapEntry inthashmapentry = this.e(i);
-
-        return inthashmapentry == null ? null : inthashmapentry.b;
+        IntHashMapEntry var2 = this.removeEntry(par1);
+        return var2 == null ? null : var2.valueEntry;
     }
 
-    final IntHashMapEntry e(int i) {
-        int j = g(i);
-        int k = a(j, this.a.length);
-        IntHashMapEntry inthashmapentry = this.a[k];
+    /**
+     * Removes the specified entry from the map and returns it
+     */
+    final IntHashMapEntry removeEntry(int par1)
+    {
+        int var2 = computeHash(par1);
+        int var3 = getSlotIndex(var2, this.slots.length);
+        IntHashMapEntry var4 = this.slots[var3];
+        IntHashMapEntry var5;
+        IntHashMapEntry var6;
 
-        IntHashMapEntry inthashmapentry1;
-        IntHashMapEntry inthashmapentry2;
+        for (var5 = var4; var5 != null; var5 = var6)
+        {
+            var6 = var5.nextEntry;
 
-        for (inthashmapentry1 = inthashmapentry; inthashmapentry1 != null; inthashmapentry1 = inthashmapentry2) {
-            inthashmapentry2 = inthashmapentry1.c;
-            if (inthashmapentry1.a == i) {
-                ++this.e;
-                --this.b;
-                if (inthashmapentry == inthashmapentry1) {
-                    this.a[k] = inthashmapentry2;
-                } else {
-                    inthashmapentry.c = inthashmapentry2;
+            if (var5.hashEntry == par1)
+            {
+                ++this.versionStamp;
+                --this.count;
+
+                if (var4 == var5)
+                {
+                    this.slots[var3] = var6;
+                }
+                else
+                {
+                    var4.nextEntry = var6;
                 }
 
-                return inthashmapentry1;
+                return var5;
             }
 
-            inthashmapentry = inthashmapentry1;
+            var4 = var5;
         }
 
-        return inthashmapentry1;
+        return var5;
     }
 
-    public void c() {
-        ++this.e;
-        IntHashMapEntry[] ainthashmapentry = this.a;
+    /**
+     * Removes all entries from the map
+     */
+    public void clearMap()
+    {
+        ++this.versionStamp;
+        IntHashMapEntry[] var1 = this.slots;
 
-        for (int i = 0; i < ainthashmapentry.length; ++i) {
-            ainthashmapentry[i] = null;
+        for (int var2 = 0; var2 < var1.length; ++var2)
+        {
+            var1[var2] = null;
         }
 
-        this.b = 0;
+        this.count = 0;
     }
 
-    private void a(int i, int j, Object object, int k) {
-        IntHashMapEntry inthashmapentry = this.a[k];
+    /**
+     * Adds an object to a slot
+     */
+    private void insert(int par1, int par2, Object par3Obj, int par4)
+    {
+        IntHashMapEntry var5 = this.slots[par4];
+        this.slots[par4] = new IntHashMapEntry(par1, par2, par3Obj, var5);
 
-        this.a[k] = new IntHashMapEntry(i, j, object, inthashmapentry);
-        if (this.b++ >= this.c) {
-            this.h(2 * this.a.length);
+        if (this.count++ >= this.threshold)
+        {
+            this.grow(2 * this.slots.length);
         }
     }
 
-    static int f(int i) {
-        return g(i);
+    /**
+     * Returns the hash code for a key
+     */
+    static int getHash(int par0)
+    {
+        return computeHash(par0);
     }
 }

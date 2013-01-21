@@ -1,6 +1,5 @@
 package org.bukkit.craftbukkit.entity;
 
-import net.minecraft.server.EntityMinecart;
 import org.bukkit.craftbukkit.CraftServer;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Minecart;
@@ -27,16 +26,16 @@ public class CraftMinecart extends CraftVehicle implements Minecart {
         }
     }
 
-    public CraftMinecart(CraftServer server, EntityMinecart entity) {
+    public CraftMinecart(CraftServer server, net.minecraft.entity.item.EntityMinecart/*was:EntityMinecart*/ entity) {
         super(server, entity);
     }
 
     public void setDamage(int damage) {
-        getHandle().setDamage(damage);
+        getHandle().setDamage/*was:setDamage*/(damage);
     }
 
     public int getDamage() {
-        return getHandle().getDamage();
+        return getHandle().getDamage/*was:getDamage*/();
     }
 
     public double getMaxSpeed() {
@@ -74,8 +73,8 @@ public class CraftMinecart extends CraftVehicle implements Minecart {
     }
 
     @Override
-    public EntityMinecart getHandle() {
-        return (EntityMinecart) entity;
+    public net.minecraft.entity.item.EntityMinecart/*was:EntityMinecart*/ getHandle() {
+        return (net.minecraft.entity.item.EntityMinecart/*was:EntityMinecart*/) entity;
     }
 
     @Override

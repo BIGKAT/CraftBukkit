@@ -1,105 +1,145 @@
-package net.minecraft.server;
+package net.minecraft.item;
 
 import org.bukkit.craftbukkit.block.CraftBlockState; // CraftBukkit
+import net.minecraft.block.Block;
+import net.minecraft.block.BlockSkull;
+import net.minecraft.creativetab.CreativeTabs;
+import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.tileentity.TileEntity;
+import net.minecraft.tileentity.TileEntitySkull;
+import net.minecraft.util.MathHelper;
+import net.minecraft.util.StatCollector;
+import net.minecraft.world.World;
 
-public class ItemSkull extends Item {
+public class ItemSkull extends Item
+{
+    private static final String[] skullTypes = new String[] {"skeleton", "wither", "zombie", "char", "creeper"};
+    private static final int[] field_82806_b = new int[] {224, 225, 226, 227, 228};
 
-    private static final String[] a = new String[] { "skeleton", "wither", "zombie", "char", "creeper"};
-    private static final int[] b = new int[] { 224, 225, 226, 227, 228};
-
-    public ItemSkull(int i) {
-        super(i);
-        this.a(CreativeModeTab.c);
-        this.setMaxDurability(0);
-        this.a(true);
+    public ItemSkull(int par1)
+    {
+        super(par1);
+        this.setCreativeTab(CreativeTabs.tabDecorations);
+        this.setMaxDamage(0);
+        this.setHasSubtypes(true);
     }
 
-    public boolean interactWith(ItemStack itemstack, EntityHuman entityhuman, World world, int i, int j, int k, int l, float f, float f1, float f2) {
-        if (l == 0) {
+    /**
+     * Callback for item usage. If the item does something special on right clicking, he will have one of those. Return
+     * True if something happen and false if it don't. This is for ITEMS, not BLOCKS
+     */
+    public boolean onItemUse(ItemStack par1ItemStack, EntityPlayer par2EntityPlayer, World par3World, int par4, int par5, int par6, int par7, float par8, float par9, float par10)
+    {
+        if (par7 == 0)
+        {
             return false;
-        } else if (!world.getMaterial(i, j, k).isBuildable()) {
+        }
+        else if (!par3World.getBlockMaterial(par4, par5, par6).isSolid())
+        {
             return false;
-        } else {
-            int clickedX = i, clickedY = j, clickedZ = k; // CraftBukkit
+        }
+        else
+        {
+            int var11 = par4, var12 = par5, var13 = par6; // CraftBukkit
 
-            if (l == 1) {
-                ++j;
+            if (par7 == 1)
+            {
+                ++par5;
             }
 
-            if (l == 2) {
-                --k;
+            if (par7 == 2)
+            {
+                --par6;
             }
 
-            if (l == 3) {
-                ++k;
+            if (par7 == 3)
+            {
+                ++par6;
             }
 
-            if (l == 4) {
-                --i;
+            if (par7 == 4)
+            {
+                --par4;
             }
 
-            if (l == 5) {
-                ++i;
+            if (par7 == 5)
+            {
+                ++par4;
             }
 
-            if (!entityhuman.a(i, j, k, l, itemstack)) {
+            if (!par2EntityPlayer.canPlayerEdit(par4, par5, par6, par7, par1ItemStack))
+            {
                 return false;
-            } else if (!Block.SKULL.canPlace(world, i, j, k)) {
+            }
+            else if (!Block.skull.canPlaceBlockAt(par3World, par4, par5, par6))
+            {
                 return false;
-            } else {
-                CraftBlockState blockState = CraftBlockState.getBlockState(world, i, j, k); // CraftBukkit
-
-                world.setTypeIdAndData(i, j, k, Block.SKULL.id, l);
+            }
+            else
+            {
+                CraftBlockState blockState = CraftBlockState.getBlockState(par3World, par4, par5, par6); // CraftBukkit
+                par3World.setBlockAndMetadataWithNotify(par4, par5, par6, Block.skull.blockID, par7);
                 int i1 = 0;
 
-                if (l == 1) {
-                    i1 = MathHelper.floor((double) (entityhuman.yaw * 16.0F / 360.0F) + 0.5D) & 15;
+                if (par7 == 1)
+                {
+                    i1 = MathHelper.floor_double((double)(par2EntityPlayer.rotationYaw * 16.0F / 360.0F) + 0.5D) & 15;
                 }
 
-                TileEntity tileentity = world.getTileEntity(i, j, k);
+                TileEntity tileentity = par3World.getBlockTileEntity(par4, par5, par6);
 
-                if (tileentity != null && tileentity instanceof TileEntitySkull) {
+                if (tileentity != null && tileentity instanceof TileEntitySkull)
+                {
                     String s = "";
 
-                    if (itemstack.hasTag() && itemstack.getTag().hasKey("SkullOwner")) {
-                        s = itemstack.getTag().getString("SkullOwner");
+                    if (par1ItemStack.hasTagCompound() && par1ItemStack.getTagCompound().hasKey("SkullOwner"))
+                    {
+                        s = par1ItemStack.getTagCompound().getString("SkullOwner");
                     }
 
-                    ((TileEntitySkull) tileentity).setSkullType(itemstack.getData(), s);
-                    ((TileEntitySkull) tileentity).setRotation(i1);
-                    ((BlockSkull) Block.SKULL).a(world, i, j, k, (TileEntitySkull) tileentity);
+                    ((TileEntitySkull) tileentity).setSkullType(par1ItemStack.getItemDamage(), s);
+                    ((TileEntitySkull) tileentity).setSkullRotation(i1);
+                    ((BlockSkull) Block.skull).makeWither(par3World, par4, par5, par6, (TileEntitySkull) tileentity);
                 }
 
                 // CraftBukkit start
-                org.bukkit.event.block.BlockPlaceEvent event = org.bukkit.craftbukkit.event.CraftEventFactory.callBlockPlaceEvent(world, entityhuman, blockState, clickedX, clickedY, clickedZ);
+                org.bukkit.event.block.BlockPlaceEvent event = org.bukkit.craftbukkit.event.CraftEventFactory.callBlockPlaceEvent(par3World, par2EntityPlayer, blockState, var11, var12, var13);
 
-                if (event.isCancelled() || !event.canBuild()) {
+                if (event.isCancelled() || !event.canBuild())
+                {
                     event.getBlockPlaced().setTypeIdAndData(blockState.getTypeId(), blockState.getRawData(), false);
                     return false;
                 }
-                // CraftBukkit end
 
-                --itemstack.count;
+                // CraftBukkit end
+                --par1ItemStack.stackSize;
                 return true;
             }
         }
     }
 
-    public int filterData(int i) {
-        return i;
+    /**
+     * Returns the metadata of the block which this Item (ItemBlock) can place
+     */
+    public int getMetadata(int par1)
+    {
+        return par1;
     }
 
-    public String d(ItemStack itemstack) {
-        int i = itemstack.getData();
+    public String getItemNameIS(ItemStack par1ItemStack)
+    {
+        int var2 = par1ItemStack.getItemDamage();
 
-        if (i < 0 || i >= a.length) {
-            i = 0;
+        if (var2 < 0 || var2 >= skullTypes.length)
+        {
+            var2 = 0;
         }
 
-        return super.getName() + "." + a[i];
+        return super.getItemName() + "." + skullTypes[var2];
     }
 
-    public String l(ItemStack itemstack) {
-        return itemstack.getData() == 3 && itemstack.hasTag() && itemstack.getTag().hasKey("SkullOwner") ? LocaleI18n.get("item.skull.player.name", new Object[] { itemstack.getTag().getString("SkullOwner")}) : super.l(itemstack);
+    public String getItemDisplayName(ItemStack par1ItemStack)
+    {
+        return par1ItemStack.getItemDamage() == 3 && par1ItemStack.hasTagCompound() && par1ItemStack.getTagCompound().hasKey("SkullOwner") ? StatCollector.translateToLocalFormatted("item.skull.player.name", new Object[] {par1ItemStack.getTagCompound().getString("SkullOwner")}): super.getItemDisplayName(par1ItemStack);
     }
 }

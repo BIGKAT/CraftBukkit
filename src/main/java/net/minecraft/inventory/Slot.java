@@ -1,74 +1,138 @@
-package net.minecraft.server;
+package net.minecraft.inventory;
 
-public class Slot {
+import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.item.ItemStack;
+public class Slot
+{
+    public final int slotIndex; // CraftBukkit - private -> public
 
-    public final int index; // CraftBukkit - private -> public
+    /** The inventory we want to extract a slot from. */
     public final IInventory inventory;
-    public int g;
-    public int h;
-    public int i;
 
-    public Slot(IInventory iinventory, int i, int j, int k) {
-        this.inventory = iinventory;
-        this.index = i;
-        this.h = j;
-        this.i = k;
+    /** the id of the slot(also the index in the inventory arraylist) */
+    public int slotNumber;
+
+    /** display position of the inventory slot on the screen x axis */
+    public int xDisplayPosition;
+
+    /** display position of the inventory slot on the screen y axis */
+    public int yDisplayPosition;
+
+    public Slot(IInventory par1IInventory, int par2, int par3, int par4)
+    {
+        this.inventory = par1IInventory;
+        this.slotIndex = par2;
+        this.xDisplayPosition = par3;
+        this.yDisplayPosition = par4;
     }
 
-    public void a(ItemStack itemstack, ItemStack itemstack1) {
-        if (itemstack != null && itemstack1 != null) {
-            if (itemstack.id == itemstack1.id) {
-                int i = itemstack1.count - itemstack.count;
+    /**
+     * if par2 has more items than par1, onCrafting(item,countIncrease) is called
+     */
+    public void onSlotChange(ItemStack par1ItemStack, ItemStack par2ItemStack)
+    {
+        if (par1ItemStack != null && par2ItemStack != null)
+        {
+            if (par1ItemStack.itemID == par2ItemStack.itemID)
+            {
+                int var3 = par2ItemStack.stackSize - par1ItemStack.stackSize;
 
-                if (i > 0) {
-                    this.a(itemstack, i);
+                if (var3 > 0)
+                {
+                    this.onCrafting(par1ItemStack, var3);
                 }
             }
         }
     }
 
-    protected void a(ItemStack itemstack, int i) {}
+    /**
+     * the itemStack passed in is the output - ie, iron ingots, and pickaxes, not ore and wood. Typically increases an
+     * internal count then calls onCrafting(item).
+     */
+    protected void onCrafting(ItemStack par1ItemStack, int par2) {}
 
-    protected void b(ItemStack itemstack) {}
+    /**
+     * the itemStack passed in is the output - ie, iron ingots, and pickaxes, not ore and wood.
+     */
+    protected void onCrafting(ItemStack par1ItemStack) {}
 
-    public void a(EntityHuman entityhuman, ItemStack itemstack) {
-        this.e();
+    public void onPickupFromSlot(EntityPlayer par1EntityPlayer, ItemStack par2ItemStack)
+    {
+        this.onSlotChanged();
     }
 
-    public boolean isAllowed(ItemStack itemstack) {
+    /**
+     * Check if the stack is a valid item for this slot. Always true beside for the armor slots.
+     */
+    public boolean isItemValid(ItemStack par1ItemStack)
+    {
         return true;
     }
 
-    public ItemStack getItem() {
-        return this.inventory.getItem(this.index);
+    /**
+     * Helper fnct to get the stack in the slot.
+     */
+    public ItemStack getStack()
+    {
+        return this.inventory.getStackInSlot(this.slotIndex);
     }
 
-    public boolean d() {
-        return this.getItem() != null;
+    /**
+     * Returns if this slot contains a stack.
+     */
+    public boolean getHasStack()
+    {
+        return this.getStack() != null;
     }
 
-    public void set(ItemStack itemstack) {
-        this.inventory.setItem(this.index, itemstack);
-        this.e();
+    /**
+     * Helper method to put a stack in the slot.
+     */
+    public void putStack(ItemStack par1ItemStack)
+    {
+        this.inventory.setInventorySlotContents(this.slotIndex, par1ItemStack);
+        this.onSlotChanged();
     }
 
-    public void e() {
-        this.inventory.update();
+    /**
+     * Called when the stack in a Slot changes
+     */
+    public void onSlotChanged()
+    {
+        this.inventory.onInventoryChanged();
     }
 
-    public int a() {
-        return this.inventory.getMaxStackSize();
+    /**
+     * Returns the maximum stack size for a given slot (usually the same as getInventoryStackLimit(), but 1 in the case
+     * of armor slots)
+     */
+    public int getSlotStackLimit()
+    {
+        return this.inventory.getInventoryStackLimit();
     }
 
-    public ItemStack a(int i) {
-        return this.inventory.splitStack(this.index, i);
+    /**
+     * Decrease the size of the stack in slot (first int arg) by the amount of the second int arg. Returns the new
+     * stack.
+     */
+    public ItemStack decrStackSize(int par1)
+    {
+        return this.inventory.decrStackSize(this.slotIndex, par1);
     }
 
-    public boolean a(IInventory iinventory, int i) {
-        return iinventory == this.inventory && i == this.index;
+    /**
+     * returns true if this slot is in par2 of par1
+     */
+    public boolean isSlotInInventory(IInventory par1IInventory, int par2)
+    {
+        return par1IInventory == this.inventory && par2 == this.slotIndex;
     }
 
-    public boolean a(EntityHuman entityhuman) {
+    /**
+     * Return whether this slot's stack can be taken from this slot.
+     */
+    public boolean canTakeStack(EntityPlayer par1EntityPlayer)
+    {
         return true;
     }
 }

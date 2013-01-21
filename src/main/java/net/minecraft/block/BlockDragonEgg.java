@@ -1,99 +1,145 @@
-package net.minecraft.server;
+package net.minecraft.block;
 
 import java.util.Random;
+import net.minecraft.block.material.Material;
+import net.minecraft.entity.item.EntityFallingSand;
+import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.world.World;
 
 import org.bukkit.event.block.BlockFromToEvent; // CraftBukkit
 
-public class BlockDragonEgg extends Block {
-
-    public BlockDragonEgg(int i, int j) {
-        super(i, j, Material.DRAGON_EGG);
-        this.a(0.0625F, 0.0F, 0.0625F, 0.9375F, 1.0F, 0.9375F);
+public class BlockDragonEgg extends Block
+{
+    public BlockDragonEgg(int par1, int par2)
+    {
+        super(par1, par2, Material.dragonEgg);
+        this.setBlockBounds(0.0625F, 0.0F, 0.0625F, 0.9375F, 1.0F, 0.9375F);
     }
 
-    public void onPlace(World world, int i, int j, int k) {
-        world.a(i, j, k, this.id, this.r_());
+    /**
+     * Called whenever the block is added into the world. Args: world, x, y, z
+     */
+    public void onBlockAdded(World par1World, int par2, int par3, int par4)
+    {
+        par1World.scheduleBlockUpdate(par2, par3, par4, this.blockID, this.tickRate());
     }
 
-    public void doPhysics(World world, int i, int j, int k, int l) {
-        world.a(i, j, k, this.id, this.r_());
+    /**
+     * Lets the block know when one of its neighbor changes. Doesn't know which neighbor changed (coordinates passed are
+     * their own) Args: x, y, z, neighbor blockID
+     */
+    public void onNeighborBlockChange(World par1World, int par2, int par3, int par4, int par5)
+    {
+        par1World.scheduleBlockUpdate(par2, par3, par4, this.blockID, this.tickRate());
     }
 
-    public void b(World world, int i, int j, int k, Random random) {
-        this.l(world, i, j, k);
+    /**
+     * Ticks the block if it's been scheduled
+     */
+    public void updateTick(World par1World, int par2, int par3, int par4, Random par5Random)
+    {
+        this.fallIfPossible(par1World, par2, par3, par4);
     }
 
-    private void l(World world, int i, int j, int k) {
-        if (BlockSand.canFall(world, i, j - 1, k) && j >= 0) {
-            byte b0 = 32;
+    /**
+     * Checks if the dragon egg can fall down, and if so, makes it fall.
+     */
+    private void fallIfPossible(World par1World, int par2, int par3, int par4)
+    {
+        if (BlockSand.canFallBelow(par1World, par2, par3 - 1, par4) && par3 >= 0)
+        {
+            byte var5 = 32;
 
-            if (!BlockSand.instaFall && world.d(i - b0, j - b0, k - b0, i + b0, j + b0, k + b0)) {
+            if (!BlockSand.fallInstantly && par1World.checkChunksExist(par2 - var5, par3 - var5, par4 - var5, par2 + var5, par3 + var5, par4 + var5))
+            {
                 // CraftBukkit - added data
-                EntityFallingBlock entityfallingblock = new EntityFallingBlock(world, (double) ((float) i + 0.5F), (double) ((float) j + 0.5F), (double) ((float) k + 0.5F), this.id, world.getData(i, j, k));
+                EntityFallingSand var6 = new EntityFallingSand(par1World, (double)((float) par2 + 0.5F), (double)((float) par3 + 0.5F), (double)((float) par4 + 0.5F), this.blockID, par1World.getBlockMetadata(par2, par3, par4));
+                par1World.spawnEntityInWorld(var6);
+            }
+            else
+            {
+                par1World.setBlockWithNotify(par2, par3, par4, 0);
 
-                world.addEntity(entityfallingblock);
-            } else {
-                world.setTypeId(i, j, k, 0);
-
-                while (BlockSand.canFall(world, i, j - 1, k) && j > 0) {
-                    --j;
+                while (BlockSand.canFallBelow(par1World, par2, par3 - 1, par4) && par3 > 0)
+                {
+                    --par3;
                 }
 
-                if (j > 0) {
-                    world.setTypeId(i, j, k, this.id);
+                if (par3 > 0)
+                {
+                    par1World.setBlockWithNotify(par2, par3, par4, this.blockID);
                 }
             }
         }
     }
 
-    public boolean interact(World world, int i, int j, int k, EntityHuman entityhuman, int l, float f, float f1, float f2) {
-        this.n(world, i, j, k);
+    /**
+     * Called upon block activation (right click on the block.)
+     */
+    public boolean onBlockActivated(World par1World, int par2, int par3, int par4, EntityPlayer par5EntityPlayer, int par6, float par7, float par8, float par9)
+    {
+        this.teleportNearby(par1World, par2, par3, par4);
         return true;
     }
 
-    public void attack(World world, int i, int j, int k, EntityHuman entityhuman) {
-        this.n(world, i, j, k);
+    /**
+     * Called when the block is clicked by a player. Args: x, y, z, entityPlayer
+     */
+    public void onBlockClicked(World par1World, int par2, int par3, int par4, EntityPlayer par5EntityPlayer)
+    {
+        this.teleportNearby(par1World, par2, par3, par4);
     }
 
-    private void n(World world, int i, int j, int k) {
-        if (world.getTypeId(i, j, k) == this.id) {
-            for (int l = 0; l < 1000; ++l) {
-                int i1 = i + world.random.nextInt(16) - world.random.nextInt(16);
-                int j1 = j + world.random.nextInt(8) - world.random.nextInt(8);
-                int k1 = k + world.random.nextInt(16) - world.random.nextInt(16);
+    /**
+     * Teleports the dragon egg somewhere else in a 31x19x31 area centered on the egg.
+     */
+    private void teleportNearby(World par1World, int par2, int par3, int par4)
+    {
+        if (par1World.getBlockId(par2, par3, par4) == this.blockID)
+        {
+            for (int var5 = 0; var5 < 1000; ++var5)
+            {
+                int var6 = par2 + par1World.rand.nextInt(16) - par1World.rand.nextInt(16);
+                int var7 = par3 + par1World.rand.nextInt(8) - par1World.rand.nextInt(8);
+                int var8 = par4 + par1World.rand.nextInt(16) - par1World.rand.nextInt(16);
 
-                if (world.getTypeId(i1, j1, k1) == 0) {
+                if (par1World.getBlockId(var6, var7, var8) == 0)
+                {
                     // CraftBukkit start
-                    org.bukkit.block.Block from = world.getWorld().getBlockAt(i, j, k);
-                    org.bukkit.block.Block to = world.getWorld().getBlockAt(i1, j1, k1);
+                    org.bukkit.block.Block from = par1World.getWorld().getBlockAt(par2, par3, par4);
+                    org.bukkit.block.Block to = par1World.getWorld().getBlockAt(var6, var7, var8);
                     BlockFromToEvent event = new BlockFromToEvent(from, to);
                     org.bukkit.Bukkit.getPluginManager().callEvent(event);
 
-                    if (event.isCancelled()) {
+                    if (event.isCancelled())
+                    {
                         return;
                     }
 
-                    i1 = event.getToBlock().getX();
-                    j1 = event.getToBlock().getY();
-                    k1 = event.getToBlock().getZ();
+                    var6 = event.getToBlock().getX();
+                    var7 = event.getToBlock().getY();
+                    var8 = event.getToBlock().getZ();
                     // CraftBukkit end
 
-                    if (!world.isStatic) {
-                        world.setTypeIdAndData(i1, j1, k1, this.id, world.getData(i, j, k));
-                        world.setTypeId(i, j, k, 0);
-                    } else {
-                        short short1 = 128;
+                    if (!par1World.isRemote)
+                    {
+                        par1World.setBlockAndMetadataWithNotify(var6, var7, var8, this.blockID, par1World.getBlockMetadata(par2, par3, par4));
+                        par1World.setBlockWithNotify(par2, par3, par4, 0);
+                    }
+                    else
+                    {
+                        short var9 = 128;
 
-                        for (int l1 = 0; l1 < short1; ++l1) {
-                            double d0 = world.random.nextDouble();
-                            float f = (world.random.nextFloat() - 0.5F) * 0.2F;
-                            float f1 = (world.random.nextFloat() - 0.5F) * 0.2F;
-                            float f2 = (world.random.nextFloat() - 0.5F) * 0.2F;
-                            double d1 = (double) i1 + (double) (i - i1) * d0 + (world.random.nextDouble() - 0.5D) * 1.0D + 0.5D;
-                            double d2 = (double) j1 + (double) (j - j1) * d0 + world.random.nextDouble() * 1.0D - 0.5D;
-                            double d3 = (double) k1 + (double) (k - k1) * d0 + (world.random.nextDouble() - 0.5D) * 1.0D + 0.5D;
-
-                            world.addParticle("portal", d1, d2, d3, (double) f, (double) f1, (double) f2);
+                        for (int var10 = 0; var10 < var9; ++var10)
+                        {
+                            double var11 = par1World.rand.nextDouble();
+                            float var13 = (par1World.rand.nextFloat() - 0.5F) * 0.2F;
+                            float var14 = (par1World.rand.nextFloat() - 0.5F) * 0.2F;
+                            float var15 = (par1World.rand.nextFloat() - 0.5F) * 0.2F;
+                            double var16 = (double)var6 + (double)(par2 - var6) * var11 + (par1World.rand.nextDouble() - 0.5D) * 1.0D + 0.5D;
+                            double var18 = (double)var7 + (double)(par3 - var7) * var11 + par1World.rand.nextDouble() * 1.0D - 0.5D;
+                            double var20 = (double)var8 + (double)(par4 - var8) * var11 + (par1World.rand.nextDouble() - 0.5D) * 1.0D + 0.5D;
+                            par1World.spawnParticle("portal", var16, var18, var20, (double)var13, (double)var14, (double)var15);
                         }
                     }
 
@@ -103,19 +149,36 @@ public class BlockDragonEgg extends Block {
         }
     }
 
-    public int r_() {
+    /**
+     * How many world ticks before ticking
+     */
+    public int tickRate()
+    {
         return 5;
     }
 
-    public boolean c() {
+    /**
+     * Is this block (a) opaque and (b) a full 1m cube?  This determines whether or not to render the shared face of two
+     * adjacent blocks and also whether the player can attach torches, redstone wire, etc to this block.
+     */
+    public boolean isOpaqueCube()
+    {
         return false;
     }
 
-    public boolean b() {
+    /**
+     * If this block doesn't render as an ordinary block it will return False (examples: signs, buttons, stairs, etc)
+     */
+    public boolean renderAsNormalBlock()
+    {
         return false;
     }
 
-    public int d() {
+    /**
+     * The type of render function that is called for this block
+     */
+    public int getRenderType()
+    {
         return 27;
     }
 }

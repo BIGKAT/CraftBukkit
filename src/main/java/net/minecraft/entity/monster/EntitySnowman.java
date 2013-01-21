@@ -1,108 +1,156 @@
-package net.minecraft.server;
+package net.minecraft.entity.monster;
 
 // CraftBukkit start
 import org.bukkit.event.block.EntityBlockFormEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
+import net.minecraft.block.Block;
+import net.minecraft.entity.EntityLiving;
+import net.minecraft.entity.IRangedAttackMob;
+import net.minecraft.entity.ai.EntityAIArrowAttack;
+import net.minecraft.entity.ai.EntityAILookIdle;
+import net.minecraft.entity.ai.EntityAINearestAttackableTarget;
+import net.minecraft.entity.ai.EntityAIWander;
+import net.minecraft.entity.ai.EntityAIWatchClosest;
+import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.entity.projectile.EntitySnowball;
+import net.minecraft.item.Item;
+import net.minecraft.util.DamageSource;
+import net.minecraft.util.MathHelper;
+import net.minecraft.world.World;
 // CraftBukkit end
 
-public class EntitySnowman extends EntityGolem implements IRangedEntity {
-
-    public EntitySnowman(World world) {
-        super(world);
+public class EntitySnowman extends EntityGolem implements IRangedAttackMob
+{
+    public EntitySnowman(World par1World)
+    {
+        super(par1World);
         this.texture = "/mob/snowman.png";
-        this.a(0.4F, 1.8F);
-        this.getNavigation().a(true);
-        this.goalSelector.a(1, new PathfinderGoalArrowAttack(this, 0.25F, 20, 10.0F));
-        this.goalSelector.a(2, new PathfinderGoalRandomStroll(this, 0.2F));
-        this.goalSelector.a(3, new PathfinderGoalLookAtPlayer(this, EntityHuman.class, 6.0F));
-        this.goalSelector.a(4, new PathfinderGoalRandomLookaround(this));
-        this.targetSelector.a(1, new PathfinderGoalNearestAttackableTarget(this, EntityLiving.class, 16.0F, 0, true, false, IMonster.a));
+        this.setSize(0.4F, 1.8F);
+        this.getNavigator().setAvoidsWater(true);
+        this.tasks.addTask(1, new EntityAIArrowAttack(this, 0.25F, 20, 10.0F));
+        this.tasks.addTask(2, new EntityAIWander(this, 0.2F));
+        this.tasks.addTask(3, new EntityAIWatchClosest(this, EntityPlayer.class, 6.0F));
+        this.tasks.addTask(4, new EntityAILookIdle(this));
+        this.targetTasks.addTask(1, new EntityAINearestAttackableTarget(this, EntityLiving.class, 16.0F, 0, true, false, IMob.mobSelector));
     }
 
-    public boolean be() {
+    /**
+     * Returns true if the newer Entity AI code should be run
+     */
+    public boolean isAIEnabled()
+    {
         return true;
     }
 
-    public int getMaxHealth() {
+    public int getMaxHealth()
+    {
         return 4;
     }
 
-    public void c() {
-        super.c();
-        if (this.G()) {
+    /**
+     * Called frequently so the entity can update its state every tick as required. For example, zombies and skeletons
+     * use this to react to sunlight and start to burn.
+     */
+    public void onLivingUpdate()
+    {
+        super.onLivingUpdate();
+
+        if (this.isWet())
+        {
             // CraftBukkit start
             EntityDamageEvent event = new EntityDamageEvent(this.getBukkitEntity(), EntityDamageEvent.DamageCause.DROWNING, 1);
-            this.world.getServer().getPluginManager().callEvent(event);
+            this.worldObj.getServer().getPluginManager().callEvent(event);
 
-            if (!event.isCancelled()) {
+            if (!event.isCancelled())
+            {
                 event.getEntity().setLastDamageCause(event);
-                this.damageEntity(DamageSource.DROWN, event.getDamage());
+                this.attackEntityFrom(DamageSource.drown, event.getDamage());
             }
+
             // CraftBukkit end
         }
 
-        int i = MathHelper.floor(this.locX);
-        int j = MathHelper.floor(this.locZ);
+        int var1 = MathHelper.floor_double(this.posX);
+        int var2 = MathHelper.floor_double(this.posZ);
 
-        if (this.world.getBiome(i, j).j() > 1.0F) {
+        if (this.worldObj.getBiomeGenForCoords(var1, var2).getFloatTemperature() > 1.0F)
+        {
             // CraftBukkit start
             EntityDamageEvent event = new EntityDamageEvent(this.getBukkitEntity(), EntityDamageEvent.DamageCause.MELTING, 1);
-            this.world.getServer().getPluginManager().callEvent(event);
+            this.worldObj.getServer().getPluginManager().callEvent(event);
 
-            if (!event.isCancelled()) {
+            if (!event.isCancelled())
+            {
                 event.getEntity().setLastDamageCause(event);
-                this.damageEntity(DamageSource.BURN, event.getDamage());
+                this.attackEntityFrom(DamageSource.onFire, event.getDamage());
             }
+
             // CraftBukkit end
         }
 
-        for (i = 0; i < 4; ++i) {
-            j = MathHelper.floor(this.locX + (double) ((float) (i % 2 * 2 - 1) * 0.25F));
-            int k = MathHelper.floor(this.locY);
-            int l = MathHelper.floor(this.locZ + (double) ((float) (i / 2 % 2 * 2 - 1) * 0.25F));
+        for (var1 = 0; var1 < 4; ++var1)
+        {
+            var2 = MathHelper.floor_double(this.posX + (double)((float)(var1 % 2 * 2 - 1) * 0.25F));
+            int var3 = MathHelper.floor_double(this.posY);
+            int var4 = MathHelper.floor_double(this.posZ + (double)((float)(var1 / 2 % 2 * 2 - 1) * 0.25F));
 
-            if (this.world.getTypeId(j, k, l) == 0 && this.world.getBiome(j, l).j() < 0.8F && Block.SNOW.canPlace(this.world, j, k, l)) {
+            if (this.worldObj.getBlockId(var2, var3, var4) == 0 && this.worldObj.getBiomeGenForCoords(var2, var4).getFloatTemperature() < 0.8F && Block.snow.canPlaceBlockAt(this.worldObj, var2, var3, var4))
+            {
                 // CraftBukkit start
-                org.bukkit.block.BlockState blockState = this.world.getWorld().getBlockAt(j, k, l).getState();
-                blockState.setTypeId(Block.SNOW.id);
-
+                org.bukkit.block.BlockState blockState = this.worldObj.getWorld().getBlockAt(var2, var3, var4).getState();
+                blockState.setTypeId(Block.snow.blockID);
                 EntityBlockFormEvent event = new EntityBlockFormEvent(this.getBukkitEntity(), blockState.getBlock(), blockState);
-                this.world.getServer().getPluginManager().callEvent(event);
+                this.worldObj.getServer().getPluginManager().callEvent(event);
 
-                if(!event.isCancelled()) {
+                if (!event.isCancelled())
+                {
                     blockState.update(true);
                 }
+
                 // CraftBukkit end
             }
         }
     }
 
-    protected int getLootId() {
-        return Item.SNOW_BALL.id;
+    /**
+     * Returns the item ID for the item the mob drops on death.
+     */
+    protected int getDropItemId()
+    {
+        return Item.snowball.itemID;
     }
 
-    protected void dropDeathLoot(boolean flag, int i) {
+    /**
+     * Drop 0-2 items of this living's type. @param par1 - Whether this entity has recently been hit by a player. @param
+     * par2 - Level of Looting used to kill this mob.
+     */
+    protected void dropFewItems(boolean par1, int par2)
+    {
         // CraftBukkit start
         java.util.List<org.bukkit.inventory.ItemStack> loot = new java.util.ArrayList<org.bukkit.inventory.ItemStack>();
-        int j = this.random.nextInt(16);
+        int j = this.rand.nextInt(16);
 
-        if (j > 0) {
-            loot.add(new org.bukkit.inventory.ItemStack(Item.SNOW_BALL.id, j));
+        if (j > 0)
+        {
+            loot.add(new org.bukkit.inventory.ItemStack(Item.snowball.itemID, j));
         }
 
         org.bukkit.craftbukkit.event.CraftEventFactory.callEntityDeathEvent(this, loot);
         // CraftBukkit end
     }
 
-    public void d(EntityLiving entityliving) {
-        EntitySnowball entitysnowball = new EntitySnowball(this.world, this);
-        double d0 = entityliving.locX - this.locX;
-        double d1 = entityliving.locY + (double) entityliving.getHeadHeight() - 1.100000023841858D - entitysnowball.locY;
-        double d2 = entityliving.locZ - this.locZ;
-        float f = MathHelper.sqrt(d0 * d0 + d2 * d2) * 0.2F;
-
-        entitysnowball.shoot(d0, d1 + (double) f, d2, 1.6F, 12.0F);
-        this.makeSound("random.bow", 1.0F, 1.0F / (this.aB().nextFloat() * 0.4F + 0.8F));
-        this.world.addEntity(entitysnowball);
+    /**
+     * Attack the specified entity using a ranged attack.
+     */
+    public void attackEntityWithRangedAttack(EntityLiving par1EntityLiving)
+    {
+        EntitySnowball var2 = new EntitySnowball(this.worldObj, this);
+        double var3 = par1EntityLiving.posX - this.posX;
+        double var5 = par1EntityLiving.posY + (double)par1EntityLiving.getEyeHeight() - 1.100000023841858D - var2.posY;
+        double var7 = par1EntityLiving.posZ - this.posZ;
+        float var9 = MathHelper.sqrt_double(var3 * var3 + var7 * var7) * 0.2F;
+        var2.setThrowableHeading(var3, var5 + (double)var9, var7, 1.6F, 12.0F);
+        this.playSound("random.bow", 1.0F, 1.0F / (this.getRNG().nextFloat() * 0.4F + 0.8F));
+        this.worldObj.spawnEntityInWorld(var2);
     }
 }

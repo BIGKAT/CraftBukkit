@@ -1,4 +1,4 @@
-package net.minecraft.server;
+package net.minecraft.network.packet;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -7,59 +7,67 @@ import java.util.List;
 import java.util.zip.DataFormatException;
 import java.util.zip.Deflater;
 import java.util.zip.Inflater;
+import net.minecraft.world.chunk.Chunk;
 
-public class Packet56MapChunkBulk extends Packet {
+public class Packet56MapChunks extends Packet
+{
+    private int[] chunkPostX;
+    private int[] chunkPosZ;
+    public int[] field_73590_a;
+    public int[] field_73588_b;
 
-    private int[] c;
-    private int[] d;
-    public int[] a;
-    public int[] b;
-    private byte[] buffer;
-    private byte[][] inflatedBuffers;
-    private int size;
-    private boolean h;
-    private byte[] buildBuffer = new byte[0]; // CraftBukkit - remove static
+    /** The compressed chunk data buffer */
+    private byte[] chunkDataBuffer;
+    private byte[][] field_73584_f;
+
+    /** total size of the compressed data */
+    private int dataLength;
+    private boolean field_92024_h;
+    private byte[] chunkDataNotCompressed = new byte[0]; // CraftBukkit - remove static
     // CraftBukkit start
-    static final ThreadLocal<Deflater> localDeflater = new ThreadLocal<Deflater>() {
+    static final ThreadLocal<Deflater> localDeflater = new ThreadLocal<Deflater>()
+    {
         @Override
-        protected Deflater initialValue() {
+        protected Deflater initialValue()
+        {
             // Don't use higher compression level, slows things down too much
             return new Deflater(6);
         }
     };
     // CraftBukkit end
 
-    public Packet56MapChunkBulk() {}
+    public Packet56MapChunks() {}
 
-    public Packet56MapChunkBulk(List list) {
-        int i = list.size();
+    public Packet56MapChunks(List par1List)
+    {
+        int var2 = par1List.size();
+        this.chunkPostX = new int[var2];
+        this.chunkPosZ = new int[var2];
+        this.field_73590_a = new int[var2];
+        this.field_73588_b = new int[var2];
+        this.field_73584_f = new byte[var2][];
+        this.field_92024_h = !par1List.isEmpty() && !((Chunk)par1List.get(0)).worldObj.provider.hasNoSky;
+        int var3 = 0;
 
-        this.c = new int[i];
-        this.d = new int[i];
-        this.a = new int[i];
-        this.b = new int[i];
-        this.inflatedBuffers = new byte[i][];
-        this.h = !list.isEmpty() && !((Chunk) list.get(0)).world.worldProvider.f;
-        int j = 0;
+        for (int var4 = 0; var4 < var2; ++var4)
+        {
+            Chunk var5 = (Chunk)par1List.get(var4);
+            Packet51MapChunkData var6 = Packet51MapChunk.getMapChunkData(var5, true, '\uffff');
 
-        for (int k = 0; k < i; ++k) {
-            Chunk chunk = (Chunk) list.get(k);
-            ChunkMap chunkmap = Packet51MapChunk.a(chunk, true, '\uffff');
-
-            if (buildBuffer.length < j + chunkmap.a.length) {
-                byte[] abyte = new byte[j + chunkmap.a.length];
-
-                System.arraycopy(buildBuffer, 0, abyte, 0, buildBuffer.length);
-                buildBuffer = abyte;
+            if (chunkDataNotCompressed.length < var3 + var6.compressedData.length)
+            {
+                byte[] var7 = new byte[var3 + var6.compressedData.length];
+                System.arraycopy(chunkDataNotCompressed, 0, var7, 0, chunkDataNotCompressed.length);
+                chunkDataNotCompressed = var7;
             }
 
-            System.arraycopy(chunkmap.a, 0, buildBuffer, j, chunkmap.a.length);
-            j += chunkmap.a.length;
-            this.c[k] = chunk.x;
-            this.d[k] = chunk.z;
-            this.a[k] = chunkmap.b;
-            this.b[k] = chunkmap.c;
-            this.inflatedBuffers[k] = chunkmap.a;
+            System.arraycopy(var6.compressedData, 0, chunkDataNotCompressed, var3, var6.compressedData.length);
+            var3 += var6.compressedData.length;
+            this.chunkPostX[var4] = var5.xPosition;
+            this.chunkPosZ[var4] = var5.zPosition;
+            this.field_73590_a[var4] = var6.chunkExistFlag;
+            this.field_73588_b[var4] = var6.chunkHasAddSectionFlag;
+            this.field_73584_f[var4] = var6.compressedData;
         }
 
         /* CraftBukkit start - moved to compress()
@@ -77,102 +85,123 @@ public class Packet56MapChunkBulk extends Packet {
     }
 
     // Add compression method
-    public void compress() {
-        if (this.buffer != null) {
+    public void compress()
+    {
+        if (this.chunkDataBuffer != null)
+        {
             return;
         }
 
         Deflater deflater = localDeflater.get();
         deflater.reset();
-        deflater.setInput(this.buildBuffer);
+        deflater.setInput(this.chunkDataNotCompressed);
         deflater.finish();
-
-        this.buffer = new byte[this.buildBuffer.length + 100];
-        this.size = deflater.deflate(this.buffer);
+        this.chunkDataBuffer = new byte[this.chunkDataNotCompressed.length + 100];
+        this.dataLength = deflater.deflate(this.chunkDataBuffer);
     }
     // CraftBukkit end
 
-    public void a(DataInputStream datainputstream) throws IOException { // CraftBukkit - throws IOException
-        short short1 = datainputstream.readShort();
+    public void readPacketData(DataInputStream par1DataInputStream) throws IOException   // CraftBukkit - throws IOException
+    {
+        short var2 = par1DataInputStream.readShort();
+        this.dataLength = par1DataInputStream.readInt();
+        this.field_92024_h = par1DataInputStream.readBoolean();
+        this.chunkPostX = new int[var2];
+        this.chunkPosZ = new int[var2];
+        this.field_73590_a = new int[var2];
+        this.field_73588_b = new int[var2];
+        this.field_73584_f = new byte[var2][];
 
-        this.size = datainputstream.readInt();
-        this.h = datainputstream.readBoolean();
-        this.c = new int[short1];
-        this.d = new int[short1];
-        this.a = new int[short1];
-        this.b = new int[short1];
-        this.inflatedBuffers = new byte[short1][];
-        if (buildBuffer.length < this.size) {
-            buildBuffer = new byte[this.size];
+        if (chunkDataNotCompressed.length < this.dataLength)
+        {
+            chunkDataNotCompressed = new byte[this.dataLength];
         }
 
-        datainputstream.readFully(buildBuffer, 0, this.size);
-        byte[] abyte = new byte[196864 * short1];
-        Inflater inflater = new Inflater();
+        par1DataInputStream.readFully(chunkDataNotCompressed, 0, this.dataLength);
+        byte[] var3 = new byte[196864 * var2];
+        Inflater var4 = new Inflater();
+        var4.setInput(chunkDataNotCompressed, 0, this.dataLength);
 
-        inflater.setInput(buildBuffer, 0, this.size);
-
-        try {
-            inflater.inflate(abyte);
-        } catch (DataFormatException dataformatexception) {
+        try
+        {
+            var4.inflate(var3);
+        }
+        catch (DataFormatException var12)
+        {
             throw new IOException("Bad compressed data format");
-        } finally {
-            inflater.end();
+        }
+        finally
+        {
+            var4.end();
         }
 
-        int i = 0;
+        int var5 = 0;
 
-        for (int j = 0; j < short1; ++j) {
-            this.c[j] = datainputstream.readInt();
-            this.d[j] = datainputstream.readInt();
-            this.a[j] = datainputstream.readShort();
-            this.b[j] = datainputstream.readShort();
-            int k = 0;
-            int l = 0;
+        for (int var6 = 0; var6 < var2; ++var6)
+        {
+            this.chunkPostX[var6] = par1DataInputStream.readInt();
+            this.chunkPosZ[var6] = par1DataInputStream.readInt();
+            this.field_73590_a[var6] = par1DataInputStream.readShort();
+            this.field_73588_b[var6] = par1DataInputStream.readShort();
+            int var7 = 0;
+            int var8 = 0;
+            int var9;
 
-            int i1;
-
-            for (i1 = 0; i1 < 16; ++i1) {
-                k += this.a[j] >> i1 & 1;
-                l += this.b[j] >> i1 & 1;
+            for (var9 = 0; var9 < 16; ++var9)
+            {
+                var7 += this.field_73590_a[var6] >> var9 & 1;
+                var8 += this.field_73588_b[var6] >> var9 & 1;
             }
 
-            i1 = 2048 * 4 * k + 256;
-            i1 += 2048 * l;
-            if (this.h) {
-                i1 += 2048 * k;
+            var9 = 2048 * 4 * var7 + 256;
+            var9 += 2048 * var8;
+
+            if (this.field_92024_h)
+            {
+                var9 += 2048 * var7;
             }
 
-            this.inflatedBuffers[j] = new byte[i1];
-            System.arraycopy(abyte, i, this.inflatedBuffers[j], 0, i1);
-            i += i1;
+            this.field_73584_f[var6] = new byte[var9];
+            System.arraycopy(var3, var5, this.field_73584_f[var6], 0, var9);
+            var5 += var9;
         }
     }
 
-    public void a(DataOutputStream dataoutputstream) throws IOException { // CraftBukkit - throws IOException
+    public void writePacketData(DataOutputStream par1DataOutputStream) throws IOException   // CraftBukkit - throws IOException
+    {
         compress(); // CraftBukkit
-        dataoutputstream.writeShort(this.c.length);
-        dataoutputstream.writeInt(this.size);
-        dataoutputstream.writeBoolean(this.h);
-        dataoutputstream.write(this.buffer, 0, this.size);
+        par1DataOutputStream.writeShort(this.chunkPostX.length);
+        par1DataOutputStream.writeInt(this.dataLength);
+        par1DataOutputStream.writeBoolean(this.field_92024_h);
+        par1DataOutputStream.write(this.chunkDataBuffer, 0, this.dataLength);
 
-        for (int i = 0; i < this.c.length; ++i) {
-            dataoutputstream.writeInt(this.c[i]);
-            dataoutputstream.writeInt(this.d[i]);
-            dataoutputstream.writeShort((short) (this.a[i] & '\uffff'));
-            dataoutputstream.writeShort((short) (this.b[i] & '\uffff'));
+        for (int var2 = 0; var2 < this.chunkPostX.length; ++var2)
+        {
+            par1DataOutputStream.writeInt(this.chunkPostX[var2]);
+            par1DataOutputStream.writeInt(this.chunkPosZ[var2]);
+            par1DataOutputStream.writeShort((short)(this.field_73590_a[var2] & '\uffff'));
+            par1DataOutputStream.writeShort((short)(this.field_73588_b[var2] & '\uffff'));
         }
     }
 
-    public void handle(Connection connection) {
-        connection.a(this);
+    /**
+     * Passes this Packet on to the NetHandler for processing.
+     */
+    public void processPacket(NetHandler par1NetHandler)
+    {
+        par1NetHandler.handleMapChunks(this);
     }
 
-    public int a() {
-        return 6 + this.size + 12 * this.d();
+    /**
+     * Abstract. Return the size of the packet (not counting the header).
+     */
+    public int getPacketSize()
+    {
+        return 6 + this.dataLength + 12 * this.getNumberOfChunkInPacket();
     }
 
-    public int d() {
-        return this.c.length;
+    public int getNumberOfChunkInPacket()
+    {
+        return this.chunkPostX.length;
     }
 }

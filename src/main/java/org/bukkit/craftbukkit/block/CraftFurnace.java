@@ -1,6 +1,5 @@
 package org.bukkit.craftbukkit.block;
 
-import net.minecraft.server.TileEntityFurnace;
 import org.bukkit.block.Block;
 import org.bukkit.block.Furnace;
 import org.bukkit.craftbukkit.CraftWorld;
@@ -9,13 +8,13 @@ import org.bukkit.inventory.FurnaceInventory;
 
 public class CraftFurnace extends CraftBlockState implements Furnace {
     private final CraftWorld world;
-    private final TileEntityFurnace furnace;
+    private final net.minecraft.tileentity.TileEntityFurnace/*was:TileEntityFurnace*/ furnace;
 
     public CraftFurnace(final Block block) {
         super(block);
 
         world = (CraftWorld) block.getWorld();
-        furnace = (TileEntityFurnace) world.getTileEntityAt(getX(), getY(), getZ());
+        furnace = (net.minecraft.tileentity.TileEntityFurnace/*was:TileEntityFurnace*/) world.getTileEntityAt(getX(), getY(), getZ());
     }
 
     public FurnaceInventory getInventory() {
@@ -27,25 +26,25 @@ public class CraftFurnace extends CraftBlockState implements Furnace {
         boolean result = super.update(force);
 
         if (result) {
-            furnace.update();
+            furnace.onInventoryChanged/*was:update*/();
         }
 
         return result;
     }
 
     public short getBurnTime() {
-        return (short) furnace.burnTime;
+        return (short) furnace.furnaceBurnTime/*was:burnTime*/;
     }
 
     public void setBurnTime(short burnTime) {
-        furnace.burnTime = burnTime;
+        furnace.furnaceBurnTime/*was:burnTime*/ = burnTime;
     }
 
     public short getCookTime() {
-        return (short) furnace.cookTime;
+        return (short) furnace.furnaceCookTime/*was:cookTime*/;
     }
 
     public void setCookTime(short cookTime) {
-        furnace.cookTime = cookTime;
+        furnace.furnaceCookTime/*was:cookTime*/ = cookTime;
     }
 }

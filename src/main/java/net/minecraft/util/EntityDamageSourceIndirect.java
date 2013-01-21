@@ -1,28 +1,38 @@
-package net.minecraft.server;
+package net.minecraft.util;
 
-public class EntityDamageSourceIndirect extends EntityDamageSource {
+import net.minecraft.entity.Entity;
+import net.minecraft.entity.player.EntityPlayer;
+public class EntityDamageSourceIndirect extends EntityDamageSource
+{
+    private Entity indirectEntity;
 
-    private Entity owner;
-
-    public EntityDamageSourceIndirect(String s, Entity entity, Entity entity1) {
-        super(s, entity);
-        this.owner = entity1;
+    public EntityDamageSourceIndirect(String par1Str, Entity par2Entity, Entity par3Entity)
+    {
+        super(par1Str, par2Entity);
+        this.indirectEntity = par3Entity;
     }
 
-    public Entity f() {
-        return this.r;
+    public Entity getSourceOfDamage()
+    {
+        return this.damageSourceEntity;
     }
 
-    public Entity getEntity() {
-        return this.owner;
+    public Entity getEntity()
+    {
+        return this.indirectEntity;
     }
 
-    public String getLocalizedDeathMessage(EntityHuman entityhuman) {
-        return LocaleI18n.get("death." + this.translationIndex, new Object[] { entityhuman.name, this.owner == null ? this.r.getLocalizedName() : this.owner.getLocalizedName()});
+    /**
+     * Returns the message to be displayed on player death.
+     */
+    public String getDeathMessage(EntityPlayer par1EntityPlayer)
+    {
+        return StatCollector.translateToLocalFormatted("death." + this.damageType, new Object[] {par1EntityPlayer.username, this.indirectEntity == null ? this.damageSourceEntity.getEntityName() : this.indirectEntity.getEntityName()});
     }
 
     // CraftBukkit start
-    public Entity getProximateDamageSource() {
+    public Entity getProximateDamageSource()
+    {
         return super.getEntity();
     }
     // CraftBukkit end

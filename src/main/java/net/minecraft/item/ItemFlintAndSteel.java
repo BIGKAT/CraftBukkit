@@ -1,82 +1,102 @@
-package net.minecraft.server;
+package net.minecraft.item;
 
 // CraftBukkit start
 import org.bukkit.craftbukkit.block.CraftBlockState;
 import org.bukkit.entity.Player;
 import org.bukkit.event.block.BlockIgniteEvent;
+import net.minecraft.block.Block;
+import net.minecraft.creativetab.CreativeTabs;
+import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.world.World;
 // CraftBukkit end
 
-public class ItemFlintAndSteel extends Item {
-
-    public ItemFlintAndSteel(int i) {
-        super(i);
+public class ItemFlintAndSteel extends Item
+{
+    public ItemFlintAndSteel(int par1)
+    {
+        super(par1);
         this.maxStackSize = 1;
-        this.setMaxDurability(64);
-        this.a(CreativeModeTab.i);
+        this.setMaxDamage(64);
+        this.setCreativeTab(CreativeTabs.tabTools);
     }
 
-    public boolean interactWith(ItemStack itemstack, EntityHuman entityhuman, World world, int i, int j, int k, int l, float f, float f1, float f2) {
-        int clickedX = i, clickedY = j, clickedZ = k; // CraftBukkit
+    /**
+     * Callback for item usage. If the item does something special on right clicking, he will have one of those. Return
+     * True if something happen and false if it don't. This is for ITEMS, not BLOCKS
+     */
+    public boolean onItemUse(ItemStack par1ItemStack, EntityPlayer par2EntityPlayer, World par3World, int par4, int par5, int par6, int par7, float par8, float par9, float par10)
+    {
+        int var11 = par4, clickedY = par5, clickedZ = par6; // CraftBukkit
 
-        if (l == 0) {
-            --j;
+        if (par7 == 0)
+        {
+            --par5;
         }
 
-        if (l == 1) {
-            ++j;
+        if (par7 == 1)
+        {
+            ++par5;
         }
 
-        if (l == 2) {
-            --k;
+        if (par7 == 2)
+        {
+            --par6;
         }
 
-        if (l == 3) {
-            ++k;
+        if (par7 == 3)
+        {
+            ++par6;
         }
 
-        if (l == 4) {
-            --i;
+        if (par7 == 4)
+        {
+            --par4;
         }
 
-        if (l == 5) {
-            ++i;
+        if (par7 == 5)
+        {
+            ++par4;
         }
 
-        if (!entityhuman.a(i, j, k, l, itemstack)) {
+        if (!par2EntityPlayer.canPlayerEdit(par4, par5, par6, par7, par1ItemStack))
+        {
             return false;
-        } else {
-            int i1 = world.getTypeId(i, j, k);
+        }
+        else
+        {
+            int i1 = par3World.getBlockId(par4, par5, par6);
 
-            if (i1 == 0) {
+            if (i1 == 0)
+            {
                 // CraftBukkit start - store the clicked block
-                org.bukkit.block.Block blockClicked = world.getWorld().getBlockAt(i, j, k);
-                Player thePlayer = (Player) entityhuman.getBukkitEntity();
-
+                org.bukkit.block.Block blockClicked = par3World.getWorld().getBlockAt(par4, par5, par6);
+                Player thePlayer = (Player) par2EntityPlayer.getBukkitEntity();
                 BlockIgniteEvent eventIgnite = new BlockIgniteEvent(blockClicked, BlockIgniteEvent.IgniteCause.FLINT_AND_STEEL, thePlayer);
-                world.getServer().getPluginManager().callEvent(eventIgnite);
+                par3World.getServer().getPluginManager().callEvent(eventIgnite);
 
-                if (eventIgnite.isCancelled()) {
-                    itemstack.damage(1, entityhuman);
+                if (eventIgnite.isCancelled())
+                {
+                    par1ItemStack.damageItem(1, par2EntityPlayer);
                     return false;
                 }
 
-                CraftBlockState blockState = CraftBlockState.getBlockState(world, i, j, k);
+                CraftBlockState blockState = CraftBlockState.getBlockState(par3World, par4, par5, par6);
                 // CraftBukkit end
-
-                world.makeSound((double) i + 0.5D, (double) j + 0.5D, (double) k + 0.5D, "fire.ignite", 1.0F, d.nextFloat() * 0.4F + 0.8F);
-                world.setTypeId(i, j, k, Block.FIRE.id);
-
+                par3World.playSoundEffect((double)par4 + 0.5D, (double)par5 + 0.5D, (double)par6 + 0.5D, "fire.ignite", 1.0F, itemRand.nextFloat() * 0.4F + 0.8F);
+                par3World.setBlockWithNotify(par4, par5, par6, Block.fire.blockID);
                 // CraftBukkit start
-                org.bukkit.event.block.BlockPlaceEvent placeEvent = org.bukkit.craftbukkit.event.CraftEventFactory.callBlockPlaceEvent(world, entityhuman, blockState, clickedX, clickedY, clickedZ);
+                org.bukkit.event.block.BlockPlaceEvent placeEvent = org.bukkit.craftbukkit.event.CraftEventFactory.callBlockPlaceEvent(par3World, par2EntityPlayer, blockState, var11, clickedY, clickedZ);
 
-                if (placeEvent.isCancelled() || !placeEvent.canBuild()) {
+                if (placeEvent.isCancelled() || !placeEvent.canBuild())
+                {
                     placeEvent.getBlockPlaced().setTypeIdAndData(0, (byte) 0, false);
                     return false;
                 }
+
                 // CraftBukkit end
             }
 
-            itemstack.damage(1, entityhuman);
+            par1ItemStack.damageItem(1, par2EntityPlayer);
             return true;
         }
     }

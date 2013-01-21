@@ -1,74 +1,113 @@
-package net.minecraft.server;
+package net.minecraft.entity.ai;
 
 // CraftBukkit start
 import org.bukkit.craftbukkit.event.CraftEventFactory;
 import org.bukkit.Material;
+import net.minecraft.block.Block;
+import net.minecraft.entity.EntityLiving;
+import net.minecraft.util.MathHelper;
+import net.minecraft.world.World;
 // CraftBukkit end
 
-public class PathfinderGoalEatTile extends PathfinderGoal {
+public class EntityAIEatGrass extends EntityAIBase
+{
+    private EntityLiving theEntity;
+    private World theWorld;
 
-    private EntityLiving b;
-    private World c;
-    int a = 0;
+    /** A decrementing tick used for the sheep's head offset and animation. */
+    int eatGrassTick = 0;
 
-    public PathfinderGoalEatTile(EntityLiving entityliving) {
-        this.b = entityliving;
-        this.c = entityliving.world;
-        this.a(7);
+    public EntityAIEatGrass(EntityLiving par1EntityLiving)
+    {
+        this.theEntity = par1EntityLiving;
+        this.theWorld = par1EntityLiving.worldObj;
+        this.setMutexBits(7);
     }
 
-    public boolean a() {
-        if (this.b.aB().nextInt(this.b.isBaby() ? 50 : 1000) != 0) {
+    /**
+     * Returns whether the EntityAIBase should begin execution.
+     */
+    public boolean shouldExecute()
+    {
+        if (this.theEntity.getRNG().nextInt(this.theEntity.isChild() ? 50 : 1000) != 0)
+        {
             return false;
-        } else {
-            int i = MathHelper.floor(this.b.locX);
-            int j = MathHelper.floor(this.b.locY);
-            int k = MathHelper.floor(this.b.locZ);
-
-            return this.c.getTypeId(i, j, k) == Block.LONG_GRASS.id && this.c.getData(i, j, k) == 1 ? true : this.c.getTypeId(i, j - 1, k) == Block.GRASS.id;
+        }
+        else
+        {
+            int var1 = MathHelper.floor_double(this.theEntity.posX);
+            int var2 = MathHelper.floor_double(this.theEntity.posY);
+            int var3 = MathHelper.floor_double(this.theEntity.posZ);
+            return this.theWorld.getBlockId(var1, var2, var3) == Block.tallGrass.blockID && this.theWorld.getBlockMetadata(var1, var2, var3) == 1 ? true : this.theWorld.getBlockId(var1, var2 - 1, var3) == Block.grass.blockID;
         }
     }
 
-    public void c() {
-        this.a = 40;
-        this.c.broadcastEntityEffect(this.b, (byte) 10);
-        this.b.getNavigation().g();
+    /**
+     * Execute a one shot task or start executing a continuous task
+     */
+    public void startExecuting()
+    {
+        this.eatGrassTick = 40;
+        this.theWorld.setEntityState(this.theEntity, (byte)10);
+        this.theEntity.getNavigator().clearPathEntity();
     }
 
-    public void d() {
-        this.a = 0;
+    /**
+     * Resets the task
+     */
+    public void resetTask()
+    {
+        this.eatGrassTick = 0;
     }
 
-    public boolean b() {
-        return this.a > 0;
+    /**
+     * Returns whether an in-progress EntityAIBase should continue executing
+     */
+    public boolean continueExecuting()
+    {
+        return this.eatGrassTick > 0;
     }
 
-    public int f() {
-        return this.a;
+    public int getEatGrassTick()
+    {
+        return this.eatGrassTick;
     }
 
-    public void e() {
-        this.a = Math.max(0, this.a - 1);
-        if (this.a == 4) {
-            int i = MathHelper.floor(this.b.locX);
-            int j = MathHelper.floor(this.b.locY);
-            int k = MathHelper.floor(this.b.locZ);
+    /**
+     * Updates the task
+     */
+    public void updateTask()
+    {
+        this.eatGrassTick = Math.max(0, this.eatGrassTick - 1);
 
-            if (this.c.getTypeId(i, j, k) == Block.LONG_GRASS.id) {
+        if (this.eatGrassTick == 4)
+        {
+            int var1 = MathHelper.floor_double(this.theEntity.posX);
+            int var2 = MathHelper.floor_double(this.theEntity.posY);
+            int var3 = MathHelper.floor_double(this.theEntity.posZ);
+
+            if (this.theWorld.getBlockId(var1, var2, var3) == Block.tallGrass.blockID)
+            {
                 // CraftBukkit start
-                if (!CraftEventFactory.callEntityChangeBlockEvent(this.b.getBukkitEntity(), this.b.world.getWorld().getBlockAt(i, j, k), Material.AIR).isCancelled()) {
-                    this.c.triggerEffect(2001, i, j, k, Block.LONG_GRASS.id + 4096);
-                    this.c.setTypeId(i, j, k, 0);
-                    this.b.aH();
+                if (!CraftEventFactory.callEntityChangeBlockEvent(this.theEntity.getBukkitEntity(), this.theEntity.worldObj.getWorld().getBlockAt(var1, var2, var3), Material.AIR).isCancelled())
+                {
+                    this.theWorld.playAuxSFX(2001, var1, var2, var3, Block.tallGrass.blockID + 4096);
+                    this.theWorld.setBlockWithNotify(var1, var2, var3, 0);
+                    this.theEntity.eatGrassBonus();
                 }
+
                 // CraftBukkit end
-            } else if (this.c.getTypeId(i, j - 1, k) == Block.GRASS.id) {
+            }
+            else if (this.theWorld.getBlockId(var1, var2 - 1, var3) == Block.grass.blockID)
+            {
                 // CraftBukkit start
-                if (!CraftEventFactory.callEntityChangeBlockEvent(this.b.getBukkitEntity(), this.b.world.getWorld().getBlockAt(i, j - 1, k), Material.DIRT).isCancelled()) {
-                    this.c.triggerEffect(2001, i, j - 1, k, Block.GRASS.id);
-                    this.c.setTypeId(i, j - 1, k, Block.DIRT.id);
-                    this.b.aH();
+                if (!CraftEventFactory.callEntityChangeBlockEvent(this.theEntity.getBukkitEntity(), this.theEntity.worldObj.getWorld().getBlockAt(var1, var2 - 1, var3), Material.DIRT).isCancelled())
+                {
+                    this.theWorld.playAuxSFX(2001, var1, var2 - 1, var3, Block.grass.blockID);
+                    this.theWorld.setBlockWithNotify(var1, var2 - 1, var3, Block.dirt.blockID);
+                    this.theEntity.eatGrassBonus();
                 }
+
                 // CraftBukkit end
             }
         }

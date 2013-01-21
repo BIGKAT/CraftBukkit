@@ -1,43 +1,72 @@
-package net.minecraft.server;
+package net.minecraft.item;
 
 // CraftBukkit start
 import org.bukkit.entity.Player;
 import org.bukkit.event.entity.SheepDyeWoolEvent;
+import net.minecraft.block.Block;
+import net.minecraft.block.BlockCloth;
+import net.minecraft.block.BlockCrops;
+import net.minecraft.block.BlockDirectional;
+import net.minecraft.block.BlockLog;
+import net.minecraft.block.BlockMushroom;
+import net.minecraft.block.BlockSapling;
+import net.minecraft.block.BlockStem;
+import net.minecraft.creativetab.CreativeTabs;
+import net.minecraft.entity.EntityLiving;
+import net.minecraft.entity.passive.EntitySheep;
+import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.entity.player.EntityPlayerMP;
+import net.minecraft.util.MathHelper;
+import net.minecraft.world.World;
 // CraftBukkit end
 
-public class ItemDye extends Item {
+public class ItemDye extends Item
+{
+    /** List of dye color names */
+    public static final String[] dyeColorNames = new String[] {"black", "red", "green", "brown", "blue", "purple", "cyan", "silver", "gray", "pink", "lime", "yellow", "lightBlue", "magenta", "orange", "white"};
+    public static final int[] dyeColors = new int[] {1973019, 11743532, 3887386, 5320730, 2437522, 8073150, 2651799, 11250603, 4408131, 14188952, 4312372, 14602026, 6719955, 12801229, 15435844, 15790320};
 
-    public static final String[] a = new String[] { "black", "red", "green", "brown", "blue", "purple", "cyan", "silver", "gray", "pink", "lime", "yellow", "lightBlue", "magenta", "orange", "white"};
-    public static final int[] b = new int[] { 1973019, 11743532, 3887386, 5320730, 2437522, 8073150, 2651799, 11250603, 4408131, 14188952, 4312372, 14602026, 6719955, 12801229, 15435844, 15790320};
-
-    public ItemDye(int i) {
-        super(i);
-        this.a(true);
-        this.setMaxDurability(0);
-        this.a(CreativeModeTab.l);
+    public ItemDye(int par1)
+    {
+        super(par1);
+        this.setHasSubtypes(true);
+        this.setMaxDamage(0);
+        this.setCreativeTab(CreativeTabs.tabMaterials);
     }
 
-    public String d(ItemStack itemstack) {
-        int i = MathHelper.a(itemstack.getData(), 0, 15);
-
-        return super.getName() + "." + a[i];
+    public String getItemNameIS(ItemStack par1ItemStack)
+    {
+        int var2 = MathHelper.clamp_int(par1ItemStack.getItemDamage(), 0, 15);
+        return super.getItemName() + "." + dyeColorNames[var2];
     }
 
-    public boolean interactWith(ItemStack itemstack, EntityHuman entityhuman, World world, int i, int j, int k, int l, float f, float f1, float f2) {
-        if (!entityhuman.a(i, j, k, l, itemstack)) {
+    /**
+     * Callback for item usage. If the item does something special on right clicking, he will have one of those. Return
+     * True if something happen and false if it don't. This is for ITEMS, not BLOCKS
+     */
+    public boolean onItemUse(ItemStack par1ItemStack, EntityPlayer par2EntityPlayer, World par3World, int par4, int par5, int par6, int par7, float par8, float par9, float par10)
+    {
+        if (!par2EntityPlayer.canPlayerEdit(par4, par5, par6, par7, par1ItemStack))
+        {
             return false;
-        } else {
-            int i1;
-            int j1;
-            int k1;
+        }
+        else
+        {
+            int var11;
+            int var12;
+            int var13;
 
-            if (itemstack.getData() == 15) {
-                i1 = world.getTypeId(i, j, k);
-                if (i1 == Block.SAPLING.id) {
-                    if (!world.isStatic) {
+            if (par1ItemStack.getItemDamage() == 15)
+            {
+                var11 = par3World.getBlockId(par4, par5, par6);
+
+                if (var11 == Block.sapling.blockID)
+                {
+                    if (!par3World.isRemote)
+                    {
                         // CraftBukkit start
-                        Player player = (entityhuman instanceof EntityPlayer) ? (Player) entityhuman.getBukkitEntity() : null;
-                        ((BlockSapling) Block.SAPLING).grow(world, i, j, k, world.random, true, player, itemstack);
+                        Player player = (par2EntityPlayer instanceof EntityPlayerMP) ? (Player) par2EntityPlayer.getBukkitEntity() : null;
+                        ((BlockSapling) Block.sapling).grow(par3World, par4, par5, par6, par3World.rand, true, player, par1ItemStack);
                         //--itemstack.count; - called later if the bonemeal attempt was succesful
                         // CraftBukkit end
                     }
@@ -45,11 +74,13 @@ public class ItemDye extends Item {
                     return true;
                 }
 
-                if (i1 == Block.BROWN_MUSHROOM.id || i1 == Block.RED_MUSHROOM.id) {
+                if (var11 == Block.mushroomBrown.blockID || var11 == Block.mushroomRed.blockID)
+                {
                     // CraftBukkit start
-                    if (!world.isStatic) {
-                        Player player = (entityhuman instanceof EntityPlayer) ? (Player) entityhuman.getBukkitEntity() : null;
-                        ((BlockMushroom) Block.byId[i1]).grow(world, i, j, k, world.random, true, player, itemstack);
+                    if (!par3World.isRemote)
+                    {
+                        Player player = (par2EntityPlayer instanceof EntityPlayerMP) ? (Player) par2EntityPlayer.getBukkitEntity() : null;
+                        ((BlockMushroom) Block.blocksList[var11]).grow(par3World, par4, par5, par6, par3World.rand, true, player, par1ItemStack);
                         //--itemstack.count; - called later if the bonemeal attempt was succesful
                         // CraftBukkit end
                     }
@@ -57,71 +88,93 @@ public class ItemDye extends Item {
                     return true;
                 }
 
-                if (i1 == Block.MELON_STEM.id || i1 == Block.PUMPKIN_STEM.id) {
-                    if (world.getData(i, j, k) == 7) {
+                if (var11 == Block.melonStem.blockID || var11 == Block.pumpkinStem.blockID)
+                {
+                    if (par3World.getBlockMetadata(par4, par5, par6) == 7)
+                    {
                         return false;
                     }
 
-                    if (!world.isStatic) {
-                        ((BlockStem) Block.byId[i1]).l(world, i, j, k);
-                        --itemstack.count;
+                    if (!par3World.isRemote)
+                    {
+                        ((BlockStem)Block.blocksList[var11]).fertilizeStem(par3World, par4, par5, par6);
+                        --par1ItemStack.stackSize;
                     }
 
                     return true;
                 }
 
-                if (i1 > 0 && Block.byId[i1] instanceof BlockCrops) {
-                    if (world.getData(i, j, k) == 7) {
+                if (var11 > 0 && Block.blocksList[var11] instanceof BlockCrops)
+                {
+                    if (par3World.getBlockMetadata(par4, par5, par6) == 7)
+                    {
                         return false;
                     }
 
-                    if (!world.isStatic) {
-                        ((BlockCrops) Block.byId[i1]).c_(world, i, j, k);
-                        --itemstack.count;
+                    if (!par3World.isRemote)
+                    {
+                        ((BlockCrops)Block.blocksList[var11]).fertilize(par3World, par4, par5, par6);
+                        --par1ItemStack.stackSize;
                     }
 
                     return true;
                 }
 
-                if (i1 == Block.COCOA.id) {
-                    if (!world.isStatic) {
-                        world.setData(i, j, k, 8 | BlockDirectional.e(world.getData(i, j, k)));
-                        --itemstack.count;
+                if (var11 == Block.cocoaPlant.blockID)
+                {
+                    if (!par3World.isRemote)
+                    {
+                        par3World.setBlockMetadataWithNotify(par4, par5, par6, 8 | BlockDirectional.getDirection(par3World.getBlockMetadata(par4, par5, par6)));
+                        --par1ItemStack.stackSize;
                     }
 
                     return true;
                 }
 
-                if (i1 == Block.GRASS.id) {
-                    if (!world.isStatic) {
-                        --itemstack.count;
-
+                if (var11 == Block.grass.blockID)
+                {
+                    if (!par3World.isRemote)
+                    {
+                        --par1ItemStack.stackSize;
                         label133:
-                        for (j1 = 0; j1 < 128; ++j1) {
-                            k1 = i;
-                            int l1 = j + 1;
-                            int i2 = k;
 
-                            for (int j2 = 0; j2 < j1 / 16; ++j2) {
-                                k1 += d.nextInt(3) - 1;
-                                l1 += (d.nextInt(3) - 1) * d.nextInt(3) / 2;
-                                i2 += d.nextInt(3) - 1;
-                                if (world.getTypeId(k1, l1 - 1, i2) != Block.GRASS.id || world.t(k1, l1, i2)) {
+                        for (var12 = 0; var12 < 128; ++var12)
+                        {
+                            var13 = par4;
+                            int var14 = par5 + 1;
+                            int var15 = par6;
+
+                            for (int var16 = 0; var16 < var12 / 16; ++var16)
+                            {
+                                var13 += itemRand.nextInt(3) - 1;
+                                var14 += (itemRand.nextInt(3) - 1) * itemRand.nextInt(3) / 2;
+                                var15 += itemRand.nextInt(3) - 1;
+
+                                if (par3World.getBlockId(var13, var14 - 1, var15) != Block.grass.blockID || par3World.isBlockNormalCube(var13, var14, var15))
+                                {
                                     continue label133;
                                 }
                             }
 
-                            if (world.getTypeId(k1, l1, i2) == 0) {
-                                if (d.nextInt(10) != 0) {
-                                    if (Block.LONG_GRASS.d(world, k1, l1, i2)) {
-                                        world.setTypeIdAndData(k1, l1, i2, Block.LONG_GRASS.id, 1);
+                            if (par3World.getBlockId(var13, var14, var15) == 0)
+                            {
+                                if (itemRand.nextInt(10) != 0)
+                                {
+                                    if (Block.tallGrass.canBlockStay(par3World, var13, var14, var15))
+                                    {
+                                        par3World.setBlockAndMetadataWithNotify(var13, var14, var15, Block.tallGrass.blockID, 1);
                                     }
-                                } else if (d.nextInt(3) != 0) {
-                                    if (Block.YELLOW_FLOWER.d(world, k1, l1, i2)) {
-                                        world.setTypeId(k1, l1, i2, Block.YELLOW_FLOWER.id);
+                                }
+                                else if (itemRand.nextInt(3) != 0)
+                                {
+                                    if (Block.plantYellow.canBlockStay(par3World, var13, var14, var15))
+                                    {
+                                        par3World.setBlockWithNotify(var13, var14, var15, Block.plantYellow.blockID);
                                     }
-                                } else if (Block.RED_ROSE.d(world, k1, l1, i2)) {
-                                    world.setTypeId(k1, l1, i2, Block.RED_ROSE.id);
+                                }
+                                else if (Block.plantRed.canBlockStay(par3World, var13, var14, var15))
+                                {
+                                    par3World.setBlockWithNotify(var13, var14, var15, Block.plantRed.blockID);
                                 }
                             }
                         }
@@ -129,39 +182,52 @@ public class ItemDye extends Item {
 
                     return true;
                 }
-            } else if (itemstack.getData() == 3) {
-                i1 = world.getTypeId(i, j, k);
-                j1 = world.getData(i, j, k);
-                if (i1 == Block.LOG.id && BlockLog.e(j1) == 3) {
-                    if (l == 0) {
+            }
+            else if (par1ItemStack.getItemDamage() == 3)
+            {
+                var11 = par3World.getBlockId(par4, par5, par6);
+                var12 = par3World.getBlockMetadata(par4, par5, par6);
+
+                if (var11 == Block.wood.blockID && BlockLog.limitToValidMetadata(var12) == 3)
+                {
+                    if (par7 == 0)
+                    {
                         return false;
                     }
 
-                    if (l == 1) {
+                    if (par7 == 1)
+                    {
                         return false;
                     }
 
-                    if (l == 2) {
-                        --k;
+                    if (par7 == 2)
+                    {
+                        --par6;
                     }
 
-                    if (l == 3) {
-                        ++k;
+                    if (par7 == 3)
+                    {
+                        ++par6;
                     }
 
-                    if (l == 4) {
-                        --i;
+                    if (par7 == 4)
+                    {
+                        --par4;
                     }
 
-                    if (l == 5) {
-                        ++i;
+                    if (par7 == 5)
+                    {
+                        ++par4;
                     }
 
-                    if (world.isEmpty(i, j, k)) {
-                        k1 = Block.byId[Block.COCOA.id].getPlacedData(world, i, j, k, l, f, f1, f2, 0);
-                        world.setTypeIdAndData(i, j, k, Block.COCOA.id, k1);
-                        if (!entityhuman.abilities.canInstantlyBuild) {
-                            --itemstack.count;
+                    if (par3World.isAirBlock(par4, par5, par6))
+                    {
+                        var13 = Block.blocksList[Block.cocoaPlant.blockID].onBlockPlaced(par3World, par4, par5, par6, par7, par8, par9, par10, 0);
+                        par3World.setBlockAndMetadataWithNotify(par4, par5, par6, Block.cocoaPlant.blockID, var13);
+
+                        if (!par2EntityPlayer.capabilities.isCreativeMode)
+                        {
+                            --par1ItemStack.stackSize;
                         }
                     }
 
@@ -173,30 +239,38 @@ public class ItemDye extends Item {
         }
     }
 
-    public boolean a(ItemStack itemstack, EntityLiving entityliving) {
-        if (entityliving instanceof EntitySheep) {
-            EntitySheep entitysheep = (EntitySheep) entityliving;
-            int i = BlockCloth.e_(itemstack.getData());
+    /**
+     * dye sheep, place saddles, etc ...
+     */
+    public boolean itemInteractionForEntity(ItemStack par1ItemStack, EntityLiving par2EntityLiving)
+    {
+        if (par2EntityLiving instanceof EntitySheep)
+        {
+            EntitySheep var3 = (EntitySheep)par2EntityLiving;
+            int var4 = BlockCloth.getBlockFromDye(par1ItemStack.getItemDamage());
 
-            if (!entitysheep.isSheared() && entitysheep.getColor() != i) {
+            if (!var3.getSheared() && var3.getFleeceColor() != var4)
+            {
                 // CraftBukkit start
-                byte bColor = (byte) i;
-                SheepDyeWoolEvent event = new SheepDyeWoolEvent((org.bukkit.entity.Sheep) entitysheep.getBukkitEntity(), org.bukkit.DyeColor.getByData(bColor));
-                entitysheep.world.getServer().getPluginManager().callEvent(event);
+                byte bColor = (byte) var4;
+                SheepDyeWoolEvent event = new SheepDyeWoolEvent((org.bukkit.entity.Sheep) var3.getBukkitEntity(), org.bukkit.DyeColor.getByData(bColor));
+                var3.worldObj.getServer().getPluginManager().callEvent(event);
 
-                if (event.isCancelled()) {
+                if (event.isCancelled())
+                {
                     return false;
                 }
 
-                i = (byte) event.getColor().getWoolData();
+                var4 = (byte) event.getColor().getWoolData();
                 // CraftBukkit end
-
-                entitysheep.setColor(i);
-                --itemstack.count;
+                var3.setFleeceColor(var4);
+                --par1ItemStack.stackSize;
             }
 
             return true;
-        } else {
+        }
+        else
+        {
             return false;
         }
     }

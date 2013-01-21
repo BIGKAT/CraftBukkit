@@ -1,233 +1,324 @@
-package net.minecraft.server;
+package net.minecraft.tileentity;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
+import net.minecraft.entity.Entity;
+import net.minecraft.entity.EntityList;
+import net.minecraft.entity.EntityLiving;
+import net.minecraft.nbt.NBTBase;
+import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.nbt.NBTTagList;
+import net.minecraft.network.packet.Packet;
+import net.minecraft.network.packet.Packet132TileEntityData;
+import net.minecraft.util.AxisAlignedBB;
+import net.minecraft.util.WeightedRandom;
 
-public class TileEntityMobSpawner extends TileEntity {
+public class TileEntityMobSpawner extends TileEntity
+{
+    /** The stored delay before a new spawn. */
+    public int delay = -1;
+    public String mobID = "Pig"; // CraftBukkit - private -> public
+    private List field_92016_e = null;
 
-    public int spawnDelay = -1;
-    public String mobName = "Pig"; // CraftBukkit - private -> public
-    private List mobs = null;
-    private TileEntityMobSpawnerData spawnData = null;
-    public double b;
-    public double c = 0.0D;
+    /** The extra NBT data to add to spawned entities */
+    private TileEntityMobSpawnerSpawnData spawnerTags = null;
+    public double yaw;
+    public double yaw2 = 0.0D;
     private int minSpawnDelay = 200;
     private int maxSpawnDelay = 800;
     private int spawnCount = 4;
-    private Entity j;
+    private Entity field_92017_j;
+
+    /** Maximum number of entities for limiting mob spawning */
     private int maxNearbyEntities = 6;
+
+    /** Required player range for mob spawning to occur */
     private int requiredPlayerRange = 16;
+
+    /** Range for spawning new entities with mob spawners */
     private int spawnRange = 4;
 
-    public TileEntityMobSpawner() {
-        this.spawnDelay = 20;
+    public TileEntityMobSpawner()
+    {
+        this.delay = 20;
     }
 
-    public String getMobName() {
-        return this.spawnData == null ? this.mobName : this.spawnData.c;
+    public String func_92015_a()
+    {
+        return this.spawnerTags == null ? this.mobID : this.spawnerTags.field_92033_c;
     }
 
-    public void a(String s) {
-        this.mobName = s;
+    public void setMobID(String par1Str)
+    {
+        this.mobID = par1Str;
     }
 
-    public boolean b() {
-        return this.world.findNearbyPlayer((double) this.x + 0.5D, (double) this.y + 0.5D, (double) this.z + 0.5D, (double) this.requiredPlayerRange) != null;
+    /**
+     * Returns true if there is a player in range (using World.getClosestPlayer)
+     */
+    public boolean anyPlayerInRange()
+    {
+        return this.worldObj.getClosestPlayer((double)this.xCoord + 0.5D, (double)this.yCoord + 0.5D, (double)this.zCoord + 0.5D, (double)this.requiredPlayerRange) != null;
     }
 
-    public void g() {
-        if (this.b()) {
-            double d0;
+    /**
+     * Allows the entity to update its state. Overridden in most subclasses, e.g. the mob spawner uses this to count
+     * ticks and creates a new spawn inside its implementation.
+     */
+    public void updateEntity()
+    {
+        if (this.anyPlayerInRange())
+        {
+            double var5;
 
-            if (this.world.isStatic) {
-                double d1 = (double) ((float) this.x + this.world.random.nextFloat());
-                double d2 = (double) ((float) this.y + this.world.random.nextFloat());
+            if (this.worldObj.isRemote)
+            {
+                double var1 = (double)((float)this.xCoord + this.worldObj.rand.nextFloat());
+                double var3 = (double)((float)this.yCoord + this.worldObj.rand.nextFloat());
+                var5 = (double)((float)this.zCoord + this.worldObj.rand.nextFloat());
+                this.worldObj.spawnParticle("smoke", var1, var3, var5, 0.0D, 0.0D, 0.0D);
+                this.worldObj.spawnParticle("flame", var1, var3, var5, 0.0D, 0.0D, 0.0D);
 
-                d0 = (double) ((float) this.z + this.world.random.nextFloat());
-                this.world.addParticle("smoke", d1, d2, d0, 0.0D, 0.0D, 0.0D);
-                this.world.addParticle("flame", d1, d2, d0, 0.0D, 0.0D, 0.0D);
-                if (this.spawnDelay > 0) {
-                    --this.spawnDelay;
+                if (this.delay > 0)
+                {
+                    --this.delay;
                 }
 
-                this.c = this.b;
-                this.b = (this.b + (double) (1000.0F / ((float) this.spawnDelay + 200.0F))) % 360.0D;
-            } else {
-                if (this.spawnDelay == -1) {
-                    this.e();
+                this.yaw2 = this.yaw;
+                this.yaw = (this.yaw + (double)(1000.0F / ((float)this.delay + 200.0F))) % 360.0D;
+            }
+            else
+            {
+                if (this.delay == -1)
+                {
+                    this.updateDelay();
                 }
 
-                if (this.spawnDelay > 0) {
-                    --this.spawnDelay;
+                if (this.delay > 0)
+                {
+                    --this.delay;
                     return;
                 }
 
-                boolean flag = false;
+                boolean var12 = false;
 
-                for (int i = 0; i < this.spawnCount; ++i) {
-                    Entity entity = EntityTypes.createEntityByName(this.getMobName(), this.world);
+                for (int var2 = 0; var2 < this.spawnCount; ++var2)
+                {
+                    Entity var13 = EntityList.createEntityByName(this.func_92015_a(), this.worldObj);
 
-                    if (entity == null) {
+                    if (var13 == null)
+                    {
                         return;
                     }
 
-                    int j = this.world.a(entity.getClass(), AxisAlignedBB.a().a((double) this.x, (double) this.y, (double) this.z, (double) (this.x + 1), (double) (this.y + 1), (double) (this.z + 1)).grow((double) (this.spawnRange * 2), 4.0D, (double) (this.spawnRange * 2))).size();
+                    int var4 = this.worldObj.getEntitiesWithinAABB(var13.getClass(), AxisAlignedBB.getAABBPool().addOrModifyAABBInPool((double)this.xCoord, (double)this.yCoord, (double)this.zCoord, (double)(this.xCoord + 1), (double)(this.yCoord + 1), (double)(this.zCoord + 1)).expand((double)(this.spawnRange * 2), 4.0D, (double)(this.spawnRange * 2))).size();
 
-                    if (j >= this.maxNearbyEntities) {
-                        this.e();
+                    if (var4 >= this.maxNearbyEntities)
+                    {
+                        this.updateDelay();
                         return;
                     }
 
-                    if (entity != null) {
-                        d0 = (double) this.x + (this.world.random.nextDouble() - this.world.random.nextDouble()) * (double) this.spawnRange;
-                        double d3 = (double) (this.y + this.world.random.nextInt(3) - 1);
-                        double d4 = (double) this.z + (this.world.random.nextDouble() - this.world.random.nextDouble()) * (double) this.spawnRange;
-                        EntityLiving entityliving = entity instanceof EntityLiving ? (EntityLiving) entity : null;
+                    if (var13 != null)
+                    {
+                        var5 = (double)this.xCoord + (this.worldObj.rand.nextDouble() - this.worldObj.rand.nextDouble()) * (double)this.spawnRange;
+                        double var7 = (double)(this.yCoord + this.worldObj.rand.nextInt(3) - 1);
+                        double var9 = (double)this.zCoord + (this.worldObj.rand.nextDouble() - this.worldObj.rand.nextDouble()) * (double)this.spawnRange;
+                        EntityLiving var11 = var13 instanceof EntityLiving ? (EntityLiving)var13 : null;
+                        var13.setLocationAndAngles(var5, var7, var9, this.worldObj.rand.nextFloat() * 360.0F, 0.0F);
 
-                        entity.setPositionRotation(d0, d3, d4, this.world.random.nextFloat() * 360.0F, 0.0F);
-                        if (entityliving == null || entityliving.canSpawn()) {
-                            this.a(entity);
-                            this.world.addEntity(entity, org.bukkit.event.entity.CreatureSpawnEvent.SpawnReason.SPAWNER); // CraftBukkit
-                            this.world.triggerEffect(2004, this.x, this.y, this.z, 0);
-                            if (entityliving != null) {
-                                entityliving.aR();
+                        if (var11 == null || var11.getCanSpawnHere())
+                        {
+                            this.writeNBTTagsTo(var13);
+                            this.worldObj.addEntity(var13, org.bukkit.event.entity.CreatureSpawnEvent.SpawnReason.SPAWNER); // CraftBukkit
+                            this.worldObj.playAuxSFX(2004, this.xCoord, this.yCoord, this.zCoord, 0);
+
+                            if (var11 != null)
+                            {
+                                var11.spawnExplosionParticle();
                             }
 
-                            flag = true;
+                            var12 = true;
                         }
                     }
                 }
 
-                if (flag) {
-                    this.e();
+                if (var12)
+                {
+                    this.updateDelay();
                 }
             }
 
-            super.g();
+            super.updateEntity();
         }
     }
 
-    public void a(Entity entity) {
-        if (this.spawnData != null) {
-            NBTTagCompound nbttagcompound = new NBTTagCompound();
+    public void writeNBTTagsTo(Entity par1Entity)
+    {
+        if (this.spawnerTags != null)
+        {
+            NBTTagCompound var2 = new NBTTagCompound();
+            par1Entity.addEntityID(var2);
+            Iterator var3 = this.spawnerTags.field_92032_b.getTags().iterator();
 
-            entity.c(nbttagcompound);
-            Iterator iterator = this.spawnData.b.c().iterator();
-
-            while (iterator.hasNext()) {
-                NBTBase nbtbase = (NBTBase) iterator.next();
-
-                nbttagcompound.set(nbtbase.getName(), nbtbase.clone());
+            while (var3.hasNext())
+            {
+                NBTBase var4 = (NBTBase)var3.next();
+                var2.setTag(var4.getName(), var4.copy());
             }
 
-            entity.e(nbttagcompound);
-        } else if (entity instanceof EntityLiving && entity.world != null) {
-            ((EntityLiving) entity).bG();
+            par1Entity.readFromNBT(var2);
+        }
+        else if (par1Entity instanceof EntityLiving && par1Entity.worldObj != null)
+        {
+            ((EntityLiving)par1Entity).initCreature();
         }
     }
 
-    private void e() {
-        if (this.maxSpawnDelay <= this.minSpawnDelay) {
-            this.spawnDelay = this.minSpawnDelay;
-        } else {
-            this.spawnDelay = this.minSpawnDelay + this.world.random.nextInt(this.maxSpawnDelay - this.minSpawnDelay);
+    /**
+     * Sets the delay before a new spawn (base delay of 200 + random number up to 600).
+     */
+    private void updateDelay()
+    {
+        if (this.maxSpawnDelay <= this.minSpawnDelay)
+        {
+            this.delay = this.minSpawnDelay;
+        }
+        else
+        {
+            this.delay = this.minSpawnDelay + this.worldObj.rand.nextInt(this.maxSpawnDelay - this.minSpawnDelay);
         }
 
-        if (this.mobs != null && this.mobs.size() > 0) {
-            this.spawnData = (TileEntityMobSpawnerData) WeightedRandom.a(this.world.random, (Collection) this.mobs);
-            this.world.notify(this.x, this.y, this.z);
+        if (this.field_92016_e != null && this.field_92016_e.size() > 0)
+        {
+            this.spawnerTags = (TileEntityMobSpawnerSpawnData) WeightedRandom.getRandomItem(this.worldObj.rand, (Collection) this.field_92016_e);
+            this.worldObj.markBlockForUpdate(this.xCoord, this.yCoord, this.zCoord);
         }
 
-        this.world.playNote(this.x, this.y, this.z, this.q().id, 1, 0);
+        this.worldObj.addBlockEvent(this.xCoord, this.yCoord, this.zCoord, this.getBlockType().blockID, 1, 0);
     }
 
-    public void a(NBTTagCompound nbttagcompound) {
-        super.a(nbttagcompound);
-        this.mobName = nbttagcompound.getString("EntityId");
-        this.spawnDelay = nbttagcompound.getShort("Delay");
-        if (nbttagcompound.hasKey("SpawnPotentials")) {
-            this.mobs = new ArrayList();
-            NBTTagList nbttaglist = nbttagcompound.getList("SpawnPotentials");
+    /**
+     * Reads a tile entity from NBT.
+     */
+    public void readFromNBT(NBTTagCompound par1NBTTagCompound)
+    {
+        super.readFromNBT(par1NBTTagCompound);
+        this.mobID = par1NBTTagCompound.getString("EntityId");
+        this.delay = par1NBTTagCompound.getShort("Delay");
 
-            for (int i = 0; i < nbttaglist.size(); ++i) {
-                this.mobs.add(new TileEntityMobSpawnerData(this, (NBTTagCompound) nbttaglist.get(i)));
+        if (par1NBTTagCompound.hasKey("SpawnPotentials"))
+        {
+            this.field_92016_e = new ArrayList();
+            NBTTagList var2 = par1NBTTagCompound.getTagList("SpawnPotentials");
+
+            for (int var3 = 0; var3 < var2.tagCount(); ++var3)
+            {
+                this.field_92016_e.add(new TileEntityMobSpawnerSpawnData(this, (NBTTagCompound)var2.tagAt(var3)));
             }
-        } else {
-            this.mobs = null;
+        }
+        else
+        {
+            this.field_92016_e = null;
         }
 
-        if (nbttagcompound.hasKey("SpawnData")) {
-            this.spawnData = new TileEntityMobSpawnerData(this, nbttagcompound.getCompound("SpawnData"), this.mobName);
-        } else {
-            this.spawnData = null;
+        if (par1NBTTagCompound.hasKey("SpawnData"))
+        {
+            this.spawnerTags = new TileEntityMobSpawnerSpawnData(this, par1NBTTagCompound.getCompoundTag("SpawnData"), this.mobID);
+        }
+        else
+        {
+            this.spawnerTags = null;
         }
 
-        if (nbttagcompound.hasKey("MinSpawnDelay")) {
-            this.minSpawnDelay = nbttagcompound.getShort("MinSpawnDelay");
-            this.maxSpawnDelay = nbttagcompound.getShort("MaxSpawnDelay");
-            this.spawnCount = nbttagcompound.getShort("SpawnCount");
+        if (par1NBTTagCompound.hasKey("MinSpawnDelay"))
+        {
+            this.minSpawnDelay = par1NBTTagCompound.getShort("MinSpawnDelay");
+            this.maxSpawnDelay = par1NBTTagCompound.getShort("MaxSpawnDelay");
+            this.spawnCount = par1NBTTagCompound.getShort("SpawnCount");
         }
 
-        if (nbttagcompound.hasKey("MaxNearbyEntities")) {
-            this.maxNearbyEntities = nbttagcompound.getShort("MaxNearbyEntities");
-            this.requiredPlayerRange = nbttagcompound.getShort("RequiredPlayerRange");
+        if (par1NBTTagCompound.hasKey("MaxNearbyEntities"))
+        {
+            this.maxNearbyEntities = par1NBTTagCompound.getShort("MaxNearbyEntities");
+            this.requiredPlayerRange = par1NBTTagCompound.getShort("RequiredPlayerRange");
         }
 
-        if (nbttagcompound.hasKey("SpawnRange")) {
-            this.spawnRange = nbttagcompound.getShort("SpawnRange");
+        if (par1NBTTagCompound.hasKey("SpawnRange"))
+        {
+            this.spawnRange = par1NBTTagCompound.getShort("SpawnRange");
         }
 
-        if (this.world != null && this.world.isStatic) {
-            this.j = null;
+        if (this.worldObj != null && this.worldObj.isRemote)
+        {
+            this.field_92017_j = null;
         }
     }
 
-    public void b(NBTTagCompound nbttagcompound) {
-        super.b(nbttagcompound);
-        nbttagcompound.setString("EntityId", this.getMobName());
-        nbttagcompound.setShort("Delay", (short) this.spawnDelay);
-        nbttagcompound.setShort("MinSpawnDelay", (short) this.minSpawnDelay);
-        nbttagcompound.setShort("MaxSpawnDelay", (short) this.maxSpawnDelay);
-        nbttagcompound.setShort("SpawnCount", (short) this.spawnCount);
-        nbttagcompound.setShort("MaxNearbyEntities", (short) this.maxNearbyEntities);
-        nbttagcompound.setShort("RequiredPlayerRange", (short) this.requiredPlayerRange);
-        nbttagcompound.setShort("SpawnRange", (short) this.spawnRange);
-        if (this.spawnData != null) {
-            nbttagcompound.setCompound("SpawnData", (NBTTagCompound) this.spawnData.b.clone());
+    /**
+     * Writes a tile entity to NBT.
+     */
+    public void writeToNBT(NBTTagCompound par1NBTTagCompound)
+    {
+        super.writeToNBT(par1NBTTagCompound);
+        par1NBTTagCompound.setString("EntityId", this.func_92015_a());
+        par1NBTTagCompound.setShort("Delay", (short)this.delay);
+        par1NBTTagCompound.setShort("MinSpawnDelay", (short)this.minSpawnDelay);
+        par1NBTTagCompound.setShort("MaxSpawnDelay", (short)this.maxSpawnDelay);
+        par1NBTTagCompound.setShort("SpawnCount", (short)this.spawnCount);
+        par1NBTTagCompound.setShort("MaxNearbyEntities", (short)this.maxNearbyEntities);
+        par1NBTTagCompound.setShort("RequiredPlayerRange", (short)this.requiredPlayerRange);
+        par1NBTTagCompound.setShort("SpawnRange", (short)this.spawnRange);
+
+        if (this.spawnerTags != null)
+        {
+            par1NBTTagCompound.setCompoundTag("SpawnData", (NBTTagCompound)this.spawnerTags.field_92032_b.copy());
         }
 
-        if (this.spawnData != null || this.mobs != null && this.mobs.size() > 0) {
-            NBTTagList nbttaglist = new NBTTagList();
+        if (this.spawnerTags != null || this.field_92016_e != null && this.field_92016_e.size() > 0)
+        {
+            NBTTagList var2 = new NBTTagList();
 
-            if (this.mobs != null && this.mobs.size() > 0) {
-                Iterator iterator = this.mobs.iterator();
+            if (this.field_92016_e != null && this.field_92016_e.size() > 0)
+            {
+                Iterator var3 = this.field_92016_e.iterator();
 
-                while (iterator.hasNext()) {
-                    TileEntityMobSpawnerData tileentitymobspawnerdata = (TileEntityMobSpawnerData) iterator.next();
-
-                    nbttaglist.add(tileentitymobspawnerdata.a());
+                while (var3.hasNext())
+                {
+                    TileEntityMobSpawnerSpawnData var4 = (TileEntityMobSpawnerSpawnData)var3.next();
+                    var2.appendTag(var4.func_92030_a());
                 }
-            } else {
-                nbttaglist.add(this.spawnData.a());
+            }
+            else
+            {
+                var2.appendTag(this.spawnerTags.func_92030_a());
             }
 
-            nbttagcompound.set("SpawnPotentials", nbttaglist);
+            par1NBTTagCompound.setTag("SpawnPotentials", var2);
         }
     }
 
-    public Packet getUpdatePacket() {
-        NBTTagCompound nbttagcompound = new NBTTagCompound();
-
-        this.b(nbttagcompound);
-        nbttagcompound.remove("SpawnPotentials");
-        return new Packet132TileEntityData(this.x, this.y, this.z, 1, nbttagcompound);
+    /**
+     * Overriden in a sign to provide the text.
+     */
+    public Packet getDescriptionPacket()
+    {
+        NBTTagCompound var1 = new NBTTagCompound();
+        this.writeToNBT(var1);
+        var1.removeTag("SpawnPotentials");
+        return new Packet132TileEntityData(this.xCoord, this.yCoord, this.zCoord, 1, var1);
     }
 
-    public void b(int i, int j) {
-        if (i == 1 && this.world.isStatic) {
-            this.spawnDelay = this.minSpawnDelay;
+    /**
+     * Called when a client event is received with the event number and argument, see World.sendClientEvent
+     */
+    public void receiveClientEvent(int par1, int par2)
+    {
+        if (par1 == 1 && this.worldObj.isRemote)
+        {
+            this.delay = this.minSpawnDelay;
         }
     }
 }

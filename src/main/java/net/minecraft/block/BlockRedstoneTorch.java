@@ -1,41 +1,58 @@
-package net.minecraft.server;
+package net.minecraft.block;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import net.minecraft.creativetab.CreativeTabs;
+import net.minecraft.world.IBlockAccess;
+import net.minecraft.world.World;
 
 import org.bukkit.event.block.BlockRedstoneEvent; // CraftBukkit
 
-public class BlockRedstoneTorch extends BlockTorch {
+public class BlockRedstoneTorch extends BlockTorch
+{
+    /** Whether the redstone torch is currently active or not. */
+    private boolean torchActive = false;
 
-    private boolean isOn = false;
-    private static Map b = new HashMap();
+    /** Map of ArrayLists of RedstoneUpdateInfo. Key of map is World. */
+    private static Map redstoneUpdateInfoCache = new HashMap();
 
-    public int a(int i, int j) {
-        return i == 1 ? Block.REDSTONE_WIRE.a(i, j) : super.a(i, j);
+    /**
+     * From the specified side and block metadata retrieves the blocks texture. Args: side, metadata
+     */
+    public int getBlockTextureFromSideAndMetadata(int par1, int par2)
+    {
+        return par1 == 1 ? Block.redstoneWire.getBlockTextureFromSideAndMetadata(par1, par2) : super.getBlockTextureFromSideAndMetadata(par1, par2);
     }
 
-    private boolean a(World world, int i, int j, int k, boolean flag) {
-        if (!b.containsKey(world)) {
-            b.put(world, new ArrayList());
+    private boolean checkForBurnout(World par1World, int par2, int par3, int par4, boolean par5)
+    {
+        if (!redstoneUpdateInfoCache.containsKey(par1World))
+        {
+            redstoneUpdateInfoCache.put(par1World, new ArrayList());
         }
 
-        List list = (List) b.get(world);
+        List var6 = (List)redstoneUpdateInfoCache.get(par1World);
 
-        if (flag) {
-            list.add(new RedstoneUpdateInfo(i, j, k, world.getTime()));
+        if (par5)
+        {
+            var6.add(new RedstoneUpdateInfo(par2, par3, par4, par1World.getTotalWorldTime()));
         }
 
-        int l = 0;
+        int var7 = 0;
 
-        for (int i1 = 0; i1 < list.size(); ++i1) {
-            RedstoneUpdateInfo redstoneupdateinfo = (RedstoneUpdateInfo) list.get(i1);
+        for (int var8 = 0; var8 < var6.size(); ++var8)
+        {
+            RedstoneUpdateInfo var9 = (RedstoneUpdateInfo)var6.get(var8);
 
-            if (redstoneupdateinfo.a == i && redstoneupdateinfo.b == j && redstoneupdateinfo.c == k) {
-                ++l;
-                if (l >= 8) {
+            if (var9.x == par2 && var9.y == par3 && var9.z == par4)
+            {
+                ++var7;
+
+                if (var7 >= 8)
+                {
                     return true;
                 }
             }
@@ -44,129 +61,190 @@ public class BlockRedstoneTorch extends BlockTorch {
         return false;
     }
 
-    protected BlockRedstoneTorch(int i, int j, boolean flag) {
-        super(i, j);
-        this.isOn = flag;
-        this.b(true);
-        this.a((CreativeModeTab) null);
+    protected BlockRedstoneTorch(int par1, int par2, boolean par3)
+    {
+        super(par1, par2);
+        this.torchActive = par3;
+        this.setTickRandomly(true);
+        this.setCreativeTab((CreativeTabs)null);
     }
 
-    public int r_() {
+    /**
+     * How many world ticks before ticking
+     */
+    public int tickRate()
+    {
         return 2;
     }
 
-    public void onPlace(World world, int i, int j, int k) {
-        if (world.getData(i, j, k) == 0) {
-            super.onPlace(world, i, j, k);
+    /**
+     * Called whenever the block is added into the world. Args: world, x, y, z
+     */
+    public void onBlockAdded(World par1World, int par2, int par3, int par4)
+    {
+        if (par1World.getBlockMetadata(par2, par3, par4) == 0)
+        {
+            super.onBlockAdded(par1World, par2, par3, par4);
         }
 
-        if (this.isOn) {
-            world.applyPhysics(i, j - 1, k, this.id);
-            world.applyPhysics(i, j + 1, k, this.id);
-            world.applyPhysics(i - 1, j, k, this.id);
-            world.applyPhysics(i + 1, j, k, this.id);
-            world.applyPhysics(i, j, k - 1, this.id);
-            world.applyPhysics(i, j, k + 1, this.id);
-        }
-    }
-
-    public void remove(World world, int i, int j, int k, int l, int i1) {
-        if (this.isOn) {
-            world.applyPhysics(i, j - 1, k, this.id);
-            world.applyPhysics(i, j + 1, k, this.id);
-            world.applyPhysics(i - 1, j, k, this.id);
-            world.applyPhysics(i + 1, j, k, this.id);
-            world.applyPhysics(i, j, k - 1, this.id);
-            world.applyPhysics(i, j, k + 1, this.id);
+        if (this.torchActive)
+        {
+            par1World.notifyBlocksOfNeighborChange(par2, par3 - 1, par4, this.blockID);
+            par1World.notifyBlocksOfNeighborChange(par2, par3 + 1, par4, this.blockID);
+            par1World.notifyBlocksOfNeighborChange(par2 - 1, par3, par4, this.blockID);
+            par1World.notifyBlocksOfNeighborChange(par2 + 1, par3, par4, this.blockID);
+            par1World.notifyBlocksOfNeighborChange(par2, par3, par4 - 1, this.blockID);
+            par1World.notifyBlocksOfNeighborChange(par2, par3, par4 + 1, this.blockID);
         }
     }
 
-    public boolean b(IBlockAccess iblockaccess, int i, int j, int k, int l) {
-        if (!this.isOn) {
+    /**
+     * ejects contained items into the world, and notifies neighbours of an update, as appropriate
+     */
+    public void breakBlock(World par1World, int par2, int par3, int par4, int par5, int par6)
+    {
+        if (this.torchActive)
+        {
+            par1World.notifyBlocksOfNeighborChange(par2, par3 - 1, par4, this.blockID);
+            par1World.notifyBlocksOfNeighborChange(par2, par3 + 1, par4, this.blockID);
+            par1World.notifyBlocksOfNeighborChange(par2 - 1, par3, par4, this.blockID);
+            par1World.notifyBlocksOfNeighborChange(par2 + 1, par3, par4, this.blockID);
+            par1World.notifyBlocksOfNeighborChange(par2, par3, par4 - 1, this.blockID);
+            par1World.notifyBlocksOfNeighborChange(par2, par3, par4 + 1, this.blockID);
+        }
+    }
+
+    /**
+     * Returns true if the block is emitting indirect/weak redstone power on the specified side. If isBlockNormalCube
+     * returns true, standard redstone propagation rules will apply instead and this will not be called. Args: World, X,
+     * Y, Z, side. Note that the side is reversed - eg it is 1 (up) when checking the bottom of the block.
+     */
+    public boolean isProvidingWeakPower(IBlockAccess par1IBlockAccess, int par2, int par3, int par4, int par5)
+    {
+        if (!this.torchActive)
+        {
             return false;
-        } else {
-            int i1 = iblockaccess.getData(i, j, k);
-
-            return i1 == 5 && l == 1 ? false : (i1 == 3 && l == 3 ? false : (i1 == 4 && l == 2 ? false : (i1 == 1 && l == 5 ? false : i1 != 2 || l != 4)));
+        }
+        else
+        {
+            int var6 = par1IBlockAccess.getBlockMetadata(par2, par3, par4);
+            return var6 == 5 && par5 == 1 ? false : (var6 == 3 && par5 == 3 ? false : (var6 == 4 && par5 == 2 ? false : (var6 == 1 && par5 == 5 ? false : var6 != 2 || par5 != 4)));
         }
     }
 
-    private boolean l(World world, int i, int j, int k) {
-        int l = world.getData(i, j, k);
-
-        return l == 5 && world.isBlockFaceIndirectlyPowered(i, j - 1, k, 0) ? true : (l == 3 && world.isBlockFaceIndirectlyPowered(i, j, k - 1, 2) ? true : (l == 4 && world.isBlockFaceIndirectlyPowered(i, j, k + 1, 3) ? true : (l == 1 && world.isBlockFaceIndirectlyPowered(i - 1, j, k, 4) ? true : l == 2 && world.isBlockFaceIndirectlyPowered(i + 1, j, k, 5))));
+    /**
+     * Returns true or false based on whether the block the torch is attached to is providing indirect power.
+     */
+    private boolean isIndirectlyPowered(World par1World, int par2, int par3, int par4)
+    {
+        int var5 = par1World.getBlockMetadata(par2, par3, par4);
+        return var5 == 5 && par1World.isBlockIndirectlyProvidingPowerTo(par2, par3 - 1, par4, 0) ? true : (var5 == 3 && par1World.isBlockIndirectlyProvidingPowerTo(par2, par3, par4 - 1, 2) ? true : (var5 == 4 && par1World.isBlockIndirectlyProvidingPowerTo(par2, par3, par4 + 1, 3) ? true : (var5 == 1 && par1World.isBlockIndirectlyProvidingPowerTo(par2 - 1, par3, par4, 4) ? true : var5 == 2 && par1World.isBlockIndirectlyProvidingPowerTo(par2 + 1, par3, par4, 5))));
     }
 
-    public void b(World world, int i, int j, int k, Random random) {
-        boolean flag = this.l(world, i, j, k);
-        List list = (List) b.get(world);
+    /**
+     * Ticks the block if it's been scheduled
+     */
+    public void updateTick(World par1World, int par2, int par3, int par4, Random par5Random)
+    {
+        boolean var6 = this.isIndirectlyPowered(par1World, par2, par3, par4);
+        List var7 = (List)redstoneUpdateInfoCache.get(par1World);
 
-        while (list != null && !list.isEmpty() && world.getTime() - ((RedstoneUpdateInfo) list.get(0)).d > 60L) {
-            list.remove(0);
+        while (var7 != null && !var7.isEmpty() && par1World.getTotalWorldTime() - ((RedstoneUpdateInfo)var7.get(0)).updateTime > 60L)
+        {
+            var7.remove(0);
         }
 
         // CraftBukkit start
-        org.bukkit.plugin.PluginManager manager = world.getServer().getPluginManager();
-        org.bukkit.block.Block block = world.getWorld().getBlockAt(i, j, k);
-        int oldCurrent = this.isOn ? 15 : 0;
-
+        org.bukkit.plugin.PluginManager manager = par1World.getServer().getPluginManager();
+        org.bukkit.block.Block block = par1World.getWorld().getBlockAt(par2, par3, par4);
+        int oldCurrent = this.torchActive ? 15 : 0;
         BlockRedstoneEvent event = new BlockRedstoneEvent(block, oldCurrent, oldCurrent);
         // CraftBukkit end
 
-        if (this.isOn) {
-            if (flag) {
+        if (this.torchActive)
+        {
+            if (var6)
+            {
                 // CraftBukkit start
-                if (oldCurrent != 0) {
+                if (oldCurrent != 0)
+                {
                     event.setNewCurrent(0);
                     manager.callEvent(event);
-                    if (event.getNewCurrent() != 0) {
+
+                    if (event.getNewCurrent() != 0)
+                    {
                         return;
                     }
                 }
+
                 // CraftBukkit end
+                par1World.setBlockAndMetadataWithNotify(par2, par3, par4, Block.torchRedstoneIdle.blockID, par1World.getBlockMetadata(par2, par3, par4));
 
-                world.setTypeIdAndData(i, j, k, Block.REDSTONE_TORCH_OFF.id, world.getData(i, j, k));
-                if (this.a(world, i, j, k, true)) {
-                    world.makeSound((double) ((float) i + 0.5F), (double) ((float) j + 0.5F), (double) ((float) k + 0.5F), "random.fizz", 0.5F, 2.6F + (world.random.nextFloat() - world.random.nextFloat()) * 0.8F);
+                if (this.checkForBurnout(par1World, par2, par3, par4, true))
+                {
+                    par1World.playSoundEffect((double)((float)par2 + 0.5F), (double)((float)par3 + 0.5F), (double)((float)par4 + 0.5F), "random.fizz", 0.5F, 2.6F + (par1World.rand.nextFloat() - par1World.rand.nextFloat()) * 0.8F);
 
-                    for (int l = 0; l < 5; ++l) {
-                        double d0 = (double) i + random.nextDouble() * 0.6D + 0.2D;
-                        double d1 = (double) j + random.nextDouble() * 0.6D + 0.2D;
-                        double d2 = (double) k + random.nextDouble() * 0.6D + 0.2D;
-
-                        world.addParticle("smoke", d0, d1, d2, 0.0D, 0.0D, 0.0D);
+                    for (int var8 = 0; var8 < 5; ++var8)
+                    {
+                        double var9 = (double)par2 + par5Random.nextDouble() * 0.6D + 0.2D;
+                        double var11 = (double)par3 + par5Random.nextDouble() * 0.6D + 0.2D;
+                        double var13 = (double)par4 + par5Random.nextDouble() * 0.6D + 0.2D;
+                        par1World.spawnParticle("smoke", var9, var11, var13, 0.0D, 0.0D, 0.0D);
                     }
                 }
             }
-        } else if (!flag && !this.a(world, i, j, k, false)) {
+        }
+        else if (!var6 && !this.checkForBurnout(par1World, par2, par3, par4, false))
+        {
             // CraftBukkit start
-            if (oldCurrent != 15) {
+            if (oldCurrent != 15)
+            {
                 event.setNewCurrent(15);
                 manager.callEvent(event);
-                if (event.getNewCurrent() != 15) {
+
+                if (event.getNewCurrent() != 15)
+                {
                     return;
                 }
             }
-            // CraftBukkit end
 
-            world.setTypeIdAndData(i, j, k, Block.REDSTONE_TORCH_ON.id, world.getData(i, j, k));
+            // CraftBukkit end
+            par1World.setBlockAndMetadataWithNotify(par2, par3, par4, Block.torchRedstoneActive.blockID, par1World.getBlockMetadata(par2, par3, par4));
         }
     }
 
-    public void doPhysics(World world, int i, int j, int k, int l) {
-        super.doPhysics(world, i, j, k, l);
-        world.a(i, j, k, this.id, this.r_());
+    /**
+     * Lets the block know when one of its neighbor changes. Doesn't know which neighbor changed (coordinates passed are
+     * their own) Args: x, y, z, neighbor blockID
+     */
+    public void onNeighborBlockChange(World par1World, int par2, int par3, int par4, int par5)
+    {
+        super.onNeighborBlockChange(par1World, par2, par3, par4, par5);
+        par1World.scheduleBlockUpdate(par2, par3, par4, this.blockID, this.tickRate());
     }
 
-    public boolean c(IBlockAccess iblockaccess, int i, int j, int k, int l) {
-        return l == 0 ? this.b(iblockaccess, i, j, k, l) : false;
+    /**
+     * Returns true if the block is emitting direct/strong redstone power on the specified side. Args: World, X, Y, Z,
+     * side. Note that the side is reversed - eg it is 1 (up) when checking the bottom of the block.
+     */
+    public boolean isProvidingStrongPower(IBlockAccess par1IBlockAccess, int par2, int par3, int par4, int par5)
+    {
+        return par5 == 0 ? this.isProvidingWeakPower(par1IBlockAccess, par2, par3, par4, par5) : false;
     }
 
-    public int getDropType(int i, Random random, int j) {
-        return Block.REDSTONE_TORCH_ON.id;
+    /**
+     * Returns the ID of the items to drop on destruction.
+     */
+    public int idDropped(int par1, Random par2Random, int par3)
+    {
+        return Block.torchRedstoneActive.blockID;
     }
 
-    public boolean isPowerSource() {
+    /**
+     * Can this block provide power. Only wire currently seems to have this change based on its state.
+     */
+    public boolean canProvidePower()
+    {
         return true;
     }
 }

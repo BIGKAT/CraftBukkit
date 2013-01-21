@@ -1,330 +1,512 @@
-package net.minecraft.server;
+package net.minecraft.entity.monster;
 
 import java.util.Calendar;
+import net.minecraft.block.Block;
+import net.minecraft.entity.Entity;
+import net.minecraft.entity.EntityLiving;
+import net.minecraft.entity.EnumCreatureAttribute;
+import net.minecraft.entity.ai.EntityAIAttackOnCollide;
+import net.minecraft.entity.ai.EntityAIBreakDoor;
+import net.minecraft.entity.ai.EntityAIHurtByTarget;
+import net.minecraft.entity.ai.EntityAILookIdle;
+import net.minecraft.entity.ai.EntityAIMoveThroughVillage;
+import net.minecraft.entity.ai.EntityAIMoveTwardsRestriction;
+import net.minecraft.entity.ai.EntityAINearestAttackableTarget;
+import net.minecraft.entity.ai.EntityAISwimming;
+import net.minecraft.entity.ai.EntityAIWander;
+import net.minecraft.entity.ai.EntityAIWatchClosest;
+import net.minecraft.entity.passive.EntityVillager;
+import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.item.Item;
+import net.minecraft.item.ItemStack;
+import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.potion.Potion;
+import net.minecraft.potion.PotionEffect;
+import net.minecraft.util.MathHelper;
+import net.minecraft.world.World;
 
 import org.bukkit.event.entity.EntityCombustEvent; // CraftBukkit
 
-public class EntityZombie extends EntityMonster {
+public class EntityZombie extends EntityMob
+{
+    /**
+     * Ticker used to determine the time remaining for this zombie to convert into a villager when cured.
+     */
+    private int conversionTime = 0;
 
-    private int d = 0;
-
-    public EntityZombie(World world) {
-        super(world);
+    public EntityZombie(World par1World)
+    {
+        super(par1World);
         this.texture = "/mob/zombie.png";
-        this.bH = 0.23F;
-        this.getNavigation().b(true);
-        this.goalSelector.a(0, new PathfinderGoalFloat(this));
-        this.goalSelector.a(1, new PathfinderGoalBreakDoor(this));
-        this.goalSelector.a(2, new PathfinderGoalMeleeAttack(this, EntityHuman.class, this.bH, false));
-        this.goalSelector.a(3, new PathfinderGoalMeleeAttack(this, EntityVillager.class, this.bH, true));
-        this.goalSelector.a(4, new PathfinderGoalMoveTowardsRestriction(this, this.bH));
-        this.goalSelector.a(5, new PathfinderGoalMoveThroughVillage(this, this.bH, false));
-        this.goalSelector.a(6, new PathfinderGoalRandomStroll(this, this.bH));
-        this.goalSelector.a(7, new PathfinderGoalLookAtPlayer(this, EntityHuman.class, 8.0F));
-        this.goalSelector.a(7, new PathfinderGoalRandomLookaround(this));
-        this.targetSelector.a(1, new PathfinderGoalHurtByTarget(this, false));
-        this.targetSelector.a(2, new PathfinderGoalNearestAttackableTarget(this, EntityHuman.class, 16.0F, 0, true));
-        this.targetSelector.a(2, new PathfinderGoalNearestAttackableTarget(this, EntityVillager.class, 16.0F, 0, false));
+        this.moveSpeed = 0.23F;
+        this.getNavigator().setBreakDoors(true);
+        this.tasks.addTask(0, new EntityAISwimming(this));
+        this.tasks.addTask(1, new EntityAIBreakDoor(this));
+        this.tasks.addTask(2, new EntityAIAttackOnCollide(this, EntityPlayer.class, this.moveSpeed, false));
+        this.tasks.addTask(3, new EntityAIAttackOnCollide(this, EntityVillager.class, this.moveSpeed, true));
+        this.tasks.addTask(4, new EntityAIMoveTwardsRestriction(this, this.moveSpeed));
+        this.tasks.addTask(5, new EntityAIMoveThroughVillage(this, this.moveSpeed, false));
+        this.tasks.addTask(6, new EntityAIWander(this, this.moveSpeed));
+        this.tasks.addTask(7, new EntityAIWatchClosest(this, EntityPlayer.class, 8.0F));
+        this.tasks.addTask(7, new EntityAILookIdle(this));
+        this.targetTasks.addTask(1, new EntityAIHurtByTarget(this, false));
+        this.targetTasks.addTask(2, new EntityAINearestAttackableTarget(this, EntityPlayer.class, 16.0F, 0, true));
+        this.targetTasks.addTask(2, new EntityAINearestAttackableTarget(this, EntityVillager.class, 16.0F, 0, false));
     }
 
-    public float bB() {
-        return super.bB() * (this.isBaby() ? 1.5F : 1.0F);
+    /**
+     * This method returns a value to be applied directly to entity speed, this factor is less than 1 when a slowdown
+     * potion effect is applied, more than 1 when a haste potion effect is applied and 2 for fleeing entities.
+     */
+    public float getSpeedModifier()
+    {
+        return super.getSpeedModifier() * (this.isChild() ? 1.5F : 1.0F);
     }
 
-    protected void a() {
-        super.a();
-        this.getDataWatcher().a(12, Byte.valueOf((byte) 0));
-        this.getDataWatcher().a(13, Byte.valueOf((byte) 0));
-        this.getDataWatcher().a(14, Byte.valueOf((byte) 0));
+    protected void entityInit()
+    {
+        super.entityInit();
+        this.getDataWatcher().addObject(12, Byte.valueOf((byte)0));
+        this.getDataWatcher().addObject(13, Byte.valueOf((byte)0));
+        this.getDataWatcher().addObject(14, Byte.valueOf((byte)0));
     }
 
-    public int getMaxHealth() {
+    public int getMaxHealth()
+    {
         return 20;
     }
 
-    public int aW() {
-        int i = super.aW() + 2;
+    /**
+     * Returns the current armor value as determined by a call to InventoryPlayer.getTotalArmorValue
+     */
+    public int getTotalArmorValue()
+    {
+        int var1 = super.getTotalArmorValue() + 2;
 
-        if (i > 20) {
-            i = 20;
+        if (var1 > 20)
+        {
+            var1 = 20;
         }
 
-        return i;
+        return var1;
     }
 
-    protected boolean be() {
+    /**
+     * Returns true if the newer Entity AI code should be run
+     */
+    protected boolean isAIEnabled()
+    {
         return true;
     }
 
-    public boolean isBaby() {
-        return this.getDataWatcher().getByte(12) == 1;
+    /**
+     * If Animal, checks if the age timer is negative
+     */
+    public boolean isChild()
+    {
+        return this.getDataWatcher().getWatchableObjectByte(12) == 1;
     }
 
-    public void setBaby(boolean flag) {
-        this.getDataWatcher().watch(12, Byte.valueOf((byte) (flag ? 1 : 0))); // CraftBukkit - added flag
+    /**
+     * Set whether this zombie is a child.
+     */
+    public void setChild(boolean par1)
+    {
+        this.getDataWatcher().updateObject(12, Byte.valueOf((byte)(par1 ? 1 : 0)));  // CraftBukkit - added flag
     }
 
-    public boolean isVillager() {
-        return this.getDataWatcher().getByte(13) == 1;
+    /**
+     * Return whether this zombie is a villager.
+     */
+    public boolean isVillager()
+    {
+        return this.getDataWatcher().getWatchableObjectByte(13) == 1;
     }
 
-    public void setVillager(boolean flag) {
-        this.getDataWatcher().watch(13, Byte.valueOf((byte) (flag ? 1 : 0)));
+    /**
+     * Set whether this zombie is a villager.
+     */
+    public void setVillager(boolean par1)
+    {
+        this.getDataWatcher().updateObject(13, Byte.valueOf((byte)(par1 ? 1 : 0)));
     }
 
-    public void c() {
-        if (this.world.u() && !this.world.isStatic && !this.isBaby()) {
-            float f = this.c(1.0F);
+    /**
+     * Called frequently so the entity can update its state every tick as required. For example, zombies and skeletons
+     * use this to react to sunlight and start to burn.
+     */
+    public void onLivingUpdate()
+    {
+        if (this.worldObj.isDaytime() && !this.worldObj.isRemote && !this.isChild())
+        {
+            float var1 = this.getBrightness(1.0F);
 
-            if (f > 0.5F && this.random.nextFloat() * 30.0F < (f - 0.4F) * 2.0F && this.world.k(MathHelper.floor(this.locX), MathHelper.floor(this.locY), MathHelper.floor(this.locZ))) {
-                boolean flag = true;
-                ItemStack itemstack = this.getEquipment(4);
+            if (var1 > 0.5F && this.rand.nextFloat() * 30.0F < (var1 - 0.4F) * 2.0F && this.worldObj.canBlockSeeTheSky(MathHelper.floor_double(this.posX), MathHelper.floor_double(this.posY), MathHelper.floor_double(this.posZ)))
+            {
+                boolean var2 = true;
+                ItemStack var3 = this.getCurrentItemOrArmor(4);
 
-                if (itemstack != null) {
-                    if (itemstack.f()) {
-                        itemstack.setData(itemstack.i() + this.random.nextInt(2));
-                        if (itemstack.i() >= itemstack.k()) {
-                            this.a(itemstack);
-                            this.setEquipment(4, (ItemStack) null);
+                if (var3 != null)
+                {
+                    if (var3.isItemStackDamageable())
+                    {
+                        var3.setItemDamage(var3.getItemDamageForDisplay() + this.rand.nextInt(2));
+
+                        if (var3.getItemDamageForDisplay() >= var3.getMaxDamage())
+                        {
+                            this.renderBrokenItemStack(var3);
+                            this.setCurrentItemOrArmor(4, (ItemStack)null);
                         }
                     }
 
-                    flag = false;
+                    var2 = false;
                 }
 
-                if (flag) {
+                if (var2)
+                {
                     // CraftBukkit start
                     EntityCombustEvent event = new EntityCombustEvent(this.getBukkitEntity(), 8);
-                    this.world.getServer().getPluginManager().callEvent(event);
+                    this.worldObj.getServer().getPluginManager().callEvent(event);
 
-                    if (!event.isCancelled()) {
-                        this.setOnFire(event.getDuration());
+                    if (!event.isCancelled())
+                    {
+                        this.setFire(event.getDuration());
                     }
+
                     // CraftBukkit end
                 }
             }
         }
 
-        super.c();
+        super.onLivingUpdate();
     }
 
-    public void j_() {
-        if (!this.world.isStatic && this.o()) {
-            int i = this.q();
+    /**
+     * Called to update the entity's position/logic.
+     */
+    public void onUpdate()
+    {
+        if (!this.worldObj.isRemote && this.func_82230_o())
+        {
+            int var1 = this.getConversionTimeBoost();
+            this.conversionTime -= var1;
 
-            this.d -= i;
-            if (this.d <= 0) {
-                this.p();
+            if (this.conversionTime <= 0)
+            {
+                this.convertToVillager();
             }
         }
 
-        super.j_();
+        super.onUpdate();
     }
 
-    public int c(Entity entity) {
-        ItemStack itemstack = this.bD();
-        int i = 4;
+    /**
+     * Returns the amount of damage a mob should deal.
+     */
+    public int getAttackStrength(Entity par1Entity)
+    {
+        ItemStack var2 = this.getHeldItem();
+        int var3 = 4;
 
-        if (itemstack != null) {
-            i += itemstack.a((Entity) this);
+        if (var2 != null)
+        {
+            var3 += var2.getDamageVsEntity((Entity) this);
         }
 
-        return i;
+        return var3;
     }
 
-    protected String aY() {
+    /**
+     * Returns the sound this mob makes while it's alive.
+     */
+    protected String getLivingSound()
+    {
         return "mob.zombie.say";
     }
 
-    protected String aZ() {
+    /**
+     * Returns the sound this mob makes when it is hurt.
+     */
+    protected String getHurtSound()
+    {
         return "mob.zombie.hurt";
     }
 
-    protected String ba() {
+    /**
+     * Returns the sound this mob makes on death.
+     */
+    protected String getDeathSound()
+    {
         return "mob.zombie.death";
     }
 
-    protected void a(int i, int j, int k, int l) {
-        this.makeSound("mob.zombie.step", 0.15F, 1.0F);
+    /**
+     * Plays step sound at given x, y, z for the entity
+     */
+    protected void playStepSound(int par1, int par2, int par3, int par4)
+    {
+        this.playSound("mob.zombie.step", 0.15F, 1.0F);
     }
 
-    protected int getLootId() {
-        return Item.ROTTEN_FLESH.id;
+    /**
+     * Returns the item ID for the item the mob drops on death.
+     */
+    protected int getDropItemId()
+    {
+        return Item.rottenFlesh.itemID;
     }
 
-    public EnumMonsterType getMonsterType() {
-        return EnumMonsterType.UNDEAD;
+    /**
+     * Get this Entity's EnumCreatureAttribute
+     */
+    public EnumCreatureAttribute getCreatureAttribute()
+    {
+        return EnumCreatureAttribute.UNDEAD;
     }
 
     // CraftBukkit start - return rare dropped item instead of dropping it
-    protected ItemStack l(int i) {
-        switch (this.random.nextInt(3)) {
-        case 0:
-            return new ItemStack(Item.IRON_INGOT.id, 1, 0);
-        case 1:
-            return new ItemStack(Item.CARROT.id, 1, 0);
-        case 2:
-            return new ItemStack(Item.POTATO.id, 1, 0);
-        default:
-            return null;
+    protected ItemStack l(int i)
+    {
+        switch (this.rand.nextInt(3))
+        {
+            case 0:
+                return new ItemStack(Item.ingotIron.itemID, 1, 0);
+
+            case 1:
+                return new ItemStack(Item.carrot.itemID, 1, 0);
+
+            case 2:
+                return new ItemStack(Item.potato.itemID, 1, 0);
+
+            default:
+                return null;
         }
     }
     // CraftBukkit end
 
-    protected void bE() {
-        super.bE();
-        if (this.random.nextFloat() < (this.world.difficulty == 3 ? 0.05F : 0.01F)) {
-            int i = this.random.nextInt(3);
+    protected void func_82164_bB()
+    {
+        super.func_82164_bB();
 
-            if (i == 0) {
-                this.setEquipment(0, new ItemStack(Item.IRON_SWORD));
-            } else {
-                this.setEquipment(0, new ItemStack(Item.IRON_SPADE));
+        if (this.rand.nextFloat() < (this.worldObj.difficultySetting == 3 ? 0.05F : 0.01F))
+        {
+            int var1 = this.rand.nextInt(3);
+
+            if (var1 == 0)
+            {
+                this.setCurrentItemOrArmor(0, new ItemStack(Item.swordSteel));
+            }
+            else
+            {
+                this.setCurrentItemOrArmor(0, new ItemStack(Item.shovelSteel));
             }
         }
     }
 
-    public void b(NBTTagCompound nbttagcompound) {
-        super.b(nbttagcompound);
-        if (this.isBaby()) {
-            nbttagcompound.setBoolean("IsBaby", true);
+    /**
+     * (abstract) Protected helper method to write subclass entity data to NBT.
+     */
+    public void writeEntityToNBT(NBTTagCompound par1NBTTagCompound)
+    {
+        super.writeEntityToNBT(par1NBTTagCompound);
+
+        if (this.isChild())
+        {
+            par1NBTTagCompound.setBoolean("IsBaby", true);
         }
 
-        if (this.isVillager()) {
-            nbttagcompound.setBoolean("IsVillager", true);
+        if (this.isVillager())
+        {
+            par1NBTTagCompound.setBoolean("IsVillager", true);
         }
 
-        nbttagcompound.setInt("ConversionTime", this.o() ? this.d : -1);
+        par1NBTTagCompound.setInteger("ConversionTime", this.func_82230_o() ? this.conversionTime : -1);
     }
 
-    public void a(NBTTagCompound nbttagcompound) {
-        super.a(nbttagcompound);
-        if (nbttagcompound.getBoolean("IsBaby")) {
-            this.setBaby(true);
+    /**
+     * (abstract) Protected helper method to read subclass entity data from NBT.
+     */
+    public void readEntityFromNBT(NBTTagCompound par1NBTTagCompound)
+    {
+        super.readEntityFromNBT(par1NBTTagCompound);
+
+        if (par1NBTTagCompound.getBoolean("IsBaby"))
+        {
+            this.setChild(true);
         }
 
-        if (nbttagcompound.getBoolean("IsVillager")) {
+        if (par1NBTTagCompound.getBoolean("IsVillager"))
+        {
             this.setVillager(true);
         }
 
-        if (nbttagcompound.hasKey("ConversionTime") && nbttagcompound.getInt("ConversionTime") > -1) {
-            this.a(nbttagcompound.getInt("ConversionTime"));
+        if (par1NBTTagCompound.hasKey("ConversionTime") && par1NBTTagCompound.getInteger("ConversionTime") > -1)
+        {
+            this.startConversion(par1NBTTagCompound.getInteger("ConversionTime"));
         }
     }
 
-    public void a(EntityLiving entityliving) {
-        super.a(entityliving);
-        if (this.world.difficulty >= 2 && entityliving instanceof EntityVillager) {
-            if (this.world.difficulty == 2 && this.random.nextBoolean()) {
+    /**
+     * This method gets called when the entity kills another one.
+     */
+    public void onKillEntity(EntityLiving par1EntityLiving)
+    {
+        super.onKillEntity(par1EntityLiving);
+
+        if (this.worldObj.difficultySetting >= 2 && par1EntityLiving instanceof EntityVillager)
+        {
+            if (this.worldObj.difficultySetting == 2 && this.rand.nextBoolean())
+            {
                 return;
             }
 
-            EntityZombie entityzombie = new EntityZombie(this.world);
+            EntityZombie var2 = new EntityZombie(this.worldObj);
+            var2.func_82149_j(par1EntityLiving);
+            this.worldObj.setEntityDead(par1EntityLiving);
+            var2.initCreature();
+            var2.setVillager(true);
 
-            entityzombie.k(entityliving);
-            this.world.kill(entityliving);
-            entityzombie.bG();
-            entityzombie.setVillager(true);
-            if (entityliving.isBaby()) {
-                entityzombie.setBaby(true);
+            if (par1EntityLiving.isChild())
+            {
+                var2.setChild(true);
             }
 
-            this.world.addEntity(entityzombie);
-            this.world.a((EntityHuman) null, 1016, (int) this.locX, (int) this.locY, (int) this.locZ, 0);
+            this.worldObj.spawnEntityInWorld(var2);
+            this.worldObj.playAuxSFXAtEntity((EntityPlayer)null, 1016, (int)this.posX, (int)this.posY, (int)this.posZ, 0);
         }
     }
 
-    public void bG() {
-        this.canPickUpLoot = this.random.nextFloat() < at[this.world.difficulty];
-        if (this.world.random.nextFloat() < 0.05F) {
+    /**
+     * Initialize this creature.
+     */
+    public void initCreature()
+    {
+        this.canPickUpLoot = this.rand.nextFloat() < pickUpLootProability[this.worldObj.difficultySetting];
+
+        if (this.worldObj.rand.nextFloat() < 0.05F)
+        {
             this.setVillager(true);
         }
 
-        this.bE();
-        this.bF();
-        if (this.getEquipment(4) == null) {
-            Calendar calendar = this.world.T();
+        this.func_82164_bB();
+        this.func_82162_bC();
 
-            if (calendar.get(2) + 1 == 10 && calendar.get(5) == 31 && this.random.nextFloat() < 0.25F) {
-                this.setEquipment(4, new ItemStack(this.random.nextFloat() < 0.1F ? Block.JACK_O_LANTERN : Block.PUMPKIN));
-                this.dropChances[4] = 0.0F;
+        if (this.getCurrentItemOrArmor(4) == null)
+        {
+            Calendar var1 = this.worldObj.getCurrentDate();
+
+            if (var1.get(2) + 1 == 10 && var1.get(5) == 31 && this.rand.nextFloat() < 0.25F)
+            {
+                this.setCurrentItemOrArmor(4, new ItemStack(this.rand.nextFloat() < 0.1F ? Block.pumpkinLantern : Block.pumpkin));
+                this.equipmentDropChances[4] = 0.0F;
             }
         }
     }
 
-    public boolean a(EntityHuman entityhuman) {
-        ItemStack itemstack = entityhuman.bS();
+    /**
+     * Called when a player interacts with a mob. e.g. gets milk from a cow, gets into the saddle on a pig.
+     */
+    public boolean interact(EntityPlayer par1EntityPlayer)
+    {
+        ItemStack var2 = par1EntityPlayer.getCurrentEquippedItem();
 
-        if (itemstack != null && itemstack.getItem() == Item.GOLDEN_APPLE && itemstack.getData() == 0 && this.isVillager() && this.hasEffect(MobEffectList.WEAKNESS)) {
-            if (!entityhuman.abilities.canInstantlyBuild) {
-                --itemstack.count;
+        if (var2 != null && var2.getItem() == Item.appleGold && var2.getItemDamage() == 0 && this.isVillager() && this.isPotionActive(Potion.weakness))
+        {
+            if (!par1EntityPlayer.capabilities.isCreativeMode)
+            {
+                --var2.stackSize;
             }
 
-            if (itemstack.count <= 0) {
-                entityhuman.inventory.setItem(entityhuman.inventory.itemInHandIndex, (ItemStack) null);
+            if (var2.stackSize <= 0)
+            {
+                par1EntityPlayer.inventory.setInventorySlotContents(par1EntityPlayer.inventory.currentItem, (ItemStack)null);
             }
 
-            if (!this.world.isStatic) {
-                this.a(this.random.nextInt(2401) + 3600);
+            if (!this.worldObj.isRemote)
+            {
+                this.startConversion(this.rand.nextInt(2401) + 3600);
             }
 
             return true;
-        } else {
+        }
+        else
+        {
             return false;
         }
     }
 
-    protected void a(int i) {
-        this.d = i;
-        this.getDataWatcher().watch(14, Byte.valueOf((byte) 1));
-        this.o(MobEffectList.WEAKNESS.id);
-        this.addEffect(new MobEffect(MobEffectList.INCREASE_DAMAGE.id, i, Math.min(this.world.difficulty - 1, 0)));
-        this.world.broadcastEntityEffect(this, (byte) 16);
+    /**
+     * Starts converting this zombie into a villager. The zombie converts into a villager after the specified time in
+     * ticks.
+     */
+    protected void startConversion(int par1)
+    {
+        this.conversionTime = par1;
+        this.getDataWatcher().updateObject(14, Byte.valueOf((byte)1));
+        this.removePotionEffect(Potion.weakness.id);
+        this.addPotionEffect(new PotionEffect(Potion.damageBoost.id, par1, Math.min(this.worldObj.difficultySetting - 1, 0)));
+        this.worldObj.setEntityState(this, (byte)16);
     }
 
-    public boolean o() {
-        return this.getDataWatcher().getByte(14) == 1;
+    public boolean func_82230_o()
+    {
+        return this.getDataWatcher().getWatchableObjectByte(14) == 1;
     }
 
-    protected void p() {
-        EntityVillager entityvillager = new EntityVillager(this.world);
+    /**
+     * Convert this zombie into a villager.
+     */
+    protected void convertToVillager()
+    {
+        EntityVillager var1 = new EntityVillager(this.worldObj);
+        var1.func_82149_j(this);
+        var1.initCreature();
+        var1.func_82187_q();
 
-        entityvillager.k(this);
-        entityvillager.bG();
-        entityvillager.q();
-        if (this.isBaby()) {
-            entityvillager.setAge(-24000);
+        if (this.isChild())
+        {
+            var1.setGrowingAge(-24000);
         }
 
-        this.world.kill(this);
-        this.world.addEntity(entityvillager);
-        entityvillager.addEffect(new MobEffect(MobEffectList.CONFUSION.id, 200, 0));
-        this.world.a((EntityHuman) null, 1017, (int) this.locX, (int) this.locY, (int) this.locZ, 0);
+        this.worldObj.setEntityDead(this);
+        this.worldObj.spawnEntityInWorld(var1);
+        var1.addPotionEffect(new PotionEffect(Potion.confusion.id, 200, 0));
+        this.worldObj.playAuxSFXAtEntity((EntityPlayer)null, 1017, (int)this.posX, (int)this.posY, (int)this.posZ, 0);
     }
 
-    protected int q() {
-        int i = 1;
+    /**
+     * Return the amount of time decremented from conversionTime every tick.
+     */
+    protected int getConversionTimeBoost()
+    {
+        int var1 = 1;
 
-        if (this.random.nextFloat() < 0.01F) {
-            int j = 0;
+        if (this.rand.nextFloat() < 0.01F)
+        {
+            int var2 = 0;
 
-            for (int k = (int) this.locX - 4; k < (int) this.locX + 4 && j < 14; ++k) {
-                for (int l = (int) this.locY - 4; l < (int) this.locY + 4 && j < 14; ++l) {
-                    for (int i1 = (int) this.locZ - 4; i1 < (int) this.locZ + 4 && j < 14; ++i1) {
-                        int j1 = this.world.getTypeId(k, l, i1);
+            for (int var3 = (int)this.posX - 4; var3 < (int)this.posX + 4 && var2 < 14; ++var3)
+            {
+                for (int var4 = (int)this.posY - 4; var4 < (int)this.posY + 4 && var2 < 14; ++var4)
+                {
+                    for (int var5 = (int)this.posZ - 4; var5 < (int)this.posZ + 4 && var2 < 14; ++var5)
+                    {
+                        int var6 = this.worldObj.getBlockId(var3, var4, var5);
 
-                        if (j1 == Block.IRON_FENCE.id || j1 == Block.BED.id) {
-                            if (this.random.nextFloat() < 0.3F) {
-                                ++i;
+                        if (var6 == Block.fenceIron.blockID || var6 == Block.bed.blockID)
+                        {
+                            if (this.rand.nextFloat() < 0.3F)
+                            {
+                                ++var1;
                             }
 
-                            ++j;
+                            ++var2;
                         }
                     }
                 }
             }
         }
 
-        return i;
+        return var1;
     }
 }

@@ -1,89 +1,109 @@
-package net.minecraft.server;
+package net.minecraft.entity.ai;
 
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import net.minecraft.profiler.Profiler;
 
 import org.bukkit.craftbukkit.util.UnsafeList; // CraftBukkit
 
-public class PathfinderGoalSelector {
-
+public class EntityAITasks
+{
     // CraftBukkit start - ArrayList -> UnsafeList
-    private List a = new UnsafeList();
-    private List b = new UnsafeList();
+    private List taskEntries = new UnsafeList();
+    private List executingTaskEntries = new UnsafeList();
     // CraftBukkit end
-    private final MethodProfiler c;
-    private int d = 0;
-    private int e = 3;
 
-    public PathfinderGoalSelector(MethodProfiler methodprofiler) {
-        this.c = methodprofiler;
+    /** Instance of Profiler. */
+    private final Profiler theProfiler;
+    private int field_75778_d = 0;
+    private int field_75779_e = 3;
+
+    public EntityAITasks(Profiler par1Profiler)
+    {
+        this.theProfiler = par1Profiler;
     }
 
-    public void a(int i, PathfinderGoal pathfindergoal) {
-        this.a.add(new PathfinderGoalSelectorItem(this, i, pathfindergoal));
+    public void addTask(int par1, EntityAIBase par2EntityAIBase)
+    {
+        this.taskEntries.add(new EntityAITaskEntry(this, par1, par2EntityAIBase));
     }
 
-    public void a(PathfinderGoal pathfindergoal) {
-        Iterator iterator = this.a.iterator();
+    public void func_85156_a(EntityAIBase par1EntityAIBase)
+    {
+        Iterator var2 = this.taskEntries.iterator();
 
-        while (iterator.hasNext()) {
-            PathfinderGoalSelectorItem pathfindergoalselectoritem = (PathfinderGoalSelectorItem) iterator.next();
-            PathfinderGoal pathfindergoal1 = pathfindergoalselectoritem.a;
+        while (var2.hasNext())
+        {
+            EntityAITaskEntry var3 = (EntityAITaskEntry)var2.next();
+            EntityAIBase var4 = var3.action;
 
-            if (pathfindergoal1 == pathfindergoal) {
-                if (this.b.contains(pathfindergoalselectoritem)) {
-                    pathfindergoal1.d();
-                    this.b.remove(pathfindergoalselectoritem);
+            if (var4 == par1EntityAIBase)
+            {
+                if (this.executingTaskEntries.contains(var3))
+                {
+                    var4.resetTask();
+                    this.executingTaskEntries.remove(var3);
                 }
 
-                iterator.remove();
+                var2.remove();
             }
         }
     }
 
-    public void a() {
+    public void onUpdateTasks()
+    {
         // ArrayList arraylist = new ArrayList(); // CraftBukkit - remove usage
-        Iterator iterator;
-        PathfinderGoalSelectorItem pathfindergoalselectoritem;
+        Iterator var1;
+        EntityAITaskEntry var2;
 
-        if (this.d++ % this.e == 0) {
-            iterator = this.a.iterator();
+        if (this.field_75778_d++ % this.field_75779_e == 0)
+        {
+            var1 = this.taskEntries.iterator();
 
-            while (iterator.hasNext()) {
-                pathfindergoalselectoritem = (PathfinderGoalSelectorItem) iterator.next();
-                boolean flag = this.b.contains(pathfindergoalselectoritem);
+            while (var1.hasNext())
+            {
+                var2 = (EntityAITaskEntry) var1.next();
+                boolean var3 = this.executingTaskEntries.contains(var2);
 
-                if (flag) {
-                    if (this.b(pathfindergoalselectoritem) && this.a(pathfindergoalselectoritem)) {
+                if (var3)
+                {
+                    if (this.func_75775_b(var2) && this.func_75773_a(var2))
+                    {
                         continue;
                     }
 
-                    pathfindergoalselectoritem.a.d();
-                    this.b.remove(pathfindergoalselectoritem);
+                    var2.action.resetTask();
+                    this.executingTaskEntries.remove(var2);
                 }
 
-                if (this.b(pathfindergoalselectoritem) && pathfindergoalselectoritem.a.a()) {
+                if (this.func_75775_b(var2) && var2.action.shouldExecute())
+                {
                     // CraftBukkit start - call method now instead of queueing
                     // arraylist.add(pathfindergoalselectoritem);
-                    pathfindergoalselectoritem.a.c();
+                    var2.action.startExecuting();
                     // CraftBukkit end
-                    this.b.add(pathfindergoalselectoritem);
+                    this.executingTaskEntries.add(var2);
                 }
             }
-        } else {
-            iterator = this.b.iterator();
+        }
+        else
+        {
+            var1 = this.executingTaskEntries.iterator();
 
-            while (iterator.hasNext()) {
-                pathfindergoalselectoritem = (PathfinderGoalSelectorItem) iterator.next();
-                if (!pathfindergoalselectoritem.a.b()) {
-                    pathfindergoalselectoritem.a.d();
-                    iterator.remove();
+            while (var1.hasNext())
+            {
+                var2 = (EntityAITaskEntry) var1.next();
+
+                if (!var2.action.continueExecuting())
+                {
+                    var2.action.resetTask();
+                    var1.remove();
                 }
             }
         }
 
-        this.c.a("goalStart");
+        this.theProfiler.startSection("goalStart");
         // CraftBukkit start - removed usage of arraylist
         /*iterator = arraylist.iterator();
 
@@ -94,56 +114,68 @@ public class PathfinderGoalSelector {
             this.c.b();
         }*/
         // CraftBukkit end
+        this.theProfiler.endSection();
+        this.theProfiler.startSection("goalTick");
+        var1 = this.executingTaskEntries.iterator();
 
-        this.c.b();
-        this.c.a("goalTick");
-        iterator = this.b.iterator();
-
-        while (iterator.hasNext()) {
-            pathfindergoalselectoritem = (PathfinderGoalSelectorItem) iterator.next();
-            pathfindergoalselectoritem.a.e();
+        while (var1.hasNext())
+        {
+            var2 = (EntityAITaskEntry) var1.next();
+            var2.action.updateTask();
         }
 
-        this.c.b();
+        this.theProfiler.endSection();
     }
 
-    private boolean a(PathfinderGoalSelectorItem pathfindergoalselectoritem) {
-        this.c.a("canContinue");
-        boolean flag = pathfindergoalselectoritem.a.b();
-
-        this.c.b();
-        return flag;
+    private boolean func_75773_a(EntityAITaskEntry par1EntityAITaskEntry)
+    {
+        this.theProfiler.startSection("canContinue");
+        boolean var2 = par1EntityAITaskEntry.action.continueExecuting();
+        this.theProfiler.endSection();
+        return var2;
     }
 
-    private boolean b(PathfinderGoalSelectorItem pathfindergoalselectoritem) {
-        this.c.a("canUse");
-        Iterator iterator = this.a.iterator();
+    private boolean func_75775_b(EntityAITaskEntry par1EntityAITaskEntry)
+    {
+        this.theProfiler.startSection("canUse");
+        Iterator var2 = this.taskEntries.iterator();
 
-        while (iterator.hasNext()) {
-            PathfinderGoalSelectorItem pathfindergoalselectoritem1 = (PathfinderGoalSelectorItem) iterator.next();
+        while (var2.hasNext())
+        {
+            EntityAITaskEntry var3 = (EntityAITaskEntry)var2.next();
 
-            if (pathfindergoalselectoritem1 != pathfindergoalselectoritem) {
-                if (pathfindergoalselectoritem.b >= pathfindergoalselectoritem1.b) {
+            if (var3 != par1EntityAITaskEntry)
+            {
+                if (par1EntityAITaskEntry.priority >= var3.priority)
+                {
                     // CraftBukkit - switch order
-                    if (!this.a(pathfindergoalselectoritem, pathfindergoalselectoritem1) && this.b.contains(pathfindergoalselectoritem1)) {
-                        this.c.b();
-                        ((UnsafeList.Itr) iterator).valid = false; // CraftBukkit - mark iterator for reuse
+                    if (!this.areTasksCompatible(par1EntityAITaskEntry, var3) && this.executingTaskEntries.contains(var3))
+                    {
+                        this.theProfiler.endSection();
+                        ((UnsafeList.Itr) var2).valid = false; // CraftBukkit - mark iterator for reuse
                         return false;
                     }
-                // CraftBukkit - switch order
-                } else if (!pathfindergoalselectoritem1.a.i() && this.b.contains(pathfindergoalselectoritem1)) {
-                    this.c.b();
-                    ((UnsafeList.Itr) iterator).valid = false; // CraftBukkit - mark iterator for reuse
+
+                    // CraftBukkit - switch order
+                }
+                else if (!var3.action.isContinuous() && this.executingTaskEntries.contains(var3))
+                {
+                    this.theProfiler.endSection();
+                    ((UnsafeList.Itr) var2).valid = false; // CraftBukkit - mark iterator for reuse
                     return false;
                 }
             }
         }
 
-        this.c.b();
+        this.theProfiler.endSection();
         return true;
     }
 
-    private boolean a(PathfinderGoalSelectorItem pathfindergoalselectoritem, PathfinderGoalSelectorItem pathfindergoalselectoritem1) {
-        return (pathfindergoalselectoritem.a.j() & pathfindergoalselectoritem1.a.j()) == 0;
+    /**
+     * Returns whether two EntityAITaskEntries can be executed concurrently
+     */
+    private boolean areTasksCompatible(EntityAITaskEntry par1EntityAITaskEntry, EntityAITaskEntry par2EntityAITaskEntry)
+    {
+        return (par1EntityAITaskEntry.action.getMutexBits() & par2EntityAITaskEntry.action.getMutexBits()) == 0;
     }
 }

@@ -1,128 +1,178 @@
-package net.minecraft.server;
+package net.minecraft.entity.effect;
 
 import java.util.List;
+import net.minecraft.block.Block;
+import net.minecraft.entity.Entity;
+import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.util.AxisAlignedBB;
+import net.minecraft.util.MathHelper;
+import net.minecraft.world.World;
 
 import org.bukkit.event.block.BlockIgniteEvent; // CraftBukkit
 
-public class EntityLightning extends EntityWeather {
+public class EntityLightningBolt extends EntityWeatherEffect
+{
+    /**
+     * Declares which state the lightning bolt is in. Whether it's in the air, hit the ground, etc.
+     */
+    private int lightningState;
 
-    private int lifeTicks;
-    public long a = 0L;
-    private int c;
+    /**
+     * A random long that is used to change the vertex of the lightning rendered in RenderLightningBolt
+     */
+    public long boltVertex = 0L;
+
+    /**
+     * Determines the time before the EntityLightningBolt is destroyed. It is a random integer decremented over time.
+     */
+    private int boltLivingTime;
 
     // CraftBukkit start
     private org.bukkit.craftbukkit.CraftWorld cworld;
     public boolean isEffect = false;
 
-    public EntityLightning(World world, double d0, double d1, double d2) {
-        this(world, d0, d1, d2, false);
+    public EntityLightningBolt(World par1World, double par2, double par4, double par6)
+    {
+        this(par1World, par2, par4, par6, false);
     }
 
-    public EntityLightning(World world, double d0, double d1, double d2, boolean isEffect) {
+    public EntityLightningBolt(World world, double d0, double d1, double d2, boolean isEffect)
+    {
         // CraftBukkit end
-
         super(world);
-
         // CraftBukkit start
         this.isEffect = isEffect;
         this.cworld = world.getWorld();
         // CraftBukkit end
-
-        this.setPositionRotation(d0, d1, d2, 0.0F, 0.0F);
-        this.lifeTicks = 2;
-        this.a = this.random.nextLong();
-        this.c = this.random.nextInt(3) + 1;
+        this.setLocationAndAngles(d0, d1, d2, 0.0F, 0.0F);
+        this.lightningState = 2;
+        this.boltVertex = this.rand.nextLong();
+        this.boltLivingTime = this.rand.nextInt(3) + 1;
 
         // CraftBukkit
-        if (!isEffect && !world.isStatic && world.difficulty >= 2 && world.areChunksLoaded(MathHelper.floor(d0), MathHelper.floor(d1), MathHelper.floor(d2), 10)) {
-            int i = MathHelper.floor(d0);
-            int j = MathHelper.floor(d1);
-            int k = MathHelper.floor(d2);
+        if (!isEffect && !world.isRemote && world.difficultySetting >= 2 && world.doChunksNearChunkExist(MathHelper.floor_double(d0), MathHelper.floor_double(d1), MathHelper.floor_double(d2), 10))
+        {
+            int i = MathHelper.floor_double(d0);
+            int j = MathHelper.floor_double(d1);
+            int k = MathHelper.floor_double(d2);
 
-            if (world.getTypeId(i, j, k) == 0 && Block.FIRE.canPlace(world, i, j, k)) {
+            if (world.getBlockId(i, j, k) == 0 && Block.fire.canPlaceBlockAt(world, i, j, k))
+            {
                 // CraftBukkit start
                 BlockIgniteEvent event = new BlockIgniteEvent(this.cworld.getBlockAt(i, j, k), BlockIgniteEvent.IgniteCause.LIGHTNING, null);
                 world.getServer().getPluginManager().callEvent(event);
 
-                if (!event.isCancelled()) {
-                    world.setTypeId(i, j, k, Block.FIRE.id);
+                if (!event.isCancelled())
+                {
+                    world.setBlockWithNotify(i, j, k, Block.fire.blockID);
                 }
+
                 // CraftBukkit end
             }
 
-            for (i = 0; i < 4; ++i) {
-                j = MathHelper.floor(d0) + this.random.nextInt(3) - 1;
-                k = MathHelper.floor(d1) + this.random.nextInt(3) - 1;
-                int l = MathHelper.floor(d2) + this.random.nextInt(3) - 1;
+            for (i = 0; i < 4; ++i)
+            {
+                j = MathHelper.floor_double(d0) + this.rand.nextInt(3) - 1;
+                k = MathHelper.floor_double(d1) + this.rand.nextInt(3) - 1;
+                int l = MathHelper.floor_double(d2) + this.rand.nextInt(3) - 1;
 
-                if (world.getTypeId(j, k, l) == 0 && Block.FIRE.canPlace(world, j, k, l)) {
+                if (world.getBlockId(j, k, l) == 0 && Block.fire.canPlaceBlockAt(world, j, k, l))
+                {
                     // CraftBukkit start
                     BlockIgniteEvent event = new BlockIgniteEvent(this.cworld.getBlockAt(j, k, l), BlockIgniteEvent.IgniteCause.LIGHTNING, null);
                     world.getServer().getPluginManager().callEvent(event);
 
-                    if (!event.isCancelled()) {
-                        world.setTypeId(j, k, l, Block.FIRE.id);
+                    if (!event.isCancelled())
+                    {
+                        world.setBlockWithNotify(j, k, l, Block.fire.blockID);
                     }
+
                     // CraftBukkit end
                 }
             }
         }
     }
 
-    public void j_() {
-        super.j_();
-        if (this.lifeTicks == 2) {
-            this.world.makeSound(this.locX, this.locY, this.locZ, "ambient.weather.thunder", 10000.0F, 0.8F + this.random.nextFloat() * 0.2F);
-            this.world.makeSound(this.locX, this.locY, this.locZ, "random.explode", 2.0F, 0.5F + this.random.nextFloat() * 0.2F);
+    /**
+     * Called to update the entity's position/logic.
+     */
+    public void onUpdate()
+    {
+        super.onUpdate();
+
+        if (this.lightningState == 2)
+        {
+            this.worldObj.playSoundEffect(this.posX, this.posY, this.posZ, "ambient.weather.thunder", 10000.0F, 0.8F + this.rand.nextFloat() * 0.2F);
+            this.worldObj.playSoundEffect(this.posX, this.posY, this.posZ, "random.explode", 2.0F, 0.5F + this.rand.nextFloat() * 0.2F);
         }
 
-        --this.lifeTicks;
-        if (this.lifeTicks < 0) {
-            if (this.c == 0) {
-                this.die();
-            } else if (this.lifeTicks < -this.random.nextInt(10)) {
-                --this.c;
-                this.lifeTicks = 1;
-                this.a = this.random.nextLong();
+        --this.lightningState;
+
+        if (this.lightningState < 0)
+        {
+            if (this.boltLivingTime == 0)
+            {
+                this.setDead();
+            }
+            else if (this.lightningState < -this.rand.nextInt(10))
+            {
+                --this.boltLivingTime;
+                this.lightningState = 1;
+                this.boltVertex = this.rand.nextLong();
+
                 // CraftBukkit
-                if (!this.isEffect && !this.world.isStatic && this.world.areChunksLoaded(MathHelper.floor(this.locX), MathHelper.floor(this.locY), MathHelper.floor(this.locZ), 10)) {
-                    int i = MathHelper.floor(this.locX);
-                    int j = MathHelper.floor(this.locY);
-                    int k = MathHelper.floor(this.locZ);
+                if (!this.isEffect && !this.worldObj.isRemote && this.worldObj.doChunksNearChunkExist(MathHelper.floor_double(this.posX), MathHelper.floor_double(this.posY), MathHelper.floor_double(this.posZ), 10))
+                {
+                    int var1 = MathHelper.floor_double(this.posX);
+                    int var2 = MathHelper.floor_double(this.posY);
+                    int var3 = MathHelper.floor_double(this.posZ);
 
-                    if (this.world.getTypeId(i, j, k) == 0 && Block.FIRE.canPlace(this.world, i, j, k)) {
+                    if (this.worldObj.getBlockId(var1, var2, var3) == 0 && Block.fire.canPlaceBlockAt(this.worldObj, var1, var2, var3))
+                    {
                         // CraftBukkit start
-                        BlockIgniteEvent event = new BlockIgniteEvent(this.cworld.getBlockAt(i, j, k), BlockIgniteEvent.IgniteCause.LIGHTNING, null);
-                        this.world.getServer().getPluginManager().callEvent(event);
+                        BlockIgniteEvent event = new BlockIgniteEvent(this.cworld.getBlockAt(var1, var2, var3), BlockIgniteEvent.IgniteCause.LIGHTNING, null);
+                        this.worldObj.getServer().getPluginManager().callEvent(event);
 
-                        if (!event.isCancelled()) {
-                            this.world.setTypeId(i, j, k, Block.FIRE.id);
+                        if (!event.isCancelled())
+                        {
+                            this.worldObj.setBlockWithNotify(var1, var2, var3, Block.fire.blockID);
                         }
+
                         // CraftBukkit end
                     }
                 }
             }
         }
 
-        if (this.lifeTicks >= 0 && !this.isEffect) { // CraftBukkit - add !this.isEffect
-            if (this.world.isStatic) {
-                this.world.q = 2;
-            } else {
-                double d0 = 3.0D;
-                List list = this.world.getEntities(this, AxisAlignedBB.a().a(this.locX - d0, this.locY - d0, this.locZ - d0, this.locX + d0, this.locY + 6.0D + d0, this.locZ + d0));
+        if (this.lightningState >= 0 && !this.isEffect)   // CraftBukkit - add !this.isEffect
+        {
+            if (this.worldObj.isRemote)
+            {
+                this.worldObj.lastLightningBolt = 2;
+            }
+            else
+            {
+                double var6 = 3.0D;
+                List var7 = this.worldObj.getEntitiesWithinAABBExcludingEntity(this, AxisAlignedBB.getAABBPool().addOrModifyAABBInPool(this.posX - var6, this.posY - var6, this.posZ - var6, this.posX + var6, this.posY + 6.0D + var6, this.posZ + var6));
 
-                for (int l = 0; l < list.size(); ++l) {
-                    Entity entity = (Entity) list.get(l);
-
-                    entity.a(this);
+                for (int var4 = 0; var4 < var7.size(); ++var4)
+                {
+                    Entity var5 = (Entity)var7.get(var4);
+                    var5.onStruckByLightning(this);
                 }
             }
         }
     }
 
-    protected void a() {}
+    protected void entityInit() {}
 
-    protected void a(NBTTagCompound nbttagcompound) {}
+    /**
+     * (abstract) Protected helper method to read subclass entity data from NBT.
+     */
+    protected void readEntityFromNBT(NBTTagCompound par1NBTTagCompound) {}
 
-    protected void b(NBTTagCompound nbttagcompound) {}
+    /**
+     * (abstract) Protected helper method to write subclass entity data to NBT.
+     */
+    protected void writeEntityToNBT(NBTTagCompound par1NBTTagCompound) {}
 }

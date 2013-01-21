@@ -1,7 +1,15 @@
-package net.minecraft.server;
+package net.minecraft.entity;
 
 import java.util.Iterator;
 import java.util.List;
+import net.minecraft.block.material.Material;
+import net.minecraft.entity.item.EntityPainting;
+import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.util.DamageSource;
+import net.minecraft.util.Direction;
+import net.minecraft.util.MathHelper;
+import net.minecraft.world.World;
 
 // CraftBukkit start
 import org.bukkit.entity.Hanging;
@@ -11,322 +19,419 @@ import org.bukkit.event.hanging.HangingBreakEvent;
 import org.bukkit.event.painting.PaintingBreakEvent;
 // CraftBukkit end
 
-public abstract class EntityHanging extends Entity {
+public abstract class EntityHanging extends Entity
+{
+    private int tickCounter1;
+    public int hangingDirection;
+    public int xPosition;
+    public int yPosition;
+    public int zPosition;
 
-    private int e;
-    public int direction;
-    public int x;
-    public int y;
-    public int z;
-
-    public EntityHanging(World world) {
-        super(world);
-        this.e = 0;
-        this.direction = 0;
-        this.height = 0.0F;
-        this.a(0.5F, 0.5F);
+    public EntityHanging(World par1World)
+    {
+        super(par1World);
+        this.tickCounter1 = 0;
+        this.hangingDirection = 0;
+        this.yOffset = 0.0F;
+        this.setSize(0.5F, 0.5F);
     }
 
-    public EntityHanging(World world, int i, int j, int k, int l) {
-        this(world);
-        this.x = i;
-        this.y = j;
-        this.z = k;
+    public EntityHanging(World par1World, int par2, int par3, int par4, int par5)
+    {
+        this(par1World);
+        this.xPosition = par2;
+        this.yPosition = par3;
+        this.zPosition = par4;
     }
 
-    protected void a() {}
+    protected void entityInit() {}
 
-    public void setDirection(int i) {
-        this.direction = i;
-        this.lastYaw = this.yaw = (float) (i * 90);
-        float f = (float) this.d();
-        float f1 = (float) this.g();
-        float f2 = (float) this.d();
+    public void setDirection(int par1)
+    {
+        this.hangingDirection = par1;
+        this.prevRotationYaw = this.rotationYaw = (float)(par1 * 90);
+        float var2 = (float)this.func_82329_d();
+        float var3 = (float)this.func_82330_g();
+        float var4 = (float)this.func_82329_d();
 
-        if (i != 2 && i != 0) {
-            f = 0.5F;
-        } else {
-            f2 = 0.5F;
-            this.yaw = this.lastYaw = (float) (Direction.f[i] * 90);
+        if (par1 != 2 && par1 != 0)
+        {
+            var2 = 0.5F;
+        }
+        else
+        {
+            var4 = 0.5F;
+            this.rotationYaw = this.prevRotationYaw = (float)(Direction.footInvisibleFaceRemap[par1] * 90);
         }
 
-        f /= 32.0F;
-        f1 /= 32.0F;
-        f2 /= 32.0F;
-        float f3 = (float) this.x + 0.5F;
-        float f4 = (float) this.y + 0.5F;
-        float f5 = (float) this.z + 0.5F;
-        float f6 = 0.5625F;
+        var2 /= 32.0F;
+        var3 /= 32.0F;
+        var4 /= 32.0F;
+        float var5 = (float)this.xPosition + 0.5F;
+        float var6 = (float)this.yPosition + 0.5F;
+        float var7 = (float)this.zPosition + 0.5F;
+        float var8 = 0.5625F;
 
-        if (i == 2) {
-            f5 -= f6;
+        if (par1 == 2)
+        {
+            var7 -= var8;
         }
 
-        if (i == 1) {
-            f3 -= f6;
+        if (par1 == 1)
+        {
+            var5 -= var8;
         }
 
-        if (i == 0) {
-            f5 += f6;
+        if (par1 == 0)
+        {
+            var7 += var8;
         }
 
-        if (i == 3) {
-            f3 += f6;
+        if (par1 == 3)
+        {
+            var5 += var8;
         }
 
-        if (i == 2) {
-            f3 -= this.g(this.d());
+        if (par1 == 2)
+        {
+            var5 -= this.func_70517_b(this.func_82329_d());
         }
 
-        if (i == 1) {
-            f5 += this.g(this.d());
+        if (par1 == 1)
+        {
+            var7 += this.func_70517_b(this.func_82329_d());
         }
 
-        if (i == 0) {
-            f3 += this.g(this.d());
+        if (par1 == 0)
+        {
+            var5 += this.func_70517_b(this.func_82329_d());
         }
 
-        if (i == 3) {
-            f5 -= this.g(this.d());
+        if (par1 == 3)
+        {
+            var7 -= this.func_70517_b(this.func_82329_d());
         }
 
-        f4 += this.g(this.g());
-        this.setPosition((double) f3, (double) f4, (double) f5);
-        float f7 = -0.03125F;
-
-        this.boundingBox.b((double) (f3 - f - f7), (double) (f4 - f1 - f7), (double) (f5 - f2 - f7), (double) (f3 + f + f7), (double) (f4 + f1 + f7), (double) (f5 + f2 + f7));
+        var6 += this.func_70517_b(this.func_82330_g());
+        this.setPosition((double)var5, (double)var6, (double)var7);
+        float var9 = -0.03125F;
+        this.boundingBox.setBounds((double)(var5 - var2 - var9), (double)(var6 - var3 - var9), (double)(var7 - var4 - var9), (double)(var5 + var2 + var9), (double)(var6 + var3 + var9), (double)(var7 + var4 + var9));
     }
 
-    private float g(int i) {
-        return i == 32 ? 0.5F : (i == 64 ? 0.5F : 0.0F);
+    private float func_70517_b(int par1)
+    {
+        return par1 == 32 ? 0.5F : (par1 == 64 ? 0.5F : 0.0F);
     }
 
-    public void j_() {
-        if (this.e++ == 100 && !this.world.isStatic) {
-            this.e = 0;
-            if (!this.dead && !this.survives()) {
+    /**
+     * Called to update the entity's position/logic.
+     */
+    public void onUpdate()
+    {
+        if (this.tickCounter1++ == 100 && !this.worldObj.isRemote)
+        {
+            this.tickCounter1 = 0;
+
+            if (!this.isDead && !this.onValidSurface())
+            {
                 // CraftBukkit start
-                Material material = this.world.getMaterial((int) this.locX, (int) this.locY, (int) this.locZ);
+                Material material = this.worldObj.getBlockMaterial((int) this.posX, (int) this.posY, (int) this.posZ);
                 HangingBreakEvent.RemoveCause cause;
 
-                if (!material.equals(Material.AIR)) {
+                if (!material.equals(Material.air))
+                {
                     // TODO: This feels insufficient to catch 100% of suffocation cases
                     cause = HangingBreakEvent.RemoveCause.OBSTRUCTION;
-                } else {
+                }
+                else
+                {
                     cause = HangingBreakEvent.RemoveCause.PHYSICS;
                 }
 
                 HangingBreakEvent event = new HangingBreakEvent((Hanging) this.getBukkitEntity(), cause);
-                this.world.getServer().getPluginManager().callEvent(event);
-
+                this.worldObj.getServer().getPluginManager().callEvent(event);
                 PaintingBreakEvent paintingEvent = null;
-                if (this instanceof EntityPainting) {
+
+                if (this instanceof EntityPainting)
+                {
                     // Fire old painting event until it can be removed
                     paintingEvent = new PaintingBreakEvent((Painting) this.getBukkitEntity(), PaintingBreakEvent.RemoveCause.valueOf(cause.name()));
                     paintingEvent.setCancelled(event.isCancelled());
-                    this.world.getServer().getPluginManager().callEvent(paintingEvent);
+                    this.worldObj.getServer().getPluginManager().callEvent(paintingEvent);
                 }
 
-                if (dead || event.isCancelled() || (paintingEvent != null && paintingEvent.isCancelled())) {
+                if (isDead || event.isCancelled() || (paintingEvent != null && paintingEvent.isCancelled()))
+                {
                     return;
                 }
-                // CraftBukkit end
 
-                this.die();
-                this.h();
+                // CraftBukkit end
+                this.setDead();
+                this.dropItemStack();
             }
         }
     }
 
-    public boolean survives() {
-        if (!this.world.getCubes(this, this.boundingBox).isEmpty()) {
+    /**
+     * checks to make sure painting can be placed there
+     */
+    public boolean onValidSurface()
+    {
+        if (!this.worldObj.getCollidingBoundingBoxes(this, this.boundingBox).isEmpty())
+        {
             return false;
-        } else {
-            int i = Math.max(1, this.d() / 16);
-            int j = Math.max(1, this.g() / 16);
-            int k = this.x;
-            int l = this.y;
-            int i1 = this.z;
+        }
+        else
+        {
+            int var1 = Math.max(1, this.func_82329_d() / 16);
+            int var2 = Math.max(1, this.func_82330_g() / 16);
+            int var3 = this.xPosition;
+            int var4 = this.yPosition;
+            int var5 = this.zPosition;
 
-            if (this.direction == 2) {
-                k = MathHelper.floor(this.locX - (double) ((float) this.d() / 32.0F));
+            if (this.hangingDirection == 2)
+            {
+                var3 = MathHelper.floor_double(this.posX - (double)((float)this.func_82329_d() / 32.0F));
             }
 
-            if (this.direction == 1) {
-                i1 = MathHelper.floor(this.locZ - (double) ((float) this.d() / 32.0F));
+            if (this.hangingDirection == 1)
+            {
+                var5 = MathHelper.floor_double(this.posZ - (double)((float)this.func_82329_d() / 32.0F));
             }
 
-            if (this.direction == 0) {
-                k = MathHelper.floor(this.locX - (double) ((float) this.d() / 32.0F));
+            if (this.hangingDirection == 0)
+            {
+                var3 = MathHelper.floor_double(this.posX - (double)((float)this.func_82329_d() / 32.0F));
             }
 
-            if (this.direction == 3) {
-                i1 = MathHelper.floor(this.locZ - (double) ((float) this.d() / 32.0F));
+            if (this.hangingDirection == 3)
+            {
+                var5 = MathHelper.floor_double(this.posZ - (double)((float)this.func_82329_d() / 32.0F));
             }
 
-            l = MathHelper.floor(this.locY - (double) ((float) this.g() / 32.0F));
+            var4 = MathHelper.floor_double(this.posY - (double)((float)this.func_82330_g() / 32.0F));
 
-            for (int j1 = 0; j1 < i; ++j1) {
-                for (int k1 = 0; k1 < j; ++k1) {
-                    Material material;
+            for (int var6 = 0; var6 < var1; ++var6)
+            {
+                for (int var7 = 0; var7 < var2; ++var7)
+                {
+                    Material var8;
 
-                    if (this.direction != 2 && this.direction != 0) {
-                        material = this.world.getMaterial(this.x, l + k1, i1 + j1);
-                    } else {
-                        material = this.world.getMaterial(k + j1, l + k1, this.z);
+                    if (this.hangingDirection != 2 && this.hangingDirection != 0)
+                    {
+                        var8 = this.worldObj.getBlockMaterial(this.xPosition, var4 + var7, var5 + var6);
+                    }
+                    else
+                    {
+                        var8 = this.worldObj.getBlockMaterial(var3 + var6, var4 + var7, this.zPosition);
                     }
 
-                    if (!material.isBuildable()) {
+                    if (!var8.isSolid())
+                    {
                         return false;
                     }
                 }
             }
 
-            List list = this.world.getEntities(this, this.boundingBox);
-            Iterator iterator = list.iterator();
+            List var9 = this.worldObj.getEntitiesWithinAABBExcludingEntity(this, this.boundingBox);
+            Iterator var10 = var9.iterator();
+            Entity var11;
 
-            Entity entity;
-
-            do {
-                if (!iterator.hasNext()) {
+            do
+            {
+                if (!var10.hasNext())
+                {
                     return true;
                 }
 
-                entity = (Entity) iterator.next();
-            } while (!(entity instanceof EntityHanging));
+                var11 = (Entity)var10.next();
+            }
+            while (!(var11 instanceof EntityHanging));
 
             return false;
         }
     }
 
-    public boolean L() {
+    /**
+     * Returns true if other Entities should be prevented from moving through this Entity.
+     */
+    public boolean canBeCollidedWith()
+    {
         return true;
     }
 
-    public boolean j(Entity entity) {
-        return entity instanceof EntityHuman ? this.damageEntity(DamageSource.playerAttack((EntityHuman) entity), 0) : false;
+    public boolean func_85031_j(Entity par1Entity)
+    {
+        return par1Entity instanceof EntityPlayer ? this.attackEntityFrom(DamageSource.causePlayerDamage((EntityPlayer)par1Entity), 0) : false;
     }
 
-    public boolean damageEntity(DamageSource damagesource, int i) {
-        if (this.isInvulnerable()) {
+    /**
+     * Called when the entity is attacked.
+     */
+    public boolean attackEntityFrom(DamageSource par1DamageSource, int par2)
+    {
+        if (this.isEntityInvulnerable())
+        {
             return false;
-        } else {
-            if (!this.dead && !this.world.isStatic) {
+        }
+        else
+        {
+            if (!this.isDead && !this.worldObj.isRemote)
+            {
                 // CraftBukkit start
                 HangingBreakEvent event = new HangingBreakEvent((Hanging) this.getBukkitEntity(), HangingBreakEvent.RemoveCause.DEFAULT);
                 PaintingBreakEvent paintingEvent = null;
-                if (damagesource.getEntity() != null) {
-                    event = new HangingBreakByEntityEvent((Hanging) this.getBukkitEntity(), damagesource.getEntity() == null ? null : damagesource.getEntity().getBukkitEntity());
 
-                    if (this instanceof EntityPainting) {
+                if (par1DamageSource.getEntity() != null)
+                {
+                    event = new HangingBreakByEntityEvent((Hanging) this.getBukkitEntity(), par1DamageSource.getEntity() == null ? null : par1DamageSource.getEntity().getBukkitEntity());
+
+                    if (this instanceof EntityPainting)
+                    {
                         // Fire old painting event until it can be removed
-                        paintingEvent = new org.bukkit.event.painting.PaintingBreakByEntityEvent((Painting) this.getBukkitEntity(), damagesource.getEntity() == null ? null : damagesource.getEntity().getBukkitEntity());
+                        paintingEvent = new org.bukkit.event.painting.PaintingBreakByEntityEvent((Painting) this.getBukkitEntity(), par1DamageSource.getEntity() == null ? null : par1DamageSource.getEntity().getBukkitEntity());
                     }
-                } else if (damagesource == DamageSource.EXPLOSION || damagesource == DamageSource.EXPLOSION2) {
+                }
+                else if (par1DamageSource == DamageSource.explosion || par1DamageSource == DamageSource.explosion2)
+                {
                     event = new HangingBreakEvent((Hanging) this.getBukkitEntity(), HangingBreakEvent.RemoveCause.EXPLOSION);
                 }
 
-                this.world.getServer().getPluginManager().callEvent(event);
+                this.worldObj.getServer().getPluginManager().callEvent(event);
 
-                if (paintingEvent != null) {
+                if (paintingEvent != null)
+                {
                     paintingEvent.setCancelled(event.isCancelled());
-                    this.world.getServer().getPluginManager().callEvent(paintingEvent);
+                    this.worldObj.getServer().getPluginManager().callEvent(paintingEvent);
                 }
 
-                if (dead || event.isCancelled() || (paintingEvent != null && paintingEvent.isCancelled())) {
+                if (isDead || event.isCancelled() || (paintingEvent != null && paintingEvent.isCancelled()))
+                {
                     return true;
                 }
+
                 // CraftBukkit end
+                this.setDead();
+                this.setBeenAttacked();
+                EntityPlayer var3 = null;
 
-                this.die();
-                this.K();
-                EntityHuman entityhuman = null;
-
-                if (damagesource.getEntity() instanceof EntityHuman) {
-                    entityhuman = (EntityHuman) damagesource.getEntity();
+                if (par1DamageSource.getEntity() instanceof EntityPlayer)
+                {
+                    var3 = (EntityPlayer)par1DamageSource.getEntity();
                 }
 
-                if (entityhuman != null && entityhuman.abilities.canInstantlyBuild) {
+                if (var3 != null && var3.capabilities.isCreativeMode)
+                {
                     return true;
                 }
 
-                this.h();
+                this.dropItemStack();
             }
 
             return true;
         }
     }
 
-    public void move(double d0, double d1, double d2) {
-        if (!this.world.isStatic && !this.dead && d0 * d0 + d1 * d1 + d2 * d2 > 0.0D) {
-            if (dead) return; // CraftBukkit
+    /**
+     * Tries to moves the entity by the passed in displacement. Args: x, y, z
+     */
+    public void moveEntity(double par1, double par3, double par5)
+    {
+        if (!this.worldObj.isRemote && !this.isDead && par1 * par1 + par3 * par3 + par5 * par5 > 0.0D)
+        {
+            if (isDead)
+            {
+                return;    // CraftBukkit
+            }
 
-            this.die();
-            this.h();
+            this.setDead();
+            this.dropItemStack();
         }
     }
 
-    public void g(double d0, double d1, double d2) {
-        if (false && !this.world.isStatic && !this.dead && d0 * d0 + d1 * d1 + d2 * d2 > 0.0D) { // CraftBukkit - not needed
-            this.die();
-            this.h();
+    /**
+     * Adds to the current velocity of the entity. Args: x, y, z
+     */
+    public void addVelocity(double par1, double par3, double par5)
+    {
+        if (false && !this.worldObj.isRemote && !this.isDead && par1 * par1 + par3 * par3 + par5 * par5 > 0.0D)   // CraftBukkit - not needed
+        {
+            this.setDead();
+            this.dropItemStack();
         }
     }
 
-    public void b(NBTTagCompound nbttagcompound) {
-        nbttagcompound.setByte("Direction", (byte) this.direction);
-        nbttagcompound.setInt("TileX", this.x);
-        nbttagcompound.setInt("TileY", this.y);
-        nbttagcompound.setInt("TileZ", this.z);
-        switch (this.direction) {
-        case 0:
-            nbttagcompound.setByte("Dir", (byte) 2);
-            break;
+    /**
+     * (abstract) Protected helper method to write subclass entity data to NBT.
+     */
+    public void writeEntityToNBT(NBTTagCompound par1NBTTagCompound)
+    {
+        par1NBTTagCompound.setByte("Direction", (byte)this.hangingDirection);
+        par1NBTTagCompound.setInteger("TileX", this.xPosition);
+        par1NBTTagCompound.setInteger("TileY", this.yPosition);
+        par1NBTTagCompound.setInteger("TileZ", this.zPosition);
 
-        case 1:
-            nbttagcompound.setByte("Dir", (byte) 1);
-            break;
-
-        case 2:
-            nbttagcompound.setByte("Dir", (byte) 0);
-            break;
-
-        case 3:
-            nbttagcompound.setByte("Dir", (byte) 3);
-        }
-    }
-
-    public void a(NBTTagCompound nbttagcompound) {
-        if (nbttagcompound.hasKey("Direction")) {
-            this.direction = nbttagcompound.getByte("Direction");
-        } else {
-            switch (nbttagcompound.getByte("Dir")) {
+        switch (this.hangingDirection)
+        {
             case 0:
-                this.direction = 2;
+                par1NBTTagCompound.setByte("Dir", (byte)2);
                 break;
 
             case 1:
-                this.direction = 1;
+                par1NBTTagCompound.setByte("Dir", (byte)1);
                 break;
 
             case 2:
-                this.direction = 0;
+                par1NBTTagCompound.setByte("Dir", (byte)0);
                 break;
 
             case 3:
-                this.direction = 3;
+                par1NBTTagCompound.setByte("Dir", (byte)3);
+        }
+    }
+
+    /**
+     * (abstract) Protected helper method to read subclass entity data from NBT.
+     */
+    public void readEntityFromNBT(NBTTagCompound par1NBTTagCompound)
+    {
+        if (par1NBTTagCompound.hasKey("Direction"))
+        {
+            this.hangingDirection = par1NBTTagCompound.getByte("Direction");
+        }
+        else
+        {
+            switch (par1NBTTagCompound.getByte("Dir"))
+            {
+                case 0:
+                    this.hangingDirection = 2;
+                    break;
+
+                case 1:
+                    this.hangingDirection = 1;
+                    break;
+
+                case 2:
+                    this.hangingDirection = 0;
+                    break;
+
+                case 3:
+                    this.hangingDirection = 3;
             }
         }
 
-        this.x = nbttagcompound.getInt("TileX");
-        this.y = nbttagcompound.getInt("TileY");
-        this.z = nbttagcompound.getInt("TileZ");
-        this.setDirection(this.direction);
+        this.xPosition = par1NBTTagCompound.getInteger("TileX");
+        this.yPosition = par1NBTTagCompound.getInteger("TileY");
+        this.zPosition = par1NBTTagCompound.getInteger("TileZ");
+        this.setDirection(this.hangingDirection);
     }
 
-    public abstract int d();
+    public abstract int func_82329_d();
 
-    public abstract int g();
+    public abstract int func_82330_g();
 
-    public abstract void h();
+    /**
+     * Drop the item currently on this item frame.
+     */
+    public abstract void dropItemStack();
 }

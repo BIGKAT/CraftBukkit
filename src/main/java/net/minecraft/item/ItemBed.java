@@ -1,61 +1,91 @@
-package net.minecraft.server;
+package net.minecraft.item;
 
 import org.bukkit.craftbukkit.block.CraftBlockState; // CraftBukkit
+import net.minecraft.block.Block;
+import net.minecraft.block.BlockBed;
+import net.minecraft.creativetab.CreativeTabs;
+import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.util.MathHelper;
+import net.minecraft.world.World;
 
-public class ItemBed extends Item {
-
-    public ItemBed(int i) {
-        super(i);
-        this.a(CreativeModeTab.c);
+public class ItemBed extends Item
+{
+    public ItemBed(int par1)
+    {
+        super(par1);
+        this.setCreativeTab(CreativeTabs.tabDecorations);
     }
 
-    public boolean interactWith(ItemStack itemstack, EntityHuman entityhuman, World world, int i, int j, int k, int l, float f, float f1, float f2) {
-        if (world.isStatic) {
+    /**
+     * Callback for item usage. If the item does something special on right clicking, he will have one of those. Return
+     * True if something happen and false if it don't. This is for ITEMS, not BLOCKS
+     */
+    public boolean onItemUse(ItemStack par1ItemStack, EntityPlayer par2EntityPlayer, World par3World, int par4, int par5, int par6, int par7, float par8, float par9, float par10)
+    {
+        if (par3World.isRemote)
+        {
             return true;
-        } else if (l != 1) {
+        }
+        else if (par7 != 1)
+        {
             return false;
-        } else {
-            ++j;
-            BlockBed blockbed = (BlockBed) Block.BED;
-            int i1 = MathHelper.floor((double) (entityhuman.yaw * 4.0F / 360.0F) + 0.5D) & 3;
-            byte b0 = 0;
-            byte b1 = 0;
+        }
+        else
+        {
+            ++par5;
+            BlockBed var11 = (BlockBed)Block.bed;
+            int var12 = MathHelper.floor_double((double)(par2EntityPlayer.rotationYaw * 4.0F / 360.0F) + 0.5D) & 3;
+            byte var13 = 0;
+            byte var14 = 0;
 
-            if (i1 == 0) {
-                b1 = 1;
+            if (var12 == 0)
+            {
+                var14 = 1;
             }
 
-            if (i1 == 1) {
-                b0 = -1;
+            if (var12 == 1)
+            {
+                var13 = -1;
             }
 
-            if (i1 == 2) {
-                b1 = -1;
+            if (var12 == 2)
+            {
+                var14 = -1;
             }
 
-            if (i1 == 3) {
-                b0 = 1;
+            if (var12 == 3)
+            {
+                var13 = 1;
             }
 
-            if (entityhuman.a(i, j, k, l, itemstack) && entityhuman.a(i + b0, j, k + b1, l, itemstack)) {
-                if (world.isEmpty(i, j, k) && world.isEmpty(i + b0, j, k + b1) && world.v(i, j - 1, k) && world.v(i + b0, j - 1, k + b1)) {
+            if (par2EntityPlayer.canPlayerEdit(par4, par5, par6, par7, par1ItemStack) && par2EntityPlayer.canPlayerEdit(par4 + var13, par5, par6 + var14, par7, par1ItemStack))
+            {
+                if (par3World.isAirBlock(par4, par5, par6) && par3World.isAirBlock(par4 + var13, par5, par6 + var14) && par3World.doesBlockHaveSolidTopSurface(par4, par5 - 1, par6) && par3World.doesBlockHaveSolidTopSurface(par4 + var13, par5 - 1, par6 + var14))
+                {
                     // CraftBukkit start
                     //world.setTypeIdAndData(i, j, k, blockbed.id, i1);
-                    if (!ItemBlock.processBlockPlace(world, entityhuman, null, i, j, k, blockbed.id, i1)) {
+                    if (!ItemBlock.processBlockPlace(par3World, par2EntityPlayer, null, par4, par5, par6, var11.blockID, var12))
+                    {
                         return false;
                     }
+
                     // CraftBukkit end
 
-                    if (world.getTypeId(i, j, k) == blockbed.id) {
-                        world.setTypeIdAndData(i + b0, j, k + b1, blockbed.id, i1 + 8);
+                    if (par3World.getBlockId(par4, par5, par6) == var11.blockID)
+                    {
+                        par3World.setBlockAndMetadataWithNotify(par4 + var13, par5, par6 + var14, var11.blockID, var12 + 8);
                     }
 
-                    --itemstack.count;
+                    --par1ItemStack.stackSize;
                     return true;
-                } else {
+                }
+                else
+                {
                     return false;
                 }
-            } else {
+            }
+            else
+            {
                 return false;
             }
         }

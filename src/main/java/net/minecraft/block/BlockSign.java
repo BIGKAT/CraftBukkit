@@ -1,128 +1,190 @@
-package net.minecraft.server;
+package net.minecraft.block;
 
 import java.util.Random;
+import net.minecraft.block.material.Material;
+import net.minecraft.item.Item;
+import net.minecraft.tileentity.TileEntity;
+import net.minecraft.util.AxisAlignedBB;
+import net.minecraft.world.IBlockAccess;
+import net.minecraft.world.World;
 
 import org.bukkit.event.block.BlockRedstoneEvent; // CraftBukkit
 
-public class BlockSign extends BlockContainer {
+public class BlockSign extends BlockContainer
+{
+    private Class signEntityClass;
 
-    private Class a;
-    private boolean b;
+    /** Whether this is a freestanding sign or a wall-mounted sign */
+    private boolean isFreestanding;
 
-    protected BlockSign(int i, Class oclass, boolean flag) {
-        super(i, Material.WOOD);
-        this.b = flag;
-        this.textureId = 4;
-        this.a = oclass;
-        float f = 0.25F;
-        float f1 = 1.0F;
-
-        this.a(0.5F - f, 0.0F, 0.5F - f, 0.5F + f, f1, 0.5F + f);
+    protected BlockSign(int par1, Class par2Class, boolean par3)
+    {
+        super(par1, Material.wood);
+        this.isFreestanding = par3;
+        this.blockIndexInTexture = 4;
+        this.signEntityClass = par2Class;
+        float var4 = 0.25F;
+        float var5 = 1.0F;
+        this.setBlockBounds(0.5F - var4, 0.0F, 0.5F - var4, 0.5F + var4, var5, 0.5F + var4);
     }
 
-    public AxisAlignedBB e(World world, int i, int j, int k) {
+    /**
+     * Returns a bounding box from the pool of bounding boxes (this means this box can change after the pool has been
+     * cleared to be reused)
+     */
+    public AxisAlignedBB getCollisionBoundingBoxFromPool(World par1World, int par2, int par3, int par4)
+    {
         return null;
     }
 
-    public void updateShape(IBlockAccess iblockaccess, int i, int j, int k) {
-        if (!this.b) {
-            int l = iblockaccess.getData(i, j, k);
-            float f = 0.28125F;
-            float f1 = 0.78125F;
-            float f2 = 0.0F;
-            float f3 = 1.0F;
-            float f4 = 0.125F;
+    /**
+     * Updates the blocks bounds based on its current state. Args: world, x, y, z
+     */
+    public void setBlockBoundsBasedOnState(IBlockAccess par1IBlockAccess, int par2, int par3, int par4)
+    {
+        if (!this.isFreestanding)
+        {
+            int var5 = par1IBlockAccess.getBlockMetadata(par2, par3, par4);
+            float var6 = 0.28125F;
+            float var7 = 0.78125F;
+            float var8 = 0.0F;
+            float var9 = 1.0F;
+            float var10 = 0.125F;
+            this.setBlockBounds(0.0F, 0.0F, 0.0F, 1.0F, 1.0F, 1.0F);
 
-            this.a(0.0F, 0.0F, 0.0F, 1.0F, 1.0F, 1.0F);
-            if (l == 2) {
-                this.a(f2, f, 1.0F - f4, f3, f1, 1.0F);
+            if (var5 == 2)
+            {
+                this.setBlockBounds(var8, var6, 1.0F - var10, var9, var7, 1.0F);
             }
 
-            if (l == 3) {
-                this.a(f2, f, 0.0F, f3, f1, f4);
+            if (var5 == 3)
+            {
+                this.setBlockBounds(var8, var6, 0.0F, var9, var7, var10);
             }
 
-            if (l == 4) {
-                this.a(1.0F - f4, f, f2, 1.0F, f1, f3);
+            if (var5 == 4)
+            {
+                this.setBlockBounds(1.0F - var10, var6, var8, 1.0F, var7, var9);
             }
 
-            if (l == 5) {
-                this.a(0.0F, f, f2, f4, f1, f3);
+            if (var5 == 5)
+            {
+                this.setBlockBounds(0.0F, var6, var8, var10, var7, var9);
             }
         }
     }
 
-    public int d() {
+    /**
+     * The type of render function that is called for this block
+     */
+    public int getRenderType()
+    {
         return -1;
     }
 
-    public boolean b() {
+    /**
+     * If this block doesn't render as an ordinary block it will return False (examples: signs, buttons, stairs, etc)
+     */
+    public boolean renderAsNormalBlock()
+    {
         return false;
     }
 
-    public boolean c(IBlockAccess iblockaccess, int i, int j, int k) {
+    public boolean getBlocksMovement(IBlockAccess par1IBlockAccess, int par2, int par3, int par4)
+    {
         return true;
     }
 
-    public boolean c() {
+    /**
+     * Is this block (a) opaque and (b) a full 1m cube?  This determines whether or not to render the shared face of two
+     * adjacent blocks and also whether the player can attach torches, redstone wire, etc to this block.
+     */
+    public boolean isOpaqueCube()
+    {
         return false;
     }
 
-    public TileEntity a(World world) {
-        try {
-            return (TileEntity) this.a.newInstance();
-        } catch (Exception exception) {
-            throw new RuntimeException(exception);
+    /**
+     * Returns a new instance of a block's tile entity class. Called on placing the block.
+     */
+    public TileEntity createNewTileEntity(World par1World)
+    {
+        try
+        {
+            return (TileEntity)this.signEntityClass.newInstance();
+        }
+        catch (Exception var3)
+        {
+            throw new RuntimeException(var3);
         }
     }
 
-    public int getDropType(int i, Random random, int j) {
-        return Item.SIGN.id;
+    /**
+     * Returns the ID of the items to drop on destruction.
+     */
+    public int idDropped(int par1, Random par2Random, int par3)
+    {
+        return Item.sign.itemID;
     }
 
-    public void doPhysics(World world, int i, int j, int k, int l) {
-        boolean flag = false;
+    /**
+     * Lets the block know when one of its neighbor changes. Doesn't know which neighbor changed (coordinates passed are
+     * their own) Args: x, y, z, neighbor blockID
+     */
+    public void onNeighborBlockChange(World par1World, int par2, int par3, int par4, int par5)
+    {
+        boolean var6 = false;
 
-        if (this.b) {
-            if (!world.getMaterial(i, j - 1, k).isBuildable()) {
-                flag = true;
+        if (this.isFreestanding)
+        {
+            if (!par1World.getBlockMaterial(par2, par3 - 1, par4).isSolid())
+            {
+                var6 = true;
             }
-        } else {
-            int i1 = world.getData(i, j, k);
+        }
+        else
+        {
+            int var7 = par1World.getBlockMetadata(par2, par3, par4);
+            var6 = true;
 
-            flag = true;
-            if (i1 == 2 && world.getMaterial(i, j, k + 1).isBuildable()) {
-                flag = false;
+            if (var7 == 2 && par1World.getBlockMaterial(par2, par3, par4 + 1).isSolid())
+            {
+                var6 = false;
             }
 
-            if (i1 == 3 && world.getMaterial(i, j, k - 1).isBuildable()) {
-                flag = false;
+            if (var7 == 3 && par1World.getBlockMaterial(par2, par3, par4 - 1).isSolid())
+            {
+                var6 = false;
             }
 
-            if (i1 == 4 && world.getMaterial(i + 1, j, k).isBuildable()) {
-                flag = false;
+            if (var7 == 4 && par1World.getBlockMaterial(par2 + 1, par3, par4).isSolid())
+            {
+                var6 = false;
             }
 
-            if (i1 == 5 && world.getMaterial(i - 1, j, k).isBuildable()) {
-                flag = false;
+            if (var7 == 5 && par1World.getBlockMaterial(par2 - 1, par3, par4).isSolid())
+            {
+                var6 = false;
             }
         }
 
-        if (flag) {
-            this.c(world, i, j, k, world.getData(i, j, k), 0);
-            world.setTypeId(i, j, k, 0);
+        if (var6)
+        {
+            this.dropBlockAsItem(par1World, par2, par3, par4, par1World.getBlockMetadata(par2, par3, par4), 0);
+            par1World.setBlockWithNotify(par2, par3, par4, 0);
         }
 
-        super.doPhysics(world, i, j, k, l);
+        super.onNeighborBlockChange(par1World, par2, par3, par4, par5);
 
         // CraftBukkit start
-        if (net.minecraft.server.Block.byId[l] != null && net.minecraft.server.Block.byId[l].isPowerSource()) {
-            org.bukkit.block.Block block = world.getWorld().getBlockAt(i, j, k);
+        if (Block.blocksList[par5] != null && Block.blocksList[par5].canProvidePower())
+        {
+            org.bukkit.block.Block block = par1World.getWorld().getBlockAt(par2, par3, par4);
             int power = block.getBlockPower();
-
             BlockRedstoneEvent eventRedstone = new BlockRedstoneEvent(block, power, power);
-            world.getServer().getPluginManager().callEvent(eventRedstone);
+            par1World.getServer().getPluginManager().callEvent(eventRedstone);
         }
+
         // CraftBukkit end
     }
 }

@@ -1,58 +1,81 @@
-package net.minecraft.server;
+package net.minecraft.network.packet;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 
 import java.io.IOException; // CraftBukkit
 
-public class Packet3Chat extends Packet {
+public class Packet3Chat extends Packet
+{
+    /** Maximum number of characters allowed in chat string in each packet. */
+    public static int maxChatLength = 119;
 
-    public static int a = 119;
+    /** The message being sent. */
     public String message;
-    private boolean c;
+    private boolean isServer;
 
-    public Packet3Chat() {
-        this.c = true;
+    public Packet3Chat()
+    {
+        this.isServer = true;
     }
 
-    public Packet3Chat(String s) {
-        this(s, true);
+    public Packet3Chat(String par1Str)
+    {
+        this(par1Str, true);
     }
 
-    public Packet3Chat(String s, boolean flag) {
-        this.c = true;
-
+    public Packet3Chat(String par1Str, boolean par2)
+    {
+        this.isServer = true;
         /* CraftBukkit start - handle this later
         if (s.length() > b) {
             s = s.substring(0, b);
         }
         // CraftBukkit end */
-
-        this.message = s;
-        this.c = flag;
+        this.message = par1Str;
+        this.isServer = par2;
     }
 
-    public void a(DataInputStream datainputstream) throws IOException { // CraftBukkit
-        this.message = a(datainputstream, a);
+    public void readPacketData(DataInputStream par1DataInputStream) throws IOException   // CraftBukkit
+    {
+        this.message = readString(par1DataInputStream, maxChatLength);
     }
 
-    public void a(DataOutputStream dataoutputstream) throws IOException { // CraftBukkit
-        a(this.message, dataoutputstream);
+    public void writePacketData(DataOutputStream par1DataOutputStream) throws IOException   // CraftBukkit
+    {
+        writeString(this.message, par1DataOutputStream);
     }
 
-    public void handle(Connection connection) {
-        connection.a(this);
+    /**
+     * Passes this Packet on to the NetHandler for processing.
+     */
+    public void processPacket(NetHandler par1NetHandler)
+    {
+        par1NetHandler.handleChat(this);
     }
 
-    public int a() {
+    /**
+     * Abstract. Return the size of the packet (not counting the header).
+     */
+    public int getPacketSize()
+    {
         return 2 + this.message.length() * 2;
     }
 
-    public boolean isServer() {
-        return this.c;
+    /**
+     * Get whether this is a server
+     */
+    public boolean getIsServer()
+    {
+        return this.isServer;
     }
 
-    public boolean a_() {
+    /**
+     * If this returns true, the packet may be processed on any thread; otherwise it is queued for the main thread to
+     * handle.
+     */
+    public boolean canProcessAsync()
+    {
         return !this.message.startsWith("/");
     }
 }

@@ -1,7 +1,17 @@
-package net.minecraft.server;
+package net.minecraft.tileentity;
 
 import java.util.Iterator;
 import java.util.List;
+import net.minecraft.block.Block;
+import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.inventory.IInventory;
+import net.minecraft.item.ItemStack;
+import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.network.packet.Packet;
+import net.minecraft.network.packet.Packet132TileEntityData;
+import net.minecraft.potion.Potion;
+import net.minecraft.potion.PotionEffect;
+import net.minecraft.util.AxisAlignedBB;
 
 // CraftBukkit start
 import java.util.List;
@@ -10,160 +20,218 @@ import org.bukkit.craftbukkit.entity.CraftHumanEntity;
 import org.bukkit.entity.HumanEntity;
 // CraftBukkit end
 
-public class TileEntityBeacon extends TileEntity implements IInventory {
+public class TileEntityBeacon extends TileEntity implements IInventory
+{
+    /** List of effects that Beacon can apply */
+    public static final Potion[][] effectsList = new Potion[][] {{Potion.moveSpeed, Potion.digSpeed}, {Potion.resistance, Potion.jump}, {Potion.damageBoost}, {Potion.regeneration}};
+    private boolean field_82135_d;
 
-    public static final MobEffectList[][] a = new MobEffectList[][] { { MobEffectList.FASTER_MOVEMENT, MobEffectList.FASTER_DIG}, { MobEffectList.RESISTANCE, MobEffectList.JUMP}, { MobEffectList.INCREASE_DAMAGE}, { MobEffectList.REGENERATION}};
-    private boolean d;
-    private int e = -1;
-    private int f;
-    private int g;
-    private ItemStack h;
+    /** Level of this beacon's pyramid. */
+    private int levels = -1;
+
+    /** Primary potion effect given by this beacon. */
+    private int primaryEffect;
+
+    /** Secondary potion effect given by this beacon. */
+    private int secondaryEffect;
+
+    /** Item given to this beacon as payment. */
+    private ItemStack payment;
     // CraftBukkit start
     public List<HumanEntity> transaction = new java.util.ArrayList<HumanEntity>();
     private int maxStack = MAX_STACK;
 
-    public ItemStack[] getContents() {
+    public ItemStack[] getContents()
+    {
         return null;
     }
 
-    public void onOpen(CraftHumanEntity who) {
+    public void onOpen(CraftHumanEntity who)
+    {
         transaction.add(who);
     }
 
-    public void onClose(CraftHumanEntity who) {
+    public void onClose(CraftHumanEntity who)
+    {
         transaction.remove(who);
     }
 
-    public List<HumanEntity> getViewers() {
+    public List<HumanEntity> getViewers()
+    {
         return transaction;
     }
 
-    public void setMaxStackSize(int size) {
+    public void setMaxStackSize(int size)
+    {
         maxStack = size;
     }
     // CraftBukkit end
 
     public TileEntityBeacon() {}
 
-    public void g() {
-        if (this.world.getTime() % 80L == 0L) {
-            this.v();
-            this.u();
+    /**
+     * Allows the entity to update its state. Overridden in most subclasses, e.g. the mob spawner uses this to count
+     * ticks and creates a new spawn inside its implementation.
+     */
+    public void updateEntity()
+    {
+        if (this.worldObj.getTotalWorldTime() % 80L == 0L)
+        {
+            this.func_82131_u();
+            this.func_82124_t();
         }
     }
 
-    private void u() {
-        if (this.d && this.e > 0 && !this.world.isStatic && this.f > 0) {
-            double d0 = (double) (this.e * 8 + 8);
-            byte b0 = 0;
+    private void func_82124_t()
+    {
+        if (this.field_82135_d && this.levels > 0 && !this.worldObj.isRemote && this.primaryEffect > 0)
+        {
+            double var1 = (double)(this.levels * 8 + 8);
+            byte var3 = 0;
 
-            if (this.e >= 4 && this.f == this.g) {
-                b0 = 1;
+            if (this.levels >= 4 && this.primaryEffect == this.secondaryEffect)
+            {
+                var3 = 1;
             }
 
-            AxisAlignedBB axisalignedbb = AxisAlignedBB.a().a((double) this.x, (double) this.y, (double) this.z, (double) (this.x + 1), (double) (this.y + 1), (double) (this.z + 1)).grow(d0, d0, d0);
-            List list = this.world.a(EntityHuman.class, axisalignedbb);
-            Iterator iterator = list.iterator();
+            AxisAlignedBB var4 = AxisAlignedBB.getAABBPool().addOrModifyAABBInPool((double)this.xCoord, (double)this.yCoord, (double)this.zCoord, (double)(this.xCoord + 1), (double)(this.yCoord + 1), (double)(this.zCoord + 1)).expand(var1, var1, var1);
+            List var5 = this.worldObj.getEntitiesWithinAABB(EntityPlayer.class, var4);
+            Iterator var6 = var5.iterator();
+            EntityPlayer var7;
 
-            EntityHuman entityhuman;
-
-            while (iterator.hasNext()) {
-                entityhuman = (EntityHuman) iterator.next();
-                entityhuman.addEffect(new MobEffect(this.f, 180, b0, true));
+            while (var6.hasNext())
+            {
+                var7 = (EntityPlayer)var6.next();
+                var7.addPotionEffect(new PotionEffect(this.primaryEffect, 180, var3, true));
             }
 
-            if (this.e >= 4 && this.f != this.g && this.g > 0) {
-                iterator = list.iterator();
+            if (this.levels >= 4 && this.primaryEffect != this.secondaryEffect && this.secondaryEffect > 0)
+            {
+                var6 = var5.iterator();
 
-                while (iterator.hasNext()) {
-                    entityhuman = (EntityHuman) iterator.next();
-                    entityhuman.addEffect(new MobEffect(this.g, 180, 0, true));
+                while (var6.hasNext())
+                {
+                    var7 = (EntityPlayer)var6.next();
+                    var7.addPotionEffect(new PotionEffect(this.secondaryEffect, 180, 0, true));
                 }
             }
         }
     }
 
-    private void v() {
-        if (!this.world.k(this.x, this.y + 1, this.z)) {
-            this.d = false;
-            this.e = 0;
-        } else {
-            this.d = true;
-            this.e = 0;
+    private void func_82131_u()
+    {
+        if (!this.worldObj.canBlockSeeTheSky(this.xCoord, this.yCoord + 1, this.zCoord))
+        {
+            this.field_82135_d = false;
+            this.levels = 0;
+        }
+        else
+        {
+            this.field_82135_d = true;
+            this.levels = 0;
 
-            for (int i = 1; i <= 4; this.e = i++) {
-                int j = this.y - i;
+            for (int var1 = 1; var1 <= 4; this.levels = var1++)
+            {
+                int var2 = this.yCoord - var1;
 
-                if (j < 1) {
+                if (var2 < 1)
+                {
                     break;
                 }
 
-                boolean flag = true;
+                boolean var3 = true;
 
-                for (int k = this.x - i; k <= this.x + i && flag; ++k) {
-                    for (int l = this.z - i; l <= this.z + i; ++l) {
-                        int i1 = this.world.getTypeId(k, j, l);
+                for (int var4 = this.xCoord - var1; var4 <= this.xCoord + var1 && var3; ++var4)
+                {
+                    for (int var5 = this.zCoord - var1; var5 <= this.zCoord + var1; ++var5)
+                    {
+                        int var6 = this.worldObj.getBlockId(var4, var2, var5);
 
-                        if (i1 != Block.EMERALD_BLOCK.id && i1 != Block.GOLD_BLOCK.id && i1 != Block.DIAMOND_BLOCK.id && i1 != Block.IRON_BLOCK.id) {
-                            flag = false;
+                        if (var6 != Block.blockEmerald.blockID && var6 != Block.blockGold.blockID && var6 != Block.blockDiamond.blockID && var6 != Block.blockSteel.blockID)
+                        {
+                            var3 = false;
                             break;
                         }
                     }
                 }
 
-                if (!flag) {
+                if (!var3)
+                {
                     break;
                 }
             }
 
-            if (this.e == 0) {
-                this.d = false;
+            if (this.levels == 0)
+            {
+                this.field_82135_d = false;
             }
         }
     }
 
-    public int i() {
-        return this.f;
+    /**
+     * Return the primary potion effect given by this beacon.
+     */
+    public int getPrimaryEffect()
+    {
+        return this.primaryEffect;
     }
 
-    public int j() {
-        return this.g;
+    /**
+     * Return the secondary potion effect given by this beacon.
+     */
+    public int getSecondaryEffect()
+    {
+        return this.secondaryEffect;
     }
 
-    public int k() {
-        return this.e;
+    /**
+     * Return the levels of this beacon's pyramid.
+     */
+    public int getLevels()
+    {
+        return this.levels;
     }
 
-    public void d(int i) {
-        this.f = 0;
+    public void func_82128_d(int par1)
+    {
+        this.primaryEffect = 0;
 
-        for (int j = 0; j < this.e && j < 3; ++j) {
-            MobEffectList[] amobeffectlist = a[j];
-            int k = amobeffectlist.length;
+        for (int var2 = 0; var2 < this.levels && var2 < 3; ++var2)
+        {
+            Potion[] var3 = effectsList[var2];
+            int var4 = var3.length;
 
-            for (int l = 0; l < k; ++l) {
-                MobEffectList mobeffectlist = amobeffectlist[l];
+            for (int var5 = 0; var5 < var4; ++var5)
+            {
+                Potion var6 = var3[var5];
 
-                if (mobeffectlist.id == i) {
-                    this.f = i;
+                if (var6.id == par1)
+                {
+                    this.primaryEffect = par1;
                     return;
                 }
             }
         }
     }
 
-    public void e(int i) {
-        this.g = 0;
-        if (this.e >= 4) {
-            for (int j = 0; j < 4; ++j) {
-                MobEffectList[] amobeffectlist = a[j];
-                int k = amobeffectlist.length;
+    public void func_82127_e(int par1)
+    {
+        this.secondaryEffect = 0;
 
-                for (int l = 0; l < k; ++l) {
-                    MobEffectList mobeffectlist = amobeffectlist[l];
+        if (this.levels >= 4)
+        {
+            for (int var2 = 0; var2 < 4; ++var2)
+            {
+                Potion[] var3 = effectsList[var2];
+                int var4 = var3.length;
 
-                    if (mobeffectlist.id == i) {
-                        this.g = i;
+                for (int var5 = 0; var5 < var4; ++var5)
+                {
+                    Potion var6 = var3[var5];
+
+                    if (var6.id == par1)
+                    {
+                        this.secondaryEffect = par1;
                         return;
                     }
                 }
@@ -171,81 +239,135 @@ public class TileEntityBeacon extends TileEntity implements IInventory {
         }
     }
 
-    public Packet getUpdatePacket() {
-        NBTTagCompound nbttagcompound = new NBTTagCompound();
-
-        this.b(nbttagcompound);
-        return new Packet132TileEntityData(this.x, this.y, this.z, 3, nbttagcompound);
+    /**
+     * Overriden in a sign to provide the text.
+     */
+    public Packet getDescriptionPacket()
+    {
+        NBTTagCompound var1 = new NBTTagCompound();
+        this.writeToNBT(var1);
+        return new Packet132TileEntityData(this.xCoord, this.yCoord, this.zCoord, 3, var1);
     }
 
-    public void a(NBTTagCompound nbttagcompound) {
-        super.a(nbttagcompound);
-        this.f = nbttagcompound.getInt("Primary");
-        this.g = nbttagcompound.getInt("Secondary");
-        this.e = nbttagcompound.getInt("Levels");
+    /**
+     * Reads a tile entity from NBT.
+     */
+    public void readFromNBT(NBTTagCompound par1NBTTagCompound)
+    {
+        super.readFromNBT(par1NBTTagCompound);
+        this.primaryEffect = par1NBTTagCompound.getInteger("Primary");
+        this.secondaryEffect = par1NBTTagCompound.getInteger("Secondary");
+        this.levels = par1NBTTagCompound.getInteger("Levels");
     }
 
-    public void b(NBTTagCompound nbttagcompound) {
-        super.b(nbttagcompound);
-        nbttagcompound.setInt("Primary", this.f);
-        nbttagcompound.setInt("Secondary", this.g);
-        nbttagcompound.setInt("Levels", this.e);
+    /**
+     * Writes a tile entity to NBT.
+     */
+    public void writeToNBT(NBTTagCompound par1NBTTagCompound)
+    {
+        super.writeToNBT(par1NBTTagCompound);
+        par1NBTTagCompound.setInteger("Primary", this.primaryEffect);
+        par1NBTTagCompound.setInteger("Secondary", this.secondaryEffect);
+        par1NBTTagCompound.setInteger("Levels", this.levels);
     }
 
-    public int getSize() {
+    /**
+     * Returns the number of slots in the inventory.
+     */
+    public int getSizeInventory()
+    {
         return 1;
     }
 
-    public ItemStack getItem(int i) {
-        return i == 0 ? this.h : null;
+    /**
+     * Returns the stack in slot i
+     */
+    public ItemStack getStackInSlot(int par1)
+    {
+        return par1 == 0 ? this.payment : null;
     }
 
-    public ItemStack splitStack(int i, int j) {
-        if (i == 0 && this.h != null) {
-            if (j >= this.h.count) {
-                ItemStack itemstack = this.h;
-
-                this.h = null;
-                return itemstack;
-            } else {
-                this.h.count -= j;
-                return new ItemStack(this.h.id, j, this.h.getData());
+    /**
+     * Removes from an inventory slot (first arg) up to a specified number (second arg) of items and returns them in a
+     * new stack.
+     */
+    public ItemStack decrStackSize(int par1, int par2)
+    {
+        if (par1 == 0 && this.payment != null)
+        {
+            if (par2 >= this.payment.stackSize)
+            {
+                ItemStack var3 = this.payment;
+                this.payment = null;
+                return var3;
             }
-        } else {
+            else
+            {
+                this.payment.stackSize -= par2;
+                return new ItemStack(this.payment.itemID, par2, this.payment.getItemDamage());
+            }
+        }
+        else
+        {
             return null;
         }
     }
 
-    public ItemStack splitWithoutUpdate(int i) {
-        if (i == 0 && this.h != null) {
-            ItemStack itemstack = this.h;
-
-            this.h = null;
-            return itemstack;
-        } else {
+    /**
+     * When some containers are closed they call this on each slot, then drop whatever it returns as an EntityItem -
+     * like when you close a workbench GUI.
+     */
+    public ItemStack getStackInSlotOnClosing(int par1)
+    {
+        if (par1 == 0 && this.payment != null)
+        {
+            ItemStack var2 = this.payment;
+            this.payment = null;
+            return var2;
+        }
+        else
+        {
             return null;
         }
     }
 
-    public void setItem(int i, ItemStack itemstack) {
-        if (i == 0) {
-            this.h = itemstack;
+    /**
+     * Sets the given item stack to the specified slot in the inventory (can be crafting or armor sections).
+     */
+    public void setInventorySlotContents(int par1, ItemStack par2ItemStack)
+    {
+        if (par1 == 0)
+        {
+            this.payment = par2ItemStack;
         }
     }
 
-    public String getName() {
+    /**
+     * Returns the name of the inventory.
+     */
+    public String getInvName()
+    {
         return "container.beacon";
     }
 
-    public int getMaxStackSize() {
+    /**
+     * Returns the maximum stack size for a inventory slot. Seems to always be 64, possibly will be extended. *Isn't
+     * this more of a set than a get?*
+     */
+    public int getInventoryStackLimit()
+    {
         return maxStack; // CraftBukkit
     }
 
-    public boolean a_(EntityHuman entityhuman) {
-        return this.world.getTileEntity(this.x, this.y, this.z) != this ? false : entityhuman.e((double) this.x + 0.5D, (double) this.y + 0.5D, (double) this.z + 0.5D) <= 64.0D;
+    /**
+     * Do not make give this method the name canInteractWith because it clashes with Container
+     */
+    public boolean isUseableByPlayer(EntityPlayer par1EntityPlayer)
+    {
+        return this.worldObj.getBlockTileEntity(this.xCoord, this.yCoord, this.zCoord) != this ? false : par1EntityPlayer.getDistanceSq((double)this.xCoord + 0.5D, (double)this.yCoord + 0.5D, (double)this.zCoord + 0.5D) <= 64.0D;
     }
 
-    public void startOpen() {}
+    public void openChest() {}
 
-    public void f() {}
+    public void closeChest() {}
 }

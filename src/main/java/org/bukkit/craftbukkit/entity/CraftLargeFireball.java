@@ -1,18 +1,17 @@
 package org.bukkit.craftbukkit.entity;
 
-import net.minecraft.server.EntityLargeFireball;
 import org.bukkit.craftbukkit.CraftServer;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.LargeFireball;
 
 public class CraftLargeFireball extends CraftFireball implements LargeFireball {
-    public CraftLargeFireball(CraftServer server, EntityLargeFireball entity) {
+    public CraftLargeFireball(CraftServer server, net.minecraft.entity.projectile.EntityLargeFireball/*was:EntityLargeFireball*/ entity) {
         super(server, entity);
     }
 
     @Override
-    public EntityLargeFireball getHandle() {
-        return (EntityLargeFireball) entity;
+    public net.minecraft.entity.projectile.EntityLargeFireball/*was:EntityLargeFireball*/ getHandle() {
+        return (net.minecraft.entity.projectile.EntityLargeFireball/*was:EntityLargeFireball*/) entity;
     }
 
     @Override

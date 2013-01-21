@@ -1,82 +1,117 @@
-package net.minecraft.server;
+package net.minecraft.item.crafting;
 
-public class RecipeMapClone extends ShapelessRecipes implements IRecipe { // CraftBukkit - added extends
-
+import net.minecraft.inventory.InventoryCrafting;
+import net.minecraft.item.Item;
+import net.minecraft.item.ItemStack;
+import net.minecraft.world.World;
+public class RecipesMapCloning extends ShapelessRecipes implements IRecipe   // CraftBukkit - added extends
+{
     // CraftBukkit start - delegate to new parent class
-    public RecipeMapClone() {
-        super(new ItemStack(Item.MAP, 0, -1), java.util.Arrays.asList(new ItemStack(Item.MAP_EMPTY, 0, 0)));
+    public RecipesMapCloning()
+    {
+        super(new ItemStack(Item.map, 0, -1), java.util.Arrays.asList(new ItemStack(Item.emptyMap, 0, 0)));
     }
     // CraftBukkit end
+    /**
+     * Used to check if a recipe matches current crafting inventory
+     */
+    public boolean matches(InventoryCrafting par1InventoryCrafting, World par2World)
+    {
+        int var3 = 0;
+        ItemStack var4 = null;
 
-    public boolean a(InventoryCrafting inventorycrafting, World world) {
-        int i = 0;
-        ItemStack itemstack = null;
+        for (int var5 = 0; var5 < par1InventoryCrafting.getSizeInventory(); ++var5)
+        {
+            ItemStack var6 = par1InventoryCrafting.getStackInSlot(var5);
 
-        for (int j = 0; j < inventorycrafting.getSize(); ++j) {
-            ItemStack itemstack1 = inventorycrafting.getItem(j);
-
-            if (itemstack1 != null) {
-                if (itemstack1.id == Item.MAP.id) {
-                    if (itemstack != null) {
+            if (var6 != null)
+            {
+                if (var6.itemID == Item.map.itemID)
+                {
+                    if (var4 != null)
+                    {
                         return false;
                     }
 
-                    itemstack = itemstack1;
-                } else {
-                    if (itemstack1.id != Item.MAP_EMPTY.id) {
+                    var4 = var6;
+                }
+                else
+                {
+                    if (var6.itemID != Item.emptyMap.itemID)
+                    {
                         return false;
                     }
 
-                    ++i;
+                    ++var3;
                 }
             }
         }
 
-        return itemstack != null && i > 0;
+        return var4 != null && var3 > 0;
     }
 
-    public ItemStack a(InventoryCrafting inventorycrafting) {
-        int i = 0;
-        ItemStack itemstack = null;
+    /**
+     * Returns an Item that is the result of this recipe
+     */
+    public ItemStack getCraftingResult(InventoryCrafting par1InventoryCrafting)
+    {
+        int var2 = 0;
+        ItemStack var3 = null;
 
-        for (int j = 0; j < inventorycrafting.getSize(); ++j) {
-            ItemStack itemstack1 = inventorycrafting.getItem(j);
+        for (int var4 = 0; var4 < par1InventoryCrafting.getSizeInventory(); ++var4)
+        {
+            ItemStack var5 = par1InventoryCrafting.getStackInSlot(var4);
 
-            if (itemstack1 != null) {
-                if (itemstack1.id == Item.MAP.id) {
-                    if (itemstack != null) {
+            if (var5 != null)
+            {
+                if (var5.itemID == Item.map.itemID)
+                {
+                    if (var3 != null)
+                    {
                         return null;
                     }
 
-                    itemstack = itemstack1;
-                } else {
-                    if (itemstack1.id != Item.MAP_EMPTY.id) {
+                    var3 = var5;
+                }
+                else
+                {
+                    if (var5.itemID != Item.emptyMap.itemID)
+                    {
                         return null;
                     }
 
-                    ++i;
+                    ++var2;
                 }
             }
         }
 
-        if (itemstack != null && i >= 1) {
-            ItemStack itemstack2 = new ItemStack(Item.MAP, i + 1, itemstack.getData());
+        if (var3 != null && var2 >= 1)
+        {
+            ItemStack var6 = new ItemStack(Item.map, var2 + 1, var3.getItemDamage());
 
-            if (itemstack.s()) {
-                itemstack2.c(itemstack.r());
+            if (var3.hasDisplayName())
+            {
+                var6.setItemName(var3.getDisplayName());
             }
 
-            return itemstack2;
-        } else {
+            return var6;
+        }
+        else
+        {
             return null;
         }
     }
 
-    public int a() {
+    /**
+     * Returns the size of the recipe area
+     */
+    public int getRecipeSize()
+    {
         return 9;
     }
 
-    public ItemStack b() {
+    public ItemStack getRecipeOutput()
+    {
         return null;
     }
 }

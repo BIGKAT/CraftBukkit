@@ -1,26 +1,42 @@
-package net.minecraft.server;
+package net.minecraft.world.storage;
 
 import java.io.File;
+import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.world.MinecraftException;
+import net.minecraft.world.WorldProvider;
+import net.minecraft.world.chunk.storage.IChunkLoader;
 
-public interface IDataManager {
+public interface ISaveHandler
+{
+    /**
+     * Loads and returns the world info
+     */
+    WorldInfo loadWorldInfo();
 
-    WorldData getWorldData();
+    void checkSessionLock() throws MinecraftException; // CraftBukkit - throws ExceptionWorldConflict
 
-    void checkSession() throws ExceptionWorldConflict; // CraftBukkit - throws ExceptionWorldConflict
+    IChunkLoader getChunkLoader(WorldProvider worldprovider);
 
-    IChunkLoader createChunkLoader(WorldProvider worldprovider);
+    void saveWorldInfoWithPlayer(WorldInfo worlddata, NBTTagCompound nbttagcompound);
 
-    void saveWorldData(WorldData worlddata, NBTTagCompound nbttagcompound);
+    void saveWorldInfo(WorldInfo worlddata);
 
-    void saveWorldData(WorldData worlddata);
+    /**
+     * returns null if no saveHandler is relevent (eg. SMP)
+     */
+    IPlayerFileData getSaveHandler();
 
-    PlayerFileData getPlayerFileData();
+    /**
+     * Called to flush all changes to disk, waiting for them to complete.
+     */
+    void flush();
 
-    void a();
+    File getMapFileFromName(String s);
 
-    File getDataFile(String s);
-
-    String g();
+    /**
+     * Returns the name of the directory where world information is saved.
+     */
+    String getSaveDirectoryName();
 
     java.util.UUID getUUID(); // CraftBukkit
 }

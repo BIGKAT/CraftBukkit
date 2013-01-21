@@ -1,178 +1,272 @@
-package net.minecraft.server;
+package net.minecraft.entity;
 
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
+import net.minecraft.entity.boss.EntityDragon;
+import net.minecraft.entity.item.EntityBoat;
+import net.minecraft.entity.item.EntityEnderCrystal;
+import net.minecraft.entity.item.EntityEnderEye;
+import net.minecraft.entity.item.EntityEnderPearl;
+import net.minecraft.entity.item.EntityExpBottle;
+import net.minecraft.entity.item.EntityFallingSand;
+import net.minecraft.entity.item.EntityFireworkRocket;
+import net.minecraft.entity.item.EntityItem;
+import net.minecraft.entity.item.EntityItemFrame;
+import net.minecraft.entity.item.EntityMinecart;
+import net.minecraft.entity.item.EntityPainting;
+import net.minecraft.entity.item.EntityTNTPrimed;
+import net.minecraft.entity.item.EntityXPOrb;
+import net.minecraft.entity.passive.IAnimals;
+import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.entity.player.EntityPlayerMP;
+import net.minecraft.entity.projectile.EntityArrow;
+import net.minecraft.entity.projectile.EntityEgg;
+import net.minecraft.entity.projectile.EntityFireball;
+import net.minecraft.entity.projectile.EntityFishHook;
+import net.minecraft.entity.projectile.EntityPotion;
+import net.minecraft.entity.projectile.EntitySmallFireball;
+import net.minecraft.entity.projectile.EntitySnowball;
+import net.minecraft.entity.projectile.EntityWitherSkull;
+import net.minecraft.item.Item;
+import net.minecraft.item.ItemMap;
+import net.minecraft.item.ItemStack;
+import net.minecraft.network.packet.Packet;
+import net.minecraft.network.packet.Packet17Sleep;
+import net.minecraft.network.packet.Packet20NamedEntitySpawn;
+import net.minecraft.network.packet.Packet23VehicleSpawn;
+import net.minecraft.network.packet.Packet24MobSpawn;
+import net.minecraft.network.packet.Packet25EntityPainting;
+import net.minecraft.network.packet.Packet26EntityExpOrb;
+import net.minecraft.network.packet.Packet28EntityVelocity;
+import net.minecraft.network.packet.Packet31RelEntityMove;
+import net.minecraft.network.packet.Packet32EntityLook;
+import net.minecraft.network.packet.Packet33RelEntityMoveLook;
+import net.minecraft.network.packet.Packet34EntityTeleport;
+import net.minecraft.network.packet.Packet35EntityHeadRotation;
+import net.minecraft.network.packet.Packet39AttachEntity;
+import net.minecraft.network.packet.Packet40EntityMetadata;
+import net.minecraft.network.packet.Packet41EntityEffect;
+import net.minecraft.network.packet.Packet5PlayerInventory;
+import net.minecraft.potion.PotionEffect;
+import net.minecraft.util.MathHelper;
+import net.minecraft.world.storage.MapData;
 
 // CraftBukkit start
 import org.bukkit.entity.Player;
 import org.bukkit.event.player.PlayerVelocityEvent;
 // CraftBukkit end
 
-public class EntityTrackerEntry {
+public class EntityTrackerEntry
+{
+    public Entity myEntity;
+    public int blocksDistanceThreshold;
 
-    public Entity tracker;
-    public int b;
-    public int c;
-    public int xLoc;
-    public int yLoc;
-    public int zLoc;
-    public int yRot;
-    public int xRot;
-    public int i;
-    public double j;
-    public double k;
-    public double l;
-    public int m = 0;
-    private double p;
-    private double q;
-    private double r;
-    private boolean s = false;
-    private boolean isMoving;
-    private int u = 0;
-    private Entity v;
-    private boolean w = false;
-    public boolean n = false;
+    /** check for sync when ticks % updateFrequency==0 */
+    public int updateFrequency;
+    public int lastScaledXPosition;
+    public int lastScaledYPosition;
+    public int lastScaledZPosition;
+    public int lastYaw;
+    public int lastPitch;
+    public int lastHeadMotion;
+    public double motionX;
+    public double motionY;
+    public double motionZ;
+    public int ticks = 0;
+    private double posX;
+    private double posY;
+    private double posZ;
+
+    /** set to true on first sendLocationToClients */
+    private boolean isDataInitialized = false;
+    private boolean sendVelocityUpdates;
+
+    /**
+     * every 400 ticks a  full teleport packet is sent, rather than just a "move me +x" command, so that position
+     * remains fully synced.
+     */
+    private int ticksSinceLastForcedTeleport = 0;
+    private Entity field_85178_v;
+    private boolean ridingEntity = false;
+    public boolean playerEntitiesUpdated = false;
     public Set trackedPlayers = new HashSet();
 
-    public EntityTrackerEntry(Entity entity, int i, int j, boolean flag) {
-        this.tracker = entity;
-        this.b = i;
-        this.c = j;
-        this.isMoving = flag;
-        this.xLoc = MathHelper.floor(entity.locX * 32.0D);
-        this.yLoc = MathHelper.floor(entity.locY * 32.0D);
-        this.zLoc = MathHelper.floor(entity.locZ * 32.0D);
-        this.yRot = MathHelper.d(entity.yaw * 256.0F / 360.0F);
-        this.xRot = MathHelper.d(entity.pitch * 256.0F / 360.0F);
-        this.i = MathHelper.d(entity.ap() * 256.0F / 360.0F);
+    public EntityTrackerEntry(Entity par1Entity, int par2, int par3, boolean par4)
+    {
+        this.myEntity = par1Entity;
+        this.blocksDistanceThreshold = par2;
+        this.updateFrequency = par3;
+        this.sendVelocityUpdates = par4;
+        this.lastScaledXPosition = MathHelper.floor_double(par1Entity.posX * 32.0D);
+        this.lastScaledYPosition = MathHelper.floor_double(par1Entity.posY * 32.0D);
+        this.lastScaledZPosition = MathHelper.floor_double(par1Entity.posZ * 32.0D);
+        this.lastYaw = MathHelper.floor_float(par1Entity.rotationYaw * 256.0F / 360.0F);
+        this.lastPitch = MathHelper.floor_float(par1Entity.rotationPitch * 256.0F / 360.0F);
+        this.lastHeadMotion = MathHelper.floor_float(par1Entity.setRotationYawHead() * 256.0F / 360.0F);
     }
 
-    public boolean equals(Object object) {
-        return object instanceof EntityTrackerEntry ? ((EntityTrackerEntry) object).tracker.id == this.tracker.id : false;
+    public boolean equals(Object par1Obj)
+    {
+        return par1Obj instanceof EntityTrackerEntry ? ((EntityTrackerEntry)par1Obj).myEntity.entityId == this.myEntity.entityId : false;
     }
 
-    public int hashCode() {
-        return this.tracker.id;
+    public int hashCode()
+    {
+        return this.myEntity.entityId;
     }
 
-    public void track(List list) {
-        this.n = false;
-        if (!this.s || this.tracker.e(this.p, this.q, this.r) > 16.0D) {
-            this.p = this.tracker.locX;
-            this.q = this.tracker.locY;
-            this.r = this.tracker.locZ;
-            this.s = true;
-            this.n = true;
-            this.scanPlayers(list);
+    /**
+     * also sends velocity, rotation, and riding info.
+     */
+    public void sendLocationToAllClients(List par1List)
+    {
+        this.playerEntitiesUpdated = false;
+
+        if (!this.isDataInitialized || this.myEntity.getDistanceSq(this.posX, this.posY, this.posZ) > 16.0D)
+        {
+            this.posX = this.myEntity.posX;
+            this.posY = this.myEntity.posY;
+            this.posZ = this.myEntity.posZ;
+            this.isDataInitialized = true;
+            this.playerEntitiesUpdated = true;
+            this.sendEventsToPlayers(par1List);
         }
 
-        if (this.v != this.tracker.vehicle) {
-            this.v = this.tracker.vehicle;
-            this.broadcast(new Packet39AttachEntity(this.tracker, this.tracker.vehicle));
+        if (this.field_85178_v != this.myEntity.ridingEntity)
+        {
+            this.field_85178_v = this.myEntity.ridingEntity;
+            this.sendPacketToAllTrackingPlayers(new Packet39AttachEntity(this.myEntity, this.myEntity.ridingEntity));
         }
 
-        if (this.tracker instanceof EntityItemFrame && this.m % 10 == 0) {
-            EntityItemFrame i4 = (EntityItemFrame) this.tracker;
-            ItemStack i5 = i4.i();
+        if (this.myEntity instanceof EntityItemFrame && this.ticks % 10 == 0)
+        {
+            EntityItemFrame var23 = (EntityItemFrame)this.myEntity;
+            ItemStack var24 = var23.getDisplayedItem();
 
-            if (i5 != null && i5.getItem() instanceof ItemWorldMap) {
-                WorldMap i7 = Item.MAP.getSavedMap(i5, this.tracker.world);
-                Iterator j0 = list.iterator();
+            if (var24 != null && var24.getItem() instanceof ItemMap)
+            {
+                MapData var26 = Item.map.getMapData(var24, this.myEntity.worldObj);
+                Iterator var29 = par1List.iterator();
 
-                while (j0.hasNext()) {
-                    EntityHuman j1 = (EntityHuman) j0.next();
-                    EntityPlayer j2 = (EntityPlayer) j1;
+                while (var29.hasNext())
+                {
+                    EntityPlayer var30 = (EntityPlayer)var29.next();
+                    EntityPlayerMP var31 = (EntityPlayerMP)var30;
+                    var26.updateVisiblePlayers(var31, var24);
 
-                    i7.a(j2, i5);
-                    if (j2.playerConnection.lowPriorityCount() <= 5) {
-                        Packet j3 = Item.MAP.c(i5, this.tracker.world, j2);
+                    if (var31.playerNetServerHandler.packetSize() <= 5)
+                    {
+                        Packet var32 = Item.map.createMapDataPacket(var24, this.myEntity.worldObj, var31);
 
-                        if (j3 != null) {
-                            j2.playerConnection.sendPacket(j3);
+                        if (var32 != null)
+                        {
+                            var31.playerNetServerHandler.sendPacketToPlayer(var32);
                         }
                     }
                 }
             }
 
-            DataWatcher i9 = this.tracker.getDataWatcher();
+            DataWatcher var28 = this.myEntity.getDataWatcher();
 
-            if (i9.a()) {
-                this.broadcastIncludingSelf(new Packet40EntityMetadata(this.tracker.id, i9, false));
+            if (var28.hasChanges())
+            {
+                this.sendPacketToAllAssociatedPlayers(new Packet40EntityMetadata(this.myEntity.entityId, var28, false));
             }
-        } else if (this.m++ % this.c == 0 || this.tracker.am) {
-            int i;
-            int j;
+        }
+        else if (this.ticks++ % this.updateFrequency == 0 || this.myEntity.isAirBorne)
+        {
+            int var2;
+            int var3;
 
-            if (this.tracker.vehicle == null) {
-                ++this.u;
-                i = this.tracker.as.a(this.tracker.locX);
-                j = MathHelper.floor(this.tracker.locY * 32.0D);
-                int k = this.tracker.as.a(this.tracker.locZ);
-                int l = MathHelper.d(this.tracker.yaw * 256.0F / 360.0F);
-                int i1 = MathHelper.d(this.tracker.pitch * 256.0F / 360.0F);
-                int j1 = i - this.xLoc;
-                int k1 = j - this.yLoc;
-                int l1 = k - this.zLoc;
-                Object object = null;
-                boolean flag = Math.abs(j1) >= 4 || Math.abs(k1) >= 4 || Math.abs(l1) >= 4 || this.m % 60 == 0;
-                boolean flag1 = Math.abs(l - this.yRot) >= 4 || Math.abs(i1 - this.xRot) >= 4;
+            if (this.myEntity.ridingEntity == null)
+            {
+                ++this.ticksSinceLastForcedTeleport;
+                var2 = this.myEntity.myEntitySize.multiplyBy32AndRound(this.myEntity.posX);
+                var3 = MathHelper.floor_double(this.myEntity.posY * 32.0D);
+                int var4 = this.myEntity.myEntitySize.multiplyBy32AndRound(this.myEntity.posZ);
+                int var5 = MathHelper.floor_float(this.myEntity.rotationYaw * 256.0F / 360.0F);
+                int var6 = MathHelper.floor_float(this.myEntity.rotationPitch * 256.0F / 360.0F);
+                int var7 = var2 - this.lastScaledXPosition;
+                int var8 = var3 - this.lastScaledYPosition;
+                int var9 = var4 - this.lastScaledZPosition;
+                Object var10 = null;
+                boolean var11 = Math.abs(var7) >= 4 || Math.abs(var8) >= 4 || Math.abs(var9) >= 4 || this.ticks % 60 == 0;
+                boolean var12 = Math.abs(var5 - this.lastYaw) >= 4 || Math.abs(var6 - this.lastPitch) >= 4;
 
                 // CraftBukkit start - code moved from below
-                if (flag) {
-                    this.xLoc = i;
-                    this.yLoc = j;
-                    this.zLoc = k;
+                if (var11)
+                {
+                    this.lastScaledXPosition = var2;
+                    this.lastScaledYPosition = var3;
+                    this.lastScaledZPosition = var4;
                 }
 
-                if (flag1) {
-                    this.yRot = l;
-                    this.xRot = i1;
+                if (var12)
+                {
+                    this.lastYaw = var5;
+                    this.lastPitch = var6;
                 }
+
                 // CraftBukkit end
 
-                if (j1 >= -128 && j1 < 128 && k1 >= -128 && k1 < 128 && l1 >= -128 && l1 < 128 && this.u <= 400 && !this.w) {
-                    if (flag && flag1) {
-                        object = new Packet33RelEntityMoveLook(this.tracker.id, (byte) j1, (byte) k1, (byte) l1, (byte) l, (byte) i1);
-                    } else if (flag) {
-                        object = new Packet31RelEntityMove(this.tracker.id, (byte) j1, (byte) k1, (byte) l1);
-                    } else if (flag1) {
-                        object = new Packet32EntityLook(this.tracker.id, (byte) l, (byte) i1);
+                if (var7 >= -128 && var7 < 128 && var8 >= -128 && var8 < 128 && var9 >= -128 && var9 < 128 && this.ticksSinceLastForcedTeleport <= 400 && !this.ridingEntity)
+                {
+                    if (var11 && var12)
+                    {
+                        var10 = new Packet33RelEntityMoveLook(this.myEntity.entityId, (byte)var7, (byte)var8, (byte)var9, (byte)var5, (byte)var6);
                     }
-                } else {
-                    this.u = 0;
+                    else if (var11)
+                    {
+                        var10 = new Packet31RelEntityMove(this.myEntity.entityId, (byte)var7, (byte)var8, (byte)var9);
+                    }
+                    else if (var12)
+                    {
+                        var10 = new Packet32EntityLook(this.myEntity.entityId, (byte)var5, (byte)var6);
+                    }
+                }
+                else
+                {
+                    this.ticksSinceLastForcedTeleport = 0;
+
                     // CraftBukkit start - refresh list of who can see a player before sending teleport packet
-                    if (this.tracker instanceof EntityPlayer) {
-                        this.scanPlayers(new java.util.ArrayList(this.trackedPlayers));
+                    if (this.myEntity instanceof EntityPlayerMP)
+                    {
+                        this.sendEventsToPlayers(new java.util.ArrayList(this.trackedPlayers));
                     }
+
                     // CraftBukkit end
-                    object = new Packet34EntityTeleport(this.tracker.id, i, j, k, (byte) l, (byte) i1);
+                    var10 = new Packet34EntityTeleport(this.myEntity.entityId, var2, var3, var4, (byte)var5, (byte)var6);
                 }
 
-                if (this.isMoving) {
-                    double d0 = this.tracker.motX - this.j;
-                    double d1 = this.tracker.motY - this.k;
-                    double d2 = this.tracker.motZ - this.l;
-                    double d3 = 0.02D;
-                    double d4 = d0 * d0 + d1 * d1 + d2 * d2;
+                if (this.sendVelocityUpdates)
+                {
+                    double var13 = this.myEntity.motionX - this.motionX;
+                    double var15 = this.myEntity.motionY - this.motionY;
+                    double var17 = this.myEntity.motionZ - this.motionZ;
+                    double var19 = 0.02D;
+                    double var21 = var13 * var13 + var15 * var15 + var17 * var17;
 
-                    if (d4 > d3 * d3 || d4 > 0.0D && this.tracker.motX == 0.0D && this.tracker.motY == 0.0D && this.tracker.motZ == 0.0D) {
-                        this.j = this.tracker.motX;
-                        this.k = this.tracker.motY;
-                        this.l = this.tracker.motZ;
-                        this.broadcast(new Packet28EntityVelocity(this.tracker.id, this.j, this.k, this.l));
+                    if (var21 > var19 * var19 || var21 > 0.0D && this.myEntity.motionX == 0.0D && this.myEntity.motionY == 0.0D && this.myEntity.motionZ == 0.0D)
+                    {
+                        this.motionX = this.myEntity.motionX;
+                        this.motionY = this.myEntity.motionY;
+                        this.motionZ = this.myEntity.motionZ;
+                        this.sendPacketToAllTrackingPlayers(new Packet28EntityVelocity(this.myEntity.entityId, this.motionX, this.motionY, this.motionZ));
                     }
                 }
 
-                if (object != null) {
-                    this.broadcast((Packet) object);
+                if (var10 != null)
+                {
+                    this.sendPacketToAllTrackingPlayers((Packet)var10);
                 }
 
-                DataWatcher datawatcher1 = this.tracker.getDataWatcher();
+                DataWatcher var33 = this.myEntity.getDataWatcher();
 
-                if (datawatcher1.a()) {
-                    this.broadcastIncludingSelf(new Packet40EntityMetadata(this.tracker.id, datawatcher1, false));
+                if (var33.hasChanges())
+                {
+                    this.sendPacketToAllAssociatedPlayers(new Packet40EntityMetadata(this.myEntity.entityId, var33, false));
                 }
 
                 /* CraftBukkit start - code moved up
@@ -187,303 +281,403 @@ public class EntityTrackerEntry {
                     this.xRot = i1;
                 }
                 // CraftBukkit end */
+                this.ridingEntity = false;
+            }
+            else
+            {
+                var2 = MathHelper.floor_float(this.myEntity.rotationYaw * 256.0F / 360.0F);
+                var3 = MathHelper.floor_float(this.myEntity.rotationPitch * 256.0F / 360.0F);
+                boolean var25 = Math.abs(var2 - this.lastYaw) >= 4 || Math.abs(var3 - this.lastPitch) >= 4;
 
-                this.w = false;
-            } else {
-                i = MathHelper.d(this.tracker.yaw * 256.0F / 360.0F);
-                j = MathHelper.d(this.tracker.pitch * 256.0F / 360.0F);
-                boolean flag2 = Math.abs(i - this.yRot) >= 4 || Math.abs(j - this.xRot) >= 4;
-
-                if (flag2) {
-                    this.broadcast(new Packet32EntityLook(this.tracker.id, (byte) i, (byte) j));
-                    this.yRot = i;
-                    this.xRot = j;
+                if (var25)
+                {
+                    this.sendPacketToAllTrackingPlayers(new Packet32EntityLook(this.myEntity.entityId, (byte)var2, (byte)var3));
+                    this.lastYaw = var2;
+                    this.lastPitch = var3;
                 }
 
-                this.xLoc = this.tracker.as.a(this.tracker.locX);
-                this.yLoc = MathHelper.floor(this.tracker.locY * 32.0D);
-                this.zLoc = this.tracker.as.a(this.tracker.locZ);
-                DataWatcher datawatcher2 = this.tracker.getDataWatcher();
+                this.lastScaledXPosition = this.myEntity.myEntitySize.multiplyBy32AndRound(this.myEntity.posX);
+                this.lastScaledYPosition = MathHelper.floor_double(this.myEntity.posY * 32.0D);
+                this.lastScaledZPosition = this.myEntity.myEntitySize.multiplyBy32AndRound(this.myEntity.posZ);
+                DataWatcher var27 = this.myEntity.getDataWatcher();
 
-                if (datawatcher2.a()) {
-                    this.broadcastIncludingSelf(new Packet40EntityMetadata(this.tracker.id, datawatcher2, false));
+                if (var27.hasChanges())
+                {
+                    this.sendPacketToAllAssociatedPlayers(new Packet40EntityMetadata(this.myEntity.entityId, var27, false));
                 }
 
-                this.w = true;
+                this.ridingEntity = true;
             }
 
-            i = MathHelper.d(this.tracker.ap() * 256.0F / 360.0F);
-            if (Math.abs(i - this.i) >= 4) {
-                this.broadcast(new Packet35EntityHeadRotation(this.tracker.id, (byte) i));
-                this.i = i;
+            var2 = MathHelper.floor_float(this.myEntity.setRotationYawHead() * 256.0F / 360.0F);
+
+            if (Math.abs(var2 - this.lastHeadMotion) >= 4)
+            {
+                this.sendPacketToAllTrackingPlayers(new Packet35EntityHeadRotation(this.myEntity.entityId, (byte)var2));
+                this.lastHeadMotion = var2;
             }
 
-            this.tracker.am = false;
+            this.myEntity.isAirBorne = false;
         }
 
-        if (this.tracker.velocityChanged) {
+        if (this.myEntity.velocityChanged)
+        {
             // CraftBukkit start - create PlayerVelocity event
             boolean cancelled = false;
 
-            if (this.tracker instanceof EntityPlayer) {
-                Player player = (Player) this.tracker.getBukkitEntity();
+            if (this.myEntity instanceof EntityPlayerMP)
+            {
+                Player player = (Player) this.myEntity.getBukkitEntity();
                 org.bukkit.util.Vector velocity = player.getVelocity();
-
                 PlayerVelocityEvent event = new PlayerVelocityEvent(player, velocity);
-                this.tracker.world.getServer().getPluginManager().callEvent(event);
+                this.myEntity.worldObj.getServer().getPluginManager().callEvent(event);
 
-                if (event.isCancelled()) {
+                if (event.isCancelled())
+                {
                     cancelled = true;
-                } else if (!velocity.equals(event.getVelocity())) {
+                }
+                else if (!velocity.equals(event.getVelocity()))
+                {
                     player.setVelocity(velocity);
                 }
             }
 
-            if (!cancelled) {
-                this.broadcastIncludingSelf((Packet) (new Packet28EntityVelocity(this.tracker)));
+            if (!cancelled)
+            {
+                this.sendPacketToAllAssociatedPlayers((Packet)(new Packet28EntityVelocity(this.myEntity)));
             }
+
             // CraftBukkit end
-
-            this.tracker.velocityChanged = false;
+            this.myEntity.velocityChanged = false;
         }
     }
 
-    public void broadcast(Packet packet) {
-        Iterator iterator = this.trackedPlayers.iterator();
+    /**
+     * if this is a player, then it is not informed
+     */
+    public void sendPacketToAllTrackingPlayers(Packet par1Packet)
+    {
+        Iterator var2 = this.trackedPlayers.iterator();
 
-        while (iterator.hasNext()) {
-            EntityPlayer entityplayer = (EntityPlayer) iterator.next();
-
-            entityplayer.playerConnection.sendPacket(packet);
+        while (var2.hasNext())
+        {
+            EntityPlayerMP var3 = (EntityPlayerMP)var2.next();
+            var3.playerNetServerHandler.sendPacketToPlayer(par1Packet);
         }
     }
 
-    public void broadcastIncludingSelf(Packet packet) {
-        this.broadcast(packet);
-        if (this.tracker instanceof EntityPlayer) {
-            ((EntityPlayer) this.tracker).playerConnection.sendPacket(packet);
+    /**
+     * if this is a player, then it recieves the message also
+     */
+    public void sendPacketToAllAssociatedPlayers(Packet par1Packet)
+    {
+        this.sendPacketToAllTrackingPlayers(par1Packet);
+
+        if (this.myEntity instanceof EntityPlayerMP)
+        {
+            ((EntityPlayerMP)this.myEntity).playerNetServerHandler.sendPacketToPlayer(par1Packet);
         }
     }
 
-    public void a() {
-        Iterator iterator = this.trackedPlayers.iterator();
+    public void informAllAssociatedPlayersOfItemDestruction()
+    {
+        Iterator var1 = this.trackedPlayers.iterator();
 
-        while (iterator.hasNext()) {
-            EntityPlayer entityplayer = (EntityPlayer) iterator.next();
-
-            entityplayer.removeQueue.add(Integer.valueOf(this.tracker.id));
+        while (var1.hasNext())
+        {
+            EntityPlayerMP var2 = (EntityPlayerMP)var1.next();
+            var2.destroyedItemsNetCache.add(Integer.valueOf(this.myEntity.entityId));
         }
     }
 
-    public void a(EntityPlayer entityplayer) {
-        if (this.trackedPlayers.contains(entityplayer)) {
-            entityplayer.removeQueue.add(Integer.valueOf(this.tracker.id));
-            this.trackedPlayers.remove(entityplayer);
+    public void removeFromWatchingList(EntityPlayerMP par1EntityPlayerMP)
+    {
+        if (this.trackedPlayers.contains(par1EntityPlayerMP))
+        {
+            par1EntityPlayerMP.destroyedItemsNetCache.add(Integer.valueOf(this.myEntity.entityId));
+            this.trackedPlayers.remove(par1EntityPlayerMP);
         }
     }
 
-    public void updatePlayer(EntityPlayer entityplayer) {
-        if (entityplayer != this.tracker) {
-            double d0 = entityplayer.locX - (double) (this.xLoc / 32);
-            double d1 = entityplayer.locZ - (double) (this.zLoc / 32);
+    /**
+     * if the player is more than the distance threshold (typically 64) then the player is removed instead
+     */
+    public void tryStartWachingThis(EntityPlayerMP par1EntityPlayerMP)
+    {
+        if (par1EntityPlayerMP != this.myEntity)
+        {
+            double var2 = par1EntityPlayerMP.posX - (double)(this.lastScaledXPosition / 32);
+            double var4 = par1EntityPlayerMP.posZ - (double)(this.lastScaledZPosition / 32);
 
-            if (d0 >= (double) (-this.b) && d0 <= (double) this.b && d1 >= (double) (-this.b) && d1 <= (double) this.b) {
-                if (!this.trackedPlayers.contains(entityplayer) && this.d(entityplayer)) {
+            if (var2 >= (double)(-this.blocksDistanceThreshold) && var2 <= (double)this.blocksDistanceThreshold && var4 >= (double)(-this.blocksDistanceThreshold) && var4 <= (double)this.blocksDistanceThreshold)
+            {
+                if (!this.trackedPlayers.contains(par1EntityPlayerMP) && this.isPlayerWatchingThisChunk(par1EntityPlayerMP))
+                {
                     // CraftBukkit start
-                    if (this.tracker instanceof EntityPlayer) {
-                        Player player = ((EntityPlayer) this.tracker).getBukkitEntity();
-                        if (!entityplayer.getBukkitEntity().canSee(player)) {
+                    if (this.myEntity instanceof EntityPlayerMP)
+                    {
+                        Player player = ((EntityPlayerMP) this.myEntity).getBukkitEntity();
+
+                        if (!par1EntityPlayerMP.getBukkitEntity().canSee(player))
+                        {
                             return;
                         }
                     }
 
-                    entityplayer.removeQueue.remove(Integer.valueOf(this.tracker.id));
+                    par1EntityPlayerMP.destroyedItemsNetCache.remove(Integer.valueOf(this.myEntity.entityId));
                     // CraftBukkit end
+                    this.trackedPlayers.add(par1EntityPlayerMP);
+                    Packet var6 = this.getPacketForThisEntity();
+                    par1EntityPlayerMP.playerNetServerHandler.sendPacketToPlayer(var6);
 
-                    this.trackedPlayers.add(entityplayer);
-                    Packet packet = this.b();
-
-                    entityplayer.playerConnection.sendPacket(packet);
-                    if (!this.tracker.getDataWatcher().d()) {
-                        entityplayer.playerConnection.sendPacket(new Packet40EntityMetadata(this.tracker.id, this.tracker.getDataWatcher(), true));
+                    if (!this.myEntity.getDataWatcher().func_92034_d())
+                    {
+                        par1EntityPlayerMP.playerNetServerHandler.sendPacketToPlayer(new Packet40EntityMetadata(this.myEntity.entityId, this.myEntity.getDataWatcher(), true));
                     }
 
-                    this.j = this.tracker.motX;
-                    this.k = this.tracker.motY;
-                    this.l = this.tracker.motZ;
-                    if (this.isMoving && !(packet instanceof Packet24MobSpawn)) {
-                        entityplayer.playerConnection.sendPacket(new Packet28EntityVelocity(this.tracker.id, this.tracker.motX, this.tracker.motY, this.tracker.motZ));
+                    this.motionX = this.myEntity.motionX;
+                    this.motionY = this.myEntity.motionY;
+                    this.motionZ = this.myEntity.motionZ;
+
+                    if (this.sendVelocityUpdates && !(var6 instanceof Packet24MobSpawn))
+                    {
+                        par1EntityPlayerMP.playerNetServerHandler.sendPacketToPlayer(new Packet28EntityVelocity(this.myEntity.entityId, this.myEntity.motionX, this.myEntity.motionY, this.myEntity.motionZ));
                     }
 
-                    if (this.tracker.vehicle != null) {
-                        entityplayer.playerConnection.sendPacket(new Packet39AttachEntity(this.tracker, this.tracker.vehicle));
+                    if (this.myEntity.ridingEntity != null)
+                    {
+                        par1EntityPlayerMP.playerNetServerHandler.sendPacketToPlayer(new Packet39AttachEntity(this.myEntity, this.myEntity.ridingEntity));
                     }
 
-                    if (this.tracker instanceof EntityLiving) {
-                        for (int i = 0; i < 5; ++i) {
-                            ItemStack itemstack = ((EntityLiving) this.tracker).getEquipment(i);
+                    if (this.myEntity instanceof EntityLiving)
+                    {
+                        for (int var7 = 0; var7 < 5; ++var7)
+                        {
+                            ItemStack var8 = ((EntityLiving)this.myEntity).getCurrentItemOrArmor(var7);
 
-                            if (itemstack != null) {
-                                entityplayer.playerConnection.sendPacket(new Packet5EntityEquipment(this.tracker.id, i, itemstack));
+                            if (var8 != null)
+                            {
+                                par1EntityPlayerMP.playerNetServerHandler.sendPacketToPlayer(new Packet5PlayerInventory(this.myEntity.entityId, var7, var8));
                             }
                         }
                     }
 
-                    if (this.tracker instanceof EntityHuman) {
-                        EntityHuman entityhuman = (EntityHuman) this.tracker;
+                    if (this.myEntity instanceof EntityPlayer)
+                    {
+                        EntityPlayer var11 = (EntityPlayer)this.myEntity;
 
-                        if (entityhuman.isSleeping()) {
-                            entityplayer.playerConnection.sendPacket(new Packet17EntityLocationAction(this.tracker, 0, MathHelper.floor(this.tracker.locX), MathHelper.floor(this.tracker.locY), MathHelper.floor(this.tracker.locZ)));
+                        if (var11.isPlayerSleeping())
+                        {
+                            par1EntityPlayerMP.playerNetServerHandler.sendPacketToPlayer(new Packet17Sleep(this.myEntity, 0, MathHelper.floor_double(this.myEntity.posX), MathHelper.floor_double(this.myEntity.posY), MathHelper.floor_double(this.myEntity.posZ)));
                         }
                     }
 
                     // CraftBukkit start - Fix for nonsensical head yaw
-                    this.i = MathHelper.d(this.tracker.ap() * 256.0F / 360.0F); // tracker.am() should be getHeadRotation
-                    this.broadcast(new Packet35EntityHeadRotation(this.tracker.id, (byte) i));
+                    this.lastHeadMotion = MathHelper.floor_float(this.myEntity.setRotationYawHead() * 256.0F / 360.0F); // tracker.am() should be getHeadRotation
+                    this.sendPacketToAllTrackingPlayers(new Packet35EntityHeadRotation(this.myEntity.entityId, (byte) lastHeadMotion));
                     // CraftBukkit end
 
-                    if (this.tracker instanceof EntityLiving) {
-                        EntityLiving entityliving = (EntityLiving) this.tracker;
-                        Iterator iterator = entityliving.getEffects().iterator();
+                    if (this.myEntity instanceof EntityLiving)
+                    {
+                        EntityLiving var10 = (EntityLiving)this.myEntity;
+                        Iterator var12 = var10.getActivePotionEffects().iterator();
 
-                        while (iterator.hasNext()) {
-                            MobEffect mobeffect = (MobEffect) iterator.next();
-
-                            entityplayer.playerConnection.sendPacket(new Packet41MobEffect(this.tracker.id, mobeffect));
+                        while (var12.hasNext())
+                        {
+                            PotionEffect var9 = (PotionEffect)var12.next();
+                            par1EntityPlayerMP.playerNetServerHandler.sendPacketToPlayer(new Packet41EntityEffect(this.myEntity.entityId, var9));
                         }
                     }
                 }
-            } else if (this.trackedPlayers.contains(entityplayer)) {
-                this.trackedPlayers.remove(entityplayer);
-                entityplayer.removeQueue.add(Integer.valueOf(this.tracker.id));
+            }
+            else if (this.trackedPlayers.contains(par1EntityPlayerMP))
+            {
+                this.trackedPlayers.remove(par1EntityPlayerMP);
+                par1EntityPlayerMP.destroyedItemsNetCache.add(Integer.valueOf(this.myEntity.entityId));
             }
         }
     }
 
-    private boolean d(EntityPlayer entityplayer) {
-        return entityplayer.p().getPlayerChunkMap().a(entityplayer, this.tracker.ai, this.tracker.ak);
+    private boolean isPlayerWatchingThisChunk(EntityPlayerMP par1EntityPlayerMP)
+    {
+        return par1EntityPlayerMP.getServerForPlayer().getPlayerManager().isPlayerWatchingChunk(par1EntityPlayerMP, this.myEntity.chunkCoordX, this.myEntity.chunkCoordZ);
     }
 
-    public void scanPlayers(List list) {
-        for (int i = 0; i < list.size(); ++i) {
-            this.updatePlayer((EntityPlayer) list.get(i));
+    public void sendEventsToPlayers(List par1List)
+    {
+        for (int var2 = 0; var2 < par1List.size(); ++var2)
+        {
+            this.tryStartWachingThis((EntityPlayerMP)par1List.get(var2));
         }
     }
 
-    private Packet b() {
-        if (this.tracker.dead) {
+    private Packet getPacketForThisEntity()
+    {
+        if (this.myEntity.isDead)
+        {
             // CraftBukkit start - remove useless error spam, just return
             // System.out.println("Fetching addPacket for removed entity");
             return null;
             // CraftBukkit end
         }
 
-        if (this.tracker instanceof EntityItem) {
-            return new Packet23VehicleSpawn(this.tracker, 2, 1);
-        } else if (this.tracker instanceof EntityPlayer) {
-            return new Packet20NamedEntitySpawn((EntityHuman) this.tracker);
-        } else {
-            if (this.tracker instanceof EntityMinecart) {
-                EntityMinecart entityminecart = (EntityMinecart) this.tracker;
+        if (this.myEntity instanceof EntityItem)
+        {
+            return new Packet23VehicleSpawn(this.myEntity, 2, 1);
+        }
+        else if (this.myEntity instanceof EntityPlayerMP)
+        {
+            return new Packet20NamedEntitySpawn((EntityPlayer)this.myEntity);
+        }
+        else
+        {
+            if (this.myEntity instanceof EntityMinecart)
+            {
+                EntityMinecart var1 = (EntityMinecart)this.myEntity;
 
-                if (entityminecart.type == 0) {
-                    return new Packet23VehicleSpawn(this.tracker, 10);
+                if (var1.minecartType == 0)
+                {
+                    return new Packet23VehicleSpawn(this.myEntity, 10);
                 }
 
-                if (entityminecart.type == 1) {
-                    return new Packet23VehicleSpawn(this.tracker, 11);
+                if (var1.minecartType == 1)
+                {
+                    return new Packet23VehicleSpawn(this.myEntity, 11);
                 }
 
-                if (entityminecart.type == 2) {
-                    return new Packet23VehicleSpawn(this.tracker, 12);
+                if (var1.minecartType == 2)
+                {
+                    return new Packet23VehicleSpawn(this.myEntity, 12);
                 }
             }
 
-            if (this.tracker instanceof EntityBoat) {
-                return new Packet23VehicleSpawn(this.tracker, 1);
-            } else if (!(this.tracker instanceof IAnimal) && !(this.tracker instanceof EntityEnderDragon)) {
-                if (this.tracker instanceof EntityFishingHook) {
-                    EntityHuman entityhuman = ((EntityFishingHook) this.tracker).owner;
+            if (this.myEntity instanceof EntityBoat)
+            {
+                return new Packet23VehicleSpawn(this.myEntity, 1);
+            }
+            else if (!(this.myEntity instanceof IAnimals) && !(this.myEntity instanceof EntityDragon))
+            {
+                if (this.myEntity instanceof EntityFishHook)
+                {
+                    EntityPlayer var8 = ((EntityFishHook)this.myEntity).angler;
+                    return new Packet23VehicleSpawn(this.myEntity, 90, var8 != null ? var8.entityId : this.myEntity.entityId);
+                }
+                else if (this.myEntity instanceof EntityArrow)
+                {
+                    Entity var7 = ((EntityArrow)this.myEntity).shootingEntity;
+                    return new Packet23VehicleSpawn(this.myEntity, 60, var7 != null ? var7.entityId : this.myEntity.entityId);
+                }
+                else if (this.myEntity instanceof EntitySnowball)
+                {
+                    return new Packet23VehicleSpawn(this.myEntity, 61);
+                }
+                else if (this.myEntity instanceof EntityPotion)
+                {
+                    return new Packet23VehicleSpawn(this.myEntity, 73, ((EntityPotion)this.myEntity).getPotionDamage());
+                }
+                else if (this.myEntity instanceof EntityExpBottle)
+                {
+                    return new Packet23VehicleSpawn(this.myEntity, 75);
+                }
+                else if (this.myEntity instanceof EntityEnderPearl)
+                {
+                    return new Packet23VehicleSpawn(this.myEntity, 65);
+                }
+                else if (this.myEntity instanceof EntityEnderEye)
+                {
+                    return new Packet23VehicleSpawn(this.myEntity, 72);
+                }
+                else if (this.myEntity instanceof EntityFireworkRocket)
+                {
+                    return new Packet23VehicleSpawn(this.myEntity, 76);
+                }
+                else
+                {
+                    Packet23VehicleSpawn var2;
 
-                    return new Packet23VehicleSpawn(this.tracker, 90, entityhuman != null ? entityhuman.id : this.tracker.id);
-                } else if (this.tracker instanceof EntityArrow) {
-                    Entity entity = ((EntityArrow) this.tracker).shooter;
+                    if (this.myEntity instanceof EntityFireball)
+                    {
+                        EntityFireball var6 = (EntityFireball)this.myEntity;
+                        var2 = null;
+                        byte var3 = 63;
 
-                    return new Packet23VehicleSpawn(this.tracker, 60, entity != null ? entity.id : this.tracker.id);
-                } else if (this.tracker instanceof EntitySnowball) {
-                    return new Packet23VehicleSpawn(this.tracker, 61);
-                } else if (this.tracker instanceof EntityPotion) {
-                    return new Packet23VehicleSpawn(this.tracker, 73, ((EntityPotion) this.tracker).getPotionValue());
-                } else if (this.tracker instanceof EntityThrownExpBottle) {
-                    return new Packet23VehicleSpawn(this.tracker, 75);
-                } else if (this.tracker instanceof EntityEnderPearl) {
-                    return new Packet23VehicleSpawn(this.tracker, 65);
-                } else if (this.tracker instanceof EntityEnderSignal) {
-                    return new Packet23VehicleSpawn(this.tracker, 72);
-                } else if (this.tracker instanceof EntityFireworks) {
-                    return new Packet23VehicleSpawn(this.tracker, 76);
-                } else {
-                    Packet23VehicleSpawn packet23vehiclespawn;
-
-                    if (this.tracker instanceof EntityFireball) {
-                        EntityFireball entityfireball = (EntityFireball) this.tracker;
-
-                        packet23vehiclespawn = null;
-                        byte b0 = 63;
-
-                        if (this.tracker instanceof EntitySmallFireball) {
-                            b0 = 64;
-                        } else if (this.tracker instanceof EntityWitherSkull) {
-                            b0 = 66;
+                        if (this.myEntity instanceof EntitySmallFireball)
+                        {
+                            var3 = 64;
+                        }
+                        else if (this.myEntity instanceof EntityWitherSkull)
+                        {
+                            var3 = 66;
                         }
 
-                        if (entityfireball.shooter != null) {
-                            packet23vehiclespawn = new Packet23VehicleSpawn(this.tracker, b0, ((EntityFireball) this.tracker).shooter.id);
-                        } else {
-                            packet23vehiclespawn = new Packet23VehicleSpawn(this.tracker, b0, 0);
+                        if (var6.shootingEntity != null)
+                        {
+                            var2 = new Packet23VehicleSpawn(this.myEntity, var3, ((EntityFireball)this.myEntity).shootingEntity.entityId);
+                        }
+                        else
+                        {
+                            var2 = new Packet23VehicleSpawn(this.myEntity, var3, 0);
                         }
 
-                        packet23vehiclespawn.e = (int) (entityfireball.dirX * 8000.0D);
-                        packet23vehiclespawn.f = (int) (entityfireball.dirY * 8000.0D);
-                        packet23vehiclespawn.g = (int) (entityfireball.dirZ * 8000.0D);
-                        return packet23vehiclespawn;
-                    } else if (this.tracker instanceof EntityEgg) {
-                        return new Packet23VehicleSpawn(this.tracker, 62);
-                    } else if (this.tracker instanceof EntityTNTPrimed) {
-                        return new Packet23VehicleSpawn(this.tracker, 50);
-                    } else if (this.tracker instanceof EntityEnderCrystal) {
-                        return new Packet23VehicleSpawn(this.tracker, 51);
-                    } else if (this.tracker instanceof EntityFallingBlock) {
-                        EntityFallingBlock entityfallingblock = (EntityFallingBlock) this.tracker;
-
-                        return new Packet23VehicleSpawn(this.tracker, 70, entityfallingblock.id | entityfallingblock.data << 16);
-                    } else if (this.tracker instanceof EntityPainting) {
-                        return new Packet25EntityPainting((EntityPainting) this.tracker);
-                    } else if (this.tracker instanceof EntityItemFrame) {
-                        EntityItemFrame entityitemframe = (EntityItemFrame) this.tracker;
-
-                        packet23vehiclespawn = new Packet23VehicleSpawn(this.tracker, 71, entityitemframe.direction);
-                        packet23vehiclespawn.b = MathHelper.d((float) (entityitemframe.x * 32));
-                        packet23vehiclespawn.c = MathHelper.d((float) (entityitemframe.y * 32));
-                        packet23vehiclespawn.d = MathHelper.d((float) (entityitemframe.z * 32));
-                        return packet23vehiclespawn;
-                    } else if (this.tracker instanceof EntityExperienceOrb) {
-                        return new Packet26AddExpOrb((EntityExperienceOrb) this.tracker);
-                    } else {
-                        throw new IllegalArgumentException("Don\'t know how to add " + this.tracker.getClass() + "!");
+                        var2.speedX = (int)(var6.accelerationX * 8000.0D);
+                        var2.speedY = (int)(var6.accelerationY * 8000.0D);
+                        var2.speedZ = (int)(var6.accelerationZ * 8000.0D);
+                        return var2;
+                    }
+                    else if (this.myEntity instanceof EntityEgg)
+                    {
+                        return new Packet23VehicleSpawn(this.myEntity, 62);
+                    }
+                    else if (this.myEntity instanceof EntityTNTPrimed)
+                    {
+                        return new Packet23VehicleSpawn(this.myEntity, 50);
+                    }
+                    else if (this.myEntity instanceof EntityEnderCrystal)
+                    {
+                        return new Packet23VehicleSpawn(this.myEntity, 51);
+                    }
+                    else if (this.myEntity instanceof EntityFallingSand)
+                    {
+                        EntityFallingSand var5 = (EntityFallingSand)this.myEntity;
+                        return new Packet23VehicleSpawn(this.myEntity, 70, var5.blockID | var5.metadata << 16);
+                    }
+                    else if (this.myEntity instanceof EntityPainting)
+                    {
+                        return new Packet25EntityPainting((EntityPainting)this.myEntity);
+                    }
+                    else if (this.myEntity instanceof EntityItemFrame)
+                    {
+                        EntityItemFrame var4 = (EntityItemFrame)this.myEntity;
+                        var2 = new Packet23VehicleSpawn(this.myEntity, 71, var4.hangingDirection);
+                        var2.xPosition = MathHelper.floor_float((float)(var4.xPosition * 32));
+                        var2.yPosition = MathHelper.floor_float((float)(var4.yPosition * 32));
+                        var2.zPosition = MathHelper.floor_float((float)(var4.zPosition * 32));
+                        return var2;
+                    }
+                    else if (this.myEntity instanceof EntityXPOrb)
+                    {
+                        return new Packet26EntityExpOrb((EntityXPOrb)this.myEntity);
+                    }
+                    else
+                    {
+                        throw new IllegalArgumentException("Don\'t know how to add " + this.myEntity.getClass() + "!");
                     }
                 }
-            } else {
-                this.i = MathHelper.d(this.tracker.ap() * 256.0F / 360.0F);
-                return new Packet24MobSpawn((EntityLiving) this.tracker);
+            }
+            else
+            {
+                this.lastHeadMotion = MathHelper.floor_float(this.myEntity.setRotationYawHead() * 256.0F / 360.0F);
+                return new Packet24MobSpawn((EntityLiving)this.myEntity);
             }
         }
     }
 
-    public void clear(EntityPlayer entityplayer) {
-        if (this.trackedPlayers.contains(entityplayer)) {
-            this.trackedPlayers.remove(entityplayer);
-            entityplayer.removeQueue.add(Integer.valueOf(this.tracker.id));
+    public void removePlayerFromTracker(EntityPlayerMP par1EntityPlayerMP)
+    {
+        if (this.trackedPlayers.contains(par1EntityPlayerMP))
+        {
+            this.trackedPlayers.remove(par1EntityPlayerMP);
+            par1EntityPlayerMP.destroyedItemsNetCache.add(Integer.valueOf(this.myEntity.entityId));
         }
     }
 }

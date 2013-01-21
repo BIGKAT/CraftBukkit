@@ -2,7 +2,6 @@ package org.bukkit.craftbukkit.inventory;
 
 import java.util.Map;
 
-import net.minecraft.server.NBTTagCompound;
 
 import org.bukkit.Material;
 import org.bukkit.configuration.serialization.DelegateDeserialization;
@@ -28,11 +27,11 @@ class CraftMetaSkull extends CraftMetaItem implements SkullMeta {
         this.player = skullMeta.player;
     }
 
-    CraftMetaSkull(NBTTagCompound tag) {
+    CraftMetaSkull(net.minecraft.nbt.NBTTagCompound/*was:NBTTagCompound*/ tag) {
         super(tag);
 
-        if (tag.hasKey(SKULL_OWNER.NBT)) {
-            player = tag.getString(SKULL_OWNER.NBT);
+        if (tag.hasKey/*was:hasKey*/(SKULL_OWNER.NBT)) {
+            player = tag.getString/*was:getString*/(SKULL_OWNER.NBT);
         }
     }
 
@@ -42,11 +41,11 @@ class CraftMetaSkull extends CraftMetaItem implements SkullMeta {
     }
 
     @Override
-    void applyToItem(NBTTagCompound tag) {
+    void applyToItem(net.minecraft.nbt.NBTTagCompound/*was:NBTTagCompound*/ tag) {
         super.applyToItem(tag);
 
         if (hasOwner()) {
-            tag.setString(SKULL_OWNER.NBT, player);
+            tag.setString/*was:setString*/(SKULL_OWNER.NBT, player);
         }
     }
 

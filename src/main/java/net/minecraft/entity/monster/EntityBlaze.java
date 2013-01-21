@@ -1,134 +1,208 @@
-package net.minecraft.server;
+package net.minecraft.entity.monster;
 
-public class EntityBlaze extends EntityMonster {
+import net.minecraft.entity.Entity;
+import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.entity.projectile.EntitySmallFireball;
+import net.minecraft.item.Item;
+import net.minecraft.util.DamageSource;
+import net.minecraft.util.MathHelper;
+import net.minecraft.world.World;
+public class EntityBlaze extends EntityMob
+{
+    /** Random offset used in floating behaviour */
+    private float heightOffset = 0.5F;
 
-    private float d = 0.5F;
-    private int e;
-    private int f;
+    /** ticks until heightOffset is randomized */
+    private int heightOffsetUpdateTime;
+    private int field_70846_g;
 
-    public EntityBlaze(World world) {
-        super(world);
+    public EntityBlaze(World par1World)
+    {
+        super(par1World);
         this.texture = "/mob/fire.png";
-        this.fireProof = true;
-        this.bd = 10;
+        this.isImmuneToFire = true;
+        this.experienceValue = 10;
     }
 
-    public int getMaxHealth() {
+    public int getMaxHealth()
+    {
         return 20;
     }
 
-    protected void a() {
-        super.a();
-        this.datawatcher.a(16, new Byte((byte) 0));
+    protected void entityInit()
+    {
+        super.entityInit();
+        this.dataWatcher.addObject(16, new Byte((byte)0));
     }
 
-    protected String aY() {
+    /**
+     * Returns the sound this mob makes while it's alive.
+     */
+    protected String getLivingSound()
+    {
         return "mob.blaze.breathe";
     }
 
-    protected String aZ() {
+    /**
+     * Returns the sound this mob makes when it is hurt.
+     */
+    protected String getHurtSound()
+    {
         return "mob.blaze.hit";
     }
 
-    protected String ba() {
+    /**
+     * Returns the sound this mob makes on death.
+     */
+    protected String getDeathSound()
+    {
         return "mob.blaze.death";
     }
 
-    public float c(float f) {
+    /**
+     * Gets how bright this entity is.
+     */
+    public float getBrightness(float par1)
+    {
         return 1.0F;
     }
 
-    public void c() {
-        if (!this.world.isStatic) {
-            if (this.G()) {
-                this.damageEntity(DamageSource.DROWN, 1);
+    /**
+     * Called frequently so the entity can update its state every tick as required. For example, zombies and skeletons
+     * use this to react to sunlight and start to burn.
+     */
+    public void onLivingUpdate()
+    {
+        if (!this.worldObj.isRemote)
+        {
+            if (this.isWet())
+            {
+                this.attackEntityFrom(DamageSource.drown, 1);
             }
 
-            --this.e;
-            if (this.e <= 0) {
-                this.e = 100;
-                this.d = 0.5F + (float) this.random.nextGaussian() * 3.0F;
+            --this.heightOffsetUpdateTime;
+
+            if (this.heightOffsetUpdateTime <= 0)
+            {
+                this.heightOffsetUpdateTime = 100;
+                this.heightOffset = 0.5F + (float)this.rand.nextGaussian() * 3.0F;
             }
 
-            if (this.l() != null && this.l().locY + (double) this.l().getHeadHeight() > this.locY + (double) this.getHeadHeight() + (double) this.d) {
-                this.motY += (0.30000001192092896D - this.motY) * 0.30000001192092896D;
+            if (this.getEntityToAttack() != null && this.getEntityToAttack().posY + (double)this.getEntityToAttack().getEyeHeight() > this.posY + (double)this.getEyeHeight() + (double)this.heightOffset)
+            {
+                this.motionY += (0.30000001192092896D - this.motionY) * 0.30000001192092896D;
             }
         }
 
-        if (this.random.nextInt(24) == 0) {
-            this.world.makeSound(this.locX + 0.5D, this.locY + 0.5D, this.locZ + 0.5D, "fire.fire", 1.0F + this.random.nextFloat(), this.random.nextFloat() * 0.7F + 0.3F);
+        if (this.rand.nextInt(24) == 0)
+        {
+            this.worldObj.playSoundEffect(this.posX + 0.5D, this.posY + 0.5D, this.posZ + 0.5D, "fire.fire", 1.0F + this.rand.nextFloat(), this.rand.nextFloat() * 0.7F + 0.3F);
         }
 
-        if (!this.onGround && this.motY < 0.0D) {
-            this.motY *= 0.6D;
+        if (!this.onGround && this.motionY < 0.0D)
+        {
+            this.motionY *= 0.6D;
         }
 
-        for (int i = 0; i < 2; ++i) {
-            this.world.addParticle("largesmoke", this.locX + (this.random.nextDouble() - 0.5D) * (double) this.width, this.locY + this.random.nextDouble() * (double) this.length, this.locZ + (this.random.nextDouble() - 0.5D) * (double) this.width, 0.0D, 0.0D, 0.0D);
+        for (int var1 = 0; var1 < 2; ++var1)
+        {
+            this.worldObj.spawnParticle("largesmoke", this.posX + (this.rand.nextDouble() - 0.5D) * (double)this.width, this.posY + this.rand.nextDouble() * (double)this.height, this.posZ + (this.rand.nextDouble() - 0.5D) * (double)this.width, 0.0D, 0.0D, 0.0D);
         }
 
-        super.c();
+        super.onLivingUpdate();
     }
 
-    protected void a(Entity entity, float f) {
-        if (this.attackTicks <= 0 && f < 2.0F && entity.boundingBox.e > this.boundingBox.b && entity.boundingBox.b < this.boundingBox.e) {
-            this.attackTicks = 20;
-            this.m(entity);
-        } else if (f < 30.0F) {
-            double d0 = entity.locX - this.locX;
-            double d1 = entity.boundingBox.b + (double) (entity.length / 2.0F) - (this.locY + (double) (this.length / 2.0F));
-            double d2 = entity.locZ - this.locZ;
+    /**
+     * Basic mob attack. Default to touch of death in EntityCreature. Overridden by each mob to define their attack.
+     */
+    protected void attackEntity(Entity par1Entity, float par2)
+    {
+        if (this.attackTime <= 0 && par2 < 2.0F && par1Entity.boundingBox.maxY > this.boundingBox.minY && par1Entity.boundingBox.minY < this.boundingBox.maxY)
+        {
+            this.attackTime = 20;
+            this.attackEntityAsMob(par1Entity);
+        }
+        else if (par2 < 30.0F)
+        {
+            double var3 = par1Entity.posX - this.posX;
+            double var5 = par1Entity.boundingBox.minY + (double)(par1Entity.height / 2.0F) - (this.posY + (double)(this.height / 2.0F));
+            double var7 = par1Entity.posZ - this.posZ;
 
-            if (this.attackTicks == 0) {
-                ++this.f;
-                if (this.f == 1) {
-                    this.attackTicks = 60;
-                    this.f(true);
-                } else if (this.f <= 4) {
-                    this.attackTicks = 6;
-                } else {
-                    this.attackTicks = 100;
-                    this.f = 0;
-                    this.f(false);
+            if (this.attackTime == 0)
+            {
+                ++this.field_70846_g;
+
+                if (this.field_70846_g == 1)
+                {
+                    this.attackTime = 60;
+                    this.func_70844_e(true);
+                }
+                else if (this.field_70846_g <= 4)
+                {
+                    this.attackTime = 6;
+                }
+                else
+                {
+                    this.attackTime = 100;
+                    this.field_70846_g = 0;
+                    this.func_70844_e(false);
                 }
 
-                if (this.f > 1) {
-                    float f1 = MathHelper.c(f) * 0.5F;
+                if (this.field_70846_g > 1)
+                {
+                    float var9 = MathHelper.sqrt_float(par2) * 0.5F;
+                    this.worldObj.playAuxSFXAtEntity((EntityPlayer)null, 1009, (int)this.posX, (int)this.posY, (int)this.posZ, 0);
 
-                    this.world.a((EntityHuman) null, 1009, (int) this.locX, (int) this.locY, (int) this.locZ, 0);
-
-                    for (int i = 0; i < 1; ++i) {
-                        EntitySmallFireball entitysmallfireball = new EntitySmallFireball(this.world, this, d0 + this.random.nextGaussian() * (double) f1, d1, d2 + this.random.nextGaussian() * (double) f1);
-
-                        entitysmallfireball.locY = this.locY + (double) (this.length / 2.0F) + 0.5D;
-                        this.world.addEntity(entitysmallfireball);
+                    for (int var10 = 0; var10 < 1; ++var10)
+                    {
+                        EntitySmallFireball var11 = new EntitySmallFireball(this.worldObj, this, var3 + this.rand.nextGaussian() * (double)var9, var5, var7 + this.rand.nextGaussian() * (double)var9);
+                        var11.posY = this.posY + (double)(this.height / 2.0F) + 0.5D;
+                        this.worldObj.spawnEntityInWorld(var11);
                     }
                 }
             }
 
-            this.yaw = (float) (Math.atan2(d2, d0) * 180.0D / 3.1415927410125732D) - 90.0F;
-            this.b = true;
+            this.rotationYaw = (float)(Math.atan2(var7, var3) * 180.0D / 3.1415927410125732D) - 90.0F;
+            this.hasAttacked = true;
         }
     }
 
-    protected void a(float f) {}
+    /**
+     * Called when the mob is falling. Calculates and applies fall damage.
+     */
+    protected void fall(float par1) {}
 
-    protected int getLootId() {
-        return Item.BLAZE_ROD.id;
+    /**
+     * Returns the item ID for the item the mob drops on death.
+     */
+    protected int getDropItemId()
+    {
+        return Item.blazeRod.itemID;
     }
 
-    public boolean isBurning() {
-        return this.m();
+    /**
+     * Returns true if the entity is on fire. Used by render to add the fire effect on rendering.
+     */
+    public boolean isBurning()
+    {
+        return this.func_70845_n();
     }
 
-    protected void dropDeathLoot(boolean flag, int i) {
-        if (flag) {
+    /**
+     * Drop 0-2 items of this living's type. @param par1 - Whether this entity has recently been hit by a player. @param
+     * par2 - Level of Looting used to kill this mob.
+     */
+    protected void dropFewItems(boolean par1, int par2)
+    {
+        if (par1)
+        {
             // CraftBukkit start
             java.util.List<org.bukkit.inventory.ItemStack> loot = new java.util.ArrayList<org.bukkit.inventory.ItemStack>();
-            int j = this.random.nextInt(2 + i);
+            int j = this.rand.nextInt(2 + par2);
 
-            if (j > 0) {
-                loot.add(new org.bukkit.inventory.ItemStack(Item.BLAZE_ROD.id, j));
+            if (j > 0)
+            {
+                loot.add(new org.bukkit.inventory.ItemStack(Item.blazeRod.itemID, j));
             }
 
             org.bukkit.craftbukkit.event.CraftEventFactory.callEntityDeathEvent(this, loot);
@@ -136,27 +210,40 @@ public class EntityBlaze extends EntityMonster {
         }
     }
 
-    public boolean m() {
-        return (this.datawatcher.getByte(16) & 1) != 0;
+    public boolean func_70845_n()
+    {
+        return (this.dataWatcher.getWatchableObjectByte(16) & 1) != 0;
     }
 
-    public void f(boolean flag) {
-        byte b0 = this.datawatcher.getByte(16);
+    public void func_70844_e(boolean par1)
+    {
+        byte var2 = this.dataWatcher.getWatchableObjectByte(16);
 
-        if (flag) {
-            b0 = (byte) (b0 | 1);
-        } else {
-            b0 &= -2;
+        if (par1)
+        {
+            var2 = (byte)(var2 | 1);
+        }
+        else
+        {
+            var2 &= -2;
         }
 
-        this.datawatcher.watch(16, Byte.valueOf(b0));
+        this.dataWatcher.updateObject(16, Byte.valueOf(var2));
     }
 
-    protected boolean i_() {
+    /**
+     * Checks to make sure the light is not too bright where the mob is spawning
+     */
+    protected boolean isValidLightLevel()
+    {
         return true;
     }
 
-    public int c(Entity entity) {
+    /**
+     * Returns the amount of damage a mob should deal.
+     */
+    public int getAttackStrength(Entity par1Entity)
+    {
         return 6;
     }
 }

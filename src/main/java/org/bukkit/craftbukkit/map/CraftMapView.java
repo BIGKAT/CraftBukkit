@@ -6,7 +6,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import net.minecraft.server.WorldMap;
 
 import org.bukkit.Bukkit;
 import org.bukkit.World;
@@ -20,15 +19,15 @@ public final class CraftMapView implements MapView {
     private final Map<CraftPlayer, RenderData> renderCache = new HashMap<CraftPlayer, RenderData>();
     private final List<MapRenderer> renderers = new ArrayList<MapRenderer>();
     private final Map<MapRenderer, Map<CraftPlayer, CraftMapCanvas>> canvases = new HashMap<MapRenderer, Map<CraftPlayer, CraftMapCanvas>>();
-    protected final WorldMap worldMap;
+    protected final net.minecraft.world.storage.MapData/*was:WorldMap*/ worldMap;
 
-    public CraftMapView(WorldMap worldMap) {
+    public CraftMapView(net.minecraft.world.storage.MapData/*was:WorldMap*/ worldMap) {
         this.worldMap = worldMap;
         addRenderer(new CraftMapRenderer(this, worldMap));
     }
 
     public short getId() {
-        String text = worldMap.id;
+        String text = worldMap.mapName/*was:id*/;
         if (text.startsWith("map_")) {
             try {
                 return Short.parseShort(text.substring("map_".length()));
@@ -46,15 +45,15 @@ public final class CraftMapView implements MapView {
     }
 
     public Scale getScale() {
-        return Scale.valueOf(worldMap.scale);
+        return Scale.valueOf(worldMap.scale/*was:scale*/);
     }
 
     public void setScale(Scale scale) {
-        worldMap.scale = scale.getValue();
+        worldMap.scale/*was:scale*/ = scale.getValue();
     }
 
     public World getWorld() {
-        byte dimension = worldMap.map;
+        byte dimension = worldMap.dimension/*was:map*/;
         for (World world : Bukkit.getServer().getWorlds()) {
             if (((CraftWorld) world).getHandle().dimension == dimension) {
                 return world;
@@ -64,23 +63,23 @@ public final class CraftMapView implements MapView {
     }
 
     public void setWorld(World world) {
-        worldMap.map = (byte) ((CraftWorld) world).getHandle().dimension;
+        worldMap.dimension/*was:map*/ = (byte) ((CraftWorld) world).getHandle().dimension;
     }
 
     public int getCenterX() {
-        return worldMap.centerX;
+        return worldMap.xCenter/*was:centerX*/;
     }
 
     public int getCenterZ() {
-        return worldMap.centerZ;
+        return worldMap.zCenter/*was:centerZ*/;
     }
 
     public void setCenterX(int x) {
-        worldMap.centerX = x;
+        worldMap.xCenter/*was:centerX*/ = x;
     }
 
     public void setCenterZ(int z) {
-        worldMap.centerZ = z;
+        worldMap.zCenter/*was:centerZ*/ = z;
     }
 
     public List<MapRenderer> getRenderers() {

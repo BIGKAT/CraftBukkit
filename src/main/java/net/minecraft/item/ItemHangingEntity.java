@@ -1,60 +1,84 @@
-package net.minecraft.server;
+package net.minecraft.item;
 
 // CraftBukkit start
 import org.bukkit.entity.Player;
 import org.bukkit.event.hanging.HangingPlaceEvent;
 import org.bukkit.event.painting.PaintingPlaceEvent;
+import net.minecraft.creativetab.CreativeTabs;
+import net.minecraft.entity.EntityHanging;
+import net.minecraft.entity.item.EntityItemFrame;
+import net.minecraft.entity.item.EntityPainting;
+import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.util.Direction;
+import net.minecraft.world.World;
 // CraftBukkit end
 
-public class ItemHanging extends Item {
+public class ItemHangingEntity extends Item
+{
+    private final Class hangingEntityClass;
 
-    private final Class a;
-
-    public ItemHanging(int i, Class oclass) {
-        super(i);
-        this.a = oclass;
-        this.a(CreativeModeTab.c);
+    public ItemHangingEntity(int par1, Class par2Class)
+    {
+        super(par1);
+        this.hangingEntityClass = par2Class;
+        this.setCreativeTab(CreativeTabs.tabDecorations);
     }
 
-    public boolean interactWith(ItemStack itemstack, EntityHuman entityhuman, World world, int i, int j, int k, int l, float f, float f1, float f2) {
-        if (l == 0) {
+    /**
+     * Callback for item usage. If the item does something special on right clicking, he will have one of those. Return
+     * True if something happen and false if it don't. This is for ITEMS, not BLOCKS
+     */
+    public boolean onItemUse(ItemStack par1ItemStack, EntityPlayer par2EntityPlayer, World par3World, int par4, int par5, int par6, int par7, float par8, float par9, float par10)
+    {
+        if (par7 == 0)
+        {
             return false;
-        } else if (l == 1) {
+        }
+        else if (par7 == 1)
+        {
             return false;
-        } else {
-            int i1 = Direction.e[l];
-            EntityHanging entityhanging = this.a(world, i, j, k, i1);
+        }
+        else
+        {
+            int var11 = Direction.vineGrowth[par7];
+            EntityHanging var12 = this.createHangingEntity(par3World, par4, par5, par6, var11);
 
-            if (!entityhuman.a(i, j, k, l, itemstack)) {
+            if (!par2EntityPlayer.canPlayerEdit(par4, par5, par6, par7, par1ItemStack))
+            {
                 return false;
-            } else {
-                if (entityhanging != null && entityhanging.survives()) {
-                    if (!world.isStatic) {
+            }
+            else
+            {
+                if (var12 != null && var12.onValidSurface())
+                {
+                    if (!par3World.isRemote)
+                    {
                         // CraftBukkit start
-                        Player who = (entityhuman == null) ? null : (Player) entityhuman.getBukkitEntity();
-                        org.bukkit.block.Block blockClicked = world.getWorld().getBlockAt(i, j, k);
-                        org.bukkit.block.BlockFace blockFace = org.bukkit.craftbukkit.block.CraftBlock.notchToBlockFace(l);
-
-                        HangingPlaceEvent event = new HangingPlaceEvent((org.bukkit.entity.Hanging) entityhanging.getBukkitEntity(), who, blockClicked, blockFace);
-                        world.getServer().getPluginManager().callEvent(event);
-
+                        Player who = (par2EntityPlayer == null) ? null : (Player) par2EntityPlayer.getBukkitEntity();
+                        org.bukkit.block.Block blockClicked = par3World.getWorld().getBlockAt(par4, par5, par6);
+                        org.bukkit.block.BlockFace blockFace = org.bukkit.craftbukkit.block.CraftBlock.notchToBlockFace(par7);
+                        HangingPlaceEvent event = new HangingPlaceEvent((org.bukkit.entity.Hanging) var12.getBukkitEntity(), who, blockClicked, blockFace);
+                        par3World.getServer().getPluginManager().callEvent(event);
                         PaintingPlaceEvent paintingEvent = null;
-                        if(entityhanging instanceof EntityPainting) {
+
+                        if (var12 instanceof EntityPainting)
+                        {
                             // Fire old painting event until it can be removed
-                            paintingEvent = new PaintingPlaceEvent((org.bukkit.entity.Painting) entityhanging.getBukkitEntity(), who, blockClicked, blockFace);
+                            paintingEvent = new PaintingPlaceEvent((org.bukkit.entity.Painting) var12.getBukkitEntity(), who, blockClicked, blockFace);
                             paintingEvent.setCancelled(event.isCancelled());
-                            world.getServer().getPluginManager().callEvent(paintingEvent);
+                            par3World.getServer().getPluginManager().callEvent(paintingEvent);
                         }
 
-                        if (event.isCancelled() || (paintingEvent != null && paintingEvent.isCancelled())) {
+                        if (event.isCancelled() || (paintingEvent != null && paintingEvent.isCancelled()))
+                        {
                             return false;
                         }
-                        // CraftBukkit end
 
-                        world.addEntity(entityhanging);
+                        // CraftBukkit end
+                        par3World.spawnEntityInWorld(var12);
                     }
 
-                    --itemstack.count;
+                    --par1ItemStack.stackSize;
                 }
 
                 return true;
@@ -62,7 +86,11 @@ public class ItemHanging extends Item {
         }
     }
 
-    private EntityHanging a(World world, int i, int j, int k, int l) {
-        return (EntityHanging) (this.a == EntityPainting.class ? new EntityPainting(world, i, j, k, l) : (this.a == EntityItemFrame.class ? new EntityItemFrame(world, i, j, k, l) : null));
+    /**
+     * Create the hanging entity associated to this item.
+     */
+    private EntityHanging createHangingEntity(World par1World, int par2, int par3, int par4, int par5)
+    {
+        return (EntityHanging)(this.hangingEntityClass == EntityPainting.class ? new EntityPainting(par1World, par2, par3, par4, par5) : (this.hangingEntityClass == EntityItemFrame.class ? new EntityItemFrame(par1World, par2, par3, par4, par5) : null));
     }
 }

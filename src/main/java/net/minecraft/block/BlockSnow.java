@@ -1,84 +1,144 @@
-package net.minecraft.server;
+package net.minecraft.block;
 
 import java.util.Random;
+import net.minecraft.block.material.Material;
+import net.minecraft.creativetab.CreativeTabs;
+import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.item.Item;
+import net.minecraft.item.ItemStack;
+import net.minecraft.stats.StatList;
+import net.minecraft.util.AxisAlignedBB;
+import net.minecraft.world.EnumSkyBlock;
+import net.minecraft.world.IBlockAccess;
+import net.minecraft.world.World;
 
-public class BlockSnow extends Block {
-
-    protected BlockSnow(int i, int j) {
-        super(i, j, Material.SNOW_LAYER);
-        this.a(0.0F, 0.0F, 0.0F, 1.0F, 0.125F, 1.0F);
-        this.b(true);
-        this.a(CreativeModeTab.c);
+public class BlockSnow extends Block
+{
+    protected BlockSnow(int par1, int par2)
+    {
+        super(par1, par2, Material.snow);
+        this.setBlockBounds(0.0F, 0.0F, 0.0F, 1.0F, 0.125F, 1.0F);
+        this.setTickRandomly(true);
+        this.setCreativeTab(CreativeTabs.tabDecorations);
     }
 
-    public AxisAlignedBB e(World world, int i, int j, int k) {
-        int l = world.getData(i, j, k) & 7;
-
-        return l >= 3 ? AxisAlignedBB.a().a((double) i + this.minX, (double) j + this.minY, (double) k + this.minZ, (double) i + this.maxX, (double) ((float) j + 0.5F), (double) k + this.maxZ) : null;
+    /**
+     * Returns a bounding box from the pool of bounding boxes (this means this box can change after the pool has been
+     * cleared to be reused)
+     */
+    public AxisAlignedBB getCollisionBoundingBoxFromPool(World par1World, int par2, int par3, int par4)
+    {
+        int var5 = par1World.getBlockMetadata(par2, par3, par4) & 7;
+        return var5 >= 3 ? AxisAlignedBB.getAABBPool().addOrModifyAABBInPool((double)par2 + this.minX, (double)par3 + this.minY, (double)par4 + this.minZ, (double)par2 + this.maxX, (double)((float)par3 + 0.5F), (double)par4 + this.maxZ) : null;
     }
 
-    public boolean c() {
+    /**
+     * Is this block (a) opaque and (b) a full 1m cube?  This determines whether or not to render the shared face of two
+     * adjacent blocks and also whether the player can attach torches, redstone wire, etc to this block.
+     */
+    public boolean isOpaqueCube()
+    {
         return false;
     }
 
-    public boolean b() {
+    /**
+     * If this block doesn't render as an ordinary block it will return False (examples: signs, buttons, stairs, etc)
+     */
+    public boolean renderAsNormalBlock()
+    {
         return false;
     }
 
-    public void updateShape(IBlockAccess iblockaccess, int i, int j, int k) {
-        int l = iblockaccess.getData(i, j, k) & 7;
-        float f = (float) (2 * (1 + l)) / 16.0F;
-
-        this.a(0.0F, 0.0F, 0.0F, 1.0F, f, 1.0F);
+    /**
+     * Updates the blocks bounds based on its current state. Args: world, x, y, z
+     */
+    public void setBlockBoundsBasedOnState(IBlockAccess par1IBlockAccess, int par2, int par3, int par4)
+    {
+        int var5 = par1IBlockAccess.getBlockMetadata(par2, par3, par4) & 7;
+        float var6 = (float)(2 * (1 + var5)) / 16.0F;
+        this.setBlockBounds(0.0F, 0.0F, 0.0F, 1.0F, var6, 1.0F);
     }
 
-    public boolean canPlace(World world, int i, int j, int k) {
-        int l = world.getTypeId(i, j - 1, k);
-
-        return l != 0 && (l == Block.LEAVES.id || Block.byId[l].c()) ? world.getMaterial(i, j - 1, k).isSolid() : false;
+    /**
+     * Checks to see if its valid to put this block at the specified coordinates. Args: world, x, y, z
+     */
+    public boolean canPlaceBlockAt(World par1World, int par2, int par3, int par4)
+    {
+        int var5 = par1World.getBlockId(par2, par3 - 1, par4);
+        return var5 != 0 && (var5 == Block.leaves.blockID || Block.blocksList[var5].isOpaqueCube()) ? par1World.getBlockMaterial(par2, par3 - 1, par4).blocksMovement() : false;
     }
 
-    public void doPhysics(World world, int i, int j, int k, int l) {
-        this.n(world, i, j, k);
+    /**
+     * Lets the block know when one of its neighbor changes. Doesn't know which neighbor changed (coordinates passed are
+     * their own) Args: x, y, z, neighbor blockID
+     */
+    public void onNeighborBlockChange(World par1World, int par2, int par3, int par4, int par5)
+    {
+        this.canSnowStay(par1World, par2, par3, par4);
     }
 
-    private boolean n(World world, int i, int j, int k) {
-        if (!this.canPlace(world, i, j, k)) {
-            this.c(world, i, j, k, world.getData(i, j, k), 0);
-            world.setRawTypeId(i, j, k, 0); // CraftBukkit
-            world.notify(i, j, k); // CraftBukkit - Notify clients of the reversion
+    /**
+     * Checks if this snow block can stay at this location.
+     */
+    private boolean canSnowStay(World par1World, int par2, int par3, int par4)
+    {
+        if (!this.canPlaceBlockAt(par1World, par2, par3, par4))
+        {
+            this.dropBlockAsItem(par1World, par2, par3, par4, par1World.getBlockMetadata(par2, par3, par4), 0);
+            par1World.setBlock(par2, par3, par4, 0); // CraftBukkit
+            par1World.markBlockForUpdate(par2, par3, par4); // CraftBukkit - Notify clients of the reversion
             return false;
-        } else {
+        }
+        else
+        {
             return true;
         }
     }
 
-    public void a(World world, EntityHuman entityhuman, int i, int j, int k, int l) {
-        int i1 = Item.SNOW_BALL.id;
-
-        this.b(world, i, j, k, new ItemStack(i1, 1, 0));
-        world.setTypeId(i, j, k, 0);
-        entityhuman.a(StatisticList.C[this.id], 1);
+    /**
+     * Called when the player destroys a block with an item that can harvest it. (i, j, k) are the coordinates of the
+     * block and l is the block's subtype/damage.
+     */
+    public void harvestBlock(World par1World, EntityPlayer par2EntityPlayer, int par3, int par4, int par5, int par6)
+    {
+        int var7 = Item.snowball.itemID;
+        this.dropBlockAsItem_do(par1World, par3, par4, par5, new ItemStack(var7, 1, 0));
+        par1World.setBlockWithNotify(par3, par4, par5, 0);
+        par2EntityPlayer.addStat(StatList.mineBlockStatArray[this.blockID], 1);
     }
 
-    public int getDropType(int i, Random random, int j) {
-        return Item.SNOW_BALL.id;
+    /**
+     * Returns the ID of the items to drop on destruction.
+     */
+    public int idDropped(int par1, Random par2Random, int par3)
+    {
+        return Item.snowball.itemID;
     }
 
-    public int a(Random random) {
+    /**
+     * Returns the quantity of items to drop on block destruction.
+     */
+    public int quantityDropped(Random par1Random)
+    {
         return 0;
     }
 
-    public void b(World world, int i, int j, int k, Random random) {
-        if (world.b(EnumSkyBlock.BLOCK, i, j, k) > 11) {
+    /**
+     * Ticks the block if it's been scheduled
+     */
+    public void updateTick(World par1World, int par2, int par3, int par4, Random par5Random)
+    {
+        if (par1World.getSavedLightValue(EnumSkyBlock.Block, par2, par3, par4) > 11)
+        {
             // CraftBukkit start
-            if (org.bukkit.craftbukkit.event.CraftEventFactory.callBlockFadeEvent(world.getWorld().getBlockAt(i, j, k), 0).isCancelled()) {
+            if (org.bukkit.craftbukkit.event.CraftEventFactory.callBlockFadeEvent(par1World.getWorld().getBlockAt(par2, par3, par4), 0).isCancelled())
+            {
                 return;
             }
-            // CraftBukkit end
 
-            this.c(world, i, j, k, world.getData(i, j, k), 0);
-            world.setTypeId(i, j, k, 0);
+            // CraftBukkit end
+            this.dropBlockAsItem(par1World, par2, par3, par4, par1World.getBlockMetadata(par2, par3, par4), 0);
+            par1World.setBlockWithNotify(par2, par3, par4, 0);
         }
     }
 }

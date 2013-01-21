@@ -1,47 +1,62 @@
-package net.minecraft.server;
+package net.minecraft.network;
 
 import java.io.IOException;
 
-class NetworkWriterThread extends Thread {
+class TcpWriterThread extends Thread
+{
+    final TcpConnection theTcpConnection;
 
-    final NetworkManager a;
-
-    NetworkWriterThread(NetworkManager networkmanager, String s) {
-        super(s);
-        this.a = networkmanager;
+    TcpWriterThread(TcpConnection par1TcpConnection, String par2Str)
+    {
+        super(par2Str);
+        this.theTcpConnection = par1TcpConnection;
     }
 
-    public void run() {
-        NetworkManager.b.getAndIncrement();
+    public void run()
+    {
+        TcpConnection.field_74469_b.getAndIncrement();
 
-        try {
-            while (NetworkManager.a(this.a)) {
-                boolean flag;
+        try
+        {
+            while (TcpConnection.isRunning(this.theTcpConnection))
+            {
+                boolean var1;
 
-                for (flag = false; NetworkManager.d(this.a); flag = true) {
+                for (var1 = false; TcpConnection.sendNetworkPacket(this.theTcpConnection); var1 = true)
+                {
                     ;
                 }
 
-                try {
-                    if (flag && NetworkManager.e(this.a) != null) {
-                        NetworkManager.e(this.a).flush();
+                try
+                {
+                    if (var1 && TcpConnection.getOutputStream(this.theTcpConnection) != null)
+                    {
+                        TcpConnection.getOutputStream(this.theTcpConnection).flush();
                     }
-                } catch (IOException ioexception) {
-                    if (!NetworkManager.f(this.a)) {
-                        NetworkManager.a(this.a, (Exception) ioexception);
+                }
+                catch (IOException var8)
+                {
+                    if (!TcpConnection.isTerminating(this.theTcpConnection))
+                    {
+                        TcpConnection.sendError(this.theTcpConnection, (Exception) var8);
                     }
 
                     // ioexception.printStackTrace(); // CraftBukkit - Don't spam console on unexpected disconnect
                 }
 
-                try {
+                try
+                {
                     sleep(2L);
-                } catch (InterruptedException interruptedexception) {
+                }
+                catch (InterruptedException var7)
+                {
                     ;
                 }
             }
-        } finally {
-            NetworkManager.b.getAndDecrement();
+        }
+        finally
+        {
+            TcpConnection.field_74469_b.getAndDecrement();
         }
     }
 }

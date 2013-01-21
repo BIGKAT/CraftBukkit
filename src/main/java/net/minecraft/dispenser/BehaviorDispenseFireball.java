@@ -1,66 +1,84 @@
-package net.minecraft.server;
+package net.minecraft.dispenser;
 
 import java.util.Random;
+import net.minecraft.block.BlockDispenser;
+import net.minecraft.entity.projectile.EntitySmallFireball;
+import net.minecraft.item.ItemStack;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.util.EnumFacing;
+import net.minecraft.world.World;
 
 // CraftBukkit start
 import org.bukkit.craftbukkit.inventory.CraftItemStack;
 import org.bukkit.event.block.BlockDispenseEvent;
 // CraftBukkit end
 
-public class DispenseBehaviorFireball extends DispenseBehaviorItem {
+public class BehaviorDispenseFireball extends BehaviorDefaultDispenseItem
+{
+    final MinecraftServer mcServer;
 
-    final MinecraftServer b;
-
-    public DispenseBehaviorFireball(MinecraftServer minecraftserver) {
-        this.b = minecraftserver;
+    public BehaviorDispenseFireball(MinecraftServer par1MinecraftServer)
+    {
+        this.mcServer = par1MinecraftServer;
     }
 
-    public ItemStack b(ISourceBlock isourceblock, ItemStack itemstack) {
-        EnumFacing enumfacing = EnumFacing.a(isourceblock.h());
-        IPosition iposition = BlockDispenser.a(isourceblock);
-        double d0 = iposition.getX() + (double) ((float) enumfacing.c() * 0.3F);
-        double d1 = iposition.getY();
-        double d2 = iposition.getZ() + (double) ((float) enumfacing.e() * 0.3F);
-        World world = isourceblock.k();
-        Random random = world.random;
-        double d3 = random.nextGaussian() * 0.05D + (double) enumfacing.c();
-        double d4 = random.nextGaussian() * 0.05D;
-        double d5 = random.nextGaussian() * 0.05D + (double) enumfacing.e();
-
+    /**
+     * Dispense the specified stack, play the dispense sound and spawn particles.
+     */
+    public ItemStack dispenseStack(IBlockSource par1IBlockSource, ItemStack par2ItemStack)
+    {
+        EnumFacing var3 = EnumFacing.func_82600_a(par1IBlockSource.func_82620_h());
+        IPosition var4 = BlockDispenser.func_82525_a(par1IBlockSource);
+        double var5 = var4.getX() + (double)((float)var3.func_82601_c() * 0.3F);
+        double var7 = var4.getY();
+        double var9 = var4.getZ() + (double)((float)var3.func_82599_e() * 0.3F);
+        World var11 = par1IBlockSource.getWorld();
+        Random var12 = var11.rand;
+        double var13 = var12.nextGaussian() * 0.05D + (double)var3.func_82601_c();
+        double var15 = var12.nextGaussian() * 0.05D;
+        double var17 = var12.nextGaussian() * 0.05D + (double)var3.func_82599_e();
         // CraftBukkit start
-        ItemStack itemstack1 = itemstack.a(1);
-        org.bukkit.block.Block block = world.getWorld().getBlockAt(isourceblock.getBlockX(), isourceblock.getBlockY(), isourceblock.getBlockZ());
+        ItemStack itemstack1 = par2ItemStack.splitStack(1);
+        org.bukkit.block.Block block = var11.getWorld().getBlockAt(par1IBlockSource.getXInt(), par1IBlockSource.getYInt(), par1IBlockSource.getZInt());
         CraftItemStack craftItem = CraftItemStack.asCraftMirror(itemstack1);
+        BlockDispenseEvent event = new BlockDispenseEvent(block, craftItem.clone(), new org.bukkit.util.Vector(var13, var15, var17));
 
-        BlockDispenseEvent event = new BlockDispenseEvent(block, craftItem.clone(), new org.bukkit.util.Vector(d3, d4, d5));
-        if (!BlockDispenser.eventFired) {
-            world.getServer().getPluginManager().callEvent(event);
+        if (!BlockDispenser.eventFired)
+        {
+            var11.getServer().getPluginManager().callEvent(event);
         }
 
-        if (event.isCancelled()) {
-            itemstack.count++;
-            return itemstack;
+        if (event.isCancelled())
+        {
+            par2ItemStack.stackSize++;
+            return par2ItemStack;
         }
 
-        if (!event.getItem().equals(craftItem)) {
-            itemstack.count++;
+        if (!event.getItem().equals(craftItem))
+        {
+            par2ItemStack.stackSize++;
             // Chain to handler for new item
             ItemStack eventStack = CraftItemStack.asNMSCopy(event.getItem());
-            IDispenseBehavior idispensebehavior = (IDispenseBehavior) BlockDispenser.a.a(eventStack.getItem());
-            if (idispensebehavior != IDispenseBehavior.a && idispensebehavior != this) {
-                idispensebehavior.a(isourceblock, eventStack);
-                return itemstack;
+            IBehaviorDispenseItem idispensebehavior = (IBehaviorDispenseItem) BlockDispenser.dispenseBehaviorRegistry.func_82594_a(eventStack.getItem());
+
+            if (idispensebehavior != IBehaviorDispenseItem.itemDispenseBehaviorProvider && idispensebehavior != this)
+            {
+                idispensebehavior.dispense(par1IBlockSource, eventStack);
+                return par2ItemStack;
             }
         }
 
-        world.addEntity(new EntitySmallFireball(world, d0, d1, d2, event.getVelocity().getX(), event.getVelocity().getY(), event.getVelocity().getZ()));
+        var11.spawnEntityInWorld(new EntitySmallFireball(var11, var5, var7, var9, event.getVelocity().getX(), event.getVelocity().getY(), event.getVelocity().getZ()));
         // itemstack.a(1); // Handled during event processing
         // CraftBukkit end
-
-        return itemstack;
+        return par2ItemStack;
     }
 
-    protected void a(ISourceBlock isourceblock) {
-        isourceblock.k().triggerEffect(1009, isourceblock.getBlockX(), isourceblock.getBlockY(), isourceblock.getBlockZ(), 0);
+    /**
+     * Play the dispense sound from the specified block.
+     */
+    protected void playDispenseSound(IBlockSource par1IBlockSource)
+    {
+        par1IBlockSource.getWorld().playAuxSFX(1009, par1IBlockSource.getXInt(), par1IBlockSource.getYInt(), par1IBlockSource.getZInt(), 0);
     }
 }

@@ -1,14 +1,15 @@
-package net.minecraft.server;
+package net.minecraft.world;
 
 import java.util.ArrayList;
 
 // CraftBukkit - imported class because the constructor is package private
 
-class NoteDataList extends ArrayList {
+class ServerBlockEventList extends ArrayList
+{
+    private ServerBlockEventList() {}
 
-    private NoteDataList() {}
-
-    NoteDataList(EmptyClass2 emptyclass2) {
+    ServerBlockEventList(ServerBlockEvent par1ServerBlockEvent)
+    {
         this();
     }
 }

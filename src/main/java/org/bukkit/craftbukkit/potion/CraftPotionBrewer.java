@@ -5,7 +5,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
-import net.minecraft.server.MobEffect;
 
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.potion.PotionBrewer;
@@ -20,17 +19,17 @@ public class CraftPotionBrewer implements PotionBrewer {
         if (cache.containsKey(damage))
             return cache.get(damage);
 
-        List<?> mcEffects = net.minecraft.server.PotionBrewer.getEffects(damage, false);
+        List<?> mcEffects = net.minecraft.potion.PotionHelper/*was:PotionBrewer*/.getPotionEffects/*was:getEffects*/(damage, false);
         List<PotionEffect> effects = new ArrayList<PotionEffect>();
         if (mcEffects == null)
             return effects;
 
         for (Object raw : mcEffects) {
-            if (raw == null || !(raw instanceof MobEffect))
+            if (raw == null || !(raw instanceof net.minecraft.potion.PotionEffect/*was:MobEffect*/))
                 continue;
-            MobEffect mcEffect = (MobEffect) raw;
-            PotionEffect effect = new PotionEffect(PotionEffectType.getById(mcEffect.getEffectId()),
-                    mcEffect.getDuration(), mcEffect.getAmplifier());
+            net.minecraft.potion.PotionEffect/*was:MobEffect*/ mcEffect = (net.minecraft.potion.PotionEffect/*was:MobEffect*/) raw;
+            PotionEffect effect = new PotionEffect(PotionEffectType.getById(mcEffect.getPotionID/*was:getEffectId*/()),
+                    mcEffect.getDuration/*was:getDuration*/(), mcEffect.getAmplifier/*was:getAmplifier*/());
             // Minecraft PotionBrewer applies duration modifiers automatically.
             effects.add(effect);
         }

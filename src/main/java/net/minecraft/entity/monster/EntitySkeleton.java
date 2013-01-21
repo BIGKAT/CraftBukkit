@@ -1,172 +1,288 @@
-package net.minecraft.server;
+package net.minecraft.entity.monster;
 
 import java.util.Calendar;
+import net.minecraft.block.Block;
+import net.minecraft.enchantment.Enchantment;
+import net.minecraft.enchantment.EnchantmentHelper;
+import net.minecraft.entity.Entity;
+import net.minecraft.entity.EntityLiving;
+import net.minecraft.entity.EnumCreatureAttribute;
+import net.minecraft.entity.IRangedAttackMob;
+import net.minecraft.entity.ai.EntityAIArrowAttack;
+import net.minecraft.entity.ai.EntityAIAttackOnCollide;
+import net.minecraft.entity.ai.EntityAIBase;
+import net.minecraft.entity.ai.EntityAIFleeSun;
+import net.minecraft.entity.ai.EntityAIHurtByTarget;
+import net.minecraft.entity.ai.EntityAILookIdle;
+import net.minecraft.entity.ai.EntityAINearestAttackableTarget;
+import net.minecraft.entity.ai.EntityAIRestrictSun;
+import net.minecraft.entity.ai.EntityAISwimming;
+import net.minecraft.entity.ai.EntityAIWander;
+import net.minecraft.entity.ai.EntityAIWatchClosest;
+import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.entity.projectile.EntityArrow;
+import net.minecraft.item.Item;
+import net.minecraft.item.ItemStack;
+import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.potion.Potion;
+import net.minecraft.potion.PotionEffect;
+import net.minecraft.stats.AchievementList;
+import net.minecraft.stats.StatBase;
+import net.minecraft.util.DamageSource;
+import net.minecraft.util.MathHelper;
+import net.minecraft.world.World;
+import net.minecraft.world.WorldProviderHell;
 
 import org.bukkit.event.entity.EntityCombustEvent; // CraftBukkit
 
-public class EntitySkeleton extends EntityMonster implements IRangedEntity {
+public class EntitySkeleton extends EntityMob implements IRangedAttackMob
+{
+    private EntityAIArrowAttack field_85037_d = new EntityAIArrowAttack(this, 0.25F, 60, 10.0F);
+    private EntityAIAttackOnCollide field_85038_e = new EntityAIAttackOnCollide(this, EntityPlayer.class, 0.31F, false);
 
-    private PathfinderGoalArrowAttack d = new PathfinderGoalArrowAttack(this, 0.25F, 60, 10.0F);
-    private PathfinderGoalMeleeAttack e = new PathfinderGoalMeleeAttack(this, EntityHuman.class, 0.31F, false);
-
-    public EntitySkeleton(World world) {
-        super(world);
+    public EntitySkeleton(World par1World)
+    {
+        super(par1World);
         this.texture = "/mob/skeleton.png";
-        this.bH = 0.25F;
-        this.goalSelector.a(1, new PathfinderGoalFloat(this));
-        this.goalSelector.a(2, new PathfinderGoalRestrictSun(this));
-        this.goalSelector.a(3, new PathfinderGoalFleeSun(this, this.bH));
-        this.goalSelector.a(5, new PathfinderGoalRandomStroll(this, this.bH));
-        this.goalSelector.a(6, new PathfinderGoalLookAtPlayer(this, EntityHuman.class, 8.0F));
-        this.goalSelector.a(6, new PathfinderGoalRandomLookaround(this));
-        this.targetSelector.a(1, new PathfinderGoalHurtByTarget(this, false));
-        this.targetSelector.a(2, new PathfinderGoalNearestAttackableTarget(this, EntityHuman.class, 16.0F, 0, true));
-        if (world != null && !world.isStatic) {
-            this.m();
+        this.moveSpeed = 0.25F;
+        this.tasks.addTask(1, new EntityAISwimming(this));
+        this.tasks.addTask(2, new EntityAIRestrictSun(this));
+        this.tasks.addTask(3, new EntityAIFleeSun(this, this.moveSpeed));
+        this.tasks.addTask(5, new EntityAIWander(this, this.moveSpeed));
+        this.tasks.addTask(6, new EntityAIWatchClosest(this, EntityPlayer.class, 8.0F));
+        this.tasks.addTask(6, new EntityAILookIdle(this));
+        this.targetTasks.addTask(1, new EntityAIHurtByTarget(this, false));
+        this.targetTasks.addTask(2, new EntityAINearestAttackableTarget(this, EntityPlayer.class, 16.0F, 0, true));
+
+        if (par1World != null && !par1World.isRemote)
+        {
+            this.func_85036_m();
         }
     }
 
-    protected void a() {
-        super.a();
-        this.datawatcher.a(13, new Byte((byte) 0));
+    protected void entityInit()
+    {
+        super.entityInit();
+        this.dataWatcher.addObject(13, new Byte((byte)0));
     }
 
-    public boolean be() {
+    /**
+     * Returns true if the newer Entity AI code should be run
+     */
+    public boolean isAIEnabled()
+    {
         return true;
     }
 
-    public int getMaxHealth() {
+    public int getMaxHealth()
+    {
         return 20;
     }
 
-    protected String aY() {
+    /**
+     * Returns the sound this mob makes while it's alive.
+     */
+    protected String getLivingSound()
+    {
         return "mob.skeleton.say";
     }
 
-    protected String aZ() {
+    /**
+     * Returns the sound this mob makes when it is hurt.
+     */
+    protected String getHurtSound()
+    {
         return "mob.skeleton.hurt";
     }
 
-    protected String ba() {
+    /**
+     * Returns the sound this mob makes on death.
+     */
+    protected String getDeathSound()
+    {
         return "mob.skeleton.death";
     }
 
-    protected void a(int i, int j, int k, int l) {
-        this.makeSound("mob.skeleton.step", 0.15F, 1.0F);
+    /**
+     * Plays step sound at given x, y, z for the entity
+     */
+    protected void playStepSound(int par1, int par2, int par3, int par4)
+    {
+        this.playSound("mob.skeleton.step", 0.15F, 1.0F);
     }
 
-    public boolean m(Entity entity) {
-        if (super.m(entity)) {
-            if (this.getSkeletonType() == 1 && entity instanceof EntityLiving) {
-                ((EntityLiving) entity).addEffect(new MobEffect(MobEffectList.WITHER.id, 200));
+    public boolean attackEntityAsMob(Entity par1Entity)
+    {
+        if (super.attackEntityAsMob(par1Entity))
+        {
+            if (this.getSkeletonType() == 1 && par1Entity instanceof EntityLiving)
+            {
+                ((EntityLiving)par1Entity).addPotionEffect(new PotionEffect(Potion.wither.id, 200));
             }
 
             return true;
-        } else {
+        }
+        else
+        {
             return false;
         }
     }
 
-    public int c(Entity entity) {
-        if (this.getSkeletonType() == 1) {
-            ItemStack itemstack = this.bD();
-            int i = 4;
+    /**
+     * Returns the amount of damage a mob should deal.
+     */
+    public int getAttackStrength(Entity par1Entity)
+    {
+        if (this.getSkeletonType() == 1)
+        {
+            ItemStack var2 = this.getHeldItem();
+            int var3 = 4;
 
-            if (itemstack != null) {
-                i += itemstack.a((Entity) this);
+            if (var2 != null)
+            {
+                var3 += var2.getDamageVsEntity((Entity) this);
             }
 
-            return i;
-        } else {
-            return super.c(entity);
+            return var3;
+        }
+        else
+        {
+            return super.getAttackStrength(par1Entity);
         }
     }
 
-    public EnumMonsterType getMonsterType() {
-        return EnumMonsterType.UNDEAD;
+    /**
+     * Get this Entity's EnumCreatureAttribute
+     */
+    public EnumCreatureAttribute getCreatureAttribute()
+    {
+        return EnumCreatureAttribute.UNDEAD;
     }
 
-    public void c() {
-        if (this.world.u() && !this.world.isStatic) {
-            float f = this.c(1.0F);
+    /**
+     * Called frequently so the entity can update its state every tick as required. For example, zombies and skeletons
+     * use this to react to sunlight and start to burn.
+     */
+    public void onLivingUpdate()
+    {
+        if (this.worldObj.isDaytime() && !this.worldObj.isRemote)
+        {
+            float var1 = this.getBrightness(1.0F);
 
-            if (f > 0.5F && this.random.nextFloat() * 30.0F < (f - 0.4F) * 2.0F && this.world.k(MathHelper.floor(this.locX), MathHelper.floor(this.locY), MathHelper.floor(this.locZ))) {
-                boolean flag = true;
-                ItemStack itemstack = this.getEquipment(4);
+            if (var1 > 0.5F && this.rand.nextFloat() * 30.0F < (var1 - 0.4F) * 2.0F && this.worldObj.canBlockSeeTheSky(MathHelper.floor_double(this.posX), MathHelper.floor_double(this.posY), MathHelper.floor_double(this.posZ)))
+            {
+                boolean var2 = true;
+                ItemStack var3 = this.getCurrentItemOrArmor(4);
 
-                if (itemstack != null) {
-                    if (itemstack.f()) {
-                        itemstack.setData(itemstack.i() + this.random.nextInt(2));
-                        if (itemstack.i() >= itemstack.k()) {
-                            this.a(itemstack);
-                            this.setEquipment(4, (ItemStack) null);
+                if (var3 != null)
+                {
+                    if (var3.isItemStackDamageable())
+                    {
+                        var3.setItemDamage(var3.getItemDamageForDisplay() + this.rand.nextInt(2));
+
+                        if (var3.getItemDamageForDisplay() >= var3.getMaxDamage())
+                        {
+                            this.renderBrokenItemStack(var3);
+                            this.setCurrentItemOrArmor(4, (ItemStack)null);
                         }
                     }
 
-                    flag = false;
+                    var2 = false;
                 }
 
-                if (flag) {
+                if (var2)
+                {
                     // CraftBukkit start
-                EntityCombustEvent event = new EntityCombustEvent(this.getBukkitEntity(), 8);
-                this.world.getServer().getPluginManager().callEvent(event);
+                    EntityCombustEvent event = new EntityCombustEvent(this.getBukkitEntity(), 8);
+                    this.worldObj.getServer().getPluginManager().callEvent(event);
 
-                if (!event.isCancelled()) {
-                    this.setOnFire(event.getDuration());
-                }
-                // CraftBukkit end
+                    if (!event.isCancelled())
+                    {
+                        this.setFire(event.getDuration());
+                    }
+
+                    // CraftBukkit end
                 }
             }
         }
 
-        super.c();
+        super.onLivingUpdate();
     }
 
-    public void die(DamageSource damagesource) {
-        super.die(damagesource);
-        if (damagesource.f() instanceof EntityArrow && damagesource.getEntity() instanceof EntityHuman) {
-            EntityHuman entityhuman = (EntityHuman) damagesource.getEntity();
-            double d0 = entityhuman.locX - this.locX;
-            double d1 = entityhuman.locZ - this.locZ;
+    /**
+     * Called when the mob's health reaches 0.
+     */
+    public void onDeath(DamageSource par1DamageSource)
+    {
+        super.onDeath(par1DamageSource);
 
-            if (d0 * d0 + d1 * d1 >= 2500.0D) {
-                entityhuman.a((Statistic) AchievementList.v);
+        if (par1DamageSource.getSourceOfDamage() instanceof EntityArrow && par1DamageSource.getEntity() instanceof EntityPlayer)
+        {
+            EntityPlayer var2 = (EntityPlayer)par1DamageSource.getEntity();
+            double var3 = var2.posX - this.posX;
+            double var5 = var2.posZ - this.posZ;
+
+            if (var3 * var3 + var5 * var5 >= 2500.0D)
+            {
+                var2.triggerAchievement((StatBase) AchievementList.snipeSkeleton);
             }
         }
     }
 
-    protected int getLootId() {
-        return Item.ARROW.id;
+    /**
+     * Returns the item ID for the item the mob drops on death.
+     */
+    protected int getDropItemId()
+    {
+        return Item.arrow.itemID;
     }
 
-    protected void dropDeathLoot(boolean flag, int i) {
+    /**
+     * Drop 0-2 items of this living's type. @param par1 - Whether this entity has recently been hit by a player. @param
+     * par2 - Level of Looting used to kill this mob.
+     */
+    protected void dropFewItems(boolean par1, int par2)
+    {
         // CraftBukkit start - whole method
         java.util.List<org.bukkit.inventory.ItemStack> loot = new java.util.ArrayList<org.bukkit.inventory.ItemStack>();
 
-        if (this.getSkeletonType() == 1) {
-            int count = this.random.nextInt(3 + i) - 1;
-            if (count > 0) {
+        if (this.getSkeletonType() == 1)
+        {
+            int count = this.rand.nextInt(3 + par2) - 1;
+
+            if (count > 0)
+            {
                 loot.add(new org.bukkit.inventory.ItemStack(org.bukkit.Material.COAL, count));
             }
-        } else {
-            int count = this.random.nextInt(3 + i);
-            if (count > 0) {
+        }
+        else
+        {
+            int count = this.rand.nextInt(3 + par2);
+
+            if (count > 0)
+            {
                 loot.add(new org.bukkit.inventory.ItemStack(org.bukkit.Material.ARROW, count));
             }
         }
 
-        int count = this.random.nextInt(3 + i);
-        if (count > 0) {
+        int count = this.rand.nextInt(3 + par2);
+
+        if (count > 0)
+        {
             loot.add(new org.bukkit.inventory.ItemStack(org.bukkit.Material.BONE, count));
         }
 
         // Determine rare item drops and add them to the loot
-        if (this.lastDamageByPlayerTime > 0) {
-            int k = this.random.nextInt(200) - i;
+        if (this.recentlyHit > 0)
+        {
+            int k = this.rand.nextInt(200) - par2;
 
-            if (k < 5) {
+            if (k < 5)
+            {
                 ItemStack itemstack = this.l(k <= 0 ? 1 : 0);
-                if (itemstack != null) {
+
+                if (itemstack != null)
+                {
                     loot.add(org.bukkit.craftbukkit.inventory.CraftItemStack.asCraftMirror(itemstack));
                 }
             }
@@ -177,108 +293,159 @@ public class EntitySkeleton extends EntityMonster implements IRangedEntity {
     }
 
     // CraftBukkit - return rare dropped item instead of dropping it
-    protected ItemStack l(int i) {
-        if (this.getSkeletonType() == 1) {
-            return new ItemStack(Item.SKULL.id, 1, 1); // CraftBukkit
+    protected ItemStack l(int i)
+    {
+        if (this.getSkeletonType() == 1)
+        {
+            return new ItemStack(Item.skull.itemID, 1, 1); // CraftBukkit
         }
 
         return null;
     }
 
-    protected void bE() {
-        super.bD();
-        this.setEquipment(0, new ItemStack(Item.BOW));
+    protected void func_82164_bB()
+    {
+        super.getHeldItem();
+        this.setCurrentItemOrArmor(0, new ItemStack(Item.bow));
     }
 
-    public void bG() {
-        if (this.world.worldProvider instanceof WorldProviderHell && this.aB().nextInt(5) > 0) {
-            this.goalSelector.a(4, this.e);
+    /**
+     * Initialize this creature.
+     */
+    public void initCreature()
+    {
+        if (this.worldObj.provider instanceof WorldProviderHell && this.getRNG().nextInt(5) > 0)
+        {
+            this.tasks.addTask(4, this.field_85038_e);
             this.setSkeletonType(1);
-            this.setEquipment(0, new ItemStack(Item.STONE_SWORD));
-        } else {
-            this.goalSelector.a(4, this.d);
-            this.bE();
-            this.bF();
+            this.setCurrentItemOrArmor(0, new ItemStack(Item.swordStone));
+        }
+        else
+        {
+            this.tasks.addTask(4, this.field_85037_d);
+            this.func_82164_bB();
+            this.func_82162_bC();
         }
 
-        this.canPickUpLoot = this.random.nextFloat() < at[this.world.difficulty];
-        if (this.getEquipment(4) == null) {
-            Calendar calendar = this.world.T();
+        this.canPickUpLoot = this.rand.nextFloat() < pickUpLootProability[this.worldObj.difficultySetting];
 
-            if (calendar.get(2) + 1 == 10 && calendar.get(5) == 31 && this.random.nextFloat() < 0.25F) {
-                this.setEquipment(4, new ItemStack(this.random.nextFloat() < 0.1F ? Block.JACK_O_LANTERN : Block.PUMPKIN));
-                this.dropChances[4] = 0.0F;
+        if (this.getCurrentItemOrArmor(4) == null)
+        {
+            Calendar var1 = this.worldObj.getCurrentDate();
+
+            if (var1.get(2) + 1 == 10 && var1.get(5) == 31 && this.rand.nextFloat() < 0.25F)
+            {
+                this.setCurrentItemOrArmor(4, new ItemStack(this.rand.nextFloat() < 0.1F ? Block.pumpkinLantern : Block.pumpkin));
+                this.equipmentDropChances[4] = 0.0F;
             }
         }
     }
 
-    public void m() {
-        this.goalSelector.a((PathfinderGoal) this.e);
-        this.goalSelector.a((PathfinderGoal) this.d);
-        ItemStack itemstack = this.bD();
+    public void func_85036_m()
+    {
+        this.tasks.func_85156_a((EntityAIBase) this.field_85038_e);
+        this.tasks.func_85156_a((EntityAIBase) this.field_85037_d);
+        ItemStack var1 = this.getHeldItem();
 
-        if (itemstack != null && itemstack.id == Item.BOW.id) {
-            this.goalSelector.a(4, this.d);
-        } else {
-            this.goalSelector.a(4, this.e);
+        if (var1 != null && var1.itemID == Item.bow.itemID)
+        {
+            this.tasks.addTask(4, this.field_85037_d);
+        }
+        else
+        {
+            this.tasks.addTask(4, this.field_85038_e);
         }
     }
 
-    public void d(EntityLiving entityliving) {
-        EntityArrow entityarrow = new EntityArrow(this.world, this, entityliving, 1.6F, 12.0F);
-        int i = EnchantmentManager.getEnchantmentLevel(Enchantment.ARROW_DAMAGE.id, this.bD());
-        int j = EnchantmentManager.getEnchantmentLevel(Enchantment.ARROW_KNOCKBACK.id, this.bD());
+    /**
+     * Attack the specified entity using a ranged attack.
+     */
+    public void attackEntityWithRangedAttack(EntityLiving par1EntityLiving)
+    {
+        EntityArrow var2 = new EntityArrow(this.worldObj, this, par1EntityLiving, 1.6F, 12.0F);
+        int var3 = EnchantmentHelper.getEnchantmentLevel(Enchantment.power.effectId, this.getHeldItem());
+        int var4 = EnchantmentHelper.getEnchantmentLevel(Enchantment.punch.effectId, this.getHeldItem());
 
-        if (i > 0) {
-            entityarrow.b(entityarrow.c() + (double) i * 0.5D + 0.5D);
+        if (var3 > 0)
+        {
+            var2.setDamage(var2.getDamage() + (double)var3 * 0.5D + 0.5D);
         }
 
-        if (j > 0) {
-            entityarrow.a(j);
+        if (var4 > 0)
+        {
+            var2.setKnockbackStrength(var4);
         }
 
-        if (EnchantmentManager.getEnchantmentLevel(Enchantment.ARROW_FIRE.id, this.bD()) > 0 || this.getSkeletonType() == 1) {
-            entityarrow.setOnFire(100);
+        if (EnchantmentHelper.getEnchantmentLevel(Enchantment.flame.effectId, this.getHeldItem()) > 0 || this.getSkeletonType() == 1)
+        {
+            var2.setFire(100);
         }
 
-        this.makeSound("random.bow", 1.0F, 1.0F / (this.aB().nextFloat() * 0.4F + 0.8F));
-        this.world.addEntity(entityarrow);
+        this.playSound("random.bow", 1.0F, 1.0F / (this.getRNG().nextFloat() * 0.4F + 0.8F));
+        this.worldObj.spawnEntityInWorld(var2);
     }
 
-    public int getSkeletonType() {
-        return this.datawatcher.getByte(13);
+    /**
+     * Return this skeleton's type.
+     */
+    public int getSkeletonType()
+    {
+        return this.dataWatcher.getWatchableObjectByte(13);
     }
 
-    public void setSkeletonType(int i) {
-        this.datawatcher.watch(13, Byte.valueOf((byte) i));
-        this.fireProof = i == 1;
-        if (i == 1) {
-            this.a(0.72F, 2.16F);
-        } else {
-            this.a(0.6F, 1.8F);
+    /**
+     * Set this skeleton's type.
+     */
+    public void setSkeletonType(int par1)
+    {
+        this.dataWatcher.updateObject(13, Byte.valueOf((byte)par1));
+        this.isImmuneToFire = par1 == 1;
+
+        if (par1 == 1)
+        {
+            this.setSize(0.72F, 2.16F);
+        }
+        else
+        {
+            this.setSize(0.6F, 1.8F);
         }
     }
 
-    public void a(NBTTagCompound nbttagcompound) {
-        super.a(nbttagcompound);
-        if (nbttagcompound.hasKey("SkeletonType")) {
-            byte b0 = nbttagcompound.getByte("SkeletonType");
+    /**
+     * (abstract) Protected helper method to read subclass entity data from NBT.
+     */
+    public void readEntityFromNBT(NBTTagCompound par1NBTTagCompound)
+    {
+        super.readEntityFromNBT(par1NBTTagCompound);
 
-            this.setSkeletonType(b0);
+        if (par1NBTTagCompound.hasKey("SkeletonType"))
+        {
+            byte var2 = par1NBTTagCompound.getByte("SkeletonType");
+            this.setSkeletonType(var2);
         }
 
-        this.m();
+        this.func_85036_m();
     }
 
-    public void b(NBTTagCompound nbttagcompound) {
-        super.b(nbttagcompound);
-        nbttagcompound.setByte("SkeletonType", (byte) this.getSkeletonType());
+    /**
+     * (abstract) Protected helper method to write subclass entity data to NBT.
+     */
+    public void writeEntityToNBT(NBTTagCompound par1NBTTagCompound)
+    {
+        super.writeEntityToNBT(par1NBTTagCompound);
+        par1NBTTagCompound.setByte("SkeletonType", (byte)this.getSkeletonType());
     }
 
-    public void setEquipment(int i, ItemStack itemstack) {
-        super.setEquipment(i, itemstack);
-        if (!this.world.isStatic && i == 0) {
-            this.m();
+    /**
+     * Sets the held item, or an armor slot. Slot 0 is held item. Slot 1-4 is armor. Params: Item, slot
+     */
+    public void setCurrentItemOrArmor(int par1, ItemStack par2ItemStack)
+    {
+        super.setCurrentItemOrArmor(par1, par2ItemStack);
+
+        if (!this.worldObj.isRemote && par1 == 0)
+        {
+            this.func_85036_m();
         }
     }
 }

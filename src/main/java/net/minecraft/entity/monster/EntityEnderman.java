@@ -1,233 +1,325 @@
-package net.minecraft.server;
+package net.minecraft.entity.monster;
 
 // CraftBukkit start
 import org.bukkit.Location;
 import org.bukkit.craftbukkit.event.CraftEventFactory;
 import org.bukkit.event.entity.EntityTeleportEvent;
+import net.minecraft.block.Block;
+import net.minecraft.entity.Entity;
+import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.item.Item;
+import net.minecraft.item.ItemStack;
+import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.util.DamageSource;
+import net.minecraft.util.EntityDamageSourceIndirect;
+import net.minecraft.util.MathHelper;
+import net.minecraft.util.Vec3;
+import net.minecraft.world.World;
 // CraftBukkit end
 
-public class EntityEnderman extends EntityMonster {
+public class EntityEnderman extends EntityMob
+{
+    private static boolean[] carriableBlocks = new boolean[256];
 
-    private static boolean[] d = new boolean[256];
-    private int e = 0;
-    private int f = 0;
+    /**
+     * Counter to delay the teleportation of an enderman towards the currently attacked target
+     */
+    private int teleportDelay = 0;
+    private int field_70826_g = 0;
 
-    public EntityEnderman(World world) {
-        super(world);
+    public EntityEnderman(World par1World)
+    {
+        super(par1World);
         this.texture = "/mob/enderman.png";
-        this.bH = 0.2F;
-        this.a(0.6F, 2.9F);
-        this.X = 1.0F;
+        this.moveSpeed = 0.2F;
+        this.setSize(0.6F, 2.9F);
+        this.stepHeight = 1.0F;
     }
 
-    public int getMaxHealth() {
+    public int getMaxHealth()
+    {
         return 40;
     }
 
-    protected void a() {
-        super.a();
-        this.datawatcher.a(16, new Byte((byte) 0));
-        this.datawatcher.a(17, new Byte((byte) 0));
-        this.datawatcher.a(18, new Byte((byte) 0));
+    protected void entityInit()
+    {
+        super.entityInit();
+        this.dataWatcher.addObject(16, new Byte((byte)0));
+        this.dataWatcher.addObject(17, new Byte((byte)0));
+        this.dataWatcher.addObject(18, new Byte((byte)0));
     }
 
-    public void b(NBTTagCompound nbttagcompound) {
-        super.b(nbttagcompound);
-        nbttagcompound.setShort("carried", (short) this.getCarriedId());
-        nbttagcompound.setShort("carriedData", (short) this.getCarriedData());
+    /**
+     * (abstract) Protected helper method to write subclass entity data to NBT.
+     */
+    public void writeEntityToNBT(NBTTagCompound par1NBTTagCompound)
+    {
+        super.writeEntityToNBT(par1NBTTagCompound);
+        par1NBTTagCompound.setShort("carried", (short)this.getCarried());
+        par1NBTTagCompound.setShort("carriedData", (short)this.getCarryingData());
     }
 
-    public void a(NBTTagCompound nbttagcompound) {
-        super.a(nbttagcompound);
-        this.setCarriedId(nbttagcompound.getShort("carried"));
-        this.setCarriedData(nbttagcompound.getShort("carriedData"));
+    /**
+     * (abstract) Protected helper method to read subclass entity data from NBT.
+     */
+    public void readEntityFromNBT(NBTTagCompound par1NBTTagCompound)
+    {
+        super.readEntityFromNBT(par1NBTTagCompound);
+        this.setCarried(par1NBTTagCompound.getShort("carried"));
+        this.setCarryingData(par1NBTTagCompound.getShort("carriedData"));
     }
 
-    protected Entity findTarget() {
-        EntityHuman entityhuman = this.world.findNearbyVulnerablePlayer(this, 64.0D);
+    /**
+     * Finds the closest player within 16 blocks to attack, or null if this Entity isn't interested in attacking
+     * (Animals, Spiders at day, peaceful PigZombies).
+     */
+    protected Entity findPlayerToAttack()
+    {
+        EntityPlayer var1 = this.worldObj.getClosestVulnerablePlayerToEntity(this, 64.0D);
 
-        if (entityhuman != null) {
-            if (this.d(entityhuman)) {
-                if (this.f == 0) {
-                    this.world.makeSound(entityhuman, "mob.endermen.stare", 1.0F, 1.0F);
+        if (var1 != null)
+        {
+            if (this.shouldAttackPlayer(var1))
+            {
+                if (this.field_70826_g == 0)
+                {
+                    this.worldObj.playSoundAtEntity(var1, "mob.endermen.stare", 1.0F, 1.0F);
                 }
 
-                if (this.f++ == 5) {
-                    this.f = 0;
-                    this.f(true);
-                    return entityhuman;
+                if (this.field_70826_g++ == 5)
+                {
+                    this.field_70826_g = 0;
+                    this.func_70819_e(true);
+                    return var1;
                 }
-            } else {
-                this.f = 0;
+            }
+            else
+            {
+                this.field_70826_g = 0;
             }
         }
 
         return null;
     }
 
-    private boolean d(EntityHuman entityhuman) {
-        ItemStack itemstack = entityhuman.inventory.armor[3];
+    /**
+     * Checks to see if this enderman should be attacking this player
+     */
+    private boolean shouldAttackPlayer(EntityPlayer par1EntityPlayer)
+    {
+        ItemStack var2 = par1EntityPlayer.inventory.armorInventory[3];
 
-        if (itemstack != null && itemstack.id == Block.PUMPKIN.id) {
+        if (var2 != null && var2.itemID == Block.pumpkin.blockID)
+        {
             return false;
-        } else {
-            Vec3D vec3d = entityhuman.i(1.0F).a();
-            Vec3D vec3d1 = this.world.getVec3DPool().create(this.locX - entityhuman.locX, this.boundingBox.b + (double) (this.length / 2.0F) - (entityhuman.locY + (double) entityhuman.getHeadHeight()), this.locZ - entityhuman.locZ);
-            double d0 = vec3d1.b();
-
-            vec3d1 = vec3d1.a();
-            double d1 = vec3d.b(vec3d1);
-
-            return d1 > 1.0D - 0.025D / d0 ? entityhuman.n(this) : false;
+        }
+        else
+        {
+            Vec3 var3 = par1EntityPlayer.getLook(1.0F).normalize();
+            Vec3 var4 = this.worldObj.getWorldVec3Pool().getVecFromPool(this.posX - par1EntityPlayer.posX, this.boundingBox.minY + (double)(this.height / 2.0F) - (par1EntityPlayer.posY + (double)par1EntityPlayer.getEyeHeight()), this.posZ - par1EntityPlayer.posZ);
+            double var5 = var4.lengthVector();
+            var4 = var4.normalize();
+            double var7 = var3.dotProduct(var4);
+            return var7 > 1.0D - 0.025D / var5 ? par1EntityPlayer.canEntityBeSeen(this) : false;
         }
     }
 
-    public void c() {
-        if (this.G()) {
-            this.damageEntity(DamageSource.DROWN, 1);
+    /**
+     * Called frequently so the entity can update its state every tick as required. For example, zombies and skeletons
+     * use this to react to sunlight and start to burn.
+     */
+    public void onLivingUpdate()
+    {
+        if (this.isWet())
+        {
+            this.attackEntityFrom(DamageSource.drown, 1);
         }
 
-        this.bH = this.target != null ? 6.5F : 0.3F;
-        int i;
+        this.moveSpeed = this.entityToAttack != null ? 6.5F : 0.3F;
+        int var1;
 
-        if (!this.world.isStatic && this.world.getGameRules().getBoolean("mobGriefing")) {
-            int j;
-            int k;
-            int l;
+        if (!this.worldObj.isRemote && this.worldObj.getGameRules().getGameRuleBooleanValue("mobGriefing"))
+        {
+            int var2;
+            int var3;
+            int var4;
 
-            if (this.getCarriedId() == 0) {
-                if (this.random.nextInt(20) == 0) {
-                    i = MathHelper.floor(this.locX - 2.0D + this.random.nextDouble() * 4.0D);
-                    j = MathHelper.floor(this.locY + this.random.nextDouble() * 3.0D);
-                    k = MathHelper.floor(this.locZ - 2.0D + this.random.nextDouble() * 4.0D);
-                    l = this.world.getTypeId(i, j, k);
-                    if (d[l]) {
+            if (this.getCarried() == 0)
+            {
+                if (this.rand.nextInt(20) == 0)
+                {
+                    var1 = MathHelper.floor_double(this.posX - 2.0D + this.rand.nextDouble() * 4.0D);
+                    var2 = MathHelper.floor_double(this.posY + this.rand.nextDouble() * 3.0D);
+                    var3 = MathHelper.floor_double(this.posZ - 2.0D + this.rand.nextDouble() * 4.0D);
+                    var4 = this.worldObj.getBlockId(var1, var2, var3);
+
+                    if (carriableBlocks[var4])
+                    {
                         // CraftBukkit start - pickup event
-                        if (!CraftEventFactory.callEntityChangeBlockEvent(this, this.world.getWorld().getBlockAt(i, j, k), org.bukkit.Material.AIR).isCancelled()) {
-                            this.setCarriedId(this.world.getTypeId(i, j, k));
-                            this.setCarriedData(this.world.getData(i, j, k));
-                            this.world.setTypeId(i, j, k, 0);
+                        if (!CraftEventFactory.callEntityChangeBlockEvent(this, this.worldObj.getWorld().getBlockAt(var1, var2, var3), org.bukkit.Material.AIR).isCancelled())
+                        {
+                            this.setCarried(this.worldObj.getBlockId(var1, var2, var3));
+                            this.setCarryingData(this.worldObj.getBlockMetadata(var1, var2, var3));
+                            this.worldObj.setBlockWithNotify(var1, var2, var3, 0);
                         }
+
                         // CraftBukkit end
                     }
                 }
-            } else if (this.random.nextInt(2000) == 0) {
-                i = MathHelper.floor(this.locX - 1.0D + this.random.nextDouble() * 2.0D);
-                j = MathHelper.floor(this.locY + this.random.nextDouble() * 2.0D);
-                k = MathHelper.floor(this.locZ - 1.0D + this.random.nextDouble() * 2.0D);
-                l = this.world.getTypeId(i, j, k);
-                int i1 = this.world.getTypeId(i, j - 1, k);
+            }
+            else if (this.rand.nextInt(2000) == 0)
+            {
+                var1 = MathHelper.floor_double(this.posX - 1.0D + this.rand.nextDouble() * 2.0D);
+                var2 = MathHelper.floor_double(this.posY + this.rand.nextDouble() * 2.0D);
+                var3 = MathHelper.floor_double(this.posZ - 1.0D + this.rand.nextDouble() * 2.0D);
+                var4 = this.worldObj.getBlockId(var1, var2, var3);
+                int var5 = this.worldObj.getBlockId(var1, var2 - 1, var3);
 
-                if (l == 0 && i1 > 0 && Block.byId[i1].b()) {
+                if (var4 == 0 && var5 > 0 && Block.blocksList[var5].renderAsNormalBlock())
+                {
                     // CraftBukkit start - place event
-                    if (!CraftEventFactory.callEntityChangeBlockEvent(this, i, j, k, this.getCarriedId(), this.getCarriedData()).isCancelled()) {
-                        this.world.setTypeIdAndData(i, j, k, this.getCarriedId(), this.getCarriedData());
-                        this.setCarriedId(0);
+                    if (!CraftEventFactory.callEntityChangeBlockEvent(this, var1, var2, var3, this.getCarried(), this.getCarryingData()).isCancelled())
+                    {
+                        this.worldObj.setBlockAndMetadataWithNotify(var1, var2, var3, this.getCarried(), this.getCarryingData());
+                        this.setCarried(0);
                     }
+
                     // CraftBukkit end
                 }
             }
         }
 
-        for (i = 0; i < 2; ++i) {
-            this.world.addParticle("portal", this.locX + (this.random.nextDouble() - 0.5D) * (double) this.width, this.locY + this.random.nextDouble() * (double) this.length - 0.25D, this.locZ + (this.random.nextDouble() - 0.5D) * (double) this.width, (this.random.nextDouble() - 0.5D) * 2.0D, -this.random.nextDouble(), (this.random.nextDouble() - 0.5D) * 2.0D);
+        for (var1 = 0; var1 < 2; ++var1)
+        {
+            this.worldObj.spawnParticle("portal", this.posX + (this.rand.nextDouble() - 0.5D) * (double)this.width, this.posY + this.rand.nextDouble() * (double)this.height - 0.25D, this.posZ + (this.rand.nextDouble() - 0.5D) * (double)this.width, (this.rand.nextDouble() - 0.5D) * 2.0D, -this.rand.nextDouble(), (this.rand.nextDouble() - 0.5D) * 2.0D);
         }
 
-        if (this.world.u() && !this.world.isStatic) {
-            float f = this.c(1.0F);
+        if (this.worldObj.isDaytime() && !this.worldObj.isRemote)
+        {
+            float var6 = this.getBrightness(1.0F);
 
-            if (f > 0.5F && this.world.k(MathHelper.floor(this.locX), MathHelper.floor(this.locY), MathHelper.floor(this.locZ)) && this.random.nextFloat() * 30.0F < (f - 0.4F) * 2.0F) {
-                this.target = null;
-                this.f(false);
-                this.m();
+            if (var6 > 0.5F && this.worldObj.canBlockSeeTheSky(MathHelper.floor_double(this.posX), MathHelper.floor_double(this.posY), MathHelper.floor_double(this.posZ)) && this.rand.nextFloat() * 30.0F < (var6 - 0.4F) * 2.0F)
+            {
+                this.entityToAttack = null;
+                this.func_70819_e(false);
+                this.teleportRandomly();
             }
         }
 
-        if (this.G() || this.isBurning()) {
-            this.target = null;
-            this.f(false);
-            this.m();
+        if (this.isWet() || this.isBurning())
+        {
+            this.entityToAttack = null;
+            this.func_70819_e(false);
+            this.teleportRandomly();
         }
 
-        this.bF = false;
-        if (this.target != null) {
-            this.a(this.target, 100.0F, 100.0F);
+        this.isJumping = false;
+
+        if (this.entityToAttack != null)
+        {
+            this.faceEntity(this.entityToAttack, 100.0F, 100.0F);
         }
 
-        if (!this.world.isStatic && this.isAlive()) {
-            if (this.target != null) {
-                if (this.target instanceof EntityHuman && this.d((EntityHuman) this.target)) {
-                    this.bC = this.bD = 0.0F;
-                    this.bH = 0.0F;
-                    if (this.target.e((Entity) this) < 16.0D) {
-                        this.m();
+        if (!this.worldObj.isRemote && this.isEntityAlive())
+        {
+            if (this.entityToAttack != null)
+            {
+                if (this.entityToAttack instanceof EntityPlayer && this.shouldAttackPlayer((EntityPlayer)this.entityToAttack))
+                {
+                    this.moveStrafing = this.moveForward = 0.0F;
+                    this.moveSpeed = 0.0F;
+
+                    if (this.entityToAttack.getDistanceSqToEntity((Entity) this) < 16.0D)
+                    {
+                        this.teleportRandomly();
                     }
 
-                    this.e = 0;
-                } else if (this.target.e((Entity) this) > 256.0D && this.e++ >= 30 && this.p(this.target)) {
-                    this.e = 0;
+                    this.teleportDelay = 0;
                 }
-            } else {
-                this.f(false);
-                this.e = 0;
+                else if (this.entityToAttack.getDistanceSqToEntity((Entity) this) > 256.0D && this.teleportDelay++ >= 30 && this.teleportToEntity(this.entityToAttack))
+                {
+                    this.teleportDelay = 0;
+                }
+            }
+            else
+            {
+                this.func_70819_e(false);
+                this.teleportDelay = 0;
             }
         }
 
-        super.c();
+        super.onLivingUpdate();
     }
 
-    protected boolean m() {
-        double d0 = this.locX + (this.random.nextDouble() - 0.5D) * 64.0D;
-        double d1 = this.locY + (double) (this.random.nextInt(64) - 32);
-        double d2 = this.locZ + (this.random.nextDouble() - 0.5D) * 64.0D;
-
-        return this.j(d0, d1, d2);
+    /**
+     * Teleport the enderman to a random nearby position
+     */
+    protected boolean teleportRandomly()
+    {
+        double var1 = this.posX + (this.rand.nextDouble() - 0.5D) * 64.0D;
+        double var3 = this.posY + (double)(this.rand.nextInt(64) - 32);
+        double var5 = this.posZ + (this.rand.nextDouble() - 0.5D) * 64.0D;
+        return this.teleportTo(var1, var3, var5);
     }
 
-    protected boolean p(Entity entity) {
-        Vec3D vec3d = this.world.getVec3DPool().create(this.locX - entity.locX, this.boundingBox.b + (double) (this.length / 2.0F) - entity.locY + (double) entity.getHeadHeight(), this.locZ - entity.locZ);
-
-        vec3d = vec3d.a();
-        double d0 = 16.0D;
-        double d1 = this.locX + (this.random.nextDouble() - 0.5D) * 8.0D - vec3d.c * d0;
-        double d2 = this.locY + (double) (this.random.nextInt(16) - 8) - vec3d.d * d0;
-        double d3 = this.locZ + (this.random.nextDouble() - 0.5D) * 8.0D - vec3d.e * d0;
-
-        return this.j(d1, d2, d3);
+    /**
+     * Teleport the enderman to another entity
+     */
+    protected boolean teleportToEntity(Entity par1Entity)
+    {
+        Vec3 var2 = this.worldObj.getWorldVec3Pool().getVecFromPool(this.posX - par1Entity.posX, this.boundingBox.minY + (double)(this.height / 2.0F) - par1Entity.posY + (double)par1Entity.getEyeHeight(), this.posZ - par1Entity.posZ);
+        var2 = var2.normalize();
+        double var3 = 16.0D;
+        double var5 = this.posX + (this.rand.nextDouble() - 0.5D) * 8.0D - var2.xCoord * var3;
+        double var7 = this.posY + (double)(this.rand.nextInt(16) - 8) - var2.yCoord * var3;
+        double var9 = this.posZ + (this.rand.nextDouble() - 0.5D) * 8.0D - var2.zCoord * var3;
+        return this.teleportTo(var5, var7, var9);
     }
 
-    protected boolean j(double d0, double d1, double d2) {
-        double d3 = this.locX;
-        double d4 = this.locY;
-        double d5 = this.locZ;
+    /**
+     * Teleport the enderman
+     */
+    protected boolean teleportTo(double par1, double par3, double par5)
+    {
+        double var7 = this.posX;
+        double var9 = this.posY;
+        double var11 = this.posZ;
+        this.posX = par1;
+        this.posY = par3;
+        this.posZ = par5;
+        boolean var13 = false;
+        int var14 = MathHelper.floor_double(this.posX);
+        int var15 = MathHelper.floor_double(this.posY);
+        int var16 = MathHelper.floor_double(this.posZ);
+        int var18;
 
-        this.locX = d0;
-        this.locY = d1;
-        this.locZ = d2;
-        boolean flag = false;
-        int i = MathHelper.floor(this.locX);
-        int j = MathHelper.floor(this.locY);
-        int k = MathHelper.floor(this.locZ);
-        int l;
+        if (this.worldObj.blockExists(var14, var15, var16))
+        {
+            boolean var17 = false;
 
-        if (this.world.isLoaded(i, j, k)) {
-            boolean flag1 = false;
+            while (!var17 && var15 > 0)
+            {
+                var18 = this.worldObj.getBlockId(var14, var15 - 1, var16);
 
-            while (!flag1 && j > 0) {
-                l = this.world.getTypeId(i, j - 1, k);
-                if (l != 0 && Block.byId[l].material.isSolid()) {
-                    flag1 = true;
-                } else {
-                    --this.locY;
-                    --j;
+                if (var18 != 0 && Block.blocksList[var18].blockMaterial.blocksMovement())
+                {
+                    var17 = true;
+                }
+                else
+                {
+                    --this.posY;
+                    --var15;
                 }
             }
 
-            if (flag1) {
+            if (var17)
+            {
                 // CraftBukkit start - teleport event
-                EntityTeleportEvent teleport = new EntityTeleportEvent(this.getBukkitEntity(), new Location(this.world.getWorld(), d3, d4, d5), new Location(this.world.getWorld(), this.locX, this.locY, this.locZ));
-                this.world.getServer().getPluginManager().callEvent(teleport);
-                if (teleport.isCancelled()) {
+                EntityTeleportEvent teleport = new EntityTeleportEvent(this.getBukkitEntity(), new Location(this.worldObj.getWorld(), var7, var9, var11), new Location(this.worldObj.getWorld(), this.posX, this.posY, this.posZ));
+                this.worldObj.getServer().getPluginManager().callEvent(teleport);
+
+                if (teleport.isCancelled())
+                {
                     return false;
                 }
 
@@ -235,62 +327,89 @@ public class EntityEnderman extends EntityMonster {
                 this.setPosition(to.getX(), to.getY(), to.getZ());
                 // CraftBukkit end
 
-                if (this.world.getCubes(this, this.boundingBox).isEmpty() && !this.world.containsLiquid(this.boundingBox)) {
-                    flag = true;
+                if (this.worldObj.getCollidingBoundingBoxes(this, this.boundingBox).isEmpty() && !this.worldObj.isAnyLiquid(this.boundingBox))
+                {
+                    var13 = true;
                 }
             }
         }
 
-        if (!flag) {
-            this.setPosition(d3, d4, d5);
+        if (!var13)
+        {
+            this.setPosition(var7, var9, var11);
             return false;
-        } else {
-            short short1 = 128;
+        }
+        else
+        {
+            short var30 = 128;
 
-            for (l = 0; l < short1; ++l) {
-                double d6 = (double) l / ((double) short1 - 1.0D);
-                float f = (this.random.nextFloat() - 0.5F) * 0.2F;
-                float f1 = (this.random.nextFloat() - 0.5F) * 0.2F;
-                float f2 = (this.random.nextFloat() - 0.5F) * 0.2F;
-                double d7 = d3 + (this.locX - d3) * d6 + (this.random.nextDouble() - 0.5D) * (double) this.width * 2.0D;
-                double d8 = d4 + (this.locY - d4) * d6 + this.random.nextDouble() * (double) this.length;
-                double d9 = d5 + (this.locZ - d5) * d6 + (this.random.nextDouble() - 0.5D) * (double) this.width * 2.0D;
-
-                this.world.addParticle("portal", d7, d8, d9, (double) f, (double) f1, (double) f2);
+            for (var18 = 0; var18 < var30; ++var18)
+            {
+                double var19 = (double)var18 / ((double)var30 - 1.0D);
+                float var21 = (this.rand.nextFloat() - 0.5F) * 0.2F;
+                float var22 = (this.rand.nextFloat() - 0.5F) * 0.2F;
+                float var23 = (this.rand.nextFloat() - 0.5F) * 0.2F;
+                double var24 = var7 + (this.posX - var7) * var19 + (this.rand.nextDouble() - 0.5D) * (double)this.width * 2.0D;
+                double var26 = var9 + (this.posY - var9) * var19 + this.rand.nextDouble() * (double)this.height;
+                double var28 = var11 + (this.posZ - var11) * var19 + (this.rand.nextDouble() - 0.5D) * (double)this.width * 2.0D;
+                this.worldObj.spawnParticle("portal", var24, var26, var28, (double)var21, (double)var22, (double)var23);
             }
 
-            this.world.makeSound(d3, d4, d5, "mob.endermen.portal", 1.0F, 1.0F);
-            this.makeSound("mob.endermen.portal", 1.0F, 1.0F);
+            this.worldObj.playSoundEffect(var7, var9, var11, "mob.endermen.portal", 1.0F, 1.0F);
+            this.playSound("mob.endermen.portal", 1.0F, 1.0F);
             return true;
         }
     }
 
-    protected String aY() {
-        return this.q() ? "mob.endermen.scream" : "mob.endermen.idle";
+    /**
+     * Returns the sound this mob makes while it's alive.
+     */
+    protected String getLivingSound()
+    {
+        return this.func_70823_r() ? "mob.endermen.scream" : "mob.endermen.idle";
     }
 
-    protected String aZ() {
+    /**
+     * Returns the sound this mob makes when it is hurt.
+     */
+    protected String getHurtSound()
+    {
         return "mob.endermen.hit";
     }
 
-    protected String ba() {
+    /**
+     * Returns the sound this mob makes on death.
+     */
+    protected String getDeathSound()
+    {
         return "mob.endermen.death";
     }
 
-    protected int getLootId() {
-        return Item.ENDER_PEARL.id;
+    /**
+     * Returns the item ID for the item the mob drops on death.
+     */
+    protected int getDropItemId()
+    {
+        return Item.enderPearl.itemID;
     }
 
-    protected void dropDeathLoot(boolean flag, int i) {
-        int j = this.getLootId();
+    /**
+     * Drop 0-2 items of this living's type. @param par1 - Whether this entity has recently been hit by a player. @param
+     * par2 - Level of Looting used to kill this mob.
+     */
+    protected void dropFewItems(boolean par1, int par2)
+    {
+        int var3 = this.getDropItemId();
 
-        if (j > 0) {
+        if (var3 > 0)
+        {
             // CraftBukkit start - whole method
             java.util.List<org.bukkit.inventory.ItemStack> loot = new java.util.ArrayList<org.bukkit.inventory.ItemStack>();
-            int count = this.random.nextInt(2 + i);
+            int count = this.rand.nextInt(2 + par2);
 
-            if ((j > 0) && (count > 0)) {
-                loot.add(new org.bukkit.inventory.ItemStack(j, count));
+            if ((var3 > 0) && (count > 0))
+            {
+                loot.add(new org.bukkit.inventory.ItemStack(var3, count));
             }
 
             CraftEventFactory.callEntityDeathEvent(this, loot);
@@ -298,67 +417,103 @@ public class EntityEnderman extends EntityMonster {
         }
     }
 
-    public void setCarriedId(int i) {
-        this.datawatcher.watch(16, Byte.valueOf((byte) (i & 255)));
+    /**
+     * Set the id of the block an enderman carries
+     */
+    public void setCarried(int par1)
+    {
+        this.dataWatcher.updateObject(16, Byte.valueOf((byte)(par1 & 255)));
     }
 
-    public int getCarriedId() {
-        return this.datawatcher.getByte(16);
+    /**
+     * Get the id of the block an enderman carries
+     */
+    public int getCarried()
+    {
+        return this.dataWatcher.getWatchableObjectByte(16);
     }
 
-    public void setCarriedData(int i) {
-        this.datawatcher.watch(17, Byte.valueOf((byte) (i & 255)));
+    /**
+     * Set the metadata of the block an enderman carries
+     */
+    public void setCarryingData(int par1)
+    {
+        this.dataWatcher.updateObject(17, Byte.valueOf((byte)(par1 & 255)));
     }
 
-    public int getCarriedData() {
-        return this.datawatcher.getByte(17);
+    /**
+     * Get the metadata of the block an enderman carries
+     */
+    public int getCarryingData()
+    {
+        return this.dataWatcher.getWatchableObjectByte(17);
     }
 
-    public boolean damageEntity(DamageSource damagesource, int i) {
-        if (this.isInvulnerable()) {
+    /**
+     * Called when the entity is attacked.
+     */
+    public boolean attackEntityFrom(DamageSource par1DamageSource, int par2)
+    {
+        if (this.isEntityInvulnerable())
+        {
             return false;
-        } else {
-            this.f(true);
-            if (damagesource instanceof EntityDamageSourceIndirect) {
-                for (int j = 0; j < 64; ++j) {
-                    if (this.m()) {
+        }
+        else
+        {
+            this.func_70819_e(true);
+
+            if (par1DamageSource instanceof EntityDamageSourceIndirect)
+            {
+                for (int var3 = 0; var3 < 64; ++var3)
+                {
+                    if (this.teleportRandomly())
+                    {
                         return true;
                     }
                 }
 
                 return false;
-            } else {
-                return super.damageEntity(damagesource, i);
+            }
+            else
+            {
+                return super.attackEntityFrom(par1DamageSource, par2);
             }
         }
     }
 
-    public boolean q() {
-        return this.datawatcher.getByte(18) > 0;
+    public boolean func_70823_r()
+    {
+        return this.dataWatcher.getWatchableObjectByte(18) > 0;
     }
 
-    public void f(boolean flag) {
-        this.datawatcher.watch(18, Byte.valueOf((byte) (flag ? 1 : 0)));
+    public void func_70819_e(boolean par1)
+    {
+        this.dataWatcher.updateObject(18, Byte.valueOf((byte)(par1 ? 1 : 0)));
     }
 
-    public int c(Entity entity) {
+    /**
+     * Returns the amount of damage a mob should deal.
+     */
+    public int getAttackStrength(Entity par1Entity)
+    {
         return 7;
     }
 
-    static {
-        d[Block.GRASS.id] = true;
-        d[Block.DIRT.id] = true;
-        d[Block.SAND.id] = true;
-        d[Block.GRAVEL.id] = true;
-        d[Block.YELLOW_FLOWER.id] = true;
-        d[Block.RED_ROSE.id] = true;
-        d[Block.BROWN_MUSHROOM.id] = true;
-        d[Block.RED_MUSHROOM.id] = true;
-        d[Block.TNT.id] = true;
-        d[Block.CACTUS.id] = true;
-        d[Block.CLAY.id] = true;
-        d[Block.PUMPKIN.id] = true;
-        d[Block.MELON.id] = true;
-        d[Block.MYCEL.id] = true;
+    static
+    {
+        carriableBlocks[Block.grass.blockID] = true;
+        carriableBlocks[Block.dirt.blockID] = true;
+        carriableBlocks[Block.sand.blockID] = true;
+        carriableBlocks[Block.gravel.blockID] = true;
+        carriableBlocks[Block.plantYellow.blockID] = true;
+        carriableBlocks[Block.plantRed.blockID] = true;
+        carriableBlocks[Block.mushroomBrown.blockID] = true;
+        carriableBlocks[Block.mushroomRed.blockID] = true;
+        carriableBlocks[Block.tnt.blockID] = true;
+        carriableBlocks[Block.cactus.blockID] = true;
+        carriableBlocks[Block.blockClay.blockID] = true;
+        carriableBlocks[Block.pumpkin.blockID] = true;
+        carriableBlocks[Block.melon.blockID] = true;
+        carriableBlocks[Block.mycelium.blockID] = true;
     }
 }

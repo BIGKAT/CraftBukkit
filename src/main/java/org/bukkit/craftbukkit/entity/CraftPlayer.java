@@ -15,7 +15,6 @@ import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import net.minecraft.server.*;
 
 import org.apache.commons.lang.Validate;
 import org.apache.commons.lang.NotImplementedException;
@@ -60,7 +59,7 @@ public class CraftPlayer extends CraftHumanEntity implements Player {
     private final Map<String, Player> hiddenPlayers = new MapMaker().softValues().makeMap();
     private int hash = 0;
 
-    public CraftPlayer(CraftServer server, EntityPlayer entity) {
+    public CraftPlayer(CraftServer server, net.minecraft.entity.player.EntityPlayerMP/*was:EntityPlayer*/ entity) {
         super(server, entity);
 
         firstPlayed = System.currentTimeMillis();
@@ -68,7 +67,7 @@ public class CraftPlayer extends CraftHumanEntity implements Player {
 
     @Override
     public boolean isOp() {
-        return server.getHandle().isOp(getName());
+        return server.getHandle().areCommandsAllowed/*was:isOp*/(getName());
     }
 
     @Override
@@ -76,18 +75,18 @@ public class CraftPlayer extends CraftHumanEntity implements Player {
         if (value == isOp()) return;
 
         if (value) {
-            server.getHandle().addOp(getName());
+            server.getHandle().addOp/*was:addOp*/(getName());
         } else {
-            server.getHandle().removeOp(getName());
+            server.getHandle().removeOp/*was:removeOp*/(getName());
         }
 
         perm.recalculatePermissions();
     }
 
     public boolean isOnline() {
-        for (Object obj : server.getHandle().players) {
-            EntityPlayer player = (EntityPlayer) obj;
-            if (player.name.equalsIgnoreCase(getName())) {
+        for (Object obj : server.getHandle().playerEntityList/*was:players*/) {
+            net.minecraft.entity.player.EntityPlayerMP/*was:EntityPlayer*/ player = (net.minecraft.entity.player.EntityPlayerMP/*was:EntityPlayer*/) obj;
+            if (player.username/*was:name*/.equalsIgnoreCase(getName())) {
                 return true;
             }
         }
@@ -95,9 +94,9 @@ public class CraftPlayer extends CraftHumanEntity implements Player {
     }
 
     public InetSocketAddress getAddress() {
-        if (getHandle().playerConnection == null) return null;
+        if (getHandle().playerNetServerHandler/*was:playerConnection*/ == null) return null;
 
-        SocketAddress addr = getHandle().playerConnection.networkManager.getSocketAddress();
+        SocketAddress addr = getHandle().playerNetServerHandler/*was:playerConnection*/.netManager/*was:networkManager*/.getSocketAddress/*was:getSocketAddress*/();
         if (addr instanceof InetSocketAddress) {
             return (InetSocketAddress) addr;
         } else {
@@ -124,9 +123,9 @@ public class CraftPlayer extends CraftHumanEntity implements Player {
     }
 
     public void sendRawMessage(String message) {
-        if (getHandle().playerConnection == null) return;
+        if (getHandle().playerNetServerHandler/*was:playerConnection*/ == null) return;
 
-        getHandle().playerConnection.sendPacket(new Packet3Chat(message));
+        getHandle().playerNetServerHandler/*was:playerConnection*/.sendPacketToPlayer/*was:sendPacket*/(new net.minecraft.network.packet.Packet3Chat/*was:Packet3Chat*/(message));
     }
 
     public void sendMessage(String message) {
@@ -169,8 +168,8 @@ public class CraftPlayer extends CraftHumanEntity implements Player {
         }
 
         // Collisions will make for invisible people
-        for (int i = 0; i < server.getHandle().players.size(); ++i) {
-            if (((EntityPlayer) server.getHandle().players.get(i)).listName.equals(name)) {
+        for (int i = 0; i < server.getHandle().playerEntityList/*was:players*/.size(); ++i) {
+            if (((net.minecraft.entity.player.EntityPlayerMP/*was:EntityPlayer*/) server.getHandle().playerEntityList/*was:players*/.get(i)).listName.equals(name)) {
                 throw new IllegalArgumentException(name + " is already assigned as a player list name for someone");
             }
         }
@@ -178,15 +177,15 @@ public class CraftPlayer extends CraftHumanEntity implements Player {
         getHandle().listName = name;
 
         // Change the name on the client side
-        Packet201PlayerInfo oldpacket = new Packet201PlayerInfo(oldName, false, 9999);
-        Packet201PlayerInfo packet = new Packet201PlayerInfo(name, true, getHandle().ping);
-        for (int i = 0; i < server.getHandle().players.size(); ++i) {
-            EntityPlayer entityplayer = (EntityPlayer) server.getHandle().players.get(i);
-            if (entityplayer.playerConnection == null) continue;
+        net.minecraft.network.packet.Packet201PlayerInfo/*was:Packet201PlayerInfo*/ oldpacket = new net.minecraft.network.packet.Packet201PlayerInfo/*was:Packet201PlayerInfo*/(oldName, false, 9999);
+        net.minecraft.network.packet.Packet201PlayerInfo/*was:Packet201PlayerInfo*/ packet = new net.minecraft.network.packet.Packet201PlayerInfo/*was:Packet201PlayerInfo*/(name, true, getHandle().ping/*was:ping*/);
+        for (int i = 0; i < server.getHandle().playerEntityList/*was:players*/.size(); ++i) {
+            net.minecraft.entity.player.EntityPlayerMP/*was:EntityPlayer*/ entityplayer = (net.minecraft.entity.player.EntityPlayerMP/*was:EntityPlayer*/) server.getHandle().playerEntityList/*was:players*/.get(i);
+            if (entityplayer.playerNetServerHandler/*was:playerConnection*/ == null) continue;
 
             if (entityplayer.getBukkitEntity().canSee(this)) {
-                entityplayer.playerConnection.sendPacket(oldpacket);
-                entityplayer.playerConnection.sendPacket(packet);
+                entityplayer.playerNetServerHandler/*was:playerConnection*/.sendPacketToPlayer/*was:sendPacket*/(oldpacket);
+                entityplayer.playerNetServerHandler/*was:playerConnection*/.sendPacketToPlayer/*was:sendPacket*/(packet);
             }
         }
     }
@@ -212,16 +211,16 @@ public class CraftPlayer extends CraftHumanEntity implements Player {
     }
 
     public void kickPlayer(String message) {
-        if (getHandle().playerConnection == null) return;
+        if (getHandle().playerNetServerHandler/*was:playerConnection*/ == null) return;
 
-        getHandle().playerConnection.disconnect(message == null ? "" : message);
+        getHandle().playerNetServerHandler/*was:playerConnection*/.kickPlayerFromServer/*was:disconnect*/(message == null ? "" : message);
     }
 
     public void setCompassTarget(Location loc) {
-        if (getHandle().playerConnection == null) return;
+        if (getHandle().playerNetServerHandler/*was:playerConnection*/ == null) return;
 
         // Do not directly assign here, from the packethandler we'll assign it.
-        getHandle().playerConnection.sendPacket(new Packet6SpawnPosition(loc.getBlockX(), loc.getBlockY(), loc.getBlockZ()));
+        getHandle().playerNetServerHandler/*was:playerConnection*/.sendPacketToPlayer/*was:sendPacket*/(new net.minecraft.network.packet.Packet6SpawnPosition/*was:Packet6SpawnPosition*/(loc.getBlockX(), loc.getBlockY(), loc.getBlockZ()));
     }
 
     public Location getCompassTarget() {
@@ -229,9 +228,9 @@ public class CraftPlayer extends CraftHumanEntity implements Player {
     }
 
     public void chat(String msg) {
-        if (getHandle().playerConnection == null) return;
+        if (getHandle().playerNetServerHandler/*was:playerConnection*/ == null) return;
 
-        getHandle().playerConnection.chat(msg, false);
+        getHandle().playerNetServerHandler/*was:playerConnection*/.chat(msg, false);
     }
 
     public boolean performCommand(String command) {
@@ -239,36 +238,36 @@ public class CraftPlayer extends CraftHumanEntity implements Player {
     }
 
     public void playNote(Location loc, byte instrument, byte note) {
-        if (getHandle().playerConnection == null) return;
+        if (getHandle().playerNetServerHandler/*was:playerConnection*/ == null) return;
 
-        int id = getHandle().world.getTypeId(loc.getBlockX(), loc.getBlockY(), loc.getBlockZ());
-        getHandle().playerConnection.sendPacket(new Packet54PlayNoteBlock(loc.getBlockX(), loc.getBlockY(), loc.getBlockZ(), id, instrument, note));
+        int id = getHandle().worldObj/*was:world*/.getBlockId/*was:getTypeId*/(loc.getBlockX(), loc.getBlockY(), loc.getBlockZ());
+        getHandle().playerNetServerHandler/*was:playerConnection*/.sendPacketToPlayer/*was:sendPacket*/(new net.minecraft.network.packet.Packet54PlayNoteBlock/*was:Packet54PlayNoteBlock*/(loc.getBlockX(), loc.getBlockY(), loc.getBlockZ(), id, instrument, note));
     }
 
     public void playNote(Location loc, Instrument instrument, Note note) {
-        if (getHandle().playerConnection == null) return;
+        if (getHandle().playerNetServerHandler/*was:playerConnection*/ == null) return;
 
-        int id = getHandle().world.getTypeId(loc.getBlockX(), loc.getBlockY(), loc.getBlockZ());
-        getHandle().playerConnection.sendPacket(new Packet54PlayNoteBlock(loc.getBlockX(), loc.getBlockY(), loc.getBlockZ(), id, instrument.getType(), note.getId()));
+        int id = getHandle().worldObj/*was:world*/.getBlockId/*was:getTypeId*/(loc.getBlockX(), loc.getBlockY(), loc.getBlockZ());
+        getHandle().playerNetServerHandler/*was:playerConnection*/.sendPacketToPlayer/*was:sendPacket*/(new net.minecraft.network.packet.Packet54PlayNoteBlock/*was:Packet54PlayNoteBlock*/(loc.getBlockX(), loc.getBlockY(), loc.getBlockZ(), id, instrument.getType(), note.getId()));
     }
 
     public void playSound(Location loc, Sound sound, float volume, float pitch) {
-        if (loc == null || sound == null || getHandle().playerConnection == null) return;
+        if (loc == null || sound == null || getHandle().playerNetServerHandler/*was:playerConnection*/ == null) return;
 
         double x = loc.getBlockX() + 0.5;
         double y = loc.getBlockY() + 0.5;
         double z = loc.getBlockZ() + 0.5;
 
-        Packet62NamedSoundEffect packet = new Packet62NamedSoundEffect(CraftSound.getSound(sound), x, y, z, volume, pitch);
-        getHandle().playerConnection.sendPacket(packet);
+        net.minecraft.network.packet.Packet62LevelSound/*was:Packet62NamedSoundEffect*/ packet = new net.minecraft.network.packet.Packet62LevelSound/*was:Packet62NamedSoundEffect*/(CraftSound.getSound(sound), x, y, z, volume, pitch);
+        getHandle().playerNetServerHandler/*was:playerConnection*/.sendPacketToPlayer/*was:sendPacket*/(packet);
     }
 
     public void playEffect(Location loc, Effect effect, int data) {
-        if (getHandle().playerConnection == null) return;
+        if (getHandle().playerNetServerHandler/*was:playerConnection*/ == null) return;
 
         int packetData = effect.getId();
-        Packet61WorldEvent packet = new Packet61WorldEvent(packetData, loc.getBlockX(), loc.getBlockY(), loc.getBlockZ(), data, false);
-        getHandle().playerConnection.sendPacket(packet);
+        net.minecraft.network.packet.Packet61DoorChange/*was:Packet61WorldEvent*/ packet = new net.minecraft.network.packet.Packet61DoorChange/*was:Packet61WorldEvent*/(packetData, loc.getBlockX(), loc.getBlockY(), loc.getBlockZ(), data, false);
+        getHandle().playerNetServerHandler/*was:playerConnection*/.sendPacketToPlayer/*was:sendPacket*/(packet);
     }
 
     public <T> void playEffect(Location loc, Effect effect, T data) {
@@ -287,17 +286,17 @@ public class CraftPlayer extends CraftHumanEntity implements Player {
     }
 
     public void sendBlockChange(Location loc, int material, byte data) {
-        if (getHandle().playerConnection == null) return;
+        if (getHandle().playerNetServerHandler/*was:playerConnection*/ == null) return;
 
-        Packet53BlockChange packet = new Packet53BlockChange(loc.getBlockX(), loc.getBlockY(), loc.getBlockZ(), ((CraftWorld) loc.getWorld()).getHandle());
+        net.minecraft.network.packet.Packet53BlockChange/*was:Packet53BlockChange*/ packet = new net.minecraft.network.packet.Packet53BlockChange/*was:Packet53BlockChange*/(loc.getBlockX(), loc.getBlockY(), loc.getBlockZ(), ((CraftWorld) loc.getWorld()).getHandle());
 
-        packet.material = material;
-        packet.data = data;
-        getHandle().playerConnection.sendPacket(packet);
+        packet.type/*was:material*/ = material;
+        packet.metadata/*was:data*/ = data;
+        getHandle().playerNetServerHandler/*was:playerConnection*/.sendPacketToPlayer/*was:sendPacket*/(packet);
     }
 
     public boolean sendChunkChange(Location loc, int sx, int sy, int sz, byte[] data) {
-        if (getHandle().playerConnection == null) return false;
+        if (getHandle().playerNetServerHandler/*was:playerConnection*/ == null) return false;
 
         /*
         int x = loc.getBlockX();
@@ -330,7 +329,7 @@ public class CraftPlayer extends CraftHumanEntity implements Player {
     }
 
     public void sendMap(MapView map) {
-        if (getHandle().playerConnection == null) return;
+        if (getHandle().playerNetServerHandler/*was:playerConnection*/ == null) return;
 
         RenderData data = ((CraftMapView) map).render(this);
         for (int x = 0; x < 128; ++x) {
@@ -339,24 +338,24 @@ public class CraftPlayer extends CraftHumanEntity implements Player {
             for (int y = 0; y < 128; ++y) {
                 bytes[y + 3] = data.buffer[y * 128 + x];
             }
-            Packet131ItemData packet = new Packet131ItemData((short) Material.MAP.getId(), map.getId(), bytes);
-            getHandle().playerConnection.sendPacket(packet);
+            net.minecraft.network.packet.Packet131MapData/*was:Packet131ItemData*/ packet = new net.minecraft.network.packet.Packet131MapData/*was:Packet131ItemData*/((short) Material.MAP.getId(), map.getId(), bytes);
+            getHandle().playerNetServerHandler/*was:playerConnection*/.sendPacketToPlayer/*was:sendPacket*/(packet);
         }
     }
 
     @Override
     public boolean teleport(Location location, PlayerTeleportEvent.TeleportCause cause) {
-        EntityPlayer entity = getHandle();
+        net.minecraft.entity.player.EntityPlayerMP/*was:EntityPlayer*/ entity = getHandle();
 
-        if (getHealth() == 0 || entity.dead) {
+        if (getHealth() == 0 || entity.isDead/*was:dead*/) {
             return false;
         }
 
-        if (entity.playerConnection == null || entity.playerConnection.disconnected) {
+        if (entity.playerNetServerHandler/*was:playerConnection*/ == null || entity.playerNetServerHandler/*was:playerConnection*/.connectionClosed/*was:disconnected*/) {
             return false;
         }
 
-        if (entity.vehicle != null || entity.passenger != null) {
+        if (entity.ridingEntity/*was:vehicle*/ != null || entity.riddenByEntity/*was:passenger*/ != null) {
             return false;
         }
 
@@ -378,16 +377,16 @@ public class CraftPlayer extends CraftHumanEntity implements Player {
         // Grab the new To Location dependent on whether the event was cancelled.
         to = event.getTo();
         // Grab the To and From World Handles.
-        WorldServer fromWorld = ((CraftWorld) from.getWorld()).getHandle();
-        WorldServer toWorld = ((CraftWorld) to.getWorld()).getHandle();
+        net.minecraft.world.WorldServer/*was:WorldServer*/ fromWorld = ((CraftWorld) from.getWorld()).getHandle();
+        net.minecraft.world.WorldServer/*was:WorldServer*/ toWorld = ((CraftWorld) to.getWorld()).getHandle();
 
         // Check if the fromWorld and toWorld are the same.
         if (fromWorld == toWorld) {
-            entity.playerConnection.teleport(to);
+            entity.playerNetServerHandler/*was:playerConnection*/.teleport(to);
         } else {
             // Close any foreign inventory
-            if (getHandle().activeContainer != getHandle().defaultContainer){
-                getHandle().closeInventory();
+            if (getHandle().openContainer/*was:activeContainer*/ != getHandle().inventoryContainer/*was:defaultContainer*/){
+                getHandle().closeScreen/*was:closeInventory*/();
             }
             server.getHandle().moveToWorld(entity, toWorld.dimension, true, to);
         }
@@ -395,31 +394,31 @@ public class CraftPlayer extends CraftHumanEntity implements Player {
     }
 
     public void setSneaking(boolean sneak) {
-        getHandle().setSneaking(sneak);
+        getHandle().setSneaking/*was:setSneaking*/(sneak);
     }
 
     public boolean isSneaking() {
-        return getHandle().isSneaking();
+        return getHandle().isSneaking/*was:isSneaking*/();
     }
 
     public boolean isSprinting() {
-        return getHandle().isSprinting();
+        return getHandle().isSprinting/*was:isSprinting*/();
     }
 
     public void setSprinting(boolean sprinting) {
-        getHandle().setSprinting(sprinting);
+        getHandle().setSprinting/*was:setSprinting*/(sprinting);
     }
 
     public void loadData() {
-        server.getHandle().playerFileData.load(getHandle());
+        server.getHandle().playerNBTManagerObj/*was:playerFileData*/.readPlayerData/*was:load*/(getHandle());
     }
 
     public void saveData() {
-        server.getHandle().playerFileData.save(getHandle());
+        server.getHandle().playerNBTManagerObj/*was:playerFileData*/.writePlayerData/*was:save*/(getHandle());
     }
 
     public void updateInventory() {
-        getHandle().updateInventory(getHandle().activeContainer);
+        getHandle().sendContainerToPlayer/*was:updateInventory*/(getHandle().openContainer/*was:activeContainer*/);
     }
 
     public void setSleepingIgnored(boolean isSleeping) {
@@ -465,14 +464,14 @@ public class CraftPlayer extends CraftHumanEntity implements Player {
     }
 
     private void sendStatistic(int id, int amount) {
-        if (getHandle().playerConnection == null) return;
+        if (getHandle().playerNetServerHandler/*was:playerConnection*/ == null) return;
 
         while (amount > Byte.MAX_VALUE) {
             sendStatistic(id, Byte.MAX_VALUE);
             amount -= Byte.MAX_VALUE;
         }
 
-        getHandle().playerConnection.sendPacket(new Packet200Statistic(id, amount));
+        getHandle().playerNetServerHandler/*was:playerConnection*/.sendPacketToPlayer/*was:sendPacket*/(new net.minecraft.network.packet.Packet200Statistic/*was:Packet200Statistic*/(id, amount));
     }
 
     public void setPlayerTime(long time, boolean relative) {
@@ -497,35 +496,35 @@ public class CraftPlayer extends CraftHumanEntity implements Player {
     }
 
     public boolean isBanned() {
-        return server.getHandle().getNameBans().isBanned(getName().toLowerCase());
+        return server.getHandle().getBannedPlayers/*was:getNameBans*/().isBanned/*was:isBanned*/(getName().toLowerCase());
     }
 
     public void setBanned(boolean value) {
         if (value) {
-            BanEntry entry = new BanEntry(getName().toLowerCase());
-            server.getHandle().getNameBans().add(entry);
+            net.minecraft.server.management.BanEntry/*was:BanEntry*/ entry = new net.minecraft.server.management.BanEntry/*was:BanEntry*/(getName().toLowerCase());
+            server.getHandle().getBannedPlayers/*was:getNameBans*/().put/*was:add*/(entry);
         } else {
-            server.getHandle().getNameBans().remove(getName().toLowerCase());
+            server.getHandle().getBannedPlayers/*was:getNameBans*/().remove/*was:remove*/(getName().toLowerCase());
         }
 
-        server.getHandle().getNameBans().save();
+        server.getHandle().getBannedPlayers/*was:getNameBans*/().saveToFileWithHeader/*was:save*/();
     }
 
     public boolean isWhitelisted() {
-        return server.getHandle().getWhitelisted().contains(getName().toLowerCase());
+        return server.getHandle().getWhiteListedPlayers/*was:getWhitelisted*/().contains(getName().toLowerCase());
     }
 
     public void setWhitelisted(boolean value) {
         if (value) {
-            server.getHandle().addWhitelist(getName().toLowerCase());
+            server.getHandle().addToWhiteList/*was:addWhitelist*/(getName().toLowerCase());
         } else {
-            server.getHandle().removeWhitelist(getName().toLowerCase());
+            server.getHandle().removeFromWhitelist/*was:removeWhitelist*/(getName().toLowerCase());
         }
     }
 
     @Override
     public void setGameMode(GameMode mode) {
-        if (getHandle().playerConnection == null) return;
+        if (getHandle().playerNetServerHandler/*was:playerConnection*/ == null) return;
 
         if (mode == null) {
             throw new IllegalArgumentException("Mode cannot be null");
@@ -538,78 +537,78 @@ public class CraftPlayer extends CraftHumanEntity implements Player {
                 return;
             }
 
-            getHandle().playerInteractManager.setGameMode(EnumGamemode.a(mode.getValue()));
-            getHandle().playerConnection.sendPacket(new Packet70Bed(3, mode.getValue()));
+            getHandle().theItemInWorldManager/*was:playerInteractManager*/.setGameType/*was:setGameMode*/(net.minecraft.world.EnumGameType/*was:EnumGamemode*/.getByID/*was:a*/(mode.getValue()));
+            getHandle().playerNetServerHandler/*was:playerConnection*/.sendPacketToPlayer/*was:sendPacket*/(new net.minecraft.network.packet.Packet70GameEvent/*was:Packet70Bed*/(3, mode.getValue()));
         }
     }
 
     @Override
     public GameMode getGameMode() {
-        return GameMode.getByValue(getHandle().playerInteractManager.getGameMode().a());
+        return GameMode.getByValue(getHandle().theItemInWorldManager/*was:playerInteractManager*/.getGameType/*was:getGameMode*/().getID/*was:a*/());
     }
 
     public void giveExp(int exp) {
-        getHandle().giveExp(exp);
+        getHandle().addExperience/*was:giveExp*/(exp);
     }
 
     public void giveExpLevels(int levels) {
-        getHandle().levelDown(levels);
+        getHandle().addExperienceLevel/*was:levelDown*/(levels);
     }
 
     public float getExp() {
-        return getHandle().exp;
+        return getHandle().experience/*was:exp*/;
     }
 
     public void setExp(float exp) {
-        getHandle().exp = exp;
-        getHandle().lastSentExp = -1;
+        getHandle().experience/*was:exp*/ = exp;
+        getHandle().lastExperience/*was:lastSentExp*/ = -1;
     }
 
     public int getLevel() {
-        return getHandle().expLevel;
+        return getHandle().experienceLevel/*was:expLevel*/;
     }
 
     public void setLevel(int level) {
-        getHandle().expLevel = level;
-        getHandle().lastSentExp = -1;
+        getHandle().experienceLevel/*was:expLevel*/ = level;
+        getHandle().lastExperience/*was:lastSentExp*/ = -1;
     }
 
     public int getTotalExperience() {
-        return getHandle().expTotal;
+        return getHandle().experienceTotal/*was:expTotal*/;
     }
 
     public void setTotalExperience(int exp) {
-        getHandle().expTotal = exp;
+        getHandle().experienceTotal/*was:expTotal*/ = exp;
     }
 
     public float getExhaustion() {
-        return getHandle().getFoodData().exhaustionLevel;
+        return getHandle().getFoodStats/*was:getFoodData*/().foodExhaustionLevel/*was:exhaustionLevel*/;
     }
 
     public void setExhaustion(float value) {
-        getHandle().getFoodData().exhaustionLevel = value;
+        getHandle().getFoodStats/*was:getFoodData*/().foodExhaustionLevel/*was:exhaustionLevel*/ = value;
     }
 
     public float getSaturation() {
-        return getHandle().getFoodData().saturationLevel;
+        return getHandle().getFoodStats/*was:getFoodData*/().foodSaturationLevel/*was:saturationLevel*/;
     }
 
     public void setSaturation(float value) {
-        getHandle().getFoodData().saturationLevel = value;
+        getHandle().getFoodStats/*was:getFoodData*/().foodSaturationLevel/*was:saturationLevel*/ = value;
     }
 
     public int getFoodLevel() {
-        return getHandle().getFoodData().foodLevel;
+        return getHandle().getFoodStats/*was:getFoodData*/().foodLevel/*was:foodLevel*/;
     }
 
     public void setFoodLevel(int value) {
-        getHandle().getFoodData().foodLevel = value;
+        getHandle().getFoodStats/*was:getFoodData*/().foodLevel/*was:foodLevel*/ = value;
     }
 
     public Location getBedSpawnLocation() {
         World world = getServer().getWorld(getHandle().spawnWorld);
-        if ((world != null) && (getHandle().getBed() != null)) {
-            return new Location(world, getHandle().getBed().x, getHandle().getBed().y, getHandle().getBed().z);
+        if ((world != null) && (getHandle().getBedLocation/*was:getBed*/() != null)) {
+            return new Location(world, getHandle().getBedLocation/*was:getBed*/().posX/*was:x*/, getHandle().getBedLocation/*was:getBed*/().posY/*was:y*/, getHandle().getBedLocation/*was:getBed*/().posZ/*was:z*/);
         }
         return null;
     }
@@ -620,47 +619,47 @@ public class CraftPlayer extends CraftHumanEntity implements Player {
 
     public void setBedSpawnLocation(Location location, boolean override) {
         if (location == null) {
-            getHandle().setRespawnPosition(null, override);
+            getHandle().setSpawnChunk/*was:setRespawnPosition*/(null, override);
         } else {
-            getHandle().setRespawnPosition(new ChunkCoordinates(location.getBlockX(), location.getBlockY(), location.getBlockZ()), override);
+            getHandle().setSpawnChunk/*was:setRespawnPosition*/(new net.minecraft.util.ChunkCoordinates/*was:ChunkCoordinates*/(location.getBlockX(), location.getBlockY(), location.getBlockZ()), override);
             getHandle().spawnWorld = location.getWorld().getName();
         }
     }
 
     public void hidePlayer(Player player) {
         Validate.notNull(player, "hidden player cannot be null");
-        if (getHandle().playerConnection == null) return;
+        if (getHandle().playerNetServerHandler/*was:playerConnection*/ == null) return;
         if (equals(player)) return;
         if (hiddenPlayers.containsKey(player.getName())) return;
         hiddenPlayers.put(player.getName(), player);
 
         //remove this player from the hidden player's EntityTrackerEntry
-        EntityTracker tracker = ((WorldServer) entity.world).tracker;
-        EntityPlayer other = ((CraftPlayer) player).getHandle();
-        EntityTrackerEntry entry = (EntityTrackerEntry) tracker.trackedEntities.get(other.id);
+        net.minecraft.entity.EntityTracker/*was:EntityTracker*/ tracker = ((net.minecraft.world.WorldServer/*was:WorldServer*/) entity.worldObj/*was:world*/).theEntityTracker/*was:tracker*/;
+        net.minecraft.entity.player.EntityPlayerMP/*was:EntityPlayer*/ other = ((CraftPlayer) player).getHandle();
+        net.minecraft.entity.EntityTrackerEntry/*was:EntityTrackerEntry*/ entry = (net.minecraft.entity.EntityTrackerEntry/*was:EntityTrackerEntry*/) tracker.trackedEntityIDs/*was:trackedEntities*/.lookup/*was:get*/(other.entityId/*was:id*/);
         if (entry != null) {
-            entry.clear(getHandle());
+            entry.removePlayerFromTracker/*was:clear*/(getHandle());
         }
 
         //remove the hidden player from this player user list
-        getHandle().playerConnection.sendPacket(new Packet201PlayerInfo(player.getPlayerListName(), false, 9999));
+        getHandle().playerNetServerHandler/*was:playerConnection*/.sendPacketToPlayer/*was:sendPacket*/(new net.minecraft.network.packet.Packet201PlayerInfo/*was:Packet201PlayerInfo*/(player.getPlayerListName(), false, 9999));
     }
 
     public void showPlayer(Player player) {
         Validate.notNull(player, "shown player cannot be null");
-        if (getHandle().playerConnection == null) return;
+        if (getHandle().playerNetServerHandler/*was:playerConnection*/ == null) return;
         if (equals(player)) return;
         if (!hiddenPlayers.containsKey(player.getName())) return;
         hiddenPlayers.remove(player.getName());
 
-        EntityTracker tracker = ((WorldServer) entity.world).tracker;
-        EntityPlayer other = ((CraftPlayer) player).getHandle();
-        EntityTrackerEntry entry = (EntityTrackerEntry) tracker.trackedEntities.get(other.id);
-        if (entry != null && !entry.trackedPlayers.contains(getHandle())) {
-            entry.updatePlayer(getHandle());
+        net.minecraft.entity.EntityTracker/*was:EntityTracker*/ tracker = ((net.minecraft.world.WorldServer/*was:WorldServer*/) entity.worldObj/*was:world*/).theEntityTracker/*was:tracker*/;
+        net.minecraft.entity.player.EntityPlayerMP/*was:EntityPlayer*/ other = ((CraftPlayer) player).getHandle();
+        net.minecraft.entity.EntityTrackerEntry/*was:EntityTrackerEntry*/ entry = (net.minecraft.entity.EntityTrackerEntry/*was:EntityTrackerEntry*/) tracker.trackedEntityIDs/*was:trackedEntities*/.lookup/*was:get*/(other.entityId/*was:id*/);
+        if (entry != null && !entry.trackedPlayers/*was:trackedPlayers*/.contains(getHandle())) {
+            entry.tryStartWachingThis/*was:updatePlayer*/(getHandle());
         }
 
-        getHandle().playerConnection.sendPacket(new Packet201PlayerInfo(player.getPlayerListName(), true, getHandle().ping));
+        getHandle().playerNetServerHandler/*was:playerConnection*/.sendPacketToPlayer/*was:sendPacket*/(new net.minecraft.network.packet.Packet201PlayerInfo/*was:Packet201PlayerInfo*/(player.getPlayerListName(), true, getHandle().ping/*was:ping*/));
     }
 
     public boolean canSee(Player player) {
@@ -680,11 +679,11 @@ public class CraftPlayer extends CraftHumanEntity implements Player {
     }
 
     @Override
-    public EntityPlayer getHandle() {
-        return (EntityPlayer) entity;
+    public net.minecraft.entity.player.EntityPlayerMP/*was:EntityPlayer*/ getHandle() {
+        return (net.minecraft.entity.player.EntityPlayerMP/*was:EntityPlayer*/) entity;
     }
 
-    public void setHandle(final EntityPlayer entity) {
+    public void setHandle(final net.minecraft.entity.player.EntityPlayerMP/*was:EntityPlayer*/ entity) {
         super.setHandle(entity);
     }
 
@@ -717,41 +716,41 @@ public class CraftPlayer extends CraftHumanEntity implements Player {
         this.firstPlayed = firstPlayed;
     }
 
-    public void readExtraData(NBTTagCompound nbttagcompound) {
+    public void readExtraData(net.minecraft.nbt.NBTTagCompound/*was:NBTTagCompound*/ nbttagcompound) {
         hasPlayedBefore = true;
-        if (nbttagcompound.hasKey("bukkit")) {
-            NBTTagCompound data = nbttagcompound.getCompound("bukkit");
+        if (nbttagcompound.hasKey/*was:hasKey*/("bukkit")) {
+            net.minecraft.nbt.NBTTagCompound/*was:NBTTagCompound*/ data = nbttagcompound.getCompoundTag/*was:getCompound*/("bukkit");
 
-            if (data.hasKey("firstPlayed")) {
-                firstPlayed = data.getLong("firstPlayed");
-                lastPlayed = data.getLong("lastPlayed");
+            if (data.hasKey/*was:hasKey*/("firstPlayed")) {
+                firstPlayed = data.getLong/*was:getLong*/("firstPlayed");
+                lastPlayed = data.getLong/*was:getLong*/("lastPlayed");
             }
 
-            if (data.hasKey("newExp")) {
-                EntityPlayer handle = getHandle();
-                handle.newExp = data.getInt("newExp");
-                handle.newTotalExp = data.getInt("newTotalExp");
-                handle.newLevel = data.getInt("newLevel");
-                handle.expToDrop = data.getInt("expToDrop");
-                handle.keepLevel = data.getBoolean("keepLevel");
+            if (data.hasKey/*was:hasKey*/("newExp")) {
+                net.minecraft.entity.player.EntityPlayerMP/*was:EntityPlayer*/ handle = getHandle();
+                handle.newExp = data.getInteger/*was:getInt*/("newExp");
+                handle.newTotalExp = data.getInteger/*was:getInt*/("newTotalExp");
+                handle.newLevel = data.getInteger/*was:getInt*/("newLevel");
+                handle.expToDrop = data.getInteger/*was:getInt*/("expToDrop");
+                handle.keepLevel = data.getBoolean/*was:getBoolean*/("keepLevel");
             }
         }
     }
 
-    public void setExtraData(NBTTagCompound nbttagcompound) {
-        if (!nbttagcompound.hasKey("bukkit")) {
-            nbttagcompound.setCompound("bukkit", new NBTTagCompound());
+    public void setExtraData(net.minecraft.nbt.NBTTagCompound/*was:NBTTagCompound*/ nbttagcompound) {
+        if (!nbttagcompound.hasKey/*was:hasKey*/("bukkit")) {
+            nbttagcompound.setCompoundTag/*was:setCompound*/("bukkit", new net.minecraft.nbt.NBTTagCompound/*was:NBTTagCompound*/());
         }
 
-        NBTTagCompound data = nbttagcompound.getCompound("bukkit");
-        EntityPlayer handle = getHandle();
-        data.setInt("newExp", handle.newExp);
-        data.setInt("newTotalExp", handle.newTotalExp);
-        data.setInt("newLevel", handle.newLevel);
-        data.setInt("expToDrop", handle.expToDrop);
-        data.setBoolean("keepLevel", handle.keepLevel);
-        data.setLong("firstPlayed", getFirstPlayed());
-        data.setLong("lastPlayed", System.currentTimeMillis());
+        net.minecraft.nbt.NBTTagCompound/*was:NBTTagCompound*/ data = nbttagcompound.getCompoundTag/*was:getCompound*/("bukkit");
+        net.minecraft.entity.player.EntityPlayerMP/*was:EntityPlayer*/ handle = getHandle();
+        data.setInteger/*was:setInt*/("newExp", handle.newExp);
+        data.setInteger/*was:setInt*/("newTotalExp", handle.newTotalExp);
+        data.setInteger/*was:setInt*/("newLevel", handle.newLevel);
+        data.setInteger/*was:setInt*/("expToDrop", handle.expToDrop);
+        data.setBoolean/*was:setBoolean*/("keepLevel", handle.keepLevel);
+        data.setLong/*was:setLong*/("firstPlayed", getFirstPlayed());
+        data.setLong/*was:setLong*/("lastPlayed", System.currentTimeMillis());
     }
 
     public boolean beginConversation(Conversation conversation) {
@@ -776,14 +775,14 @@ public class CraftPlayer extends CraftHumanEntity implements Player {
 
     public void sendPluginMessage(Plugin source, String channel, byte[] message) {
         StandardMessenger.validatePluginMessage(server.getMessenger(), source, channel, message);
-        if (getHandle().playerConnection == null) return;
+        if (getHandle().playerNetServerHandler/*was:playerConnection*/ == null) return;
 
         if (channels.contains(channel)) {
-            Packet250CustomPayload packet = new Packet250CustomPayload();
-            packet.tag = channel;
-            packet.length = message.length;
-            packet.data = message;
-            getHandle().playerConnection.sendPacket(packet);
+            net.minecraft.network.packet.Packet250CustomPayload/*was:Packet250CustomPayload*/ packet = new net.minecraft.network.packet.Packet250CustomPayload/*was:Packet250CustomPayload*/();
+            packet.channel/*was:tag*/ = channel;
+            packet.length/*was:length*/ = message.length;
+            packet.data/*was:data*/ = message;
+            getHandle().playerNetServerHandler/*was:playerConnection*/.sendPacketToPlayer/*was:sendPacket*/(packet);
         }
     }
 
@@ -793,7 +792,7 @@ public class CraftPlayer extends CraftHumanEntity implements Player {
         byte[] message = (url + "\0" + "16").getBytes();
         Validate.isTrue(message.length <= Messenger.MAX_MESSAGE_SIZE, "Texture pack URL is too long");
 
-        getHandle().playerConnection.sendPacket(new Packet250CustomPayload("MC|TPack", message));
+        getHandle().playerNetServerHandler/*was:playerConnection*/.sendPacketToPlayer/*was:sendPacket*/(new net.minecraft.network.packet.Packet250CustomPayload/*was:Packet250CustomPayload*/("MC|TPack", message));
     }
 
     public void addChannel(String channel) {
@@ -813,13 +812,13 @@ public class CraftPlayer extends CraftHumanEntity implements Player {
     }
 
     public void sendSupportedChannels() {
-        if (getHandle().playerConnection == null) return;
+        if (getHandle().playerNetServerHandler/*was:playerConnection*/ == null) return;
         Set<String> listening = server.getMessenger().getIncomingChannels();
 
         if (!listening.isEmpty()) {
-            Packet250CustomPayload packet = new Packet250CustomPayload();
+            net.minecraft.network.packet.Packet250CustomPayload/*was:Packet250CustomPayload*/ packet = new net.minecraft.network.packet.Packet250CustomPayload/*was:Packet250CustomPayload*/();
 
-            packet.tag = "REGISTER";
+            packet.channel/*was:tag*/ = "REGISTER";
             ByteArrayOutputStream stream = new ByteArrayOutputStream();
 
             for (String channel : listening) {
@@ -831,10 +830,10 @@ public class CraftPlayer extends CraftHumanEntity implements Player {
                 }
             }
 
-            packet.data = stream.toByteArray();
-            packet.length = packet.data.length;
+            packet.data/*was:data*/ = stream.toByteArray();
+            packet.length/*was:length*/ = packet.data/*was:data*/.length;
 
-            getHandle().playerConnection.sendPacket(packet);
+            getHandle().playerNetServerHandler/*was:playerConnection*/.sendPacketToPlayer/*was:sendPacket*/(packet);
         }
     }
 
@@ -863,11 +862,11 @@ public class CraftPlayer extends CraftHumanEntity implements Player {
 
     @Override
     public boolean setWindowProperty(Property prop, int value) {
-        Container container = getHandle().activeContainer;
+        net.minecraft.inventory.Container/*was:Container*/ container = getHandle().openContainer/*was:activeContainer*/;
         if (container.getBukkitView().getType() != prop.getType()) {
             return false;
         }
-        getHandle().setContainerData(container, prop.getId(), value);
+        getHandle().sendProgressBarUpdate/*was:setContainerData*/(container, prop.getId(), value);
         return true;
     }
 
@@ -877,7 +876,7 @@ public class CraftPlayer extends CraftHumanEntity implements Player {
     }
 
     public boolean isFlying() {
-        return getHandle().abilities.isFlying;
+        return getHandle().capabilities/*was:abilities*/.isFlying/*was:isFlying*/;
     }
 
     public void setFlying(boolean value) {
@@ -885,53 +884,53 @@ public class CraftPlayer extends CraftHumanEntity implements Player {
             throw new IllegalArgumentException("Cannot make player fly if getAllowFlight() is false");
         }
 
-        getHandle().abilities.isFlying = value;
-        getHandle().updateAbilities();
+        getHandle().capabilities/*was:abilities*/.isFlying/*was:isFlying*/ = value;
+        getHandle().sendPlayerAbilities/*was:updateAbilities*/();
     }
 
     public boolean getAllowFlight() {
-        return getHandle().abilities.canFly;
+        return getHandle().capabilities/*was:abilities*/.allowFlying/*was:canFly*/;
     }
 
     public void setAllowFlight(boolean value) {
         if (isFlying() && !value) {
-            getHandle().abilities.isFlying = false;
+            getHandle().capabilities/*was:abilities*/.isFlying/*was:isFlying*/ = false;
         }
 
-        getHandle().abilities.canFly = value;
-        getHandle().updateAbilities();
+        getHandle().capabilities/*was:abilities*/.allowFlying/*was:canFly*/ = value;
+        getHandle().sendPlayerAbilities/*was:updateAbilities*/();
     }
 
     @Override
     public int getNoDamageTicks() {
-        if (getHandle().invulnerableTicks > 0) {
-            return Math.max(getHandle().invulnerableTicks, getHandle().noDamageTicks);
+        if (getHandle().initialInvulnerability/*was:invulnerableTicks*/ > 0) {
+            return Math.max(getHandle().initialInvulnerability/*was:invulnerableTicks*/, getHandle().hurtResistantTime/*was:noDamageTicks*/);
         } else {
-            return getHandle().noDamageTicks;
+            return getHandle().hurtResistantTime/*was:noDamageTicks*/;
         }
     }
 
     public void setFlySpeed(float value) {
         validateSpeed(value);
-        EntityPlayer player = getHandle();
-        player.abilities.flySpeed = value / 2f;
-        player.updateAbilities();
+        net.minecraft.entity.player.EntityPlayerMP/*was:EntityPlayer*/ player = getHandle();
+        player.capabilities/*was:abilities*/.flySpeed/*was:flySpeed*/ = value / 2f;
+        player.sendPlayerAbilities/*was:updateAbilities*/();
 
     }
 
     public void setWalkSpeed(float value) {
         validateSpeed(value);
-        EntityPlayer player = getHandle();
-        player.abilities.walkSpeed = value / 2f;
-        player.updateAbilities();
+        net.minecraft.entity.player.EntityPlayerMP/*was:EntityPlayer*/ player = getHandle();
+        player.capabilities/*was:abilities*/.walkSpeed/*was:walkSpeed*/ = value / 2f;
+        player.sendPlayerAbilities/*was:updateAbilities*/();
     }
 
     public float getFlySpeed() {
-        return getHandle().abilities.flySpeed * 2f;
+        return getHandle().capabilities/*was:abilities*/.flySpeed/*was:flySpeed*/ * 2f;
     }
 
     public float getWalkSpeed() {
-        return getHandle().abilities.walkSpeed * 2f;
+        return getHandle().capabilities/*was:abilities*/.walkSpeed/*was:walkSpeed*/ * 2f;
     }
 
     private void validateSpeed(float value) {
@@ -948,11 +947,11 @@ public class CraftPlayer extends CraftHumanEntity implements Player {
 
     public void setMaxHealth(int amount) {
         super.setMaxHealth(amount);
-        getHandle().triggerHealthUpdate();
+        getHandle().setPlayerHealthUpdated/*was:triggerHealthUpdate*/();
     }
 
     public void resetMaxHealth() {
         super.resetMaxHealth();
-        getHandle().triggerHealthUpdate();
+        getHandle().setPlayerHealthUpdated/*was:triggerHealthUpdate*/();
     }
 }

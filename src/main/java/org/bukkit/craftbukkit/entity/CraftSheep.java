@@ -1,6 +1,5 @@
 package org.bukkit.craftbukkit.entity;
 
-import net.minecraft.server.EntitySheep;
 
 import org.bukkit.DyeColor;
 import org.bukkit.craftbukkit.CraftServer;
@@ -8,29 +7,29 @@ import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Sheep;
 
 public class CraftSheep extends CraftAnimals implements Sheep {
-    public CraftSheep(CraftServer server, EntitySheep entity) {
+    public CraftSheep(CraftServer server, net.minecraft.entity.passive.EntitySheep/*was:EntitySheep*/ entity) {
         super(server, entity);
     }
 
     public DyeColor getColor() {
-        return DyeColor.getByWoolData((byte) getHandle().getColor());
+        return DyeColor.getByWoolData((byte) getHandle().getFleeceColor/*was:getColor*/());
     }
 
     public void setColor(DyeColor color) {
-        getHandle().setColor(color.getWoolData());
+        getHandle().setFleeceColor/*was:setColor*/(color.getWoolData());
     }
 
     public boolean isSheared() {
-        return getHandle().isSheared();
+        return getHandle().getSheared/*was:isSheared*/();
     }
 
     public void setSheared(boolean flag) {
-        getHandle().setSheared(flag);
+        getHandle().setSheared/*was:setSheared*/(flag);
     }
 
     @Override
-    public EntitySheep getHandle() {
-        return (EntitySheep) entity;
+    public net.minecraft.entity.passive.EntitySheep/*was:EntitySheep*/ getHandle() {
+        return (net.minecraft.entity.passive.EntitySheep/*was:EntitySheep*/) entity;
     }
 
     @Override

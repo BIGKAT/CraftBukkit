@@ -1,4 +1,4 @@
-package net.minecraft.server;
+package net.minecraft.world.chunk.storage;
 
 import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
@@ -12,278 +12,383 @@ import java.util.zip.DeflaterOutputStream;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.InflaterInputStream;
 
-public class RegionFile {
+public class RegionFile
+{
+    private static final byte[] emptySector = new byte[4096];
+    private final File fileName;
+    private RandomAccessFile dataFile;
+    private final int[] offsets = new int[1024];
+    private final int[] chunkTimestamps = new int[1024];
+    private ArrayList sectorFree;
 
-    private static final byte[] a = new byte[4096];
-    private final File b;
-    private RandomAccessFile c;
-    private final int[] d = new int[1024];
-    private final int[] e = new int[1024];
-    private ArrayList f;
-    private int g;
-    private long h = 0L;
+    /** McRegion sizeDelta */
+    private int sizeDelta;
+    private long lastModified = 0L;
 
-    public RegionFile(File file1) {
-        this.b = file1;
-        this.g = 0;
+    public RegionFile(File par1File)
+    {
+        this.fileName = par1File;
+        this.sizeDelta = 0;
 
-        try {
-            if (file1.exists()) {
-                this.h = file1.lastModified();
+        try
+        {
+            if (par1File.exists())
+            {
+                this.lastModified = par1File.lastModified();
             }
 
-            this.c = new RandomAccessFile(file1, "rw");
-            int i;
+            this.dataFile = new RandomAccessFile(par1File, "rw");
+            int var2;
 
-            if (this.c.length() < 4096L) {
-                for (i = 0; i < 1024; ++i) {
-                    this.c.writeInt(0);
+            if (this.dataFile.length() < 4096L)
+            {
+                for (var2 = 0; var2 < 1024; ++var2)
+                {
+                    this.dataFile.writeInt(0);
                 }
 
-                for (i = 0; i < 1024; ++i) {
-                    this.c.writeInt(0);
+                for (var2 = 0; var2 < 1024; ++var2)
+                {
+                    this.dataFile.writeInt(0);
                 }
 
-                this.g += 8192;
+                this.sizeDelta += 8192;
             }
 
-            if ((this.c.length() & 4095L) != 0L) {
-                for (i = 0; (long) i < (this.c.length() & 4095L); ++i) {
-                    this.c.write(0);
+            if ((this.dataFile.length() & 4095L) != 0L)
+            {
+                for (var2 = 0; (long)var2 < (this.dataFile.length() & 4095L); ++var2)
+                {
+                    this.dataFile.write(0);
                 }
             }
 
-            i = (int) this.c.length() / 4096;
-            this.f = new ArrayList(i);
+            var2 = (int)this.dataFile.length() / 4096;
+            this.sectorFree = new ArrayList(var2);
+            int var3;
 
-            int j;
-
-            for (j = 0; j < i; ++j) {
-                this.f.add(Boolean.valueOf(true));
+            for (var3 = 0; var3 < var2; ++var3)
+            {
+                this.sectorFree.add(Boolean.valueOf(true));
             }
 
-            this.f.set(0, Boolean.valueOf(false));
-            this.f.set(1, Boolean.valueOf(false));
-            this.c.seek(0L);
+            this.sectorFree.set(0, Boolean.valueOf(false));
+            this.sectorFree.set(1, Boolean.valueOf(false));
+            this.dataFile.seek(0L);
+            int var4;
 
-            int k;
+            for (var3 = 0; var3 < 1024; ++var3)
+            {
+                var4 = this.dataFile.readInt();
+                this.offsets[var3] = var4;
 
-            for (j = 0; j < 1024; ++j) {
-                k = this.c.readInt();
-                this.d[j] = k;
-                if (k != 0 && (k >> 8) + (k & 255) <= this.f.size()) {
-                    for (int l = 0; l < (k & 255); ++l) {
-                        this.f.set((k >> 8) + l, Boolean.valueOf(false));
+                if (var4 != 0 && (var4 >> 8) + (var4 & 255) <= this.sectorFree.size())
+                {
+                    for (int var5 = 0; var5 < (var4 & 255); ++var5)
+                    {
+                        this.sectorFree.set((var4 >> 8) + var5, Boolean.valueOf(false));
                     }
                 }
             }
 
-            for (j = 0; j < 1024; ++j) {
-                k = this.c.readInt();
-                this.e[j] = k;
+            for (var3 = 0; var3 < 1024; ++var3)
+            {
+                var4 = this.dataFile.readInt();
+                this.chunkTimestamps[var3] = var4;
             }
-        } catch (IOException ioexception) {
-            ioexception.printStackTrace();
+        }
+        catch (IOException var6)
+        {
+            var6.printStackTrace();
         }
     }
 
     // CraftBukkit start - this is a copy (sort of) of the method below it, make sure they stay in sync
-    public synchronized boolean chunkExists(int i, int j) {
-        if (this.d(i, j)) {
-            return false;
-        } else {
-            try {
-                int k = this.e(i, j);
 
-                if (k == 0) {
+    public synchronized boolean chunkExists(int i, int j)
+    {
+        if (this.outOfBounds(i, j))
+        {
+            return false;
+        }
+        else
+        {
+            try
+            {
+                int k = this.getOffset(i, j);
+
+                if (k == 0)
+                {
                     return false;
-                } else {
+                }
+                else
+                {
                     int l = k >> 8;
                     int i1 = k & 255;
 
-                    if (l + i1 > this.f.size()) {
+                    if (l + i1 > this.sectorFree.size())
+                    {
                         return false;
                     }
 
-                    this.c.seek((long) (l * 4096));
-                    int j1 = this.c.readInt();
+                    this.dataFile.seek((long)(l * 4096));
+                    int j1 = this.dataFile.readInt();
 
-                    if (j1 > 4096 * i1 || j1 <= 0) {
+                    if (j1 > 4096 * i1 || j1 <= 0)
+                    {
                         return false;
                     }
 
-                    byte b0 = this.c.readByte();
-                    if (b0 == 1 || b0 == 2) {
+                    byte b0 = this.dataFile.readByte();
+
+                    if (b0 == 1 || b0 == 2)
+                    {
                         return true;
                     }
                 }
-            } catch (IOException ioexception) {
+            }
+            catch (IOException ioexception)
+            {
                 return false;
             }
         }
 
         return false;
     }
+
     // CraftBukkit end
 
-    public synchronized DataInputStream a(int i, int j) {
-        if (this.d(i, j)) {
+    /**
+     * args: x, y - get uncompressed chunk stream from the region file
+     */
+    public synchronized DataInputStream getChunkDataInputStream(int par1, int par2)
+    {
+        if (this.outOfBounds(par1, par2))
+        {
             return null;
-        } else {
-            try {
-                int k = this.e(i, j);
+        }
+        else
+        {
+            try
+            {
+                int var3 = this.getOffset(par1, par2);
 
-                if (k == 0) {
+                if (var3 == 0)
+                {
                     return null;
-                } else {
-                    int l = k >> 8;
-                    int i1 = k & 255;
+                }
+                else
+                {
+                    int var4 = var3 >> 8;
+                    int var5 = var3 & 255;
 
-                    if (l + i1 > this.f.size()) {
+                    if (var4 + var5 > this.sectorFree.size())
+                    {
                         return null;
-                    } else {
-                        this.c.seek((long) (l * 4096));
-                        int j1 = this.c.readInt();
+                    }
+                    else
+                    {
+                        this.dataFile.seek((long)(var4 * 4096));
+                        int var6 = this.dataFile.readInt();
 
-                        if (j1 > 4096 * i1) {
+                        if (var6 > 4096 * var5)
+                        {
                             return null;
-                        } else if (j1 <= 0) {
+                        }
+                        else if (var6 <= 0)
+                        {
                             return null;
-                        } else {
-                            byte b0 = this.c.readByte();
-                            byte[] abyte;
+                        }
+                        else
+                        {
+                            byte var7 = this.dataFile.readByte();
+                            byte[] var8;
 
-                            if (b0 == 1) {
-                                abyte = new byte[j1 - 1];
-                                this.c.read(abyte);
-                                return new DataInputStream(new BufferedInputStream(new GZIPInputStream(new ByteArrayInputStream(abyte))));
-                            } else if (b0 == 2) {
-                                abyte = new byte[j1 - 1];
-                                this.c.read(abyte);
-                                return new DataInputStream(new BufferedInputStream(new InflaterInputStream(new ByteArrayInputStream(abyte))));
-                            } else {
+                            if (var7 == 1)
+                            {
+                                var8 = new byte[var6 - 1];
+                                this.dataFile.read(var8);
+                                return new DataInputStream(new BufferedInputStream(new GZIPInputStream(new ByteArrayInputStream(var8))));
+                            }
+                            else if (var7 == 2)
+                            {
+                                var8 = new byte[var6 - 1];
+                                this.dataFile.read(var8);
+                                return new DataInputStream(new BufferedInputStream(new InflaterInputStream(new ByteArrayInputStream(var8))));
+                            }
+                            else
+                            {
                                 return null;
                             }
                         }
                     }
                 }
-            } catch (IOException ioexception) {
+            }
+            catch (IOException var9)
+            {
                 return null;
             }
         }
     }
 
-    public DataOutputStream b(int i, int j) {
-        return this.d(i, j) ? null : new DataOutputStream(new DeflaterOutputStream(new ChunkBuffer(this, i, j)));
+    /**
+     * args: x, z - get an output stream used to write chunk data, data is on disk when the returned stream is closed
+     */
+    public DataOutputStream getChunkDataOutputStream(int par1, int par2)
+    {
+        return this.outOfBounds(par1, par2) ? null : new DataOutputStream(new DeflaterOutputStream(new RegionFileChunkBuffer(this, par1, par2)));
     }
 
-    protected synchronized void a(int i, int j, byte[] abyte, int k) {
-        try {
-            int l = this.e(i, j);
-            int i1 = l >> 8;
-            int j1 = l & 255;
-            int k1 = (k + 5) / 4096 + 1;
+    /**
+     * args: x, z, data, length - write chunk data at (x, z) to disk
+     */
+    protected synchronized void write(int par1, int par2, byte[] par3ArrayOfByte, int par4)
+    {
+        try
+        {
+            int var5 = this.getOffset(par1, par2);
+            int var6 = var5 >> 8;
+            int var7 = var5 & 255;
+            int var8 = (par4 + 5) / 4096 + 1;
 
-            if (k1 >= 256) {
+            if (var8 >= 256)
+            {
                 return;
             }
 
-            if (i1 != 0 && j1 == k1) {
-                this.a(i1, abyte, k);
-            } else {
-                int l1;
+            if (var6 != 0 && var7 == var8)
+            {
+                this.write(var6, par3ArrayOfByte, par4);
+            }
+            else
+            {
+                int var9;
 
-                for (l1 = 0; l1 < j1; ++l1) {
-                    this.f.set(i1 + l1, Boolean.valueOf(true));
+                for (var9 = 0; var9 < var7; ++var9)
+                {
+                    this.sectorFree.set(var6 + var9, Boolean.valueOf(true));
                 }
 
-                l1 = this.f.indexOf(Boolean.valueOf(true));
-                int i2 = 0;
-                int j2;
+                var9 = this.sectorFree.indexOf(Boolean.valueOf(true));
+                int var10 = 0;
+                int var11;
 
-                if (l1 != -1) {
-                    for (j2 = l1; j2 < this.f.size(); ++j2) {
-                        if (i2 != 0) {
-                            if (((Boolean) this.f.get(j2)).booleanValue()) {
-                                ++i2;
-                            } else {
-                                i2 = 0;
+                if (var9 != -1)
+                {
+                    for (var11 = var9; var11 < this.sectorFree.size(); ++var11)
+                    {
+                        if (var10 != 0)
+                        {
+                            if (((Boolean)this.sectorFree.get(var11)).booleanValue())
+                            {
+                                ++var10;
                             }
-                        } else if (((Boolean) this.f.get(j2)).booleanValue()) {
-                            l1 = j2;
-                            i2 = 1;
+                            else
+                            {
+                                var10 = 0;
+                            }
+                        }
+                        else if (((Boolean)this.sectorFree.get(var11)).booleanValue())
+                        {
+                            var9 = var11;
+                            var10 = 1;
                         }
 
-                        if (i2 >= k1) {
+                        if (var10 >= var8)
+                        {
                             break;
                         }
                     }
                 }
 
-                if (i2 >= k1) {
-                    i1 = l1;
-                    this.a(i, j, l1 << 8 | k1);
+                if (var10 >= var8)
+                {
+                    var6 = var9;
+                    this.setOffset(par1, par2, var9 << 8 | var8);
 
-                    for (j2 = 0; j2 < k1; ++j2) {
-                        this.f.set(i1 + j2, Boolean.valueOf(false));
+                    for (var11 = 0; var11 < var8; ++var11)
+                    {
+                        this.sectorFree.set(var6 + var11, Boolean.valueOf(false));
                     }
 
-                    this.a(i1, abyte, k);
-                } else {
-                    this.c.seek(this.c.length());
-                    i1 = this.f.size();
+                    this.write(var6, par3ArrayOfByte, par4);
+                }
+                else
+                {
+                    this.dataFile.seek(this.dataFile.length());
+                    var6 = this.sectorFree.size();
 
-                    for (j2 = 0; j2 < k1; ++j2) {
-                        this.c.write(a);
-                        this.f.add(Boolean.valueOf(false));
+                    for (var11 = 0; var11 < var8; ++var11)
+                    {
+                        this.dataFile.write(emptySector);
+                        this.sectorFree.add(Boolean.valueOf(false));
                     }
 
-                    this.g += 4096 * k1;
-                    this.a(i1, abyte, k);
-                    this.a(i, j, i1 << 8 | k1);
+                    this.sizeDelta += 4096 * var8;
+                    this.write(var6, par3ArrayOfByte, par4);
+                    this.setOffset(par1, par2, var6 << 8 | var8);
                 }
             }
 
-            this.b(i, j, (int) (System.currentTimeMillis() / 1000L));
-        } catch (IOException ioexception) {
-            ioexception.printStackTrace();
+            this.setChunkTimestamp(par1, par2, (int)(System.currentTimeMillis() / 1000L));
+        }
+        catch (IOException var12)
+        {
+            var12.printStackTrace();
         }
     }
 
-    private void a(int i, byte[] abyte, int j) throws IOException { // CraftBukkit - added throws
-        this.c.seek((long) (i * 4096));
-        this.c.writeInt(j + 1);
-        this.c.writeByte(2);
-        this.c.write(abyte, 0, j);
+    private void write(int par1, byte[] par2ArrayOfByte, int par3) throws IOException   // CraftBukkit - added throws
+    {
+        this.dataFile.seek((long)(par1 * 4096));
+        this.dataFile.writeInt(par3 + 1);
+        this.dataFile.writeByte(2);
+        this.dataFile.write(par2ArrayOfByte, 0, par3);
     }
 
-    private boolean d(int i, int j) {
-        return i < 0 || i >= 32 || j < 0 || j >= 32;
+    /**
+     * args: x, z - check region bounds
+     */
+    private boolean outOfBounds(int par1, int par2)
+    {
+        return par1 < 0 || par1 >= 32 || par2 < 0 || par2 >= 32;
     }
 
-    private int e(int i, int j) {
-        return this.d[i + j * 32];
+    /**
+     * args: x, y - get chunk's offset in region file
+     */
+    private int getOffset(int par1, int par2)
+    {
+        return this.offsets[par1 + par2 * 32];
     }
 
-    public boolean c(int i, int j) {
-        return this.e(i, j) != 0;
+    /**
+     * args: x, z, - true if chunk has been saved / converted
+     */
+    public boolean isChunkSaved(int par1, int par2)
+    {
+        return this.getOffset(par1, par2) != 0;
     }
 
-    private void a(int i, int j, int k) throws IOException { // CraftBukkit - added throws
-        this.d[i + j * 32] = k;
-        this.c.seek((long) ((i + j * 32) * 4));
-        this.c.writeInt(k);
+    private void setOffset(int par1, int par2, int par3) throws IOException   // CraftBukkit - added throws
+    {
+        this.offsets[par1 + par2 * 32] = par3;
+        this.dataFile.seek((long)((par1 + par2 * 32) * 4));
+        this.dataFile.writeInt(par3);
     }
 
-    private void b(int i, int j, int k) throws IOException { // CraftBukkit - added throws
-        this.e[i + j * 32] = k;
-        this.c.seek((long) (4096 + (i + j * 32) * 4));
-        this.c.writeInt(k);
+    private void setChunkTimestamp(int par1, int par2, int par3) throws IOException   // CraftBukkit - added throws
+    {
+        this.chunkTimestamps[par1 + par2 * 32] = par3;
+        this.dataFile.seek((long)(4096 + (par1 + par2 * 32) * 4));
+        this.dataFile.writeInt(par3);
     }
 
-    public void c() throws IOException { // CraftBukkit - added throws
-        if (this.c != null) {
-            this.c.close();
+    public void close() throws IOException   // CraftBukkit - added throws
+    {
+        if (this.dataFile != null)
+        {
+            this.dataFile.close();
         }
     }
 }

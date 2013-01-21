@@ -1,36 +1,51 @@
-package net.minecraft.server;
+package net.minecraft.world.gen.feature;
 
 import java.util.Random;
+import net.minecraft.world.World;
 
 import org.bukkit.BlockChangeDelegate; // CraftBukkit
 
-public abstract class WorldGenerator {
+public abstract class WorldGenerator
+{
+    /**
+     * Sets wither or not the generator should notify blocks of blocks it changes. When the world is first generated,
+     * this is false, when saplings grow, this is true.
+     */
+    private final boolean doBlockNotify;
+    private int field_82631_b = 1;
 
-    private final boolean a;
-    private int b = 1;
-
-    public WorldGenerator() {
-        this.a = false;
+    public WorldGenerator()
+    {
+        this.doBlockNotify = false;
     }
 
-    public WorldGenerator(boolean flag) {
-        this.a = flag;
+    public WorldGenerator(boolean par1)
+    {
+        this.doBlockNotify = par1;
     }
 
-    public abstract boolean a(World world, Random random, int i, int j, int k);
+    public abstract boolean generate(World world, Random random, int i, int j, int k);
 
-    public void a(double d0, double d1, double d2) {}
+    /**
+     * Rescales the generator settings, only used in WorldGenBigTree
+     */
+    public void setScale(double par1, double par3, double par5) {}
 
     // CraftBukkit - change signature
-    protected void setType(BlockChangeDelegate world, int i, int j, int k, int l) {
+    protected void setType(BlockChangeDelegate world, int i, int j, int k, int l)
+    {
         this.setTypeAndData(world, i, j, k, l, 0);
     }
 
     // CraftBukkit - change signature
-    protected void setTypeAndData(BlockChangeDelegate world, int i, int j, int k, int l, int i1) {
-        if (this.a) {
+    protected void setTypeAndData(BlockChangeDelegate world, int i, int j, int k, int l, int i1)
+    {
+        if (this.doBlockNotify)
+        {
             world.setTypeIdAndData(i, j, k, l, i1);
-        } else {
+        }
+        else
+        {
             world.setRawTypeIdAndData(i, j, k, l, i1);
         }
     }

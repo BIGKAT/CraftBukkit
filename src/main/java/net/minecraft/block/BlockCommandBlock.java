@@ -1,60 +1,91 @@
-package net.minecraft.server;
+package net.minecraft.block;
 
 import java.util.Random;
+import net.minecraft.block.material.Material;
+import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.tileentity.TileEntity;
+import net.minecraft.tileentity.TileEntityCommandBlock;
+import net.minecraft.world.World;
 
 import org.bukkit.event.block.BlockRedstoneEvent; // CraftBukkit
 
-public class BlockCommand extends BlockContainer {
-
-    public BlockCommand(int i) {
-        super(i, 184, Material.ORE);
+public class BlockCommandBlock extends BlockContainer
+{
+    public BlockCommandBlock(int par1)
+    {
+        super(par1, 184, Material.iron);
     }
 
-    public TileEntity a(World world) {
-        return new TileEntityCommand();
+    /**
+     * Returns a new instance of a block's tile entity class. Called on placing the block.
+     */
+    public TileEntity createNewTileEntity(World par1World)
+    {
+        return new TileEntityCommandBlock();
     }
 
-    public void doPhysics(World world, int i, int j, int k, int l) {
-        if (!world.isStatic) {
-            boolean flag = world.isBlockIndirectlyPowered(i, j, k);
-            int i1 = world.getData(i, j, k);
-            boolean flag1 = (i1 & 1) != 0;
-
+    /**
+     * Lets the block know when one of its neighbor changes. Doesn't know which neighbor changed (coordinates passed are
+     * their own) Args: x, y, z, neighbor blockID
+     */
+    public void onNeighborBlockChange(World par1World, int par2, int par3, int par4, int par5)
+    {
+        if (!par1World.isRemote)
+        {
+            boolean var6 = par1World.isBlockIndirectlyGettingPowered(par2, par3, par4);
+            int var7 = par1World.getBlockMetadata(par2, par3, par4);
+            boolean var8 = (var7 & 1) != 0;
             // CraftBukkit start
-            org.bukkit.block.Block block = world.getWorld().getBlockAt(i, j, k);
-            int old = flag1 ? 1 : 0;
-            int current = flag ? 1 : 0;
-
+            org.bukkit.block.Block block = par1World.getWorld().getBlockAt(par2, par3, par4);
+            int old = var8 ? 1 : 0;
+            int current = var6 ? 1 : 0;
             BlockRedstoneEvent eventRedstone = new BlockRedstoneEvent(block, old, current);
-            world.getServer().getPluginManager().callEvent(eventRedstone);
+            par1World.getServer().getPluginManager().callEvent(eventRedstone);
             // CraftBukkit end
 
-            if (eventRedstone.getNewCurrent() > 0 && !(eventRedstone.getOldCurrent() > 0)) { // CraftBukkit
-                world.setRawData(i, j, k, i1 | 1);
-                world.a(i, j, k, this.id, this.r_());
-            } else if (!(eventRedstone.getNewCurrent() > 0) && eventRedstone.getOldCurrent() > 0) { // CraftBukkit
-                world.setRawData(i, j, k, i1 & -2);
+            if (eventRedstone.getNewCurrent() > 0 && !(eventRedstone.getOldCurrent() > 0))   // CraftBukkit
+            {
+                par1World.setBlockMetadata(par2, par3, par4, var7 | 1);
+                par1World.scheduleBlockUpdate(par2, par3, par4, this.blockID, this.tickRate());
+            }
+            else if (!(eventRedstone.getNewCurrent() > 0) && eventRedstone.getOldCurrent() > 0)     // CraftBukkit
+            {
+                par1World.setBlockMetadata(par2, par3, par4, var7 & -2);
             }
         }
     }
 
-    public void b(World world, int i, int j, int k, Random random) {
-        TileEntity tileentity = world.getTileEntity(i, j, k);
+    /**
+     * Ticks the block if it's been scheduled
+     */
+    public void updateTick(World par1World, int par2, int par3, int par4, Random par5Random)
+    {
+        TileEntity var6 = par1World.getBlockTileEntity(par2, par3, par4);
 
-        if (tileentity != null && tileentity instanceof TileEntityCommand) {
-            ((TileEntityCommand) tileentity).a(world);
+        if (var6 != null && var6 instanceof TileEntityCommandBlock)
+        {
+            ((TileEntityCommandBlock)var6).executeCommandOnPowered(par1World);
         }
     }
 
-    public int r_() {
+    /**
+     * How many world ticks before ticking
+     */
+    public int tickRate()
+    {
         return 1;
     }
 
-    public boolean interact(World world, int i, int j, int k, EntityHuman entityhuman, int l, float f, float f1, float f2) {
-        TileEntityCommand tileentitycommand = (TileEntityCommand) world.getTileEntity(i, j, k);
+    /**
+     * Called upon block activation (right click on the block.)
+     */
+    public boolean onBlockActivated(World par1World, int par2, int par3, int par4, EntityPlayer par5EntityPlayer, int par6, float par7, float par8, float par9)
+    {
+        TileEntityCommandBlock var10 = (TileEntityCommandBlock)par1World.getBlockTileEntity(par2, par3, par4);
 
-        if (tileentitycommand != null) {
-            entityhuman.a((TileEntity) tileentitycommand);
+        if (var10 != null)
+        {
+            par5EntityPlayer.displayGUIEditSign((TileEntity) var10);
         }
 
         return true;

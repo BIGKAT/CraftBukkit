@@ -1,195 +1,343 @@
-package net.minecraft.server;
+package net.minecraft.world.chunk.storage;
 
-public class ChunkSection {
+import net.minecraft.block.Block;
+import net.minecraft.world.chunk.NibbleArray;
+public class ExtendedBlockStorage
+{
+    /**
+     * Contains the bottom-most Y block represented by this ExtendedBlockStorage. Typically a multiple of 16.
+     */
+    private int yBase;
 
-    private int yPos;
-    private int nonEmptyBlockCount;
-    private int tickingBlockCount;
-    private byte[] blockIds;
-    private NibbleArray extBlockIds;
-    private NibbleArray blockData;
-    private NibbleArray blockLight;
-    private NibbleArray skyLight;
+    /**
+     * A total count of the number of non-air blocks in this block storage's Chunk.
+     */
+    private int blockRefCount;
 
-    public ChunkSection(int i, boolean flag) {
-        this.yPos = i;
-        this.blockIds = new byte[4096];
-        this.blockData = new NibbleArray(this.blockIds.length, 4);
-        this.blockLight = new NibbleArray(this.blockIds.length, 4);
-        if (flag) {
-            this.skyLight = new NibbleArray(this.blockIds.length, 4);
+    /**
+     * Contains the number of blocks in this block storage's parent chunk that require random ticking. Used to cull the
+     * Chunk from random tick updates for performance reasons.
+     */
+    private int tickRefCount;
+
+    /**
+     * Contains the least significant 8 bits of each block ID belonging to this block storage's parent Chunk.
+     */
+    private byte[] blockLSBArray;
+
+    /**
+     * Contains the most significant 4 bits of each block ID belonging to this block storage's parent Chunk.
+     */
+    private NibbleArray blockMSBArray;
+
+    /**
+     * Stores the metadata associated with blocks in this ExtendedBlockStorage.
+     */
+    private NibbleArray blockMetadataArray;
+
+    /** The NibbleArray containing a block of Block-light data. */
+    private NibbleArray blocklightArray;
+
+    /** The NibbleArray containing a block of Sky-light data. */
+    private NibbleArray skylightArray;
+
+    public ExtendedBlockStorage(int par1, boolean par2)
+    {
+        this.yBase = par1;
+        this.blockLSBArray = new byte[4096];
+        this.blockMetadataArray = new NibbleArray(this.blockLSBArray.length, 4);
+        this.blocklightArray = new NibbleArray(this.blockLSBArray.length, 4);
+
+        if (par2)
+        {
+            this.skylightArray = new NibbleArray(this.blockLSBArray.length, 4);
         }
     }
 
     // CraftBukkit start
-    public ChunkSection(int y, boolean flag, byte[] blkIds, byte[] extBlkIds) {
-        this.yPos = y;
-        this.blockIds = blkIds;
-        if (extBlkIds != null) {
-            this.extBlockIds = new NibbleArray(extBlkIds, 4);
+    public ExtendedBlockStorage(int y, boolean flag, byte[] blkIds, byte[] extBlkIds)
+    {
+        this.yBase = y;
+        this.blockLSBArray = blkIds;
+
+        if (extBlkIds != null)
+        {
+            this.blockMSBArray = new NibbleArray(extBlkIds, 4);
         }
-        this.blockData = new NibbleArray(this.blockIds.length, 4);
-        this.blockLight = new NibbleArray(this.blockIds.length, 4);
-        if (flag) {
-            this.skyLight = new NibbleArray(this.blockIds.length, 4);
+
+        this.blockMetadataArray = new NibbleArray(this.blockLSBArray.length, 4);
+        this.blocklightArray = new NibbleArray(this.blockLSBArray.length, 4);
+
+        if (flag)
+        {
+            this.skylightArray = new NibbleArray(this.blockLSBArray.length, 4);
         }
-        this.recalcBlockCounts();
+
+        this.removeInvalidBlocks();
     }
     // CraftBukkit end
 
-    public int a(int i, int j, int k) {
-        int l = this.blockIds[j << 8 | k << 4 | i] & 255;
-
-        return this.extBlockIds != null ? this.extBlockIds.a(i, j, k) << 8 | l : l;
+    /**
+     * Returns the extended block ID for a location in a chunk, merged from a byte array and a NibbleArray to form a
+     * full 12-bit block ID.
+     */
+    public int getExtBlockID(int par1, int par2, int par3)
+    {
+        int var4 = this.blockLSBArray[par2 << 8 | par3 << 4 | par1] & 255;
+        return this.blockMSBArray != null ? this.blockMSBArray.get(par1, par2, par3) << 8 | var4 : var4;
     }
 
-    public void a(int i, int j, int k, int l) {
-        int i1 = this.blockIds[j << 8 | k << 4 | i] & 255;
+    /**
+     * Sets the extended block ID for a location in a chunk, splitting bits 11..8 into a NibbleArray and bits 7..0 into
+     * a byte array. Also performs reference counting to determine whether or not to broadly cull this Chunk from the
+     * random-update tick list.
+     */
+    public void setExtBlockID(int par1, int par2, int par3, int par4)
+    {
+        int var5 = this.blockLSBArray[par2 << 8 | par3 << 4 | par1] & 255;
 
-        if (this.extBlockIds != null) {
-            i1 |= this.extBlockIds.a(i, j, k) << 8;
+        if (this.blockMSBArray != null)
+        {
+            var5 |= this.blockMSBArray.get(par1, par2, par3) << 8;
         }
 
-        if (i1 == 0 && l != 0) {
-            ++this.nonEmptyBlockCount;
-            if (Block.byId[l] != null && Block.byId[l].isTicking()) {
-                ++this.tickingBlockCount;
+        if (var5 == 0 && par4 != 0)
+        {
+            ++this.blockRefCount;
+
+            if (Block.blocksList[par4] != null && Block.blocksList[par4].getTickRandomly())
+            {
+                ++this.tickRefCount;
             }
-        } else if (i1 != 0 && l == 0) {
-            --this.nonEmptyBlockCount;
-            if (Block.byId[i1] != null && Block.byId[i1].isTicking()) {
-                --this.tickingBlockCount;
+        }
+        else if (var5 != 0 && par4 == 0)
+        {
+            --this.blockRefCount;
+
+            if (Block.blocksList[var5] != null && Block.blocksList[var5].getTickRandomly())
+            {
+                --this.tickRefCount;
             }
-        } else if (Block.byId[i1] != null && Block.byId[i1].isTicking() && (Block.byId[l] == null || !Block.byId[l].isTicking())) {
-            --this.tickingBlockCount;
-        } else if ((Block.byId[i1] == null || !Block.byId[i1].isTicking()) && Block.byId[l] != null && Block.byId[l].isTicking()) {
-            ++this.tickingBlockCount;
+        }
+        else if (Block.blocksList[var5] != null && Block.blocksList[var5].getTickRandomly() && (Block.blocksList[par4] == null || !Block.blocksList[par4].getTickRandomly()))
+        {
+            --this.tickRefCount;
+        }
+        else if ((Block.blocksList[var5] == null || !Block.blocksList[var5].getTickRandomly()) && Block.blocksList[par4] != null && Block.blocksList[par4].getTickRandomly())
+        {
+            ++this.tickRefCount;
         }
 
-        this.blockIds[j << 8 | k << 4 | i] = (byte) (l & 255);
-        if (l > 255) {
-            if (this.extBlockIds == null) {
-                this.extBlockIds = new NibbleArray(this.blockIds.length, 4);
+        this.blockLSBArray[par2 << 8 | par3 << 4 | par1] = (byte)(par4 & 255);
+
+        if (par4 > 255)
+        {
+            if (this.blockMSBArray == null)
+            {
+                this.blockMSBArray = new NibbleArray(this.blockLSBArray.length, 4);
             }
 
-            this.extBlockIds.a(i, j, k, (l & 3840) >> 8);
-        } else if (this.extBlockIds != null) {
-            this.extBlockIds.a(i, j, k, 0);
+            this.blockMSBArray.set(par1, par2, par3, (par4 & 3840) >> 8);
+        }
+        else if (this.blockMSBArray != null)
+        {
+            this.blockMSBArray.set(par1, par2, par3, 0);
         }
     }
 
-    public int b(int i, int j, int k) {
-        return this.blockData.a(i, j, k);
+    /**
+     * Returns the metadata associated with the block at the given coordinates in this ExtendedBlockStorage.
+     */
+    public int getExtBlockMetadata(int par1, int par2, int par3)
+    {
+        return this.blockMetadataArray.get(par1, par2, par3);
     }
 
-    public void b(int i, int j, int k, int l) {
-        this.blockData.a(i, j, k, l);
+    /**
+     * Sets the metadata of the Block at the given coordinates in this ExtendedBlockStorage to the given metadata.
+     */
+    public void setExtBlockMetadata(int par1, int par2, int par3, int par4)
+    {
+        this.blockMetadataArray.set(par1, par2, par3, par4);
     }
 
-    public boolean a() {
-        return this.nonEmptyBlockCount == 0;
+    /**
+     * Returns whether or not this block storage's Chunk is fully empty, based on its internal reference count.
+     */
+    public boolean isEmpty()
+    {
+        return this.blockRefCount == 0;
     }
 
-    public boolean b() {
-        return this.tickingBlockCount > 0;
+    /**
+     * Returns whether or not this block storage's Chunk will require random ticking, used to avoid looping through
+     * random block ticks when there are no blocks that would randomly tick.
+     */
+    public boolean getNeedsRandomTick()
+    {
+        return this.tickRefCount > 0;
     }
 
-    public int d() {
-        return this.yPos;
+    /**
+     * Returns the Y location of this ExtendedBlockStorage.
+     */
+    public int getYLocation()
+    {
+        return this.yBase;
     }
 
-    public void c(int i, int j, int k, int l) {
-        this.skyLight.a(i, j, k, l);
+    /**
+     * Sets the saved Sky-light value in the extended block storage structure.
+     */
+    public void setExtSkylightValue(int par1, int par2, int par3, int par4)
+    {
+        this.skylightArray.set(par1, par2, par3, par4);
     }
 
-    public int c(int i, int j, int k) {
-        return this.skyLight.a(i, j, k);
+    /**
+     * Gets the saved Sky-light value in the extended block storage structure.
+     */
+    public int getExtSkylightValue(int par1, int par2, int par3)
+    {
+        return this.skylightArray.get(par1, par2, par3);
     }
 
-    public void d(int i, int j, int k, int l) {
-        this.blockLight.a(i, j, k, l);
+    /**
+     * Sets the saved Block-light value in the extended block storage structure.
+     */
+    public void setExtBlocklightValue(int par1, int par2, int par3, int par4)
+    {
+        this.blocklightArray.set(par1, par2, par3, par4);
     }
 
-    public int d(int i, int j, int k) {
-        return this.blockLight.a(i, j, k);
+    /**
+     * Gets the saved Block-light value in the extended block storage structure.
+     */
+    public int getExtBlocklightValue(int par1, int par2, int par3)
+    {
+        return this.blocklightArray.get(par1, par2, par3);
     }
 
-    public void recalcBlockCounts() {
+    public void removeInvalidBlocks()
+    {
         // CraftBukkit start - optimize for speed
-        byte[] blkIds = this.blockIds;
+        byte[] blkIds = this.blockLSBArray;
         int cntNonEmpty = 0;
         int cntTicking = 0;
-        if (this.extBlockIds == null) { // No extended block IDs?  Don't waste time messing with them
-            for (int off = 0; off < blkIds.length; off++) {
+
+        if (this.blockMSBArray == null)   // No extended block IDs?  Don't waste time messing with them
+        {
+            for (int off = 0; off < blkIds.length; off++)
+            {
                 int l = blkIds[off] & 0xFF;
-                if (l > 0) {
-                    if (Block.byId[l] == null) {
+
+                if (l > 0)
+                {
+                    if (Block.blocksList[l] == null)
+                    {
                         blkIds[off] = 0;
-                    } else {
+                    }
+                    else
+                    {
                         ++cntNonEmpty;
-                        if (Block.byId[l].isTicking()) {
+
+                        if (Block.blocksList[l].getTickRandomly())
+                        {
                             ++cntTicking;
                         }
                     }
                 }
             }
-        } else {
-            byte[] ext = this.extBlockIds.a;
-            for (int off = 0, off2 = 0; off < blkIds.length;) {
+        }
+        else
+        {
+            byte[] ext = this.blockMSBArray.data;
+
+            for (int off = 0, off2 = 0; off < blkIds.length;)
+            {
                 byte extid = ext[off2];
                 int l = (blkIds[off] & 0xFF) | ((extid & 0xF) << 8); // Even data
-                if (l > 0) {
-                    if (Block.byId[l] == null) {
+
+                if (l > 0)
+                {
+                    if (Block.blocksList[l] == null)
+                    {
                         blkIds[off] = 0;
                         ext[off2] &= 0xF0;
-                    } else {
+                    }
+                    else
+                    {
                         ++cntNonEmpty;
-                        if (Block.byId[l].isTicking()) {
+
+                        if (Block.blocksList[l].getTickRandomly())
+                        {
                             ++cntTicking;
                         }
                     }
                 }
+
                 off++;
                 l = (blkIds[off] & 0xFF) | ((extid & 0xF0) << 4); // Odd data
-                if (l > 0) {
-                    if (Block.byId[l] == null) {
+
+                if (l > 0)
+                {
+                    if (Block.blocksList[l] == null)
+                    {
                         blkIds[off] = 0;
                         ext[off2] &= 0x0F;
-                    } else {
+                    }
+                    else
+                    {
                         ++cntNonEmpty;
-                        if (Block.byId[l].isTicking()) {
+
+                        if (Block.blocksList[l].getTickRandomly())
+                        {
                             ++cntTicking;
                         }
                     }
                 }
+
                 off++;
                 off2++;
             }
         }
-        this.nonEmptyBlockCount = cntNonEmpty;
-        this.tickingBlockCount = cntTicking;
+
+        this.blockRefCount = cntNonEmpty;
+        this.tickRefCount = cntTicking;
     }
 
-    public void old_recalcBlockCounts() {
+    public void old_recalcBlockCounts()
+    {
         // CraftBukkit end
-        this.nonEmptyBlockCount = 0;
-        this.tickingBlockCount = 0;
+        this.blockRefCount = 0;
+        this.tickRefCount = 0;
 
-        for (int i = 0; i < 16; ++i) {
-            for (int j = 0; j < 16; ++j) {
-                for (int k = 0; k < 16; ++k) {
-                    int l = this.a(i, j, k);
+        for (int i = 0; i < 16; ++i)
+        {
+            for (int j = 0; j < 16; ++j)
+            {
+                for (int k = 0; k < 16; ++k)
+                {
+                    int l = this.getExtBlockID(i, j, k);
 
-                    if (l > 0) {
-                        if (Block.byId[l] == null) {
-                            this.blockIds[j << 8 | k << 4 | i] = 0;
-                            if (this.extBlockIds != null) {
-                                this.extBlockIds.a(i, j, k, 0);
+                    if (l > 0)
+                    {
+                        if (Block.blocksList[l] == null)
+                        {
+                            this.blockLSBArray[j << 8 | k << 4 | i] = 0;
+
+                            if (this.blockMSBArray != null)
+                            {
+                                this.blockMSBArray.set(i, j, k, 0);
                             }
-                        } else {
-                            ++this.nonEmptyBlockCount;
-                            if (Block.byId[l].isTicking()) {
-                                ++this.tickingBlockCount;
+                        }
+                        else
+                        {
+                            ++this.blockRefCount;
+
+                            if (Block.blocksList[l].getTickRandomly())
+                            {
+                                ++this.tickRefCount;
                             }
                         }
                     }
@@ -198,57 +346,95 @@ public class ChunkSection {
         }
     }
 
-    public byte[] g() {
-        return this.blockIds;
+    public byte[] getBlockLSBArray()
+    {
+        return this.blockLSBArray;
     }
 
-    public NibbleArray i() {
-        return this.extBlockIds;
+    /**
+     * Returns the block ID MSB (bits 11..8) array for this storage array's Chunk.
+     */
+    public NibbleArray getBlockMSBArray()
+    {
+        return this.blockMSBArray;
     }
 
-    public NibbleArray j() {
-        return this.blockData;
+    public NibbleArray getMetadataArray()
+    {
+        return this.blockMetadataArray;
     }
 
-    public NibbleArray k() {
-        return this.blockLight;
+    /**
+     * Returns the NibbleArray instance containing Block-light data.
+     */
+    public NibbleArray getBlocklightArray()
+    {
+        return this.blocklightArray;
     }
 
-    public NibbleArray l() {
-        return this.skyLight;
+    /**
+     * Returns the NibbleArray instance containing Sky-light data.
+     */
+    public NibbleArray getSkylightArray()
+    {
+        return this.skylightArray;
     }
 
-    public void a(byte[] abyte) {
-        this.blockIds = abyte;
+    /**
+     * Sets the array of block ID least significant bits for this ExtendedBlockStorage.
+     */
+    public void setBlockLSBArray(byte[] par1ArrayOfByte)
+    {
+        this.blockLSBArray = par1ArrayOfByte;
     }
 
-    public void a(NibbleArray nibblearray) {
+    /**
+     * Sets the array of blockID most significant bits (blockMSBArray) for this ExtendedBlockStorage.
+     */
+    public void setBlockMSBArray(NibbleArray par1NibbleArray)
+    {
         // CraftBukkit start - don't hang on to an empty nibble array
         boolean empty = true;
-        for (int i = 0; i < nibblearray.a.length; i++) {
-            if (nibblearray.a[i] != 0) {
+
+        for (int i = 0; i < par1NibbleArray.data.length; i++)
+        {
+            if (par1NibbleArray.data[i] != 0)
+            {
                 empty = false;
                 break;
             }
         }
 
-        if (empty) {
+        if (empty)
+        {
             return;
         }
+
         // CraftBukkit end
-
-        this.extBlockIds = nibblearray;
+        this.blockMSBArray = par1NibbleArray;
     }
 
-    public void b(NibbleArray nibblearray) {
-        this.blockData = nibblearray;
+    /**
+     * Sets the NibbleArray of block metadata (blockMetadataArray) for this ExtendedBlockStorage.
+     */
+    public void setBlockMetadataArray(NibbleArray par1NibbleArray)
+    {
+        this.blockMetadataArray = par1NibbleArray;
     }
 
-    public void c(NibbleArray nibblearray) {
-        this.blockLight = nibblearray;
+    /**
+     * Sets the NibbleArray instance used for Block-light values in this particular storage block.
+     */
+    public void setBlocklightArray(NibbleArray par1NibbleArray)
+    {
+        this.blocklightArray = par1NibbleArray;
     }
 
-    public void d(NibbleArray nibblearray) {
-        this.skyLight = nibblearray;
+    /**
+     * Sets the NibbleArray instance used for Sky-light values in this particular storage block.
+     */
+    public void setSkylightArray(NibbleArray par1NibbleArray)
+    {
+        this.skylightArray = par1NibbleArray;
     }
 }

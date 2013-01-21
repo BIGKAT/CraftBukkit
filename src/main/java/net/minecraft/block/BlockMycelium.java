@@ -1,6 +1,9 @@
-package net.minecraft.server;
+package net.minecraft.block;
 
 import java.util.Random;
+import net.minecraft.block.material.Material;
+import net.minecraft.creativetab.CreativeTabs;
+import net.minecraft.world.World;
 
 // CraftBukkit start
 import org.bukkit.block.BlockState;
@@ -8,53 +11,70 @@ import org.bukkit.event.block.BlockFadeEvent;
 import org.bukkit.event.block.BlockSpreadEvent;
 // CraftBukkit end
 
-public class BlockMycel extends Block {
-
-    protected BlockMycel(int i) {
-        super(i, Material.GRASS);
-        this.textureId = 77;
-        this.b(true);
-        this.a(CreativeModeTab.b);
+public class BlockMycelium extends Block
+{
+    protected BlockMycelium(int par1)
+    {
+        super(par1, Material.grass);
+        this.blockIndexInTexture = 77;
+        this.setTickRandomly(true);
+        this.setCreativeTab(CreativeTabs.tabBlock);
     }
 
-    public int a(int i, int j) {
-        return i == 1 ? 78 : (i == 0 ? 2 : 77);
+    /**
+     * From the specified side and block metadata retrieves the blocks texture. Args: side, metadata
+     */
+    public int getBlockTextureFromSideAndMetadata(int par1, int par2)
+    {
+        return par1 == 1 ? 78 : (par1 == 0 ? 2 : 77);
     }
 
-    public void b(World world, int i, int j, int k, Random random) {
-        if (!world.isStatic) {
-            if (world.getLightLevel(i, j + 1, k) < 4 && Block.lightBlock[world.getTypeId(i, j + 1, k)] > 2) {
+    /**
+     * Ticks the block if it's been scheduled
+     */
+    public void updateTick(World par1World, int par2, int par3, int par4, Random par5Random)
+    {
+        if (!par1World.isRemote)
+        {
+            if (par1World.getBlockLightValue(par2, par3 + 1, par4) < 4 && Block.lightOpacity[par1World.getBlockId(par2, par3 + 1, par4)] > 2)
+            {
                 // CraftBukkit start
-                org.bukkit.World bworld = world.getWorld();
-                BlockState blockState = bworld.getBlockAt(i, j, k).getState();
-                blockState.setTypeId(Block.DIRT.id);
-
+                org.bukkit.World bworld = par1World.getWorld();
+                BlockState blockState = bworld.getBlockAt(par2, par3, par4).getState();
+                blockState.setTypeId(Block.dirt.blockID);
                 BlockFadeEvent event = new BlockFadeEvent(blockState.getBlock(), blockState);
-                world.getServer().getPluginManager().callEvent(event);
+                par1World.getServer().getPluginManager().callEvent(event);
 
-                if (!event.isCancelled()) {
+                if (!event.isCancelled())
+                {
                     blockState.update(true);
                 }
+
                 // CraftBukkit end
-            } else if (world.getLightLevel(i, j + 1, k) >= 9) {
-                for (int l = 0; l < 4; ++l) {
-                    int i1 = i + random.nextInt(3) - 1;
-                    int j1 = j + random.nextInt(5) - 3;
-                    int k1 = k + random.nextInt(3) - 1;
-                    int l1 = world.getTypeId(i1, j1 + 1, k1);
+            }
+            else if (par1World.getBlockLightValue(par2, par3 + 1, par4) >= 9)
+            {
+                for (int var6 = 0; var6 < 4; ++var6)
+                {
+                    int var7 = par2 + par5Random.nextInt(3) - 1;
+                    int var8 = par3 + par5Random.nextInt(5) - 3;
+                    int var9 = par4 + par5Random.nextInt(3) - 1;
+                    int var10 = par1World.getBlockId(var7, var8 + 1, var9);
 
-                    if (world.getTypeId(i1, j1, k1) == Block.DIRT.id && world.getLightLevel(i1, j1 + 1, k1) >= 4 && Block.lightBlock[l1] <= 2) {
+                    if (par1World.getBlockId(var7, var8, var9) == Block.dirt.blockID && par1World.getBlockLightValue(var7, var8 + 1, var9) >= 4 && Block.lightOpacity[var10] <= 2)
+                    {
                         // CraftBukkit start
-                        org.bukkit.World bworld = world.getWorld();
-                        BlockState blockState = bworld.getBlockAt(i1, j1, k1).getState();
-                        blockState.setTypeId(this.id);
+                        org.bukkit.World bworld = par1World.getWorld();
+                        BlockState blockState = bworld.getBlockAt(var7, var8, var9).getState();
+                        blockState.setTypeId(this.blockID);
+                        BlockSpreadEvent event = new BlockSpreadEvent(blockState.getBlock(), bworld.getBlockAt(par2, par3, par4), blockState);
+                        par1World.getServer().getPluginManager().callEvent(event);
 
-                        BlockSpreadEvent event = new BlockSpreadEvent(blockState.getBlock(), bworld.getBlockAt(i, j, k), blockState);
-                        world.getServer().getPluginManager().callEvent(event);
-
-                        if (!event.isCancelled()) {
+                        if (!event.isCancelled())
+                        {
                             blockState.update(true);
                         }
+
                         // CraftBukkit end
                     }
                 }
@@ -62,7 +82,11 @@ public class BlockMycel extends Block {
         }
     }
 
-    public int getDropType(int i, Random random, int j) {
-        return Block.DIRT.getDropType(0, random, j);
+    /**
+     * Returns the ID of the items to drop on destruction.
+     */
+    public int idDropped(int par1, Random par2Random, int par3)
+    {
+        return Block.dirt.idDropped(0, par2Random, par3);
     }
 }

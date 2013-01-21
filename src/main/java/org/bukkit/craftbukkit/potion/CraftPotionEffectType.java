@@ -1,29 +1,28 @@
 package org.bukkit.craftbukkit.potion;
 
-import net.minecraft.server.MobEffectList;
 
 import org.bukkit.potion.PotionEffectType;
 
 public class CraftPotionEffectType extends PotionEffectType {
-    private final MobEffectList handle;
+    private final net.minecraft.potion.Potion/*was:MobEffectList*/ handle;
 
-    public CraftPotionEffectType(MobEffectList handle) {
-        super(handle.id);
+    public CraftPotionEffectType(net.minecraft.potion.Potion/*was:MobEffectList*/ handle) {
+        super(handle.id/*was:id*/);
         this.handle = handle;
     }
 
     @Override
     public double getDurationModifier() {
-        return handle.getDurationModifier();
+        return handle.getEffectiveness/*was:getDurationModifier*/();
     }
 
-    public MobEffectList getHandle() {
+    public net.minecraft.potion.Potion/*was:MobEffectList*/ getHandle() {
         return handle;
     }
 
     @Override
     public String getName() {
-        switch (handle.id) {
+        switch (handle.id/*was:id*/) {
         case 1:
             return "SPEED";
         case 2:
@@ -65,12 +64,12 @@ public class CraftPotionEffectType extends PotionEffectType {
         case 20:
             return "WITHER";
         default:
-            return "UNKNOWN_EFFECT_TYPE_" + handle.id;
+            return "UNKNOWN_EFFECT_TYPE_" + handle.id/*was:id*/;
         }
     }
 
     @Override
     public boolean isInstant() {
-        return handle.isInstant();
+        return handle.isInstant/*was:isInstant*/();
     }
 }

@@ -8,7 +8,6 @@ import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 
-import net.minecraft.server.EnumArt;
 
 import org.bukkit.craftbukkit.CraftArt;
 import org.junit.Test;
@@ -22,11 +21,11 @@ public class ArtTest {
     public void verifyMapping() {
         List<Art> arts = Lists.newArrayList(Art.values());
 
-        for (EnumArt enumArt : EnumArt.values()) {
+        for (net.minecraft.util.EnumArt/*was:EnumArt*/ enumArt : net.minecraft.util.EnumArt/*was:EnumArt*/.values/*was:values*/()) {
             int id = enumArt.ordinal();
-            String name = enumArt.B;
-            int width = enumArt.C / UNIT_MULTIPLIER;
-            int height = enumArt.D / UNIT_MULTIPLIER;
+            String name = enumArt.title/*was:B*/;
+            int width = enumArt.sizeX/*was:C*/ / UNIT_MULTIPLIER;
+            int height = enumArt.sizeY/*was:D*/ / UNIT_MULTIPLIER;
 
             Art subject = Art.getById(id);
 
@@ -45,9 +44,9 @@ public class ArtTest {
 
     @Test
     public void testCraftArtToNotch() {
-        Map<EnumArt, Art> cache = new EnumMap(EnumArt.class);
+        Map<net.minecraft.util.EnumArt/*was:EnumArt*/, Art> cache = new EnumMap(net.minecraft.util.EnumArt/*was:EnumArt*/.class);
         for (Art art : Art.values()) {
-            EnumArt enumArt = CraftArt.BukkitToNotch(art);
+            net.minecraft.util.EnumArt/*was:EnumArt*/ enumArt = CraftArt.BukkitToNotch(art);
             assertNotNull(art.name(), enumArt);
             assertThat(art.name(), cache.put(enumArt, art), is(nullValue()));
         }
@@ -55,8 +54,8 @@ public class ArtTest {
 
     @Test
     public void testCraftArtToBukkit() {
-        Map<Art, EnumArt> cache = new EnumMap(Art.class);
-        for (EnumArt enumArt : EnumArt.values()) {
+        Map<Art, net.minecraft.util.EnumArt/*was:EnumArt*/> cache = new EnumMap(Art.class);
+        for (net.minecraft.util.EnumArt/*was:EnumArt*/ enumArt : net.minecraft.util.EnumArt/*was:EnumArt*/.values/*was:values*/()) {
             Art art = CraftArt.NotchToBukkit(enumArt);
             assertNotNull(enumArt.name(), art);
             assertThat(enumArt.name(), cache.put(art, enumArt), is(nullValue()));

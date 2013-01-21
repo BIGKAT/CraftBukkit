@@ -1,121 +1,171 @@
-package net.minecraft.server;
+package net.minecraft.block;
 
 // CraftBukkit start
 import org.bukkit.craftbukkit.util.BlockStateListPopulator;
 import org.bukkit.event.block.BlockRedstoneEvent;
 import org.bukkit.event.entity.CreatureSpawnEvent.SpawnReason;
+import net.minecraft.block.material.Material;
+import net.minecraft.creativetab.CreativeTabs;
+import net.minecraft.entity.EntityLiving;
+import net.minecraft.entity.monster.EntityIronGolem;
+import net.minecraft.entity.monster.EntitySnowman;
+import net.minecraft.util.MathHelper;
+import net.minecraft.world.World;
 // CraftBukkit end
 
-public class BlockPumpkin extends BlockDirectional {
+public class BlockPumpkin extends BlockDirectional
+{
+    /** Boolean used to seperate different states of blocks */
+    private boolean blockType;
 
-    private boolean a;
-
-    protected BlockPumpkin(int i, int j, boolean flag) {
-        super(i, Material.PUMPKIN);
-        this.textureId = j;
-        this.b(true);
-        this.a = flag;
-        this.a(CreativeModeTab.b);
+    protected BlockPumpkin(int par1, int par2, boolean par3)
+    {
+        super(par1, Material.pumpkin);
+        this.blockIndexInTexture = par2;
+        this.setTickRandomly(true);
+        this.blockType = par3;
+        this.setCreativeTab(CreativeTabs.tabBlock);
     }
 
-    public int a(int i, int j) {
-        if (i == 1) {
-            return this.textureId;
-        } else if (i == 0) {
-            return this.textureId;
-        } else {
-            int k = this.textureId + 1 + 16;
+    /**
+     * From the specified side and block metadata retrieves the blocks texture. Args: side, metadata
+     */
+    public int getBlockTextureFromSideAndMetadata(int par1, int par2)
+    {
+        if (par1 == 1)
+        {
+            return this.blockIndexInTexture;
+        }
+        else if (par1 == 0)
+        {
+            return this.blockIndexInTexture;
+        }
+        else
+        {
+            int var3 = this.blockIndexInTexture + 1 + 16;
 
-            if (this.a) {
-                ++k;
+            if (this.blockType)
+            {
+                ++var3;
             }
 
-            return j == 2 && i == 2 ? k : (j == 3 && i == 5 ? k : (j == 0 && i == 3 ? k : (j == 1 && i == 4 ? k : this.textureId + 16)));
+            return par2 == 2 && par1 == 2 ? var3 : (par2 == 3 && par1 == 5 ? var3 : (par2 == 0 && par1 == 3 ? var3 : (par2 == 1 && par1 == 4 ? var3 : this.blockIndexInTexture + 16)));
         }
     }
 
-    public int a(int i) {
-        return i == 1 ? this.textureId : (i == 0 ? this.textureId : (i == 3 ? this.textureId + 1 + 16 : this.textureId + 16));
+    /**
+     * Returns the block texture based on the side being looked at.  Args: side
+     */
+    public int getBlockTextureFromSide(int par1)
+    {
+        return par1 == 1 ? this.blockIndexInTexture : (par1 == 0 ? this.blockIndexInTexture : (par1 == 3 ? this.blockIndexInTexture + 1 + 16 : this.blockIndexInTexture + 16));
     }
 
-    public void onPlace(World world, int i, int j, int k) {
-        super.onPlace(world, i, j, k);
-        if (world.suppressPhysics) return; // CraftBukkit
-        if (world.getTypeId(i, j - 1, k) == Block.SNOW_BLOCK.id && world.getTypeId(i, j - 2, k) == Block.SNOW_BLOCK.id) {
-            if (!world.isStatic) {
+    /**
+     * Called whenever the block is added into the world. Args: world, x, y, z
+     */
+    public void onBlockAdded(World par1World, int par2, int par3, int par4)
+    {
+        super.onBlockAdded(par1World, par2, par3, par4);
+
+        if (par1World.editingBlocks)
+        {
+            return;    // CraftBukkit
+        }
+
+        if (par1World.getBlockId(par2, par3 - 1, par4) == Block.blockSnow.blockID && par1World.getBlockId(par2, par3 - 2, par4) == Block.blockSnow.blockID)
+        {
+            if (!par1World.isRemote)
+            {
                 // CraftBukkit start - use BlockStateListPopulator
-                BlockStateListPopulator blockList = new BlockStateListPopulator(world.getWorld());
+                BlockStateListPopulator blockList = new BlockStateListPopulator(par1World.getWorld());
+                blockList.setTypeId(par2, par3, par4, 0);
+                blockList.setTypeId(par2, par3 - 1, par4, 0);
+                blockList.setTypeId(par2, par3 - 2, par4, 0);
+                EntitySnowman entitysnowman = new EntitySnowman(par1World);
+                entitysnowman.setLocationAndAngles((double) par2 + 0.5D, (double) par3 - 1.95D, (double) par4 + 0.5D, 0.0F, 0.0F);
 
-                blockList.setTypeId(i, j, k, 0);
-                blockList.setTypeId(i, j - 1, k, 0);
-                blockList.setTypeId(i, j - 2, k, 0);
-
-                EntitySnowman entitysnowman = new EntitySnowman(world);
-
-                entitysnowman.setPositionRotation((double) i + 0.5D, (double) j - 1.95D, (double) k + 0.5D, 0.0F, 0.0F);
-                if (world.addEntity(entitysnowman, SpawnReason.BUILD_SNOWMAN)) {
+                if (par1World.addEntity(entitysnowman, SpawnReason.BUILD_SNOWMAN))
+                {
                     blockList.updateList();
                 }
+
                 // CraftBukkit end
             }
 
-            for (int l = 0; l < 120; ++l) {
-                world.addParticle("snowshovel", (double) i + world.random.nextDouble(), (double) (j - 2) + world.random.nextDouble() * 2.5D, (double) k + world.random.nextDouble(), 0.0D, 0.0D, 0.0D);
+            for (int var9 = 0; var9 < 120; ++var9)
+            {
+                par1World.spawnParticle("snowshovel", (double)par2 + par1World.rand.nextDouble(), (double)(par3 - 2) + par1World.rand.nextDouble() * 2.5D, (double)par4 + par1World.rand.nextDouble(), 0.0D, 0.0D, 0.0D);
             }
-        } else if (world.getTypeId(i, j - 1, k) == Block.IRON_BLOCK.id && world.getTypeId(i, j - 2, k) == Block.IRON_BLOCK.id) {
-            boolean flag = world.getTypeId(i - 1, j - 1, k) == Block.IRON_BLOCK.id && world.getTypeId(i + 1, j - 1, k) == Block.IRON_BLOCK.id;
-            boolean flag1 = world.getTypeId(i, j - 1, k - 1) == Block.IRON_BLOCK.id && world.getTypeId(i, j - 1, k + 1) == Block.IRON_BLOCK.id;
+        }
+        else if (par1World.getBlockId(par2, par3 - 1, par4) == Block.blockSteel.blockID && par1World.getBlockId(par2, par3 - 2, par4) == Block.blockSteel.blockID)
+        {
+            boolean var10 = par1World.getBlockId(par2 - 1, par3 - 1, par4) == Block.blockSteel.blockID && par1World.getBlockId(par2 + 1, par3 - 1, par4) == Block.blockSteel.blockID;
+            boolean var5 = par1World.getBlockId(par2, par3 - 1, par4 - 1) == Block.blockSteel.blockID && par1World.getBlockId(par2, par3 - 1, par4 + 1) == Block.blockSteel.blockID;
 
-            if (flag || flag1) {
+            if (var10 || var5)
+            {
                 // CraftBukkit start - use BlockStateListPopulator
-                BlockStateListPopulator blockList = new BlockStateListPopulator(world.getWorld());
+                BlockStateListPopulator blockList = new BlockStateListPopulator(par1World.getWorld());
+                blockList.setTypeId(par2, par3, par4, 0);
+                blockList.setTypeId(par2, par3 - 1, par4, 0);
+                blockList.setTypeId(par2, par3 - 2, par4, 0);
 
-                blockList.setTypeId(i, j, k, 0);
-                blockList.setTypeId(i, j - 1, k, 0);
-                blockList.setTypeId(i, j - 2, k, 0);
-
-                if (flag) {
-                    blockList.setTypeId(i - 1, j - 1, k, 0);
-                    blockList.setTypeId(i + 1, j - 1, k, 0);
-                } else {
-                    blockList.setTypeId(i, j - 1, k - 1, 0);
-                    blockList.setTypeId(i, j - 1, k + 1, 0);
+                if (var10)
+                {
+                    blockList.setTypeId(par2 - 1, par3 - 1, par4, 0);
+                    blockList.setTypeId(par2 + 1, par3 - 1, par4, 0);
+                }
+                else
+                {
+                    blockList.setTypeId(par2, par3 - 1, par4 - 1, 0);
+                    blockList.setTypeId(par2, par3 - 1, par4 + 1, 0);
                 }
 
-                EntityIronGolem entityirongolem = new EntityIronGolem(world);
-
+                EntityIronGolem entityirongolem = new EntityIronGolem(par1World);
                 entityirongolem.setPlayerCreated(true);
-                entityirongolem.setPositionRotation((double) i + 0.5D, (double) j - 1.95D, (double) k + 0.5D, 0.0F, 0.0F);
-                if (world.addEntity(entityirongolem, SpawnReason.BUILD_IRONGOLEM)) {
-                    for (int i1 = 0; i1 < 120; ++i1) {
-                        world.addParticle("snowballpoof", (double) i + world.random.nextDouble(), (double) (j - 2) + world.random.nextDouble() * 3.9D, (double) k + world.random.nextDouble(), 0.0D, 0.0D, 0.0D);
+                entityirongolem.setLocationAndAngles((double) par2 + 0.5D, (double) par3 - 1.95D, (double) par4 + 0.5D, 0.0F, 0.0F);
+
+                if (par1World.addEntity(entityirongolem, SpawnReason.BUILD_IRONGOLEM))
+                {
+                    for (int i1 = 0; i1 < 120; ++i1)
+                    {
+                        par1World.spawnParticle("snowballpoof", (double) par2 + par1World.rand.nextDouble(), (double)(par3 - 2) + par1World.rand.nextDouble() * 3.9D, (double) par4 + par1World.rand.nextDouble(), 0.0D, 0.0D, 0.0D);
                     }
 
                     blockList.updateList();
                 }
+
                 // CraftBukkit end
             }
         }
     }
 
-    public boolean canPlace(World world, int i, int j, int k) {
-        int l = world.getTypeId(i, j, k);
-
-        return (l == 0 || Block.byId[l].material.isReplaceable()) && world.v(i, j - 1, k);
+    /**
+     * Checks to see if its valid to put this block at the specified coordinates. Args: world, x, y, z
+     */
+    public boolean canPlaceBlockAt(World par1World, int par2, int par3, int par4)
+    {
+        int var5 = par1World.getBlockId(par2, par3, par4);
+        return (var5 == 0 || Block.blocksList[var5].blockMaterial.isReplaceable()) && par1World.doesBlockHaveSolidTopSurface(par2, par3 - 1, par4);
     }
 
-    public void postPlace(World world, int i, int j, int k, EntityLiving entityliving) {
-        int l = MathHelper.floor((double) (entityliving.yaw * 4.0F / 360.0F) + 2.5D) & 3;
-
-        world.setData(i, j, k, l);
+    /**
+     * Called when the block is placed in the world.
+     */
+    public void onBlockPlacedBy(World par1World, int par2, int par3, int par4, EntityLiving par5EntityLiving)
+    {
+        int var6 = MathHelper.floor_double((double)(par5EntityLiving.rotationYaw * 4.0F / 360.0F) + 2.5D) & 3;
+        par1World.setBlockMetadataWithNotify(par2, par3, par4, var6);
     }
 
     // CraftBukkit start
-    public void doPhysics(World world, int i, int j, int k, int l) {
-        if (net.minecraft.server.Block.byId[l] != null && net.minecraft.server.Block.byId[l].isPowerSource()) {
+    public void doPhysics(World world, int i, int j, int k, int l)
+    {
+        if (Block.blocksList[l] != null && Block.blocksList[l].canProvidePower())
+        {
             org.bukkit.block.Block block = world.getWorld().getBlockAt(i, j, k);
             int power = block.getBlockPower();
-
             BlockRedstoneEvent eventRedstone = new BlockRedstoneEvent(block, power, power);
             world.getServer().getPluginManager().callEvent(eventRedstone);
         }

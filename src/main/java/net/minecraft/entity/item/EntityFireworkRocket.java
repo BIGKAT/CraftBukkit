@@ -1,121 +1,161 @@
-package net.minecraft.server;
+package net.minecraft.entity.item;
 
-public class EntityFireworks extends Entity {
+import net.minecraft.entity.Entity;
+import net.minecraft.item.ItemStack;
+import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.util.MathHelper;
+import net.minecraft.world.World;
+public class EntityFireworkRocket extends Entity
+{
+    private int field_92011_a;
+    public int field_92010_b; // CraftBukkit - private -> public
 
-    private int ticksFlown;
-    public int expectedLifespan; // CraftBukkit - private -> public
-
-    public EntityFireworks(World world) {
-        super(world);
-        this.a(0.25F, 0.25F);
+    public EntityFireworkRocket(World par1World)
+    {
+        super(par1World);
+        this.setSize(0.25F, 0.25F);
     }
 
-    protected void a() {
-        this.datawatcher.a(8, 5);
+    protected void entityInit()
+    {
+        this.dataWatcher.addObjectByDataType(8, 5);
     }
 
-    public EntityFireworks(World world, double d0, double d1, double d2, ItemStack itemstack) {
-        super(world);
-        this.ticksFlown = 0;
-        this.a(0.25F, 0.25F);
-        this.setPosition(d0, d1, d2);
-        this.height = 0.0F;
-        int i = 1;
+    public EntityFireworkRocket(World par1World, double par2, double par4, double par6, ItemStack par8ItemStack)
+    {
+        super(par1World);
+        this.field_92011_a = 0;
+        this.setSize(0.25F, 0.25F);
+        this.setPosition(par2, par4, par6);
+        this.yOffset = 0.0F;
+        int var9 = 1;
 
-        if (itemstack != null && itemstack.hasTag()) {
-            this.datawatcher.watch(8, itemstack);
-            NBTTagCompound nbttagcompound = itemstack.getTag();
-            NBTTagCompound nbttagcompound1 = nbttagcompound.getCompound("Fireworks");
+        if (par8ItemStack != null && par8ItemStack.hasTagCompound())
+        {
+            this.dataWatcher.updateObject(8, par8ItemStack);
+            NBTTagCompound var10 = par8ItemStack.getTagCompound();
+            NBTTagCompound var11 = var10.getCompoundTag("Fireworks");
 
-            if (nbttagcompound1 != null) {
-                i += nbttagcompound1.getByte("Flight");
+            if (var11 != null)
+            {
+                var9 += var11.getByte("Flight");
             }
         }
 
-        this.motX = this.random.nextGaussian() * 0.001D;
-        this.motZ = this.random.nextGaussian() * 0.001D;
-        this.motY = 0.05D;
-        this.expectedLifespan = 10 * i + this.random.nextInt(6) + this.random.nextInt(7);
+        this.motionX = this.rand.nextGaussian() * 0.001D;
+        this.motionZ = this.rand.nextGaussian() * 0.001D;
+        this.motionY = 0.05D;
+        this.field_92010_b = 10 * var9 + this.rand.nextInt(6) + this.rand.nextInt(7);
     }
 
-    public void j_() {
-        this.T = this.locX;
-        this.U = this.locY;
-        this.V = this.locZ;
-        super.j_();
-        this.motX *= 1.15D;
-        this.motZ *= 1.15D;
-        this.motY += 0.04D;
-        this.move(this.motX, this.motY, this.motZ);
-        float f = MathHelper.sqrt(this.motX * this.motX + this.motZ * this.motZ);
+    /**
+     * Called to update the entity's position/logic.
+     */
+    public void onUpdate()
+    {
+        this.lastTickPosX = this.posX;
+        this.lastTickPosY = this.posY;
+        this.lastTickPosZ = this.posZ;
+        super.onUpdate();
+        this.motionX *= 1.15D;
+        this.motionZ *= 1.15D;
+        this.motionY += 0.04D;
+        this.moveEntity(this.motionX, this.motionY, this.motionZ);
+        float var1 = MathHelper.sqrt_double(this.motionX * this.motionX + this.motionZ * this.motionZ);
+        this.rotationYaw = (float)(Math.atan2(this.motionX, this.motionZ) * 180.0D / 3.1415927410125732D);
 
-        this.yaw = (float) (Math.atan2(this.motX, this.motZ) * 180.0D / 3.1415927410125732D);
-
-        for (this.pitch = (float) (Math.atan2(this.motY, (double) f) * 180.0D / 3.1415927410125732D); this.pitch - this.lastPitch < -180.0F; this.lastPitch -= 360.0F) {
+        for (this.rotationPitch = (float)(Math.atan2(this.motionY, (double) var1) * 180.0D / 3.1415927410125732D); this.rotationPitch - this.prevRotationPitch < -180.0F; this.prevRotationPitch -= 360.0F)
+        {
             ;
         }
 
-        while (this.pitch - this.lastPitch >= 180.0F) {
-            this.lastPitch += 360.0F;
+        while (this.rotationPitch - this.prevRotationPitch >= 180.0F)
+        {
+            this.prevRotationPitch += 360.0F;
         }
 
-        while (this.yaw - this.lastYaw < -180.0F) {
-            this.lastYaw -= 360.0F;
+        while (this.rotationYaw - this.prevRotationYaw < -180.0F)
+        {
+            this.prevRotationYaw -= 360.0F;
         }
 
-        while (this.yaw - this.lastYaw >= 180.0F) {
-            this.lastYaw += 360.0F;
+        while (this.rotationYaw - this.prevRotationYaw >= 180.0F)
+        {
+            this.prevRotationYaw += 360.0F;
         }
 
-        this.pitch = this.lastPitch + (this.pitch - this.lastPitch) * 0.2F;
-        this.yaw = this.lastYaw + (this.yaw - this.lastYaw) * 0.2F;
-        if (this.ticksFlown == 0) {
-            this.world.makeSound(this, "fireworks.launch", 3.0F, 1.0F);
+        this.rotationPitch = this.prevRotationPitch + (this.rotationPitch - this.prevRotationPitch) * 0.2F;
+        this.rotationYaw = this.prevRotationYaw + (this.rotationYaw - this.prevRotationYaw) * 0.2F;
+
+        if (this.field_92011_a == 0)
+        {
+            this.worldObj.playSoundAtEntity(this, "fireworks.launch", 3.0F, 1.0F);
         }
 
-        ++this.ticksFlown;
-        if (this.world.isStatic && this.ticksFlown % 2 < 2) {
-            this.world.addParticle("fireworksSpark", this.locX, this.locY - 0.3D, this.locZ, this.random.nextGaussian() * 0.05D, -this.motY * 0.5D, this.random.nextGaussian() * 0.05D);
+        ++this.field_92011_a;
+
+        if (this.worldObj.isRemote && this.field_92011_a % 2 < 2)
+        {
+            this.worldObj.spawnParticle("fireworksSpark", this.posX, this.posY - 0.3D, this.posZ, this.rand.nextGaussian() * 0.05D, -this.motionY * 0.5D, this.rand.nextGaussian() * 0.05D);
         }
 
-        if (!this.world.isStatic && this.ticksFlown > this.expectedLifespan) {
-            this.world.broadcastEntityEffect(this, (byte) 17);
-            this.die();
-        }
-    }
-
-    public void b(NBTTagCompound nbttagcompound) {
-        nbttagcompound.setInt("Life", this.ticksFlown);
-        nbttagcompound.setInt("LifeTime", this.expectedLifespan);
-        ItemStack itemstack = this.datawatcher.getItemStack(8);
-
-        if (itemstack != null) {
-            NBTTagCompound nbttagcompound1 = new NBTTagCompound();
-
-            itemstack.save(nbttagcompound1);
-            nbttagcompound.setCompound("FireworksItem", nbttagcompound1);
+        if (!this.worldObj.isRemote && this.field_92011_a > this.field_92010_b)
+        {
+            this.worldObj.setEntityState(this, (byte)17);
+            this.setDead();
         }
     }
 
-    public void a(NBTTagCompound nbttagcompound) {
-        this.ticksFlown = nbttagcompound.getInt("Life");
-        this.expectedLifespan = nbttagcompound.getInt("LifeTime");
-        NBTTagCompound nbttagcompound1 = nbttagcompound.getCompound("FireworksItem");
+    /**
+     * (abstract) Protected helper method to write subclass entity data to NBT.
+     */
+    public void writeEntityToNBT(NBTTagCompound par1NBTTagCompound)
+    {
+        par1NBTTagCompound.setInteger("Life", this.field_92011_a);
+        par1NBTTagCompound.setInteger("LifeTime", this.field_92010_b);
+        ItemStack var2 = this.dataWatcher.getWatchableObjectItemStack(8);
 
-        if (nbttagcompound1 != null) {
-            ItemStack itemstack = ItemStack.createStack(nbttagcompound1);
+        if (var2 != null)
+        {
+            NBTTagCompound var3 = new NBTTagCompound();
+            var2.writeToNBT(var3);
+            par1NBTTagCompound.setCompoundTag("FireworksItem", var3);
+        }
+    }
 
-            if (itemstack != null) {
-                this.datawatcher.watch(8, itemstack);
+    /**
+     * (abstract) Protected helper method to read subclass entity data from NBT.
+     */
+    public void readEntityFromNBT(NBTTagCompound par1NBTTagCompound)
+    {
+        this.field_92011_a = par1NBTTagCompound.getInteger("Life");
+        this.field_92010_b = par1NBTTagCompound.getInteger("LifeTime");
+        NBTTagCompound var2 = par1NBTTagCompound.getCompoundTag("FireworksItem");
+
+        if (var2 != null)
+        {
+            ItemStack var3 = ItemStack.loadItemStackFromNBT(var2);
+
+            if (var3 != null)
+            {
+                this.dataWatcher.updateObject(8, var3);
             }
         }
     }
 
-    public float c(float f) {
-        return super.c(f);
+    /**
+     * Gets how bright this entity is.
+     */
+    public float getBrightness(float par1)
+    {
+        return super.getBrightness(par1);
     }
 
-    public boolean aq() {
+    /**
+     * If returns false, the item will not inflict any damage against entities.
+     */
+    public boolean canAttackWithItem()
+    {
         return false;
     }
 }

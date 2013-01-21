@@ -1,87 +1,126 @@
-package net.minecraft.server;
+package net.minecraft.entity.ai;
 
 import org.bukkit.craftbukkit.TrigMath; // CraftBukkit
+import net.minecraft.entity.Entity;
+import net.minecraft.entity.EntityLiving;
+import net.minecraft.util.MathHelper;
 
-public class ControllerLook {
+public class EntityLookHelper
+{
+    private EntityLiving entity;
 
-    private EntityLiving a;
-    private float b;
-    private float c;
-    private boolean d = false;
-    private double e;
-    private double f;
-    private double g;
+    /**
+     * The amount of change that is made each update for an entity facing a direction.
+     */
+    private float deltaLookYaw;
 
-    public ControllerLook(EntityLiving entityliving) {
-        this.a = entityliving;
+    /**
+     * The amount of change that is made each update for an entity facing a direction.
+     */
+    private float deltaLookPitch;
+
+    /** Whether or not the entity is trying to look at something. */
+    private boolean isLooking = false;
+    private double posX;
+    private double posY;
+    private double posZ;
+
+    public EntityLookHelper(EntityLiving par1EntityLiving)
+    {
+        this.entity = par1EntityLiving;
     }
 
-    public void a(Entity entity, float f, float f1) {
-        this.e = entity.locX;
-        if (entity instanceof EntityLiving) {
-            this.f = entity.locY + (double) entity.getHeadHeight();
-        } else {
-            this.f = (entity.boundingBox.b + entity.boundingBox.e) / 2.0D;
+    /**
+     * Sets position to look at using entity
+     */
+    public void setLookPositionWithEntity(Entity par1Entity, float par2, float par3)
+    {
+        this.posX = par1Entity.posX;
+
+        if (par1Entity instanceof EntityLiving)
+        {
+            this.posY = par1Entity.posY + (double)par1Entity.getEyeHeight();
+        }
+        else
+        {
+            this.posY = (par1Entity.boundingBox.minY + par1Entity.boundingBox.maxY) / 2.0D;
         }
 
-        this.g = entity.locZ;
-        this.b = f;
-        this.c = f1;
-        this.d = true;
+        this.posZ = par1Entity.posZ;
+        this.deltaLookYaw = par2;
+        this.deltaLookPitch = par3;
+        this.isLooking = true;
     }
 
-    public void a(double d0, double d1, double d2, float f, float f1) {
-        this.e = d0;
-        this.f = d1;
-        this.g = d2;
-        this.b = f;
-        this.c = f1;
-        this.d = true;
+    /**
+     * Sets position to look at
+     */
+    public void setLookPosition(double par1, double par3, double par5, float par7, float par8)
+    {
+        this.posX = par1;
+        this.posY = par3;
+        this.posZ = par5;
+        this.deltaLookYaw = par7;
+        this.deltaLookPitch = par8;
+        this.isLooking = true;
     }
 
-    public void a() {
-        this.a.pitch = 0.0F;
-        if (this.d) {
-            this.d = false;
-            double d0 = this.e - this.a.locX;
-            double d1 = this.f - (this.a.locY + (double) this.a.getHeadHeight());
-            double d2 = this.g - this.a.locZ;
-            double d3 = (double) MathHelper.sqrt(d0 * d0 + d2 * d2);
+    /**
+     * Updates look
+     */
+    public void onUpdateLook()
+    {
+        this.entity.rotationPitch = 0.0F;
+
+        if (this.isLooking)
+        {
+            this.isLooking = false;
+            double var1 = this.posX - this.entity.posX;
+            double var3 = this.posY - (this.entity.posY + (double)this.entity.getEyeHeight());
+            double var5 = this.posZ - this.entity.posZ;
+            double var7 = (double)MathHelper.sqrt_double(var1 * var1 + var5 * var5);
             // CraftBukkit start - Math -> TrigMath
-            float f = (float) (TrigMath.atan2(d2, d0) * 180.0D / 3.1415927410125732D) - 90.0F;
-            float f1 = (float) (-(TrigMath.atan2(d1, d3) * 180.0D / 3.1415927410125732D));
+            float f = (float)(TrigMath.atan2(var5, var1) * 180.0D / 3.1415927410125732D) - 90.0F;
+            float f1 = (float)(-(TrigMath.atan2(var3, var7) * 180.0D / 3.1415927410125732D));
             // CraftBukkit end
-
-            this.a.pitch = this.a(this.a.pitch, f1, this.c);
-            this.a.az = this.a(this.a.az, f, this.b);
-        } else {
-            this.a.az = this.a(this.a.az, this.a.ax, 10.0F);
+            this.entity.rotationPitch = this.updateRotation(this.entity.rotationPitch, f1, this.deltaLookPitch);
+            this.entity.rotationYawHead = this.updateRotation(this.entity.rotationYawHead, f, this.deltaLookYaw);
+        }
+        else
+        {
+            this.entity.rotationYawHead = this.updateRotation(this.entity.rotationYawHead, this.entity.renderYawOffset, 10.0F);
         }
 
-        float f2 = MathHelper.g(this.a.az - this.a.ax);
+        float var9 = MathHelper.wrapAngleTo180_float(this.entity.rotationYawHead - this.entity.renderYawOffset);
 
-        if (!this.a.getNavigation().f()) {
-            if (f2 < -75.0F) {
-                this.a.az = this.a.ax - 75.0F;
+        if (!this.entity.getNavigator().noPath())
+        {
+            if (var9 < -75.0F)
+            {
+                this.entity.rotationYawHead = this.entity.renderYawOffset - 75.0F;
             }
 
-            if (f2 > 75.0F) {
-                this.a.az = this.a.ax + 75.0F;
+            if (var9 > 75.0F)
+            {
+                this.entity.rotationYawHead = this.entity.renderYawOffset + 75.0F;
             }
         }
     }
 
-    private float a(float f, float f1, float f2) {
-        float f3 = MathHelper.g(f1 - f);
+    private float updateRotation(float par1, float par2, float par3)
+    {
+        float var4 = MathHelper.wrapAngleTo180_float(par2 - par1);
 
-        if (f3 > f2) {
-            f3 = f2;
+        if (var4 > par3)
+        {
+            var4 = par3;
         }
 
-        if (f3 < -f2) {
-            f3 = -f2;
+        if (var4 < -par3)
+        {
+            var4 = -par3;
         }
 
-        return f + f3;
+        return par1 + var4;
     }
 }

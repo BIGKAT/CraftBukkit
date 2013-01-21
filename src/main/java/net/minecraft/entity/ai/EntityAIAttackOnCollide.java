@@ -1,86 +1,127 @@
-package net.minecraft.server;
+package net.minecraft.entity.ai;
 
 import org.bukkit.event.entity.EntityTargetEvent; // CraftBukkit
+import net.minecraft.entity.EntityLiving;
+import net.minecraft.pathfinding.PathEntity;
+import net.minecraft.util.MathHelper;
+import net.minecraft.world.World;
 
-public class PathfinderGoalMeleeAttack extends PathfinderGoal {
+public class EntityAIAttackOnCollide extends EntityAIBase
+{
+    World worldObj;
+    EntityLiving attacker;
+    EntityLiving entityTarget;
 
-    World a;
-    EntityLiving b;
-    EntityLiving c;
-    int d;
-    float e;
-    boolean f;
-    PathEntity g;
-    Class h;
-    private int i;
+    /**
+     * An amount of decrementing ticks that allows the entity to attack once the tick reaches 0.
+     */
+    int attackTick;
+    float field_75440_e;
+    boolean field_75437_f;
 
-    public PathfinderGoalMeleeAttack(EntityLiving entityliving, Class oclass, float f, boolean flag) {
-        this(entityliving, f, flag);
-        this.h = oclass;
+    /** The PathEntity of our entity. */
+    PathEntity entityPathEntity;
+    Class classTarget;
+    private int field_75445_i;
+
+    public EntityAIAttackOnCollide(EntityLiving par1EntityLiving, Class par2Class, float par3, boolean par4)
+    {
+        this(par1EntityLiving, par3, par4);
+        this.classTarget = par2Class;
     }
 
-    public PathfinderGoalMeleeAttack(EntityLiving entityliving, float f, boolean flag) {
-        this.d = 0;
-        this.b = entityliving;
-        this.a = entityliving.world;
-        this.e = f;
-        this.f = flag;
-        this.a(3);
+    public EntityAIAttackOnCollide(EntityLiving par1EntityLiving, float par2, boolean par3)
+    {
+        this.attackTick = 0;
+        this.attacker = par1EntityLiving;
+        this.worldObj = par1EntityLiving.worldObj;
+        this.field_75440_e = par2;
+        this.field_75437_f = par3;
+        this.setMutexBits(3);
     }
 
-    public boolean a() {
-        EntityLiving entityliving = this.b.getGoalTarget();
+    /**
+     * Returns whether the EntityAIBase should begin execution.
+     */
+    public boolean shouldExecute()
+    {
+        EntityLiving var1 = this.attacker.getAttackTarget();
 
-        if (entityliving == null) {
+        if (var1 == null)
+        {
             return false;
-        } else if (this.h != null && !this.h.isAssignableFrom(entityliving.getClass())) {
+        }
+        else if (this.classTarget != null && !this.classTarget.isAssignableFrom(var1.getClass()))
+        {
             return false;
-        } else {
-            this.c = entityliving;
-            this.g = this.b.getNavigation().a(this.c);
-            return this.g != null;
+        }
+        else
+        {
+            this.entityTarget = var1;
+            this.entityPathEntity = this.attacker.getNavigator().getPathToEntityLiving(this.entityTarget);
+            return this.entityPathEntity != null;
         }
     }
 
-    public boolean b() {
-        EntityLiving entityliving = this.b.getGoalTarget();
-
-        return entityliving == null ? false : (!this.c.isAlive() ? false : (!this.f ? !this.b.getNavigation().f() : this.b.e(MathHelper.floor(this.c.locX), MathHelper.floor(this.c.locY), MathHelper.floor(this.c.locZ))));
+    /**
+     * Returns whether an in-progress EntityAIBase should continue executing
+     */
+    public boolean continueExecuting()
+    {
+        EntityLiving var1 = this.attacker.getAttackTarget();
+        return var1 == null ? false : (!this.entityTarget.isEntityAlive() ? false : (!this.field_75437_f ? !this.attacker.getNavigator().noPath() : this.attacker.isWithinHomeDistance(MathHelper.floor_double(this.entityTarget.posX), MathHelper.floor_double(this.entityTarget.posY), MathHelper.floor_double(this.entityTarget.posZ))));
     }
 
-    public void c() {
-        this.b.getNavigation().a(this.g, this.e);
-        this.i = 0;
+    /**
+     * Execute a one shot task or start executing a continuous task
+     */
+    public void startExecuting()
+    {
+        this.attacker.getNavigator().setPath(this.entityPathEntity, this.field_75440_e);
+        this.field_75445_i = 0;
     }
 
-    public void d() {
+    /**
+     * Resets the task
+     */
+    public void resetTask()
+    {
         // CraftBukkit start
-        EntityTargetEvent.TargetReason reason = this.c.isAlive() ? EntityTargetEvent.TargetReason.FORGOT_TARGET : EntityTargetEvent.TargetReason.TARGET_DIED;
-        org.bukkit.craftbukkit.event.CraftEventFactory.callEntityTargetEvent(b, null, reason);
+        EntityTargetEvent.TargetReason reason = this.entityTarget.isEntityAlive() ? EntityTargetEvent.TargetReason.FORGOT_TARGET : EntityTargetEvent.TargetReason.TARGET_DIED;
+        org.bukkit.craftbukkit.event.CraftEventFactory.callEntityTargetEvent(attacker, null, reason);
         // CraftBukkit end
-
-        this.c = null;
-        this.b.getNavigation().g();
+        this.entityTarget = null;
+        this.attacker.getNavigator().clearPathEntity();
     }
 
-    public void e() {
-        this.b.getControllerLook().a(this.c, 30.0F, 30.0F);
-        if ((this.f || this.b.aA().canSee(this.c)) && --this.i <= 0) {
-            this.i = 4 + this.b.aB().nextInt(7);
-            this.b.getNavigation().a(this.c, this.e);
+    /**
+     * Updates the task
+     */
+    public void updateTask()
+    {
+        this.attacker.getLookHelper().setLookPositionWithEntity(this.entityTarget, 30.0F, 30.0F);
+
+        if ((this.field_75437_f || this.attacker.getEntitySenses().canSee(this.entityTarget)) && --this.field_75445_i <= 0)
+        {
+            this.field_75445_i = 4 + this.attacker.getRNG().nextInt(7);
+            this.attacker.getNavigator().tryMoveToEntityLiving(this.entityTarget, this.field_75440_e);
         }
 
-        this.d = Math.max(this.d - 1, 0);
-        double d0 = (double) (this.b.width * 2.0F * this.b.width * 2.0F);
+        this.attackTick = Math.max(this.attackTick - 1, 0);
+        double var1 = (double)(this.attacker.width * 2.0F * this.attacker.width * 2.0F);
 
-        if (this.b.e(this.c.locX, this.c.boundingBox.b, this.c.locZ) <= d0) {
-            if (this.d <= 0) {
-                this.d = 20;
-                if (this.b.bD() != null) {
-                    this.b.bH();
+        if (this.attacker.getDistanceSq(this.entityTarget.posX, this.entityTarget.boundingBox.minY, this.entityTarget.posZ) <= var1)
+        {
+            if (this.attackTick <= 0)
+            {
+                this.attackTick = 20;
+
+                if (this.attacker.getHeldItem() != null)
+                {
+                    this.attacker.swingItem();
                 }
 
-                this.b.m(this.c);
+                this.attacker.attackEntityAsMob(this.entityTarget);
             }
         }
     }

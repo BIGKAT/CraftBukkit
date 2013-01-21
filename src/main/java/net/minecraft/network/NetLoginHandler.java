@@ -1,4 +1,4 @@
-package net.minecraft.server;
+package net.minecraft.network;
 
 import java.io.Serializable;
 import java.net.InetAddress;
@@ -11,208 +11,324 @@ import java.util.List;
 import java.util.Random;
 import java.util.logging.Logger;
 import javax.crypto.SecretKey;
+import net.minecraft.entity.player.EntityPlayerMP;
+import net.minecraft.network.packet.NetHandler;
+import net.minecraft.network.packet.Packet;
+import net.minecraft.network.packet.Packet1Login;
+import net.minecraft.network.packet.Packet205ClientCommand;
+import net.minecraft.network.packet.Packet252SharedKey;
+import net.minecraft.network.packet.Packet253ServerAuthData;
+import net.minecraft.network.packet.Packet254ServerPing;
+import net.minecraft.network.packet.Packet255KickDisconnect;
+import net.minecraft.network.packet.Packet2ClientProtocol;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.dedicated.DedicatedServerListenThread;
+import net.minecraft.server.management.ServerConfigurationManager;
+import net.minecraft.util.StringUtils;
 
-public class PendingConnection extends Connection {
+public class NetLoginHandler extends NetHandler
+{
+    /** The 4 byte verify token read from a Packet252SharedKey */
+    private byte[] verifyToken;
 
-    private byte[] d;
+    /** The Minecraft logger. */
     public static Logger logger = Logger.getLogger("Minecraft");
-    private static Random random = new Random();
-    public NetworkManager networkManager;
-    public boolean c = false;
-    private MinecraftServer server;
-    private int g = 0;
-    private String h = null;
-    private volatile boolean i = false;
-    private String loginKey = Long.toString(random.nextLong(), 16); // CraftBukkit - Security fix
-    private boolean k = false;
-    private SecretKey l = null;
+
+    /** The Random object used to generate serverId hex strings. */
+    private static Random rand = new Random();
+    public TcpConnection myTCPConnection;
+    public boolean connectionComplete = false;
+
+    /** Reference to the MinecraftServer object. */
+    private MinecraftServer mcServer;
+    private int connectionTimer = 0;
+    private String clientUsername = null;
+    private volatile boolean field_72544_i = false;
+    private String loginServerId = Long.toString(rand.nextLong(), 16); // CraftBukkit - Security fix
+    private boolean field_92028_k = false;
+
+    /** Secret AES key obtained from the client's Packet252SharedKey */
+    private SecretKey sharedKey = null;
     public String hostname = ""; // CraftBukkit - add field
 
-    public PendingConnection(MinecraftServer minecraftserver, Socket socket, String s) throws java.io.IOException { // CraftBukkit - throws IOException
-        this.server = minecraftserver;
-        this.networkManager = new NetworkManager(socket, s, this, minecraftserver.F().getPrivate());
-        this.networkManager.e = 0;
+    public NetLoginHandler(MinecraftServer par1MinecraftServer, Socket par2Socket, String par3Str) throws java.io.IOException   // CraftBukkit - throws IOException
+    {
+        this.mcServer = par1MinecraftServer;
+        this.myTCPConnection = new TcpConnection(par2Socket, par3Str, this, par1MinecraftServer.getKeyPair().getPrivate());
+        this.myTCPConnection.field_74468_e = 0;
     }
 
     // CraftBukkit start
-    public Socket getSocket() {
-        return this.networkManager.getSocket();
+    public Socket getSocket()
+    {
+        return this.myTCPConnection.getSocket();
     }
     // CraftBukkit end
 
-    public void c() {
-        if (this.i) {
-            this.d();
+    /**
+     * Logs the user in if a login packet is found, otherwise keeps processing network packets unless the timeout has
+     * occurred.
+     */
+    public void tryLogin()
+    {
+        if (this.field_72544_i)
+        {
+            this.initializePlayerConnection();
         }
 
-        if (this.g++ == 600) {
-            this.disconnect("Took too long to log in");
-        } else {
-            this.networkManager.b();
+        if (this.connectionTimer++ == 600)
+        {
+            this.raiseErrorAndDisconnect("Took too long to log in");
         }
-    }
-
-    public void disconnect(String s) {
-        try {
-            logger.info("Disconnecting " + this.getName() + ": " + s);
-            this.networkManager.queue(new Packet255KickDisconnect(s));
-            this.networkManager.d();
-            this.c = true;
-        } catch (Exception exception) {
-            exception.printStackTrace();
+        else
+        {
+            this.myTCPConnection.processReadPackets();
         }
     }
 
-    public void a(Packet2Handshake packet2handshake) {
+    public void raiseErrorAndDisconnect(String par1Str)
+    {
+        try
+        {
+            logger.info("Disconnecting " + this.getUsernameAndAddress() + ": " + par1Str);
+            this.myTCPConnection.addToSendQueue(new Packet255KickDisconnect(par1Str));
+            this.myTCPConnection.serverShutdown();
+            this.connectionComplete = true;
+        }
+        catch (Exception var3)
+        {
+            var3.printStackTrace();
+        }
+    }
+
+    public void handleClientProtocol(Packet2ClientProtocol par1Packet2ClientProtocol)
+    {
         // CraftBukkit start
-        this.hostname = packet2handshake.c == null ? "" : packet2handshake.c + ':' + packet2handshake.d;
+        this.hostname = par1Packet2ClientProtocol.serverHost == null ? "" : par1Packet2ClientProtocol.serverHost + ':' + par1Packet2ClientProtocol.serverPort;
         // CraftBukkit end
-        this.h = packet2handshake.f();
-        if (!this.h.equals(StripColor.a(this.h))) {
-            this.disconnect("Invalid username!");
-        } else {
-            PublicKey publickey = this.server.F().getPublic();
+        this.clientUsername = par1Packet2ClientProtocol.getUsername();
 
-            if (packet2handshake.d() != 51) {
-                if (packet2handshake.d() > 51) {
-                    this.disconnect("Outdated server!");
-                } else {
-                    this.disconnect("Outdated client!");
+        if (!this.clientUsername.equals(StringUtils.stripControlCodes(this.clientUsername)))
+        {
+            this.raiseErrorAndDisconnect("Invalid username!");
+        }
+        else
+        {
+            PublicKey var2 = this.mcServer.getKeyPair().getPublic();
+
+            if (par1Packet2ClientProtocol.getProtocolVersion() != 51)
+            {
+                if (par1Packet2ClientProtocol.getProtocolVersion() > 51)
+                {
+                    this.raiseErrorAndDisconnect("Outdated server!");
                 }
-            } else {
-                this.loginKey = this.server.getOnlineMode() ? Long.toString(random.nextLong(), 16) : "-";
-                this.d = new byte[4];
-                random.nextBytes(this.d);
-                this.networkManager.queue(new Packet253KeyRequest(this.loginKey, publickey, this.d));
+                else
+                {
+                    this.raiseErrorAndDisconnect("Outdated client!");
+                }
+            }
+            else
+            {
+                this.loginServerId = this.mcServer.isServerInOnlineMode() ? Long.toString(rand.nextLong(), 16) : "-";
+                this.verifyToken = new byte[4];
+                rand.nextBytes(this.verifyToken);
+                this.myTCPConnection.addToSendQueue(new Packet253ServerAuthData(this.loginServerId, var2, this.verifyToken));
             }
         }
     }
 
-    public void a(Packet252KeyResponse packet252keyresponse) {
-        PrivateKey privatekey = this.server.F().getPrivate();
+    public void handleSharedKey(Packet252SharedKey par1Packet252SharedKey)
+    {
+        PrivateKey var2 = this.mcServer.getKeyPair().getPrivate();
+        this.sharedKey = par1Packet252SharedKey.getSharedKey(var2);
 
-        this.l = packet252keyresponse.a(privatekey);
-        if (!Arrays.equals(this.d, packet252keyresponse.b(privatekey))) {
-            this.disconnect("Invalid client reply");
+        if (!Arrays.equals(this.verifyToken, par1Packet252SharedKey.getVerifyToken(var2)))
+        {
+            this.raiseErrorAndDisconnect("Invalid client reply");
         }
 
-        this.networkManager.queue(new Packet252KeyResponse());
+        this.myTCPConnection.addToSendQueue(new Packet252SharedKey());
     }
 
-    public void a(Packet205ClientCommand packet205clientcommand) {
-        if (packet205clientcommand.a == 0) {
-            if (this.server.getOnlineMode()) {
-                if (this.k) {
-                    this.disconnect("Duplicate login");
+    public void handleClientCommand(Packet205ClientCommand par1Packet205ClientCommand)
+    {
+        if (par1Packet205ClientCommand.forceRespawn == 0)
+        {
+            if (this.mcServer.isServerInOnlineMode())
+            {
+                if (this.field_92028_k)
+                {
+                    this.raiseErrorAndDisconnect("Duplicate login");
                     return;
                 }
-                this.k = true;
-                (new ThreadLoginVerifier(this, server.server)).start(); // CraftBukkit - add CraftServer
-            } else {
-                this.i = true;
+
+                this.field_92028_k = true;
+                (new ThreadLoginVerifier(this, mcServer.server)).start(); // CraftBukkit - add CraftServer
+            }
+            else
+            {
+                this.field_72544_i = true;
             }
         }
     }
 
-    public void a(Packet1Login packet1login) {}
+    public void handleLogin(Packet1Login par1Packet1Login) {}
 
-    public void d() {
+    /**
+     * on success the specified username is connected to the minecraftInstance, otherwise they are packet255'd
+     */
+    public void initializePlayerConnection()
+    {
         // CraftBukkit start
-        EntityPlayer s = this.server.getPlayerList().attemptLogin(this, this.h, this.hostname);
+        EntityPlayerMP s = this.mcServer.getConfigurationManager().attemptLogin(this, this.clientUsername, this.hostname);
 
-        if (s == null) {
+        if (s == null)
+        {
             return;
             // CraftBukkit end
-        } else {
-            EntityPlayer entityplayer = this.server.getPlayerList().processLogin(s); // CraftBukkit - this.h -> s
+        }
+        else
+        {
+            EntityPlayerMP var1 = this.mcServer.getConfigurationManager().processLogin(s); // CraftBukkit - this.h -> s
 
-            if (entityplayer != null) {
-                this.server.getPlayerList().a((INetworkManager) this.networkManager, entityplayer);
+            if (var1 != null)
+            {
+                this.mcServer.getConfigurationManager().initializeConnectionToPlayer((INetworkManager) this.myTCPConnection, var1);
             }
         }
 
-        this.c = true;
+        this.connectionComplete = true;
     }
 
-    public void a(String s, Object[] aobject) {
-        logger.info(this.getName() + " lost connection");
-        this.c = true;
+    public void handleErrorMessage(String par1Str, Object[] par2ArrayOfObj)
+    {
+        logger.info(this.getUsernameAndAddress() + " lost connection");
+        this.connectionComplete = true;
     }
 
-    public void a(Packet254GetInfo packet254getinfo) {
-        if (this.networkManager.getSocket() == null) return; // CraftBukkit - fix NPE when a client queries a server that is unable to handle it.
-        try {
-            PlayerList playerlist = this.server.getPlayerList();
-            String s = null;
+    /**
+     * Handle a server ping packet.
+     */
+    public void handleServerPing(Packet254ServerPing par1Packet254ServerPing)
+    {
+        if (this.myTCPConnection.getSocket() == null)
+        {
+            return;    // CraftBukkit - fix NPE when a client queries a server that is unable to handle it.
+        }
+
+        try
+        {
+            ServerConfigurationManager var2 = this.mcServer.getConfigurationManager();
+            String var3 = null;
             // CraftBukkit
-            org.bukkit.event.server.ServerListPingEvent pingEvent = org.bukkit.craftbukkit.event.CraftEventFactory.callServerListPingEvent(this.server.server, getSocket().getInetAddress(), this.server.getMotd(), playerlist.getPlayerCount(), playerlist.getMaxPlayers());
+            org.bukkit.event.server.ServerListPingEvent var4 = org.bukkit.craftbukkit.event.CraftEventFactory.callServerListPingEvent(this.mcServer.server, getSocket().getInetAddress(), this.mcServer.getMOTD(), var2.getCurrentPlayerCount(), var2.getMaxPlayers());
 
-            if (packet254getinfo.a == 1) {
+            if (par1Packet254ServerPing.field_82559_a == 1)
+            {
                 // CraftBukkit start - fix decompile issues, don't create a list from an array
-                Object[] list = new Object[] { 1, 51, this.server.getVersion(), pingEvent.getMotd(), playerlist.getPlayerCount(), pingEvent.getMaxPlayers() };
+                Object[] list = new Object[] { 1, 51, this.mcServer.getMinecraftVersion(), var4.getMotd(), var2.getCurrentPlayerCount(), var4.getMaxPlayers() };
 
-                for (Object object : list) {
-                    if (s == null) {
-                        s = "\u00A7";
-                    } else {
-                        s = s + "\0";
+                for (Object object : list)
+                {
+                    if (var3 == null)
+                    {
+                        var3 = "\u00A7";
+                    }
+                    else
+                    {
+                        var3 = var3 + "\0";
                     }
 
-                    s += org.apache.commons.lang.StringUtils.replace(object.toString(), "\0", "");
+                    var3 += org.apache.commons.lang.StringUtils.replace(object.toString(), "\0", "");
                 }
+
                 // CraftBukkit end
-            } else {
+            }
+            else
+            {
                 // CraftBukkit
-                s = pingEvent.getMotd() + "\u00A7" + playerlist.getPlayerCount() + "\u00A7" + pingEvent.getMaxPlayers();
+                var3 = var4.getMotd() + "\u00A7" + var2.getCurrentPlayerCount() + "\u00A7" + var4.getMaxPlayers();
             }
 
-            InetAddress inetaddress = null;
+            InetAddress var6 = null;
 
-            if (this.networkManager.getSocket() != null) {
-                inetaddress = this.networkManager.getSocket().getInetAddress();
+            if (this.myTCPConnection.getSocket() != null)
+            {
+                var6 = this.myTCPConnection.getSocket().getInetAddress();
             }
 
-            this.networkManager.queue(new Packet255KickDisconnect(s));
-            this.networkManager.d();
-            if (inetaddress != null && this.server.ae() instanceof DedicatedServerConnection) {
-                ((DedicatedServerConnection) this.server.ae()).a(inetaddress);
+            this.myTCPConnection.addToSendQueue(new Packet255KickDisconnect(var3));
+            this.myTCPConnection.serverShutdown();
+
+            if (var6 != null && this.mcServer.getNetworkThread() instanceof DedicatedServerListenThread)
+            {
+                ((DedicatedServerListenThread) this.mcServer.getNetworkThread()).func_71761_a(var6);
             }
 
-            this.c = true;
-        } catch (Exception exception) {
-            exception.printStackTrace();
+            this.connectionComplete = true;
+        }
+        catch (Exception var5)
+        {
+            var5.printStackTrace();
         }
     }
 
-    public void onUnhandledPacket(Packet packet) {
-        this.disconnect("Protocol error");
+    /**
+     * Default handler called for packets that don't have their own handlers in NetClientHandler; currentlly does
+     * nothing.
+     */
+    public void unexpectedPacket(Packet par1Packet)
+    {
+        this.raiseErrorAndDisconnect("Protocol error");
     }
 
-    public String getName() {
-        return this.h != null ? this.h + " [" + this.networkManager.getSocketAddress().toString() + "]" : this.networkManager.getSocketAddress().toString();
+    public String getUsernameAndAddress()
+    {
+        return this.clientUsername != null ? this.clientUsername + " [" + this.myTCPConnection.getSocketAddress().toString() + "]" : this.myTCPConnection.getSocketAddress().toString();
     }
 
-    public boolean a() {
+    /**
+     * determine if it is a server handler
+     */
+    public boolean isServerHandler()
+    {
         return true;
     }
 
-    static String a(PendingConnection pendingconnection) {
-        return pendingconnection.loginKey;
+    /**
+     * Returns the server Id randomly generated by this login handler.
+     */
+    static String getServerId(NetLoginHandler par0NetLoginHandler)
+    {
+        return par0NetLoginHandler.loginServerId;
     }
 
-    static MinecraftServer b(PendingConnection pendingconnection) {
-        return pendingconnection.server;
+    /**
+     * Returns the reference to Minecraft Server.
+     */
+    static MinecraftServer getLoginMinecraftServer(NetLoginHandler par0NetLoginHandler)
+    {
+        return par0NetLoginHandler.mcServer;
     }
 
-    static SecretKey c(PendingConnection pendingconnection) {
-        return pendingconnection.l;
+    /**
+     * Return the secret AES sharedKey
+     */
+    static SecretKey getSharedKey(NetLoginHandler par0NetLoginHandler)
+    {
+        return par0NetLoginHandler.sharedKey;
     }
 
-    static String d(PendingConnection pendingconnection) {
-        return pendingconnection.h;
+    /**
+     * Returns the connecting client username.
+     */
+    static String getClientUsername(NetLoginHandler par0NetLoginHandler)
+    {
+        return par0NetLoginHandler.clientUsername;
     }
 
-    static boolean a(PendingConnection pendingconnection, boolean flag) {
-        return pendingconnection.i = flag;
+    static boolean func_72531_a(NetLoginHandler par0NetLoginHandler, boolean par1)
+    {
+        return par0NetLoginHandler.field_72544_i = par1;
     }
 }

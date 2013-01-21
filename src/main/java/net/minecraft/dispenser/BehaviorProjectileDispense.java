@@ -1,65 +1,83 @@
-package net.minecraft.server;
+package net.minecraft.dispenser;
 
 // CraftBukkit start
 import org.bukkit.craftbukkit.inventory.CraftItemStack;
 import org.bukkit.event.block.BlockDispenseEvent;
+import net.minecraft.block.BlockDispenser;
+import net.minecraft.entity.Entity;
+import net.minecraft.entity.IProjectile;
+import net.minecraft.item.ItemStack;
+import net.minecraft.util.EnumFacing;
+import net.minecraft.world.World;
 // CraftBukkit end
 
-public abstract class DispenseBehaviorProjectile extends DispenseBehaviorItem {
-
-    public DispenseBehaviorProjectile() {}
-
-    public ItemStack b(ISourceBlock isourceblock, ItemStack itemstack) {
-        World world = isourceblock.k();
-        IPosition iposition = BlockDispenser.a(isourceblock);
-        EnumFacing enumfacing = EnumFacing.a(isourceblock.h());
-        IProjectile iprojectile = this.a(world, iposition);
-
+public abstract class BehaviorProjectileDispense extends BehaviorDefaultDispenseItem
+{
+    public BehaviorProjectileDispense() {}
+    /**
+     * Dispense the specified stack, play the dispense sound and spawn particles.
+     */
+    public ItemStack dispenseStack(IBlockSource par1IBlockSource, ItemStack par2ItemStack)
+    {
+        World var3 = par1IBlockSource.getWorld();
+        IPosition var4 = BlockDispenser.func_82525_a(par1IBlockSource);
+        EnumFacing var5 = EnumFacing.func_82600_a(par1IBlockSource.func_82620_h());
+        IProjectile var6 = this.getProjectileEntity(var3, var4);
         // CraftBukkit start
-        ItemStack itemstack1 = itemstack.a(1);
-        org.bukkit.block.Block block = world.getWorld().getBlockAt(isourceblock.getBlockX(), isourceblock.getBlockY(), isourceblock.getBlockZ());
+        ItemStack itemstack1 = par2ItemStack.splitStack(1);
+        org.bukkit.block.Block block = var3.getWorld().getBlockAt(par1IBlockSource.getXInt(), par1IBlockSource.getYInt(), par1IBlockSource.getZInt());
         CraftItemStack craftItem = CraftItemStack.asCraftMirror(itemstack1);
+        BlockDispenseEvent event = new BlockDispenseEvent(block, craftItem.clone(), new org.bukkit.util.Vector((double) var5.func_82601_c(), 0.10000000149011612D, (double) var5.func_82599_e()));
 
-        BlockDispenseEvent event = new BlockDispenseEvent(block, craftItem.clone(), new org.bukkit.util.Vector((double) enumfacing.c(), 0.10000000149011612D, (double) enumfacing.e()));
-        if (!BlockDispenser.eventFired) {
-            world.getServer().getPluginManager().callEvent(event);
+        if (!BlockDispenser.eventFired)
+        {
+            var3.getServer().getPluginManager().callEvent(event);
         }
 
-        if (event.isCancelled()) {
-            itemstack.count++;
-            return itemstack;
+        if (event.isCancelled())
+        {
+            par2ItemStack.stackSize++;
+            return par2ItemStack;
         }
 
-        if (!event.getItem().equals(craftItem)) {
-            itemstack.count++;
+        if (!event.getItem().equals(craftItem))
+        {
+            par2ItemStack.stackSize++;
             // Chain to handler for new item
             ItemStack eventStack = CraftItemStack.asNMSCopy(event.getItem());
-            IDispenseBehavior idispensebehavior = (IDispenseBehavior) BlockDispenser.a.a(eventStack.getItem());
-            if (idispensebehavior != IDispenseBehavior.a && idispensebehavior != this) {
-                idispensebehavior.a(isourceblock, eventStack);
-                return itemstack;
+            IBehaviorDispenseItem idispensebehavior = (IBehaviorDispenseItem) BlockDispenser.dispenseBehaviorRegistry.func_82594_a(eventStack.getItem());
+
+            if (idispensebehavior != IBehaviorDispenseItem.itemDispenseBehaviorProvider && idispensebehavior != this)
+            {
+                idispensebehavior.dispense(par1IBlockSource, eventStack);
+                return par2ItemStack;
             }
         }
 
-        iprojectile.shoot(event.getVelocity().getX(), event.getVelocity().getY(), event.getVelocity().getZ(), this.b(), this.a());
+        var6.setThrowableHeading(event.getVelocity().getX(), event.getVelocity().getY(), event.getVelocity().getZ(), this.func_82500_b(), this.func_82498_a());
         // CraftBukkit end
-
-        world.addEntity((Entity) iprojectile);
+        var3.spawnEntityInWorld((Entity)var6);
         // itemstack.a(1); // CraftBukkit - Handled during event processing
-        return itemstack;
+        return par2ItemStack;
     }
 
-    protected void a(ISourceBlock isourceblock) {
-        isourceblock.k().triggerEffect(1002, isourceblock.getBlockX(), isourceblock.getBlockY(), isourceblock.getBlockZ(), 0);
+    /**
+     * Play the dispense sound from the specified block.
+     */
+    protected void playDispenseSound(IBlockSource par1IBlockSource)
+    {
+        par1IBlockSource.getWorld().playAuxSFX(1002, par1IBlockSource.getXInt(), par1IBlockSource.getYInt(), par1IBlockSource.getZInt(), 0);
     }
 
-    protected abstract IProjectile a(World world, IPosition iposition);
+    protected abstract IProjectile getProjectileEntity(World world, IPosition iposition);
 
-    protected float a() {
+    protected float func_82498_a()
+    {
         return 6.0F;
     }
 
-    protected float b() {
+    protected float func_82500_b()
+    {
         return 1.1F;
     }
 }

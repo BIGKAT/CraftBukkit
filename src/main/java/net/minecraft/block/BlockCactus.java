@@ -1,104 +1,171 @@
-package net.minecraft.server;
+package net.minecraft.block;
 
 import java.util.Random;
+import net.minecraft.block.material.Material;
+import net.minecraft.creativetab.CreativeTabs;
+import net.minecraft.entity.Entity;
+import net.minecraft.entity.EntityLiving;
+import net.minecraft.util.AxisAlignedBB;
+import net.minecraft.util.DamageSource;
+import net.minecraft.world.World;
 
 import org.bukkit.event.entity.EntityDamageByBlockEvent; // CraftBukkit
 
-public class BlockCactus extends Block {
-
-    protected BlockCactus(int i, int j) {
-        super(i, j, Material.CACTUS);
-        this.b(true);
-        this.a(CreativeModeTab.c);
+public class BlockCactus extends Block
+{
+    protected BlockCactus(int par1, int par2)
+    {
+        super(par1, par2, Material.cactus);
+        this.setTickRandomly(true);
+        this.setCreativeTab(CreativeTabs.tabDecorations);
     }
 
-    public void b(World world, int i, int j, int k, Random random) {
-        if (world.isEmpty(i, j + 1, k)) {
-            int l;
+    /**
+     * Ticks the block if it's been scheduled
+     */
+    public void updateTick(World par1World, int par2, int par3, int par4, Random par5Random)
+    {
+        if (par1World.isAirBlock(par2, par3 + 1, par4))
+        {
+            int var6;
 
-            for (l = 1; world.getTypeId(i, j - l, k) == this.id; ++l) {
+            for (var6 = 1; par1World.getBlockId(par2, par3 - var6, par4) == this.blockID; ++var6)
+            {
                 ;
             }
 
-            if (l < 3) {
-                int i1 = world.getData(i, j, k);
+            if (var6 < 3)
+            {
+                int var7 = par1World.getBlockMetadata(par2, par3, par4);
 
-                if (i1 == 15) {
-                    org.bukkit.craftbukkit.event.CraftEventFactory.handleBlockGrowEvent(world, i, j + 1, k, this.id, 0); // CraftBukkit
-                    world.setData(i, j, k, 0);
-                } else {
-                    world.setData(i, j, k, i1 + 1);
+                if (var7 == 15)
+                {
+                    org.bukkit.craftbukkit.event.CraftEventFactory.handleBlockGrowEvent(par1World, par2, par3 + 1, par4, this.blockID, 0); // CraftBukkit
+                    par1World.setBlockMetadataWithNotify(par2, par3, par4, 0);
+                }
+                else
+                {
+                    par1World.setBlockMetadataWithNotify(par2, par3, par4, var7 + 1);
                 }
             }
         }
     }
 
-    public AxisAlignedBB e(World world, int i, int j, int k) {
-        float f = 0.0625F;
-
-        return AxisAlignedBB.a().a((double) ((float) i + f), (double) j, (double) ((float) k + f), (double) ((float) (i + 1) - f), (double) ((float) (j + 1) - f), (double) ((float) (k + 1) - f));
+    /**
+     * Returns a bounding box from the pool of bounding boxes (this means this box can change after the pool has been
+     * cleared to be reused)
+     */
+    public AxisAlignedBB getCollisionBoundingBoxFromPool(World par1World, int par2, int par3, int par4)
+    {
+        float var5 = 0.0625F;
+        return AxisAlignedBB.getAABBPool().addOrModifyAABBInPool((double)((float)par2 + var5), (double)par3, (double)((float)par4 + var5), (double)((float)(par2 + 1) - var5), (double)((float)(par3 + 1) - var5), (double)((float)(par4 + 1) - var5));
     }
 
-    public int a(int i) {
-        return i == 1 ? this.textureId - 1 : (i == 0 ? this.textureId + 1 : this.textureId);
+    /**
+     * Returns the block texture based on the side being looked at.  Args: side
+     */
+    public int getBlockTextureFromSide(int par1)
+    {
+        return par1 == 1 ? this.blockIndexInTexture - 1 : (par1 == 0 ? this.blockIndexInTexture + 1 : this.blockIndexInTexture);
     }
 
-    public boolean b() {
+    /**
+     * If this block doesn't render as an ordinary block it will return False (examples: signs, buttons, stairs, etc)
+     */
+    public boolean renderAsNormalBlock()
+    {
         return false;
     }
 
-    public boolean c() {
+    /**
+     * Is this block (a) opaque and (b) a full 1m cube?  This determines whether or not to render the shared face of two
+     * adjacent blocks and also whether the player can attach torches, redstone wire, etc to this block.
+     */
+    public boolean isOpaqueCube()
+    {
         return false;
     }
 
-    public int d() {
+    /**
+     * The type of render function that is called for this block
+     */
+    public int getRenderType()
+    {
         return 13;
     }
 
-    public boolean canPlace(World world, int i, int j, int k) {
-        return !super.canPlace(world, i, j, k) ? false : this.d(world, i, j, k);
+    /**
+     * Checks to see if its valid to put this block at the specified coordinates. Args: world, x, y, z
+     */
+    public boolean canPlaceBlockAt(World par1World, int par2, int par3, int par4)
+    {
+        return !super.canPlaceBlockAt(par1World, par2, par3, par4) ? false : this.canBlockStay(par1World, par2, par3, par4);
     }
 
-    public void doPhysics(World world, int i, int j, int k, int l) {
-        if (!this.d(world, i, j, k)) {
-            this.c(world, i, j, k, world.getData(i, j, k), 0);
-            world.setTypeId(i, j, k, 0);
+    /**
+     * Lets the block know when one of its neighbor changes. Doesn't know which neighbor changed (coordinates passed are
+     * their own) Args: x, y, z, neighbor blockID
+     */
+    public void onNeighborBlockChange(World par1World, int par2, int par3, int par4, int par5)
+    {
+        if (!this.canBlockStay(par1World, par2, par3, par4))
+        {
+            this.dropBlockAsItem(par1World, par2, par3, par4, par1World.getBlockMetadata(par2, par3, par4), 0);
+            par1World.setBlockWithNotify(par2, par3, par4, 0);
         }
     }
 
-    public boolean d(World world, int i, int j, int k) {
-        if (world.getMaterial(i - 1, j, k).isBuildable()) {
+    /**
+     * Can this block stay at this position.  Similar to canPlaceBlockAt except gets checked often with plants.
+     */
+    public boolean canBlockStay(World par1World, int par2, int par3, int par4)
+    {
+        if (par1World.getBlockMaterial(par2 - 1, par3, par4).isSolid())
+        {
             return false;
-        } else if (world.getMaterial(i + 1, j, k).isBuildable()) {
+        }
+        else if (par1World.getBlockMaterial(par2 + 1, par3, par4).isSolid())
+        {
             return false;
-        } else if (world.getMaterial(i, j, k - 1).isBuildable()) {
+        }
+        else if (par1World.getBlockMaterial(par2, par3, par4 - 1).isSolid())
+        {
             return false;
-        } else if (world.getMaterial(i, j, k + 1).isBuildable()) {
+        }
+        else if (par1World.getBlockMaterial(par2, par3, par4 + 1).isSolid())
+        {
             return false;
-        } else {
-            int l = world.getTypeId(i, j - 1, k);
-
-            return l == Block.CACTUS.id || l == Block.SAND.id;
+        }
+        else
+        {
+            int var5 = par1World.getBlockId(par2, par3 - 1, par4);
+            return var5 == Block.cactus.blockID || var5 == Block.sand.blockID;
         }
     }
 
-    public void a(World world, int i, int j, int k, Entity entity) {
+    /**
+     * Triggered whenever an entity collides with this block (enters into the block). Args: world, x, y, z, entity
+     */
+    public void onEntityCollidedWithBlock(World par1World, int par2, int par3, int par4, Entity par5Entity)
+    {
         // CraftBukkit start - EntityDamageByBlock event
-        if (entity instanceof EntityLiving) {
-            org.bukkit.block.Block damager = world.getWorld().getBlockAt(i, j, k);
-            org.bukkit.entity.Entity damagee = (entity == null) ? null : entity.getBukkitEntity();
-
+        if (par5Entity instanceof EntityLiving)
+        {
+            org.bukkit.block.Block damager = par1World.getWorld().getBlockAt(par2, par3, par4);
+            org.bukkit.entity.Entity damagee = (par5Entity == null) ? null : par5Entity.getBukkitEntity();
             EntityDamageByBlockEvent event = new EntityDamageByBlockEvent(damager, damagee, org.bukkit.event.entity.EntityDamageEvent.DamageCause.CONTACT, 1);
-            world.getServer().getPluginManager().callEvent(event);
+            par1World.getServer().getPluginManager().callEvent(event);
 
-            if (!event.isCancelled()) {
+            if (!event.isCancelled())
+            {
                 damagee.setLastDamageCause(event);
-                entity.damageEntity(DamageSource.CACTUS, event.getDamage());
+                par5Entity.attackEntityFrom(DamageSource.cactus, event.getDamage());
             }
+
             return;
         }
-        // CraftBukkit end
 
-        entity.damageEntity(DamageSource.CACTUS, 1);
+        // CraftBukkit end
+        par5Entity.attackEntityFrom(DamageSource.cactus, 1);
     }
 }

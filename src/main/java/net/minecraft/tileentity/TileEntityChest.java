@@ -1,25 +1,52 @@
-package net.minecraft.server;
+package net.minecraft.tileentity;
 
 import java.util.Iterator;
 import java.util.List;
+import net.minecraft.block.Block;
+import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.inventory.ContainerChest;
+import net.minecraft.inventory.IInventory;
+import net.minecraft.inventory.InventoryLargeChest;
+import net.minecraft.item.ItemStack;
+import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.nbt.NBTTagList;
+import net.minecraft.util.AxisAlignedBB;
 
 // CraftBukkit start
 import org.bukkit.craftbukkit.entity.CraftHumanEntity;
 import org.bukkit.entity.HumanEntity;
 // CraftBukkit end
 
-public class TileEntityChest extends TileEntity implements IInventory {
+public class TileEntityChest extends TileEntity implements IInventory
+{
+    private ItemStack[] chestContents = new ItemStack[27]; // CraftBukkit - 36 -> 27
 
-    private ItemStack[] items = new ItemStack[27]; // CraftBukkit - 36 -> 27
-    public boolean a = false;
-    public TileEntityChest b;
-    public TileEntityChest c;
-    public TileEntityChest d;
-    public TileEntityChest e;
-    public float f;
-    public float g;
-    public int h;
-    private int ticks;
+    /** Determines if the check for adjacent chests has taken place. */
+    public boolean adjacentChestChecked = false;
+
+    /** Contains the chest tile located adjacent to this one (if any) */
+    public TileEntityChest adjacentChestZNeg;
+
+    /** Contains the chest tile located adjacent to this one (if any) */
+    public TileEntityChest adjacentChestXPos;
+
+    /** Contains the chest tile located adjacent to this one (if any) */
+    public TileEntityChest adjacentChestXNeg;
+
+    /** Contains the chest tile located adjacent to this one (if any) */
+    public TileEntityChest adjacentChestZPosition;
+
+    /** The current angle of the lid (between 0 and 1) */
+    public float lidAngle;
+
+    /** The angle of the lid last tick */
+    public float prevLidAngle;
+
+    /** The number of players currently using this chest */
+    public int numUsingPlayers;
+
+    /** Server sync counter (once per 20 ticks) */
+    private int ticksSinceSync;
 
     public TileEntityChest() {}
 
@@ -27,303 +54,447 @@ public class TileEntityChest extends TileEntity implements IInventory {
     public List<HumanEntity> transaction = new java.util.ArrayList<HumanEntity>();
     private int maxStack = MAX_STACK;
 
-    public ItemStack[] getContents() {
-        return this.items;
+    public ItemStack[] getContents()
+    {
+        return this.chestContents;
     }
 
-    public void onOpen(CraftHumanEntity who) {
+    public void onOpen(CraftHumanEntity who)
+    {
         transaction.add(who);
     }
 
-    public void onClose(CraftHumanEntity who) {
+    public void onClose(CraftHumanEntity who)
+    {
         transaction.remove(who);
     }
 
-    public List<HumanEntity> getViewers() {
+    public List<HumanEntity> getViewers()
+    {
         return transaction;
     }
 
-    public void setMaxStackSize(int size) {
+    public void setMaxStackSize(int size)
+    {
         maxStack = size;
     }
     // CraftBukkit end
 
-    public int getSize() {
+    /**
+     * Returns the number of slots in the inventory.
+     */
+    public int getSizeInventory()
+    {
         return 27;
     }
 
-    public ItemStack getItem(int i) {
-        return this.items[i];
+    /**
+     * Returns the stack in slot i
+     */
+    public ItemStack getStackInSlot(int par1)
+    {
+        return this.chestContents[par1];
     }
 
-    public ItemStack splitStack(int i, int j) {
-        if (this.items[i] != null) {
-            ItemStack itemstack;
+    /**
+     * Removes from an inventory slot (first arg) up to a specified number (second arg) of items and returns them in a
+     * new stack.
+     */
+    public ItemStack decrStackSize(int par1, int par2)
+    {
+        if (this.chestContents[par1] != null)
+        {
+            ItemStack var3;
 
-            if (this.items[i].count <= j) {
-                itemstack = this.items[i];
-                this.items[i] = null;
-                this.update();
-                return itemstack;
-            } else {
-                itemstack = this.items[i].a(j);
-                if (this.items[i].count == 0) {
-                    this.items[i] = null;
+            if (this.chestContents[par1].stackSize <= par2)
+            {
+                var3 = this.chestContents[par1];
+                this.chestContents[par1] = null;
+                this.onInventoryChanged();
+                return var3;
+            }
+            else
+            {
+                var3 = this.chestContents[par1].splitStack(par2);
+
+                if (this.chestContents[par1].stackSize == 0)
+                {
+                    this.chestContents[par1] = null;
                 }
 
-                this.update();
-                return itemstack;
+                this.onInventoryChanged();
+                return var3;
             }
-        } else {
+        }
+        else
+        {
             return null;
         }
     }
 
-    public ItemStack splitWithoutUpdate(int i) {
-        if (this.items[i] != null) {
-            ItemStack itemstack = this.items[i];
-
-            this.items[i] = null;
-            return itemstack;
-        } else {
+    /**
+     * When some containers are closed they call this on each slot, then drop whatever it returns as an EntityItem -
+     * like when you close a workbench GUI.
+     */
+    public ItemStack getStackInSlotOnClosing(int par1)
+    {
+        if (this.chestContents[par1] != null)
+        {
+            ItemStack var2 = this.chestContents[par1];
+            this.chestContents[par1] = null;
+            return var2;
+        }
+        else
+        {
             return null;
         }
     }
 
-    public void setItem(int i, ItemStack itemstack) {
-        this.items[i] = itemstack;
-        if (itemstack != null && itemstack.count > this.getMaxStackSize()) {
-            itemstack.count = this.getMaxStackSize();
+    /**
+     * Sets the given item stack to the specified slot in the inventory (can be crafting or armor sections).
+     */
+    public void setInventorySlotContents(int par1, ItemStack par2ItemStack)
+    {
+        this.chestContents[par1] = par2ItemStack;
+
+        if (par2ItemStack != null && par2ItemStack.stackSize > this.getInventoryStackLimit())
+        {
+            par2ItemStack.stackSize = this.getInventoryStackLimit();
         }
 
-        this.update();
+        this.onInventoryChanged();
     }
 
-    public String getName() {
+    /**
+     * Returns the name of the inventory.
+     */
+    public String getInvName()
+    {
         return "container.chest";
     }
 
-    public void a(NBTTagCompound nbttagcompound) {
-        super.a(nbttagcompound);
-        NBTTagList nbttaglist = nbttagcompound.getList("Items");
+    /**
+     * Reads a tile entity from NBT.
+     */
+    public void readFromNBT(NBTTagCompound par1NBTTagCompound)
+    {
+        super.readFromNBT(par1NBTTagCompound);
+        NBTTagList var2 = par1NBTTagCompound.getTagList("Items");
+        this.chestContents = new ItemStack[this.getSizeInventory()];
 
-        this.items = new ItemStack[this.getSize()];
+        for (int var3 = 0; var3 < var2.tagCount(); ++var3)
+        {
+            NBTTagCompound var4 = (NBTTagCompound)var2.tagAt(var3);
+            int var5 = var4.getByte("Slot") & 255;
 
-        for (int i = 0; i < nbttaglist.size(); ++i) {
-            NBTTagCompound nbttagcompound1 = (NBTTagCompound) nbttaglist.get(i);
-            int j = nbttagcompound1.getByte("Slot") & 255;
-
-            if (j >= 0 && j < this.items.length) {
-                this.items[j] = ItemStack.createStack(nbttagcompound1);
+            if (var5 >= 0 && var5 < this.chestContents.length)
+            {
+                this.chestContents[var5] = ItemStack.loadItemStackFromNBT(var4);
             }
         }
     }
 
-    public void b(NBTTagCompound nbttagcompound) {
-        super.b(nbttagcompound);
-        NBTTagList nbttaglist = new NBTTagList();
+    /**
+     * Writes a tile entity to NBT.
+     */
+    public void writeToNBT(NBTTagCompound par1NBTTagCompound)
+    {
+        super.writeToNBT(par1NBTTagCompound);
+        NBTTagList var2 = new NBTTagList();
 
-        for (int i = 0; i < this.items.length; ++i) {
-            if (this.items[i] != null) {
-                NBTTagCompound nbttagcompound1 = new NBTTagCompound();
-
-                nbttagcompound1.setByte("Slot", (byte) i);
-                this.items[i].save(nbttagcompound1);
-                nbttaglist.add(nbttagcompound1);
+        for (int var3 = 0; var3 < this.chestContents.length; ++var3)
+        {
+            if (this.chestContents[var3] != null)
+            {
+                NBTTagCompound var4 = new NBTTagCompound();
+                var4.setByte("Slot", (byte)var3);
+                this.chestContents[var3].writeToNBT(var4);
+                var2.appendTag(var4);
             }
         }
 
-        nbttagcompound.set("Items", nbttaglist);
+        par1NBTTagCompound.setTag("Items", var2);
     }
 
-    public int getMaxStackSize() {
+    /**
+     * Returns the maximum stack size for a inventory slot. Seems to always be 64, possibly will be extended. *Isn't
+     * this more of a set than a get?*
+     */
+    public int getInventoryStackLimit()
+    {
         return maxStack; // CraftBukkit
     }
 
-    public boolean a_(EntityHuman entityhuman) {
-        if (this.world == null) return true; // CraftBukkit
-        return this.world.getTileEntity(this.x, this.y, this.z) != this ? false : entityhuman.e((double) this.x + 0.5D, (double) this.y + 0.5D, (double) this.z + 0.5D) <= 64.0D;
+    /**
+     * Do not make give this method the name canInteractWith because it clashes with Container
+     */
+    public boolean isUseableByPlayer(EntityPlayer par1EntityPlayer)
+    {
+        if (this.worldObj == null)
+        {
+            return true;    // CraftBukkit
+        }
+
+        return this.worldObj.getBlockTileEntity(this.xCoord, this.yCoord, this.zCoord) != this ? false : par1EntityPlayer.getDistanceSq((double)this.xCoord + 0.5D, (double)this.yCoord + 0.5D, (double)this.zCoord + 0.5D) <= 64.0D;
     }
 
-    public void h() {
-        super.h();
-        this.a = false;
+    /**
+     * Causes the TileEntity to reset all it's cached values for it's container block, blockID, metaData and in the case
+     * of chests, the adjcacent chest check
+     */
+    public void updateContainingBlockInfo()
+    {
+        super.updateContainingBlockInfo();
+        this.adjacentChestChecked = false;
     }
 
-    private void a(TileEntityChest tileentitychest, int i) {
-        if (tileentitychest.r()) {
-            this.a = false;
-        } else if (this.a) {
-            switch (i) {
+    private void func_90009_a(TileEntityChest par1TileEntityChest, int par2)
+    {
+        if (par1TileEntityChest.isInvalid())
+        {
+            this.adjacentChestChecked = false;
+        }
+        else if (this.adjacentChestChecked)
+        {
+            switch (par2)
+            {
                 case 0:
-                    if (this.e != tileentitychest) {
-                        this.a = false;
+                    if (this.adjacentChestZPosition != par1TileEntityChest)
+                    {
+                        this.adjacentChestChecked = false;
                     }
+
                     break;
 
                 case 1:
-                    if (this.d != tileentitychest) {
-                        this.a = false;
+                    if (this.adjacentChestXNeg != par1TileEntityChest)
+                    {
+                        this.adjacentChestChecked = false;
                     }
+
                     break;
 
                 case 2:
-                    if (this.b != tileentitychest) {
-                        this.a = false;
+                    if (this.adjacentChestZNeg != par1TileEntityChest)
+                    {
+                        this.adjacentChestChecked = false;
                     }
+
                     break;
 
                 case 3:
-                    if (this.c != tileentitychest) {
-                        this.a = false;
+                    if (this.adjacentChestXPos != par1TileEntityChest)
+                    {
+                        this.adjacentChestChecked = false;
                     }
             }
         }
     }
 
-    public void i() {
-        if (!this.a) {
-            this.a = true;
-            this.b = null;
-            this.c = null;
-            this.d = null;
-            this.e = null;
-            if (this.world.getTypeId(this.x - 1, this.y, this.z) == Block.CHEST.id) {
-                this.d = (TileEntityChest) this.world.getTileEntity(this.x - 1, this.y, this.z);
+    /**
+     * Performs the check for adjacent chests to determine if this chest is double or not.
+     */
+    public void checkForAdjacentChests()
+    {
+        if (!this.adjacentChestChecked)
+        {
+            this.adjacentChestChecked = true;
+            this.adjacentChestZNeg = null;
+            this.adjacentChestXPos = null;
+            this.adjacentChestXNeg = null;
+            this.adjacentChestZPosition = null;
+
+            if (this.worldObj.getBlockId(this.xCoord - 1, this.yCoord, this.zCoord) == Block.chest.blockID)
+            {
+                this.adjacentChestXNeg = (TileEntityChest)this.worldObj.getBlockTileEntity(this.xCoord - 1, this.yCoord, this.zCoord);
             }
 
-            if (this.world.getTypeId(this.x + 1, this.y, this.z) == Block.CHEST.id) {
-                this.c = (TileEntityChest) this.world.getTileEntity(this.x + 1, this.y, this.z);
+            if (this.worldObj.getBlockId(this.xCoord + 1, this.yCoord, this.zCoord) == Block.chest.blockID)
+            {
+                this.adjacentChestXPos = (TileEntityChest)this.worldObj.getBlockTileEntity(this.xCoord + 1, this.yCoord, this.zCoord);
             }
 
-            if (this.world.getTypeId(this.x, this.y, this.z - 1) == Block.CHEST.id) {
-                this.b = (TileEntityChest) this.world.getTileEntity(this.x, this.y, this.z - 1);
+            if (this.worldObj.getBlockId(this.xCoord, this.yCoord, this.zCoord - 1) == Block.chest.blockID)
+            {
+                this.adjacentChestZNeg = (TileEntityChest)this.worldObj.getBlockTileEntity(this.xCoord, this.yCoord, this.zCoord - 1);
             }
 
-            if (this.world.getTypeId(this.x, this.y, this.z + 1) == Block.CHEST.id) {
-                this.e = (TileEntityChest) this.world.getTileEntity(this.x, this.y, this.z + 1);
+            if (this.worldObj.getBlockId(this.xCoord, this.yCoord, this.zCoord + 1) == Block.chest.blockID)
+            {
+                this.adjacentChestZPosition = (TileEntityChest)this.worldObj.getBlockTileEntity(this.xCoord, this.yCoord, this.zCoord + 1);
             }
 
-            if (this.b != null) {
-                this.b.a(this, 0);
+            if (this.adjacentChestZNeg != null)
+            {
+                this.adjacentChestZNeg.func_90009_a(this, 0);
             }
 
-            if (this.e != null) {
-                this.e.a(this, 1);
+            if (this.adjacentChestZPosition != null)
+            {
+                this.adjacentChestZPosition.func_90009_a(this, 1);
             }
 
-            if (this.c != null) {
-                this.c.a(this, 2);
+            if (this.adjacentChestXPos != null)
+            {
+                this.adjacentChestXPos.func_90009_a(this, 2);
             }
 
-            if (this.d != null) {
-                this.d.a(this, 3);
+            if (this.adjacentChestXNeg != null)
+            {
+                this.adjacentChestXNeg.func_90009_a(this, 3);
             }
         }
     }
 
-    public void g() {
-        super.g();
-        if (this.world == null) return; // CraftBukkit
-        this.i();
-        ++this.ticks;
-        float f;
+    /**
+     * Allows the entity to update its state. Overridden in most subclasses, e.g. the mob spawner uses this to count
+     * ticks and creates a new spawn inside its implementation.
+     */
+    public void updateEntity()
+    {
+        super.updateEntity();
 
-        if (!this.world.isStatic && this.h != 0 && (this.ticks + this.x + this.y + this.z) % 200 == 0) {
-            this.h = 0;
-            f = 5.0F;
-            List list = this.world.a(EntityHuman.class, AxisAlignedBB.a().a((double) ((float) this.x - f), (double) ((float) this.y - f), (double) ((float) this.z - f), (double) ((float) (this.x + 1) + f), (double) ((float) (this.y + 1) + f), (double) ((float) (this.z + 1) + f)));
-            Iterator iterator = list.iterator();
+        if (this.worldObj == null)
+        {
+            return;    // CraftBukkit
+        }
 
-            while (iterator.hasNext()) {
-                EntityHuman entityhuman = (EntityHuman) iterator.next();
+        this.checkForAdjacentChests();
+        ++this.ticksSinceSync;
+        float var1;
 
-                if (entityhuman.activeContainer instanceof ContainerChest) {
-                    IInventory iinventory = ((ContainerChest) entityhuman.activeContainer).d();
+        if (!this.worldObj.isRemote && this.numUsingPlayers != 0 && (this.ticksSinceSync + this.xCoord + this.yCoord + this.zCoord) % 200 == 0)
+        {
+            this.numUsingPlayers = 0;
+            var1 = 5.0F;
+            List var2 = this.worldObj.getEntitiesWithinAABB(EntityPlayer.class, AxisAlignedBB.getAABBPool().addOrModifyAABBInPool((double)((float)this.xCoord - var1), (double)((float)this.yCoord - var1), (double)((float)this.zCoord - var1), (double)((float)(this.xCoord + 1) + var1), (double)((float)(this.yCoord + 1) + var1), (double)((float)(this.zCoord + 1) + var1)));
+            Iterator var3 = var2.iterator();
 
-                    if (iinventory == this || iinventory instanceof InventoryLargeChest && ((InventoryLargeChest) iinventory).a(this)) {
-                        ++this.h;
+            while (var3.hasNext())
+            {
+                EntityPlayer var4 = (EntityPlayer)var3.next();
+
+                if (var4.openContainer instanceof ContainerChest)
+                {
+                    IInventory var5 = ((ContainerChest)var4.openContainer).getLowerChestInventory();
+
+                    if (var5 == this || var5 instanceof InventoryLargeChest && ((InventoryLargeChest)var5).isPartOfLargeChest(this))
+                    {
+                        ++this.numUsingPlayers;
                     }
                 }
             }
         }
 
-        this.g = this.f;
-        f = 0.1F;
-        double d0;
+        this.prevLidAngle = this.lidAngle;
+        var1 = 0.1F;
+        double var11;
 
-        if (this.h > 0 && this.f == 0.0F && this.b == null && this.d == null) {
-            double d1 = (double) this.x + 0.5D;
+        if (this.numUsingPlayers > 0 && this.lidAngle == 0.0F && this.adjacentChestZNeg == null && this.adjacentChestXNeg == null)
+        {
+            double var8 = (double)this.xCoord + 0.5D;
+            var11 = (double)this.zCoord + 0.5D;
 
-            d0 = (double) this.z + 0.5D;
-            if (this.e != null) {
-                d0 += 0.5D;
+            if (this.adjacentChestZPosition != null)
+            {
+                var11 += 0.5D;
             }
 
-            if (this.c != null) {
-                d1 += 0.5D;
+            if (this.adjacentChestXPos != null)
+            {
+                var8 += 0.5D;
             }
 
-            this.world.makeSound(d1, (double) this.y + 0.5D, d0, "random.chestopen", 0.5F, this.world.random.nextFloat() * 0.1F + 0.9F);
+            this.worldObj.playSoundEffect(var8, (double)this.yCoord + 0.5D, var11, "random.chestopen", 0.5F, this.worldObj.rand.nextFloat() * 0.1F + 0.9F);
         }
 
-        if (this.h == 0 && this.f > 0.0F || this.h > 0 && this.f < 1.0F) {
-            float f1 = this.f;
+        if (this.numUsingPlayers == 0 && this.lidAngle > 0.0F || this.numUsingPlayers > 0 && this.lidAngle < 1.0F)
+        {
+            float var9 = this.lidAngle;
 
-            if (this.h > 0) {
-                this.f += f;
-            } else {
-                this.f -= f;
+            if (this.numUsingPlayers > 0)
+            {
+                this.lidAngle += var1;
+            }
+            else
+            {
+                this.lidAngle -= var1;
             }
 
-            if (this.f > 1.0F) {
-                this.f = 1.0F;
+            if (this.lidAngle > 1.0F)
+            {
+                this.lidAngle = 1.0F;
             }
 
-            float f2 = 0.5F;
+            float var10 = 0.5F;
 
-            if (this.f < f2 && f1 >= f2 && this.b == null && this.d == null) {
-                d0 = (double) this.x + 0.5D;
-                double d2 = (double) this.z + 0.5D;
+            if (this.lidAngle < var10 && var9 >= var10 && this.adjacentChestZNeg == null && this.adjacentChestXNeg == null)
+            {
+                var11 = (double)this.xCoord + 0.5D;
+                double var6 = (double)this.zCoord + 0.5D;
 
-                if (this.e != null) {
-                    d2 += 0.5D;
+                if (this.adjacentChestZPosition != null)
+                {
+                    var6 += 0.5D;
                 }
 
-                if (this.c != null) {
-                    d0 += 0.5D;
+                if (this.adjacentChestXPos != null)
+                {
+                    var11 += 0.5D;
                 }
 
-                this.world.makeSound(d0, (double) this.y + 0.5D, d2, "random.chestclosed", 0.5F, this.world.random.nextFloat() * 0.1F + 0.9F);
+                this.worldObj.playSoundEffect(var11, (double)this.yCoord + 0.5D, var6, "random.chestclosed", 0.5F, this.worldObj.rand.nextFloat() * 0.1F + 0.9F);
             }
 
-            if (this.f < 0.0F) {
-                this.f = 0.0F;
+            if (this.lidAngle < 0.0F)
+            {
+                this.lidAngle = 0.0F;
             }
         }
     }
 
-    public void b(int i, int j) {
-        if (i == 1) {
-            this.h = j;
+    /**
+     * Called when a client event is received with the event number and argument, see World.sendClientEvent
+     */
+    public void receiveClientEvent(int par1, int par2)
+    {
+        if (par1 == 1)
+        {
+            this.numUsingPlayers = par2;
         }
     }
 
-    public void startOpen() {
-        ++this.h;
-        if (this.world == null) return; // CraftBukkit
-        this.world.playNote(this.x, this.y, this.z, Block.CHEST.id, 1, this.h);
+    public void openChest()
+    {
+        ++this.numUsingPlayers;
+
+        if (this.worldObj == null)
+        {
+            return;    // CraftBukkit
+        }
+
+        this.worldObj.addBlockEvent(this.xCoord, this.yCoord, this.zCoord, Block.chest.blockID, 1, this.numUsingPlayers);
     }
 
-    public void f() {
-        --this.h;
-        if (this.world == null) return; // CraftBukkit
-        this.world.playNote(this.x, this.y, this.z, Block.CHEST.id, 1, this.h);
+    public void closeChest()
+    {
+        --this.numUsingPlayers;
+
+        if (this.worldObj == null)
+        {
+            return;    // CraftBukkit
+        }
+
+        this.worldObj.addBlockEvent(this.xCoord, this.yCoord, this.zCoord, Block.chest.blockID, 1, this.numUsingPlayers);
     }
 
-    public void w_() {
-        super.w_();
-        this.h();
-        this.i();
+    /**
+     * invalidates a tile entity
+     */
+    public void invalidate()
+    {
+        super.invalidate();
+        this.updateContainingBlockInfo();
+        this.checkForAdjacentChests();
     }
 }

@@ -1,4 +1,4 @@
-package net.minecraft.server;
+package net.minecraft.network.packet;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -6,181 +6,246 @@ import java.io.IOException;
 import java.util.zip.DataFormatException;
 import java.util.zip.Deflater;
 import java.util.zip.Inflater;
+import net.minecraft.world.chunk.Chunk;
+import net.minecraft.world.chunk.NibbleArray;
+import net.minecraft.world.chunk.storage.ExtendedBlockStorage;
 
-public class Packet51MapChunk extends Packet {
+public class Packet51MapChunk extends Packet
+{
+    /** The x-position of the transmitted chunk, in chunk coordinates. */
+    public int xCh;
 
-    public int a;
-    public int b;
-    public int c;
-    public int d;
-    private byte[] buffer;
-    private byte[] inflatedBuffer;
-    public boolean e;
-    private int size;
-    private static byte[] buildBuffer = new byte[196864];
+    /** The z-position of the transmitted chunk, in chunk coordinates. */
+    public int zCh;
 
-    public Packet51MapChunk() {
-        this.lowPriority = true;
+    /**
+     * The y-position of the lowest chunk Section in the transmitted chunk, in chunk coordinates.
+     */
+    public int yChMin;
+
+    /**
+     * The y-position of the highest chunk Section in the transmitted chunk, in chunk coordinates.
+     */
+    public int yChMax;
+
+    /** The transmitted chunk data, decompressed. */
+    private byte[] chunkData;
+
+    /** The compressed chunk data */
+    private byte[] compressedChunkData;
+
+    /**
+     * Whether to initialize the Chunk before applying the effect of the Packet51MapChunk.
+     */
+    public boolean includeInitialize;
+
+    /** The length of the compressed chunk data byte array. */
+    private int tempLength;
+
+    /** A temporary storage for the compressed chunk data byte array. */
+    private static byte[] temp = new byte[196864];
+
+    public Packet51MapChunk()
+    {
+        this.isChunkDataPacket = true;
     }
 
-    public Packet51MapChunk(Chunk chunk, boolean flag, int i) {
-        this.lowPriority = true;
-        this.a = chunk.x;
-        this.b = chunk.z;
-        this.e = flag;
-        ChunkMap chunkmap = a(chunk, flag, i);
-        Deflater deflater = new Deflater(-1);
+    public Packet51MapChunk(Chunk par1Chunk, boolean par2, int par3)
+    {
+        this.isChunkDataPacket = true;
+        this.xCh = par1Chunk.xPosition;
+        this.zCh = par1Chunk.zPosition;
+        this.includeInitialize = par2;
+        Packet51MapChunkData var4 = getMapChunkData(par1Chunk, par2, par3);
+        Deflater var5 = new Deflater(-1);
+        this.yChMax = var4.chunkHasAddSectionFlag;
+        this.yChMin = var4.chunkExistFlag;
 
-        this.d = chunkmap.c;
-        this.c = chunkmap.b;
-
-        try {
-            this.inflatedBuffer = chunkmap.a;
-            deflater.setInput(chunkmap.a, 0, chunkmap.a.length);
-            deflater.finish();
-            this.buffer = new byte[chunkmap.a.length];
-            this.size = deflater.deflate(this.buffer);
-        } finally {
-            deflater.end();
+        try
+        {
+            this.compressedChunkData = var4.compressedData;
+            var5.setInput(var4.compressedData, 0, var4.compressedData.length);
+            var5.finish();
+            this.chunkData = new byte[var4.compressedData.length];
+            this.tempLength = var5.deflate(this.chunkData);
+        }
+        finally
+        {
+            var5.end();
         }
     }
 
-    public void a(DataInputStream datainputstream) throws IOException { // CraftBukkit - throws IOException
-        this.a = datainputstream.readInt();
-        this.b = datainputstream.readInt();
-        this.e = datainputstream.readBoolean();
-        this.c = datainputstream.readShort();
-        this.d = datainputstream.readShort();
-        this.size = datainputstream.readInt();
-        if (buildBuffer.length < this.size) {
-            buildBuffer = new byte[this.size];
+    public void readPacketData(DataInputStream par1DataInputStream) throws IOException   // CraftBukkit - throws IOException
+    {
+        this.xCh = par1DataInputStream.readInt();
+        this.zCh = par1DataInputStream.readInt();
+        this.includeInitialize = par1DataInputStream.readBoolean();
+        this.yChMin = par1DataInputStream.readShort();
+        this.yChMax = par1DataInputStream.readShort();
+        this.tempLength = par1DataInputStream.readInt();
+
+        if (temp.length < this.tempLength)
+        {
+            temp = new byte[this.tempLength];
         }
 
-        datainputstream.readFully(buildBuffer, 0, this.size);
-        int i = 0;
+        par1DataInputStream.readFully(temp, 0, this.tempLength);
+        int var2 = 0;
+        int var3;
 
-        int j;
-
-        for (j = 0; j < 16; ++j) {
-            i += this.c >> j & 1;
+        for (var3 = 0; var3 < 16; ++var3)
+        {
+            var2 += this.yChMin >> var3 & 1;
         }
 
-        j = 12288 * i;
-        if (this.e) {
-            j += 256;
+        var3 = 12288 * var2;
+
+        if (this.includeInitialize)
+        {
+            var3 += 256;
         }
 
-        this.inflatedBuffer = new byte[j];
-        Inflater inflater = new Inflater();
+        this.compressedChunkData = new byte[var3];
+        Inflater var4 = new Inflater();
+        var4.setInput(temp, 0, this.tempLength);
 
-        inflater.setInput(buildBuffer, 0, this.size);
-
-        try {
-            inflater.inflate(this.inflatedBuffer);
-        } catch (DataFormatException dataformatexception) {
+        try
+        {
+            var4.inflate(this.compressedChunkData);
+        }
+        catch (DataFormatException var9)
+        {
             throw new IOException("Bad compressed data format");
-        } finally {
-            inflater.end();
+        }
+        finally
+        {
+            var4.end();
         }
     }
 
-    public void a(DataOutputStream dataoutputstream) throws IOException { // CraftBukkit - throws IOException
-        dataoutputstream.writeInt(this.a);
-        dataoutputstream.writeInt(this.b);
-        dataoutputstream.writeBoolean(this.e);
-        dataoutputstream.writeShort((short) (this.c & '\uffff'));
-        dataoutputstream.writeShort((short) (this.d & '\uffff'));
-        dataoutputstream.writeInt(this.size);
-        dataoutputstream.write(this.buffer, 0, this.size);
+    public void writePacketData(DataOutputStream par1DataOutputStream) throws IOException   // CraftBukkit - throws IOException
+    {
+        par1DataOutputStream.writeInt(this.xCh);
+        par1DataOutputStream.writeInt(this.zCh);
+        par1DataOutputStream.writeBoolean(this.includeInitialize);
+        par1DataOutputStream.writeShort((short)(this.yChMin & '\uffff'));
+        par1DataOutputStream.writeShort((short)(this.yChMax & '\uffff'));
+        par1DataOutputStream.writeInt(this.tempLength);
+        par1DataOutputStream.write(this.chunkData, 0, this.tempLength);
     }
 
-    public void handle(Connection connection) {
-        connection.a(this);
+    /**
+     * Passes this Packet on to the NetHandler for processing.
+     */
+    public void processPacket(NetHandler par1NetHandler)
+    {
+        par1NetHandler.handleMapChunk(this);
     }
 
-    public int a() {
-        return 17 + this.size;
+    /**
+     * Abstract. Return the size of the packet (not counting the header).
+     */
+    public int getPacketSize()
+    {
+        return 17 + this.tempLength;
     }
 
-    public static ChunkMap a(Chunk chunk, boolean flag, int i) {
-        int j = 0;
-        ChunkSection[] achunksection = chunk.i();
-        int k = 0;
-        ChunkMap chunkmap = new ChunkMap();
-        byte[] abyte = buildBuffer;
+    public static Packet51MapChunkData getMapChunkData(Chunk par0Chunk, boolean par1, int par2)
+    {
+        int var3 = 0;
+        ExtendedBlockStorage[] var4 = par0Chunk.getBlockStorageArray();
+        int var5 = 0;
+        Packet51MapChunkData var6 = new Packet51MapChunkData();
+        byte[] var7 = temp;
 
-        if (flag) {
-            chunk.seenByPlayer = true;
+        if (par1)
+        {
+            par0Chunk.deferRender = true;
         }
 
-        int l;
+        int var8;
 
-        for (l = 0; l < achunksection.length; ++l) {
-            if (achunksection[l] != null && (!flag || !achunksection[l].a()) && (i & 1 << l) != 0) {
-                chunkmap.b |= 1 << l;
-                if (achunksection[l].i() != null) {
-                    chunkmap.c |= 1 << l;
-                    ++k;
+        for (var8 = 0; var8 < var4.length; ++var8)
+        {
+            if (var4[var8] != null && (!par1 || !var4[var8].isEmpty()) && (par2 & 1 << var8) != 0)
+            {
+                var6.chunkExistFlag |= 1 << var8;
+
+                if (var4[var8].getBlockMSBArray() != null)
+                {
+                    var6.chunkHasAddSectionFlag |= 1 << var8;
+                    ++var5;
                 }
             }
         }
 
-        for (l = 0; l < achunksection.length; ++l) {
-            if (achunksection[l] != null && (!flag || !achunksection[l].a()) && (i & 1 << l) != 0) {
-                byte[] abyte1 = achunksection[l].g();
-
-                System.arraycopy(abyte1, 0, abyte, j, abyte1.length);
-                j += abyte1.length;
+        for (var8 = 0; var8 < var4.length; ++var8)
+        {
+            if (var4[var8] != null && (!par1 || !var4[var8].isEmpty()) && (par2 & 1 << var8) != 0)
+            {
+                byte[] var9 = var4[var8].getBlockLSBArray();
+                System.arraycopy(var9, 0, var7, var3, var9.length);
+                var3 += var9.length;
             }
         }
 
-        NibbleArray nibblearray;
+        NibbleArray var10;
 
-        for (l = 0; l < achunksection.length; ++l) {
-            if (achunksection[l] != null && (!flag || !achunksection[l].a()) && (i & 1 << l) != 0) {
-                nibblearray = achunksection[l].j();
-                System.arraycopy(nibblearray.a, 0, abyte, j, nibblearray.a.length);
-                j += nibblearray.a.length;
+        for (var8 = 0; var8 < var4.length; ++var8)
+        {
+            if (var4[var8] != null && (!par1 || !var4[var8].isEmpty()) && (par2 & 1 << var8) != 0)
+            {
+                var10 = var4[var8].getMetadataArray();
+                System.arraycopy(var10.data, 0, var7, var3, var10.data.length);
+                var3 += var10.data.length;
             }
         }
 
-        for (l = 0; l < achunksection.length; ++l) {
-            if (achunksection[l] != null && (!flag || !achunksection[l].a()) && (i & 1 << l) != 0) {
-                nibblearray = achunksection[l].k();
-                System.arraycopy(nibblearray.a, 0, abyte, j, nibblearray.a.length);
-                j += nibblearray.a.length;
+        for (var8 = 0; var8 < var4.length; ++var8)
+        {
+            if (var4[var8] != null && (!par1 || !var4[var8].isEmpty()) && (par2 & 1 << var8) != 0)
+            {
+                var10 = var4[var8].getBlocklightArray();
+                System.arraycopy(var10.data, 0, var7, var3, var10.data.length);
+                var3 += var10.data.length;
             }
         }
 
-        if (!chunk.world.worldProvider.f) {
-            for (l = 0; l < achunksection.length; ++l) {
-                if (achunksection[l] != null && (!flag || !achunksection[l].a()) && (i & 1 << l) != 0) {
-                    nibblearray = achunksection[l].l();
-                    System.arraycopy(nibblearray.a, 0, abyte, j, nibblearray.a.length);
-                    j += nibblearray.a.length;
+        if (!par0Chunk.worldObj.provider.hasNoSky)
+        {
+            for (var8 = 0; var8 < var4.length; ++var8)
+            {
+                if (var4[var8] != null && (!par1 || !var4[var8].isEmpty()) && (par2 & 1 << var8) != 0)
+                {
+                    var10 = var4[var8].getSkylightArray();
+                    System.arraycopy(var10.data, 0, var7, var3, var10.data.length);
+                    var3 += var10.data.length;
                 }
             }
         }
 
-        if (k > 0) {
-            for (l = 0; l < achunksection.length; ++l) {
-                if (achunksection[l] != null && (!flag || !achunksection[l].a()) && achunksection[l].i() != null && (i & 1 << l) != 0) {
-                    nibblearray = achunksection[l].i();
-                    System.arraycopy(nibblearray.a, 0, abyte, j, nibblearray.a.length);
-                    j += nibblearray.a.length;
+        if (var5 > 0)
+        {
+            for (var8 = 0; var8 < var4.length; ++var8)
+            {
+                if (var4[var8] != null && (!par1 || !var4[var8].isEmpty()) && var4[var8].getBlockMSBArray() != null && (par2 & 1 << var8) != 0)
+                {
+                    var10 = var4[var8].getBlockMSBArray();
+                    System.arraycopy(var10.data, 0, var7, var3, var10.data.length);
+                    var3 += var10.data.length;
                 }
             }
         }
 
-        if (flag) {
-            byte[] abyte2 = chunk.m();
-
-            System.arraycopy(abyte2, 0, abyte, j, abyte2.length);
-            j += abyte2.length;
+        if (par1)
+        {
+            byte[] var11 = par0Chunk.getBiomeArray();
+            System.arraycopy(var11, 0, var7, var3, var11.length);
+            var3 += var11.length;
         }
 
-        chunkmap.a = new byte[j];
-        System.arraycopy(abyte, 0, chunkmap.a, 0, j);
-        return chunkmap;
+        var6.compressedData = new byte[var3];
+        System.arraycopy(var7, 0, var6.compressedData, 0, var3);
+        return var6;
     }
 }

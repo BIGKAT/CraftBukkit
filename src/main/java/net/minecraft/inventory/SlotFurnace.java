@@ -1,85 +1,125 @@
-package net.minecraft.server;
+package net.minecraft.inventory;
 
 // CraftBukkit start
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.FurnaceExtractEvent;
+import net.minecraft.entity.item.EntityXPOrb;
+import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.item.Item;
+import net.minecraft.item.ItemStack;
+import net.minecraft.item.crafting.FurnaceRecipes;
+import net.minecraft.stats.AchievementList;
+import net.minecraft.stats.StatBase;
+import net.minecraft.tileentity.TileEntityFurnace;
+import net.minecraft.util.MathHelper;
 // CraftBukkit end
 
-public class SlotFurnaceResult extends Slot {
+public class SlotFurnace extends Slot
+{
+    /** The player that is using the GUI where this slot resides. */
+    private EntityPlayer thePlayer;
+    private int field_75228_b;
 
-    private EntityHuman a;
-    private int b;
-
-    public SlotFurnaceResult(EntityHuman entityhuman, IInventory iinventory, int i, int j, int k) {
-        super(iinventory, i, j, k);
-        this.a = entityhuman;
+    public SlotFurnace(EntityPlayer par1EntityPlayer, IInventory par2IInventory, int par3, int par4, int par5)
+    {
+        super(par2IInventory, par3, par4, par5);
+        this.thePlayer = par1EntityPlayer;
     }
 
-    public boolean isAllowed(ItemStack itemstack) {
+    /**
+     * Check if the stack is a valid item for this slot. Always true beside for the armor slots.
+     */
+    public boolean isItemValid(ItemStack par1ItemStack)
+    {
         return false;
     }
 
-    public ItemStack a(int i) {
-        if (this.d()) {
-            this.b += Math.min(i, this.getItem().count);
+    /**
+     * Decrease the size of the stack in slot (first int arg) by the amount of the second int arg. Returns the new
+     * stack.
+     */
+    public ItemStack decrStackSize(int par1)
+    {
+        if (this.getHasStack())
+        {
+            this.field_75228_b += Math.min(par1, this.getStack().stackSize);
         }
 
-        return super.a(i);
+        return super.decrStackSize(par1);
     }
 
-    public void a(EntityHuman entityhuman, ItemStack itemstack) {
-        this.b(itemstack);
-        super.a(entityhuman, itemstack);
+    public void onPickupFromSlot(EntityPlayer par1EntityPlayer, ItemStack par2ItemStack)
+    {
+        this.onCrafting(par2ItemStack);
+        super.onPickupFromSlot(par1EntityPlayer, par2ItemStack);
     }
 
-    protected void a(ItemStack itemstack, int i) {
-        this.b += i;
-        this.b(itemstack);
+    /**
+     * the itemStack passed in is the output - ie, iron ingots, and pickaxes, not ore and wood. Typically increases an
+     * internal count then calls onCrafting(item).
+     */
+    protected void onCrafting(ItemStack par1ItemStack, int par2)
+    {
+        this.field_75228_b += par2;
+        this.onCrafting(par1ItemStack);
     }
 
-    protected void b(ItemStack itemstack) {
-        itemstack.a(this.a.world, this.a, this.b);
-        if (!this.a.world.isStatic) {
-            int i = this.b;
-            float f = RecipesFurnace.getInstance().c(itemstack.id);
-            int j;
+    /**
+     * the itemStack passed in is the output - ie, iron ingots, and pickaxes, not ore and wood.
+     */
+    protected void onCrafting(ItemStack par1ItemStack)
+    {
+        par1ItemStack.onCrafting(this.thePlayer.worldObj, this.thePlayer, this.field_75228_b);
 
-            if (f == 0.0F) {
-                i = 0;
-            } else if (f < 1.0F) {
-                j = MathHelper.d((float) i * f);
-                if (j < MathHelper.f((float) i * f) && (float) Math.random() < (float) i * f - (float) j) {
-                    ++j;
+        if (!this.thePlayer.worldObj.isRemote)
+        {
+            int var2 = this.field_75228_b;
+            float var3 = FurnaceRecipes.smelting().getExperience(par1ItemStack.itemID);
+            int var4;
+
+            if (var3 == 0.0F)
+            {
+                var2 = 0;
+            }
+            else if (var3 < 1.0F)
+            {
+                var4 = MathHelper.floor_float((float)var2 * var3);
+
+                if (var4 < MathHelper.ceiling_float_int((float)var2 * var3) && (float)Math.random() < (float)var2 * var3 - (float)var4)
+                {
+                    ++var4;
                 }
 
-                i = j;
+                var2 = var4;
             }
 
             // CraftBukkit start
-            Player player = (Player) a.getBukkitEntity();
+            Player player = (Player) thePlayer.getBukkitEntity();
             TileEntityFurnace furnace = ((TileEntityFurnace) this.inventory);
-            org.bukkit.block.Block block = a.world.getWorld().getBlockAt(furnace.x, furnace.y, furnace.z);
-
-            FurnaceExtractEvent event = new FurnaceExtractEvent(player, block, org.bukkit.Material.getMaterial(itemstack.id), itemstack.count, i);
-            a.world.getServer().getPluginManager().callEvent(event);
-
-            i = event.getExpToDrop();
+            org.bukkit.block.Block block = thePlayer.worldObj.getWorld().getBlockAt(furnace.xCoord, furnace.yCoord, furnace.zCoord);
+            FurnaceExtractEvent event = new FurnaceExtractEvent(player, block, org.bukkit.Material.getMaterial(par1ItemStack.itemID), par1ItemStack.stackSize, var2);
+            thePlayer.worldObj.getServer().getPluginManager().callEvent(event);
+            var2 = event.getExpToDrop();
             // CraftBukkit end
 
-            while (i > 0) {
-                j = EntityExperienceOrb.getOrbValue(i);
-                i -= j;
-                this.a.world.addEntity(new EntityExperienceOrb(this.a.world, this.a.locX, this.a.locY + 0.5D, this.a.locZ + 0.5D, j));
+            while (var2 > 0)
+            {
+                var4 = EntityXPOrb.getXPSplit(var2);
+                var2 -= var4;
+                this.thePlayer.worldObj.spawnEntityInWorld(new EntityXPOrb(this.thePlayer.worldObj, this.thePlayer.posX, this.thePlayer.posY + 0.5D, this.thePlayer.posZ + 0.5D, var4));
             }
         }
 
-        this.b = 0;
-        if (itemstack.id == Item.IRON_INGOT.id) {
-            this.a.a((Statistic) AchievementList.k, 1);
+        this.field_75228_b = 0;
+
+        if (par1ItemStack.itemID == Item.ingotIron.itemID)
+        {
+            this.thePlayer.addStat((StatBase) AchievementList.acquireIron, 1);
         }
 
-        if (itemstack.id == Item.COOKED_FISH.id) {
-            this.a.a((Statistic) AchievementList.p, 1);
+        if (par1ItemStack.itemID == Item.fishCooked.itemID)
+        {
+            this.thePlayer.addStat((StatBase) AchievementList.cookFish, 1);
         }
     }
 }

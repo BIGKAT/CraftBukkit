@@ -1,91 +1,136 @@
-package net.minecraft.server;
+package net.minecraft.entity.ai;
 
 import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
+import net.minecraft.entity.EntityAgeable;
+import net.minecraft.entity.EntityLiving;
+import net.minecraft.entity.item.EntityXPOrb;
+import net.minecraft.entity.passive.EntityAnimal;
+import net.minecraft.world.World;
 
-public class PathfinderGoalBreed extends PathfinderGoal {
+public class EntityAIMate extends EntityAIBase
+{
+    private EntityAnimal theAnimal;
+    World theWorld;
+    private EntityAnimal targetMate;
 
-    private EntityAnimal d;
-    World a;
-    private EntityAnimal e;
-    int b = 0;
-    float c;
+    /**
+     * Delay preventing a baby from spawning immediately when two mate-able animals find each other.
+     */
+    int spawnBabyDelay = 0;
 
-    public PathfinderGoalBreed(EntityAnimal entityanimal, float f) {
-        this.d = entityanimal;
-        this.a = entityanimal.world;
-        this.c = f;
-        this.a(3);
+    /** The speed the creature moves at during mating behavior. */
+    float moveSpeed;
+
+    public EntityAIMate(EntityAnimal par1EntityAnimal, float par2)
+    {
+        this.theAnimal = par1EntityAnimal;
+        this.theWorld = par1EntityAnimal.worldObj;
+        this.moveSpeed = par2;
+        this.setMutexBits(3);
     }
 
-    public boolean a() {
-        if (!this.d.r()) {
+    /**
+     * Returns whether the EntityAIBase should begin execution.
+     */
+    public boolean shouldExecute()
+    {
+        if (!this.theAnimal.isInLove())
+        {
             return false;
-        } else {
-            this.e = this.f();
-            return this.e != null;
+        }
+        else
+        {
+            this.targetMate = this.getNearbyMate();
+            return this.targetMate != null;
         }
     }
 
-    public boolean b() {
-        return this.e.isAlive() && this.e.r() && this.b < 60;
+    /**
+     * Returns whether an in-progress EntityAIBase should continue executing
+     */
+    public boolean continueExecuting()
+    {
+        return this.targetMate.isEntityAlive() && this.targetMate.isInLove() && this.spawnBabyDelay < 60;
     }
 
-    public void d() {
-        this.e = null;
-        this.b = 0;
+    /**
+     * Resets the task
+     */
+    public void resetTask()
+    {
+        this.targetMate = null;
+        this.spawnBabyDelay = 0;
     }
 
-    public void e() {
-        this.d.getControllerLook().a(this.e, 10.0F, (float) this.d.bp());
-        this.d.getNavigation().a((EntityLiving) this.e, this.c);
-        ++this.b;
-        if (this.b == 60) {
-            this.g();
+    /**
+     * Updates the task
+     */
+    public void updateTask()
+    {
+        this.theAnimal.getLookHelper().setLookPositionWithEntity(this.targetMate, 10.0F, (float)this.theAnimal.getVerticalFaceSpeed());
+        this.theAnimal.getNavigator().tryMoveToEntityLiving((EntityLiving) this.targetMate, this.moveSpeed);
+        ++this.spawnBabyDelay;
+
+        if (this.spawnBabyDelay == 60)
+        {
+            this.spawnBaby();
         }
     }
 
-    private EntityAnimal f() {
-        float f = 8.0F;
-        List list = this.a.a(this.d.getClass(), this.d.boundingBox.grow((double) f, (double) f, (double) f));
-        Iterator iterator = list.iterator();
+    /**
+     * Loops through nearby animals and finds another animal of the same type that can be mated with. Returns the first
+     * valid mate found.
+     */
+    private EntityAnimal getNearbyMate()
+    {
+        float var1 = 8.0F;
+        List var2 = this.theWorld.getEntitiesWithinAABB(this.theAnimal.getClass(), this.theAnimal.boundingBox.expand((double)var1, (double)var1, (double)var1));
+        Iterator var3 = var2.iterator();
+        EntityAnimal var4;
 
-        EntityAnimal entityanimal;
-
-        do {
-            if (!iterator.hasNext()) {
+        do
+        {
+            if (!var3.hasNext())
+            {
                 return null;
             }
 
-            entityanimal = (EntityAnimal) iterator.next();
-        } while (!this.d.mate(entityanimal));
+            var4 = (EntityAnimal)var3.next();
+        }
+        while (!this.theAnimal.canMateWith(var4));
 
-        return entityanimal;
+        return var4;
     }
 
-    private void g() {
-        EntityAgeable entityageable = this.d.createChild(this.e);
+    /**
+     * Spawns a baby animal of the same type.
+     */
+    private void spawnBaby()
+    {
+        EntityAgeable var1 = this.theAnimal.createChild(this.targetMate);
 
-        if (entityageable != null) {
-            this.d.setAge(6000);
-            this.e.setAge(6000);
-            this.d.s();
-            this.e.s();
-            entityageable.setAge(-24000);
-            entityageable.setPositionRotation(this.d.locX, this.d.locY, this.d.locZ, 0.0F, 0.0F);
-            this.a.addEntity(entityageable, org.bukkit.event.entity.CreatureSpawnEvent.SpawnReason.BREEDING); // CraftBukkit - added SpawnReason
-            Random random = this.d.aB();
+        if (var1 != null)
+        {
+            this.theAnimal.setGrowingAge(6000);
+            this.targetMate.setGrowingAge(6000);
+            this.theAnimal.resetInLove();
+            this.targetMate.resetInLove();
+            var1.setGrowingAge(-24000);
+            var1.setLocationAndAngles(this.theAnimal.posX, this.theAnimal.posY, this.theAnimal.posZ, 0.0F, 0.0F);
+            this.theWorld.addEntity(var1, org.bukkit.event.entity.CreatureSpawnEvent.SpawnReason.BREEDING); // CraftBukkit - added SpawnReason
+            Random var2 = this.theAnimal.getRNG();
 
-            for (int i = 0; i < 7; ++i) {
-                double d0 = random.nextGaussian() * 0.02D;
-                double d1 = random.nextGaussian() * 0.02D;
-                double d2 = random.nextGaussian() * 0.02D;
-
-                this.a.addParticle("heart", this.d.locX + (double) (random.nextFloat() * this.d.width * 2.0F) - (double) this.d.width, this.d.locY + 0.5D + (double) (random.nextFloat() * this.d.length), this.d.locZ + (double) (random.nextFloat() * this.d.width * 2.0F) - (double) this.d.width, d0, d1, d2);
+            for (int var3 = 0; var3 < 7; ++var3)
+            {
+                double var4 = var2.nextGaussian() * 0.02D;
+                double var6 = var2.nextGaussian() * 0.02D;
+                double var8 = var2.nextGaussian() * 0.02D;
+                this.theWorld.spawnParticle("heart", this.theAnimal.posX + (double)(var2.nextFloat() * this.theAnimal.width * 2.0F) - (double)this.theAnimal.width, this.theAnimal.posY + 0.5D + (double)(var2.nextFloat() * this.theAnimal.height), this.theAnimal.posZ + (double)(var2.nextFloat() * this.theAnimal.width * 2.0F) - (double)this.theAnimal.width, var4, var6, var8);
             }
 
-            this.a.addEntity(new EntityExperienceOrb(this.a, this.d.locX, this.d.locY, this.d.locZ, random.nextInt(7) + 1));
+            this.theWorld.spawnEntityInWorld(new EntityXPOrb(this.theWorld, this.theAnimal.posX, this.theAnimal.posY, this.theAnimal.posZ, var2.nextInt(7) + 1));
         }
     }
 }

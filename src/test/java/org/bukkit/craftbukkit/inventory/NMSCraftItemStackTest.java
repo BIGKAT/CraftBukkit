@@ -3,7 +3,6 @@ package org.bukkit.craftbukkit.inventory;
 import static org.junit.Assert.*;
 import static org.hamcrest.Matchers.*;
 
-import net.minecraft.server.Enchantment;
 
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.support.AbstractTestingBase;
@@ -13,8 +12,8 @@ public class NMSCraftItemStackTest extends AbstractTestingBase {
 
     @Test
     public void testCloneEnchantedItem() throws Exception {
-        net.minecraft.server.ItemStack nmsItemStack = new net.minecraft.server.ItemStack(net.minecraft.server.Item.POTION);
-        nmsItemStack.addEnchantment(Enchantment.DAMAGE_ALL, 1);
+        /*was:net.minecraft.server.*/net.minecraft.item.ItemStack/*was:ItemStack*/ nmsItemStack = new net.minecraft.item.ItemStack/*was:ItemStack*/(net.minecraft.item.Item/*was:Item*/.potion/*was:POTION*/);
+        nmsItemStack.addEnchantment/*was:addEnchantment*/(net.minecraft.enchantment.Enchantment/*was:Enchantment*/.sharpness/*was:DAMAGE_ALL*/, 1);
         ItemStack itemStack = CraftItemStack.asCraftMirror(nmsItemStack);
         ItemStack clone = itemStack.clone();
         assertThat(clone.getType(), is(itemStack.getType()));
@@ -28,7 +27,7 @@ public class NMSCraftItemStackTest extends AbstractTestingBase {
 
     @Test
     public void testCloneNullItem() throws Exception {
-        net.minecraft.server.ItemStack nmsItemStack = null;
+        /*was:net.minecraft.server.*/net.minecraft.item.ItemStack/*was:ItemStack*/ nmsItemStack = null;
         ItemStack itemStack = CraftItemStack.asCraftMirror(nmsItemStack);
         ItemStack clone = itemStack.clone();
         assertThat(clone, is(itemStack));

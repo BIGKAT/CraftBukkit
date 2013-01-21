@@ -1,4 +1,4 @@
-package net.minecraft.server;
+package net.minecraft.server.dedicated;
 
 import java.io.File;
 import java.io.IOException;
@@ -9,6 +9,23 @@ import java.util.List;
 import java.util.Random;
 import java.util.concurrent.Callable;
 import java.util.logging.Level;
+import net.minecraft.command.ICommandSender;
+import net.minecraft.command.ServerCommand;
+import net.minecraft.crash.CrashReport;
+import net.minecraft.network.NetworkListenThread;
+import net.minecraft.network.rcon.IServer;
+import net.minecraft.network.rcon.RConThreadMain;
+import net.minecraft.network.rcon.RConThreadQuery;
+import net.minecraft.profiler.PlayerUsageSnooper;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.gui.ServerGUI;
+import net.minecraft.server.management.ServerConfigurationManager;
+import net.minecraft.util.CryptManager;
+import net.minecraft.util.MathHelper;
+import net.minecraft.world.EnumGameType;
+import net.minecraft.world.WorldSettings;
+import net.minecraft.world.WorldType;
+import net.minecraft.world.chunk.storage.AnvilSaveConverter;
 
 // CraftBukkit start
 import java.io.PrintStream;
@@ -17,311 +34,412 @@ import org.bukkit.craftbukkit.LoggerOutputStream;
 import org.bukkit.event.server.ServerCommandEvent;
 // CraftBukkit end
 
-public class DedicatedServer extends MinecraftServer implements IMinecraftServer {
-
-    private final List l = Collections.synchronizedList(new ArrayList());
-    private RemoteStatusListener m;
-    private RemoteControlListener n;
-    public PropertyManager propertyManager; // CraftBukkit - private -> public
-    private boolean generateStructures;
-    private EnumGamemode q;
-    private ServerConnection r;
-    private boolean s = false;
+public class DedicatedServer extends MinecraftServer implements IServer
+{
+    private final List pendingCommandList = Collections.synchronizedList(new ArrayList());
+    private RConThreadQuery theRConThreadQuery;
+    private RConThreadMain theRConThreadMain;
+    public PropertyManager settings; // CraftBukkit - private -> public
+    private boolean canSpawnStructures;
+    private EnumGameType gameType;
+    private NetworkListenThread networkThread;
+    private boolean guiIsEnabled = false;
 
     // CraftBukkit start - Signature changed
-    public DedicatedServer(joptsimple.OptionSet options) {
+    public DedicatedServer(joptsimple.OptionSet options)
+    {
         super(options);
         // CraftBukkit end
-        new ThreadSleepForever(this);
+        new DedicatedServerSleepThread(this);
     }
 
-    protected boolean init() throws java.net.UnknownHostException { // CraftBukkit - throws UnknownHostException
-        ThreadCommandReader threadcommandreader = new ThreadCommandReader(this);
-
-        threadcommandreader.setDaemon(true);
-        threadcommandreader.start();
+    protected boolean startServer() throws java.net.UnknownHostException   // CraftBukkit - throws UnknownHostException
+    {
+        DedicatedServerCommandThread var1 = new DedicatedServerCommandThread(this);
+        var1.setDaemon(true);
+        var1.start();
         ConsoleLogManager.init(this); // CraftBukkit
-
         // CraftBukkit start
-        System.setOut(new PrintStream(new LoggerOutputStream(log, Level.INFO), true));
-        System.setErr(new PrintStream(new LoggerOutputStream(log, Level.SEVERE), true));
+        System.setOut(new PrintStream(new LoggerOutputStream(logger, Level.INFO), true));
+        System.setErr(new PrintStream(new LoggerOutputStream(logger, Level.SEVERE), true));
         // CraftBukkit end
+        logger.info("Starting minecraft server version 1.4.7");
 
-        log.info("Starting minecraft server version 1.4.7");
-        if (Runtime.getRuntime().maxMemory() / 1024L / 1024L < 512L) {
-            log.warning("To start the server with more ram, launch it as \"java -Xmx1024M -Xms1024M -jar minecraft_server.jar\"");
+        if (Runtime.getRuntime().maxMemory() / 1024L / 1024L < 512L)
+        {
+            logger.warning("To start the server with more ram, launch it as \"java -Xmx1024M -Xms1024M -jar minecraft_server.jar\"");
         }
 
-        log.info("Loading properties");
-        this.propertyManager = new PropertyManager(this.options); // CraftBukkit - CLI argument support
-        if (this.I()) {
-            this.d("127.0.0.1");
-        } else {
-            this.setOnlineMode(this.propertyManager.getBoolean("online-mode", true));
-            this.d(this.propertyManager.getString("server-ip", ""));
+        logger.info("Loading properties");
+        this.settings = new PropertyManager(this.options); // CraftBukkit - CLI argument support
+
+        if (this.isSinglePlayer())
+        {
+            this.setHostname("127.0.0.1");
+        }
+        else
+        {
+            this.setOnlineMode(this.settings.getBooleanProperty("online-mode", true));
+            this.setHostname(this.settings.getProperty("server-ip", ""));
         }
 
-        this.setSpawnAnimals(this.propertyManager.getBoolean("spawn-animals", true));
-        this.setSpawnNPCs(this.propertyManager.getBoolean("spawn-npcs", true));
-        this.setPvP(this.propertyManager.getBoolean("pvp", true));
-        this.setAllowFlight(this.propertyManager.getBoolean("allow-flight", false));
-        this.setTexturePack(this.propertyManager.getString("texture-pack", ""));
-        this.setMotd(this.propertyManager.getString("motd", "A Minecraft Server"));
-        if (this.propertyManager.getInt("difficulty", 1) < 0) {
-            this.propertyManager.a("difficulty", Integer.valueOf(0));
-        } else if (this.propertyManager.getInt("difficulty", 1) > 3) {
-            this.propertyManager.a("difficulty", Integer.valueOf(3));
+        this.setCanSpawnAnimals(this.settings.getBooleanProperty("spawn-animals", true));
+        this.setCanSpawnNPCs(this.settings.getBooleanProperty("spawn-npcs", true));
+        this.setAllowPvp(this.settings.getBooleanProperty("pvp", true));
+        this.setAllowFlight(this.settings.getBooleanProperty("allow-flight", false));
+        this.setTexturePack(this.settings.getProperty("texture-pack", ""));
+        this.setMOTD(this.settings.getProperty("motd", "A Minecraft Server"));
+
+        if (this.settings.getIntProperty("difficulty", 1) < 0)
+        {
+            this.settings.setProperty("difficulty", Integer.valueOf(0));
+        }
+        else if (this.settings.getIntProperty("difficulty", 1) > 3)
+        {
+            this.settings.setProperty("difficulty", Integer.valueOf(3));
         }
 
-        this.generateStructures = this.propertyManager.getBoolean("generate-structures", true);
-        int i = this.propertyManager.getInt("gamemode", EnumGamemode.SURVIVAL.a());
+        this.canSpawnStructures = this.settings.getBooleanProperty("generate-structures", true);
+        int var2 = this.settings.getIntProperty("gamemode", EnumGameType.SURVIVAL.getID());
+        this.gameType = WorldSettings.getGameTypeById(var2);
+        logger.info("Default game type: " + this.gameType);
+        InetAddress var3 = null;
 
-        this.q = WorldSettings.a(i);
-        log.info("Default game type: " + this.q);
-        InetAddress inetaddress = null;
-
-        if (this.getServerIp().length() > 0) {
-            inetaddress = InetAddress.getByName(this.getServerIp());
+        if (this.getServerHostname().length() > 0)
+        {
+            var3 = InetAddress.getByName(this.getServerHostname());
         }
 
-        if (this.G() < 0) {
-            this.setPort(this.propertyManager.getInt("server-port", 25565));
+        if (this.getServerPort() < 0)
+        {
+            this.setServerPort(this.settings.getIntProperty("server-port", 25565));
         }
 
-        log.info("Generating keypair");
-        this.a(MinecraftEncryption.b());
-        log.info("Starting Minecraft server on " + (this.getServerIp().length() == 0 ? "*" : this.getServerIp()) + ":" + this.G());
+        logger.info("Generating keypair");
+        this.setKeyPair(CryptManager.createNewKeyPair());
+        logger.info("Starting Minecraft server on " + (this.getServerHostname().length() == 0 ? "*" : this.getServerHostname()) + ":" + this.getServerPort());
 
-        try {
-            this.r = new DedicatedServerConnection(this, inetaddress, this.G());
-        } catch (Throwable ioexception) { // CraftBukkit - IOException -> Throwable
-            log.warning("**** FAILED TO BIND TO PORT!");
-            log.log(Level.WARNING, "The exception was: " + ioexception.toString());
-            log.warning("Perhaps a server is already running on that port?");
+        try
+        {
+            this.networkThread = new DedicatedServerListenThread(this, var3, this.getServerPort());
+        }
+        catch (Throwable var16)     // CraftBukkit - IOException -> Throwable
+        {
+            logger.warning("**** FAILED TO BIND TO PORT!");
+            logger.log(Level.WARNING, "The exception was: " + var16.toString());
+            logger.warning("Perhaps a server is already running on that port?");
             return false;
         }
 
-        this.a((PlayerList) (new DedicatedPlayerList(this))); // CraftBukkit
+        this.setConfigurationManager((ServerConfigurationManager)(new DedicatedPlayerList(this)));  // CraftBukkit
 
-        if (!this.getOnlineMode()) {
-            log.warning("**** SERVER IS RUNNING IN OFFLINE/INSECURE MODE!");
-            log.warning("The server will make no attempt to authenticate usernames. Beware.");
-            log.warning("While this makes the game possible to play without internet access, it also opens up the ability for hackers to connect with any username they choose.");
-            log.warning("To change this, set \"online-mode\" to \"true\" in the server.properties file.");
+        if (!this.isServerInOnlineMode())
+        {
+            logger.warning("**** SERVER IS RUNNING IN OFFLINE/INSECURE MODE!");
+            logger.warning("The server will make no attempt to authenticate usernames. Beware.");
+            logger.warning("While this makes the game possible to play without internet access, it also opens up the ability for hackers to connect with any username they choose.");
+            logger.warning("To change this, set \"online-mode\" to \"true\" in the server.properties file.");
         }
 
         // this.a((PlayerList) (new DedicatedPlayerList(this))); // CraftBukkit - moved up
-        this.convertable = new WorldLoaderServer(server.getWorldContainer()); // CraftBukkit - moved from MinecraftServer constructor
-        long j = System.nanoTime();
+        this.anvilConverterForAnvilFile = new AnvilSaveConverter(server.getWorldContainer()); // CraftBukkit - moved from MinecraftServer constructor
+        long var4 = System.nanoTime();
 
-        if (this.J() == null) {
-            this.l(this.propertyManager.getString("level-name", "world"));
+        if (this.getFolderName() == null)
+        {
+            this.setFolderName(this.settings.getProperty("level-name", "world"));
         }
 
-        String s = this.propertyManager.getString("level-seed", "");
-        String s1 = this.propertyManager.getString("level-type", "DEFAULT");
-        String s2 = this.propertyManager.getString("generator-settings", "");
-        long k = (new Random()).nextLong();
+        String var6 = this.settings.getProperty("level-seed", "");
+        String var7 = this.settings.getProperty("level-type", "DEFAULT");
+        String var8 = this.settings.getProperty("generator-settings", "");
+        long var9 = (new Random()).nextLong();
 
-        if (s.length() > 0) {
-            try {
-                long l = Long.parseLong(s);
+        if (var6.length() > 0)
+        {
+            try
+            {
+                long var11 = Long.parseLong(var6);
 
-                if (l != 0L) {
-                    k = l;
+                if (var11 != 0L)
+                {
+                    var9 = var11;
                 }
-            } catch (NumberFormatException numberformatexception) {
-                k = (long) s.hashCode();
+            }
+            catch (NumberFormatException var15)
+            {
+                var9 = (long)var6.hashCode();
             }
         }
 
-        WorldType worldtype = WorldType.getType(s1);
+        WorldType var17 = WorldType.parseWorldType(var7);
 
-        if (worldtype == null) {
-            worldtype = WorldType.NORMAL;
+        if (var17 == null)
+        {
+            var17 = WorldType.DEFAULT;
         }
 
-        this.d(this.propertyManager.getInt("max-build-height", 256));
-        this.d((this.getMaxBuildHeight() + 8) / 16 * 16);
-        this.d(MathHelper.a(this.getMaxBuildHeight(), 64, 256));
-        this.propertyManager.a("max-build-height", Integer.valueOf(this.getMaxBuildHeight()));
-        log.info("Preparing level \"" + this.J() + "\"");
-        this.a(this.J(), this.J(), k, worldtype, s2);
-        long i1 = System.nanoTime() - j;
-        String s3 = String.format("%.3fs", new Object[] { Double.valueOf((double) i1 / 1.0E9D)});
+        this.setBuildLimit(this.settings.getIntProperty("max-build-height", 256));
+        this.setBuildLimit((this.getBuildLimit() + 8) / 16 * 16);
+        this.setBuildLimit(MathHelper.clamp_int(this.getBuildLimit(), 64, 256));
+        this.settings.setProperty("max-build-height", Integer.valueOf(this.getBuildLimit()));
+        logger.info("Preparing level \"" + this.getFolderName() + "\"");
+        this.loadAllWorlds(this.getFolderName(), this.getFolderName(), var9, var17, var8);
+        long var12 = System.nanoTime() - var4;
+        String var14 = String.format("%.3fs", new Object[] {Double.valueOf((double)var12 / 1.0E9D)});
+        logger.info("Done (" + var14 + ")! For help, type \"help\" or \"?\"");
 
-        log.info("Done (" + s3 + ")! For help, type \"help\" or \"?\"");
-        if (this.propertyManager.getBoolean("enable-query", false)) {
-            log.info("Starting GS4 status listener");
-            this.m = new RemoteStatusListener(this);
-            this.m.a();
+        if (this.settings.getBooleanProperty("enable-query", false))
+        {
+            logger.info("Starting GS4 status listener");
+            this.theRConThreadQuery = new RConThreadQuery(this);
+            this.theRConThreadQuery.startThread();
         }
 
-        if (this.propertyManager.getBoolean("enable-rcon", false)) {
-            log.info("Starting remote control listener");
-            this.n = new RemoteControlListener(this);
-            this.n.a();
+        if (this.settings.getBooleanProperty("enable-rcon", false))
+        {
+            logger.info("Starting remote control listener");
+            this.theRConThreadMain = new RConThreadMain(this);
+            this.theRConThreadMain.startThread();
             this.remoteConsole = new org.bukkit.craftbukkit.command.CraftRemoteConsoleCommandSender(); // CraftBukkit
         }
 
         // CraftBukkit start
-        if (this.server.getBukkitSpawnRadius() > -1) {
-            log.info("'settings.spawn-radius' in bukkit.yml has been moved to 'spawn-protection' in server.properties. I will move your config for you.");
-            this.propertyManager.properties.remove("spawn-protection");
-            this.propertyManager.getInt("spawn-protection", this.server.getBukkitSpawnRadius());
+        if (this.server.getBukkitSpawnRadius() > -1)
+        {
+            logger.info("'settings.spawn-radius' in bukkit.yml has been moved to 'spawn-protection' in server.properties. I will move your config for you.");
+            this.settings.properties.remove("spawn-protection");
+            this.settings.getIntProperty("spawn-protection", this.server.getBukkitSpawnRadius());
             this.server.removeBukkitSpawnRadius();
-            this.propertyManager.savePropertiesFile();
+            this.settings.saveProperties();
         }
 
         return true;
     }
 
-    public PropertyManager getPropertyManager() {
-        return this.propertyManager;
+    public PropertyManager getPropertyManager()
+    {
+        return this.settings;
     }
     // CraftBukkit end
 
-    public boolean getGenerateStructures() {
-        return this.generateStructures;
+    public boolean canStructuresSpawn()
+    {
+        return this.canSpawnStructures;
     }
 
-    public EnumGamemode getGamemode() {
-        return this.q;
+    public EnumGameType getGameType()
+    {
+        return this.gameType;
     }
 
-    public int getDifficulty() {
-        return Math.max(0, Math.min(3, this.propertyManager.getInt("difficulty", 1))); // CraftBukkit - clamp values
+    /**
+     * Defaults to "1" (Easy) for the dedicated server, defaults to "2" (Normal) on the client.
+     */
+    public int getDifficulty()
+    {
+        return Math.max(0, Math.min(3, this.settings.getIntProperty("difficulty", 1))); // CraftBukkit - clamp values
     }
 
-    public boolean isHardcore() {
-        return this.propertyManager.getBoolean("hardcore", false);
+    /**
+     * Defaults to false.
+     */
+    public boolean isHardcore()
+    {
+        return this.settings.getBooleanProperty("hardcore", false);
     }
 
-    protected void a(CrashReport crashreport) {
-        while (this.isRunning()) {
-            this.al();
+    /**
+     * Called on exit from the main run() loop.
+     */
+    protected void finalTick(CrashReport par1CrashReport)
+    {
+        while (this.isServerRunning())
+        {
+            this.executePendingCommands();
 
-            try {
+            try
+            {
                 Thread.sleep(10L);
-            } catch (InterruptedException interruptedexception) {
-                interruptedexception.printStackTrace();
+            }
+            catch (InterruptedException var3)
+            {
+                var3.printStackTrace();
             }
         }
     }
 
-    public CrashReport b(CrashReport crashreport) {
-        crashreport = super.b(crashreport);
-        crashreport.g().a("Is Modded", (Callable) (new CrashReportModded(this)));
-        crashreport.g().a("Type", (Callable) (new CrashReportType(this)));
-        return crashreport;
+    /**
+     * Adds the server info, including from theWorldServer, to the crash report.
+     */
+    public CrashReport addServerInfoToCrashReport(CrashReport par1CrashReport)
+    {
+        par1CrashReport = super.addServerInfoToCrashReport(par1CrashReport);
+        par1CrashReport.func_85056_g().addCrashSectionCallable("Is Modded", (Callable)(new CallableType(this)));
+        par1CrashReport.func_85056_g().addCrashSectionCallable("Type", (Callable)(new CallableServerType(this)));
+        return par1CrashReport;
     }
 
-    protected void p() {
+    /**
+     * Directly calls System.exit(0), instantly killing the program.
+     */
+    protected void systemExitNow()
+    {
         System.exit(0);
     }
 
-    public void r() {
-        super.r();
-        this.al();
+    public void updateTimeLightAndEntities()
+    {
+        super.updateTimeLightAndEntities();
+        this.executePendingCommands();
     }
 
-    public boolean getAllowNether() {
-        return this.propertyManager.getBoolean("allow-nether", true);
+    public boolean getAllowNether()
+    {
+        return this.settings.getBooleanProperty("allow-nether", true);
     }
 
-    public boolean getSpawnMonsters() {
-        return this.propertyManager.getBoolean("spawn-monsters", true);
+    public boolean allowSpawnMonsters()
+    {
+        return this.settings.getBooleanProperty("spawn-monsters", true);
     }
 
-    public void a(MojangStatisticsGenerator mojangstatisticsgenerator) {
-        mojangstatisticsgenerator.a("whitelist_enabled", Boolean.valueOf(this.am().getHasWhitelist()));
-        mojangstatisticsgenerator.a("whitelist_count", Integer.valueOf(this.am().getWhitelisted().size()));
-        super.a(mojangstatisticsgenerator);
+    public void addServerStatsToSnooper(PlayerUsageSnooper par1PlayerUsageSnooper)
+    {
+        par1PlayerUsageSnooper.addData("whitelist_enabled", Boolean.valueOf(this.getDedicatedPlayerList().isWhiteListEnabled()));
+        par1PlayerUsageSnooper.addData("whitelist_count", Integer.valueOf(this.getDedicatedPlayerList().getWhiteListedPlayers().size()));
+        super.addServerStatsToSnooper(par1PlayerUsageSnooper);
     }
 
-    public boolean getSnooperEnabled() {
-        return this.propertyManager.getBoolean("snooper-enabled", true);
+    /**
+     * Returns whether snooping is enabled or not.
+     */
+    public boolean isSnooperEnabled()
+    {
+        return this.settings.getBooleanProperty("snooper-enabled", true);
     }
 
-    public void issueCommand(String s, ICommandListener icommandlistener) {
-        this.l.add(new ServerCommand(s, icommandlistener));
+    public void addPendingCommand(String par1Str, ICommandSender par2ICommandSender)
+    {
+        this.pendingCommandList.add(new ServerCommand(par1Str, par2ICommandSender));
     }
 
-    public void al() {
-        while (!this.l.isEmpty()) {
-            ServerCommand servercommand = (ServerCommand) this.l.remove(0);
-
+    public void executePendingCommands()
+    {
+        while (!this.pendingCommandList.isEmpty())
+        {
+            ServerCommand var1 = (ServerCommand)this.pendingCommandList.remove(0);
             // CraftBukkit start - ServerCommand for preprocessing
-            ServerCommandEvent event = new ServerCommandEvent(this.console, servercommand.command);
+            ServerCommandEvent event = new ServerCommandEvent(this.console, var1.command);
             this.server.getPluginManager().callEvent(event);
-            servercommand = new ServerCommand(event.getCommand(), servercommand.source);
-
+            var1 = new ServerCommand(event.getCommand(), var1.sender);
             // this.getCommandHandler().a(servercommand.source, servercommand.command); // Called in dispatchServerCommand
-            this.server.dispatchServerCommand(this.console, servercommand);
+            this.server.dispatchServerCommand(this.console, var1);
             // CraftBukkit end
         }
     }
 
-    public boolean T() {
+    public boolean isDedicatedServer()
+    {
         return true;
     }
 
-    public DedicatedPlayerList am() {
-        return (DedicatedPlayerList) super.getPlayerList();
+    public DedicatedPlayerList getDedicatedPlayerList()
+    {
+        return (DedicatedPlayerList)super.getConfigurationManager();
     }
 
-    public ServerConnection ae() {
-        return this.r;
+    public NetworkListenThread getNetworkThread()
+    {
+        return this.networkThread;
     }
 
-    public int a(String s, int i) {
-        return this.propertyManager.getInt(s, i);
+    /**
+     * Gets an integer property. If it does not exist, set it to the specified value.
+     */
+    public int getIntProperty(String par1Str, int par2)
+    {
+        return this.settings.getIntProperty(par1Str, par2);
     }
 
-    public String a(String s, String s1) {
-        return this.propertyManager.getString(s, s1);
+    /**
+     * Gets a string property. If it does not exist, set it to the specified value.
+     */
+    public String getStringProperty(String par1Str, String par2Str)
+    {
+        return this.settings.getProperty(par1Str, par2Str);
     }
 
-    public boolean a(String s, boolean flag) {
-        return this.propertyManager.getBoolean(s, flag);
+    /**
+     * Gets a boolean property. If it does not exist, set it to the specified value.
+     */
+    public boolean getBooleanProperty(String par1Str, boolean par2)
+    {
+        return this.settings.getBooleanProperty(par1Str, par2);
     }
 
-    public void a(String s, Object object) {
-        this.propertyManager.a(s, object);
+    /**
+     * Saves an Object with the given property name.
+     */
+    public void setProperty(String par1Str, Object par2Obj)
+    {
+        this.settings.setProperty(par1Str, par2Obj);
     }
 
-    public void a() {
-        this.propertyManager.savePropertiesFile();
+    /**
+     * Saves all of the server properties to the properties file.
+     */
+    public void saveProperties()
+    {
+        this.settings.saveProperties();
     }
 
-    public String b_() {
-        File file1 = this.propertyManager.c();
-
-        return file1 != null ? file1.getAbsolutePath() : "No settings file";
+    /**
+     * Returns the filename where server properties are stored
+     */
+    public String getSettingsFilename()
+    {
+        File var1 = this.settings.getPropertiesFile();
+        return var1 != null ? var1.getAbsolutePath() : "No settings file";
     }
 
-    public void an() {
-        ServerGUI.a(this);
-        this.s = true;
+    public void enableGui()
+    {
+        ServerGUI.initGUI(this);
+        this.guiIsEnabled = true;
     }
 
-    public boolean ag() {
-        return this.s;
+    public boolean getGuiEnabled()
+    {
+        return this.guiIsEnabled;
     }
 
-    public String a(EnumGamemode enumgamemode, boolean flag) {
+    /**
+     * On dedicated does nothing. On integrated, sets commandsAllowedForAll, gameType and allows external connections.
+     */
+    public String shareToLAN(EnumGameType par1EnumGameType, boolean par2)
+    {
         return "";
     }
 
-    public boolean getEnableCommandBlock() {
-        return this.propertyManager.getBoolean("enable-command-block", false);
+    /**
+     * Return whether command blocks are enabled.
+     */
+    public boolean isCommandBlockEnabled()
+    {
+        return this.settings.getBooleanProperty("enable-command-block", false);
     }
 
-    public int getSpawnProtection() {
-        return this.propertyManager.getInt("spawn-protection", super.getSpawnProtection());
+    /**
+     * Return the spawn protection area's size.
+     */
+    public int getSpawnProtectionSize()
+    {
+        return this.settings.getIntProperty("spawn-protection", super.getSpawnProtectionSize());
     }
 
-    public PlayerList getPlayerList() {
-        return this.am();
+    public ServerConfigurationManager getConfigurationManager()
+    {
+        return this.getDedicatedPlayerList();
     }
 }

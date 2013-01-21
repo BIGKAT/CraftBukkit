@@ -1,177 +1,248 @@
-package net.minecraft.server;
+package net.minecraft.block;
 
 import java.util.Random;
+import net.minecraft.creativetab.CreativeTabs;
+import net.minecraft.item.Item;
+import net.minecraft.item.ItemStack;
+import net.minecraft.world.IBlockAccess;
+import net.minecraft.world.World;
 
 import org.bukkit.craftbukkit.event.CraftEventFactory; // CraftBukkit
 
-public class BlockStem extends BlockFlower {
+public class BlockStem extends BlockFlower
+{
+    /** Defines if it is a Melon or a Pumpkin that the stem is producing. */
+    private Block fruitType;
 
-    private Block blockFruit;
-
-    protected BlockStem(int i, Block block) {
-        super(i, 111);
-        this.blockFruit = block;
-        this.b(true);
-        float f = 0.125F;
-
-        this.a(0.5F - f, 0.0F, 0.5F - f, 0.5F + f, 0.25F, 0.5F + f);
-        this.a((CreativeModeTab) null);
+    protected BlockStem(int par1, Block par2Block)
+    {
+        super(par1, 111);
+        this.fruitType = par2Block;
+        this.setTickRandomly(true);
+        float var3 = 0.125F;
+        this.setBlockBounds(0.5F - var3, 0.0F, 0.5F - var3, 0.5F + var3, 0.25F, 0.5F + var3);
+        this.setCreativeTab((CreativeTabs)null);
     }
 
-    protected boolean d_(int i) {
-        return i == Block.SOIL.id;
+    /**
+     * Gets passed in the blockID of the block below and supposed to return true if its allowed to grow on the type of
+     * blockID passed in. Args: blockID
+     */
+    protected boolean canThisPlantGrowOnThisBlockID(int par1)
+    {
+        return par1 == Block.tilledField.blockID;
     }
 
-    public void b(World world, int i, int j, int k, Random random) {
-        super.b(world, i, j, k, random);
-        if (world.getLightLevel(i, j + 1, k) >= 9) {
-            float f = this.n(world, i, j, k);
+    /**
+     * Ticks the block if it's been scheduled
+     */
+    public void updateTick(World par1World, int par2, int par3, int par4, Random par5Random)
+    {
+        super.updateTick(par1World, par2, par3, par4, par5Random);
 
-            if (random.nextInt((int) (25.0F / f) + 1) == 0) {
-                int l = world.getData(i, j, k);
+        if (par1World.getBlockLightValue(par2, par3 + 1, par4) >= 9)
+        {
+            float var6 = this.getGrowthModifier(par1World, par2, par3, par4);
 
-                if (l < 7) {
-                    ++l;
-                    CraftEventFactory.handleBlockGrowEvent(world, i, j, k, this.id, l); // CraftBukkit
-                } else {
-                    if (world.getTypeId(i - 1, j, k) == this.blockFruit.id) {
+            if (par5Random.nextInt((int)(25.0F / var6) + 1) == 0)
+            {
+                int var7 = par1World.getBlockMetadata(par2, par3, par4);
+
+                if (var7 < 7)
+                {
+                    ++var7;
+                    CraftEventFactory.handleBlockGrowEvent(par1World, par2, par3, par4, this.blockID, var7); // CraftBukkit
+                }
+                else
+                {
+                    if (par1World.getBlockId(par2 - 1, par3, par4) == this.fruitType.blockID)
+                    {
                         return;
                     }
 
-                    if (world.getTypeId(i + 1, j, k) == this.blockFruit.id) {
+                    if (par1World.getBlockId(par2 + 1, par3, par4) == this.fruitType.blockID)
+                    {
                         return;
                     }
 
-                    if (world.getTypeId(i, j, k - 1) == this.blockFruit.id) {
+                    if (par1World.getBlockId(par2, par3, par4 - 1) == this.fruitType.blockID)
+                    {
                         return;
                     }
 
-                    if (world.getTypeId(i, j, k + 1) == this.blockFruit.id) {
+                    if (par1World.getBlockId(par2, par3, par4 + 1) == this.fruitType.blockID)
+                    {
                         return;
                     }
 
-                    int i1 = random.nextInt(4);
-                    int j1 = i;
-                    int k1 = k;
+                    int var8 = par5Random.nextInt(4);
+                    int var9 = par2;
+                    int var10 = par4;
 
-                    if (i1 == 0) {
-                        j1 = i - 1;
+                    if (var8 == 0)
+                    {
+                        var9 = par2 - 1;
                     }
 
-                    if (i1 == 1) {
-                        ++j1;
+                    if (var8 == 1)
+                    {
+                        ++var9;
                     }
 
-                    if (i1 == 2) {
-                        k1 = k - 1;
+                    if (var8 == 2)
+                    {
+                        var10 = par4 - 1;
                     }
 
-                    if (i1 == 3) {
-                        ++k1;
+                    if (var8 == 3)
+                    {
+                        ++var10;
                     }
 
-                    int l1 = world.getTypeId(j1, j - 1, k1);
+                    int var11 = par1World.getBlockId(var9, par3 - 1, var10);
 
-                    if (world.getTypeId(j1, j, k1) == 0 && (l1 == Block.SOIL.id || l1 == Block.DIRT.id || l1 == Block.GRASS.id)) {
-                        CraftEventFactory.handleBlockGrowEvent(world, j1, j, k1, this.blockFruit.id, 0); // CraftBukkit
+                    if (par1World.getBlockId(var9, par3, var10) == 0 && (var11 == Block.tilledField.blockID || var11 == Block.dirt.blockID || var11 == Block.grass.blockID))
+                    {
+                        CraftEventFactory.handleBlockGrowEvent(par1World, var9, par3, var10, this.fruitType.blockID, 0); // CraftBukkit
                     }
                 }
             }
         }
     }
 
-    public void l(World world, int i, int j, int k) {
-        world.setData(i, j, k, 7);
+    public void fertilizeStem(World par1World, int par2, int par3, int par4)
+    {
+        par1World.setBlockMetadataWithNotify(par2, par3, par4, 7);
     }
 
-    private float n(World world, int i, int j, int k) {
-        float f = 1.0F;
-        int l = world.getTypeId(i, j, k - 1);
-        int i1 = world.getTypeId(i, j, k + 1);
-        int j1 = world.getTypeId(i - 1, j, k);
-        int k1 = world.getTypeId(i + 1, j, k);
-        int l1 = world.getTypeId(i - 1, j, k - 1);
-        int i2 = world.getTypeId(i + 1, j, k - 1);
-        int j2 = world.getTypeId(i + 1, j, k + 1);
-        int k2 = world.getTypeId(i - 1, j, k + 1);
-        boolean flag = j1 == this.id || k1 == this.id;
-        boolean flag1 = l == this.id || i1 == this.id;
-        boolean flag2 = l1 == this.id || i2 == this.id || j2 == this.id || k2 == this.id;
+    private float getGrowthModifier(World par1World, int par2, int par3, int par4)
+    {
+        float var5 = 1.0F;
+        int var6 = par1World.getBlockId(par2, par3, par4 - 1);
+        int var7 = par1World.getBlockId(par2, par3, par4 + 1);
+        int var8 = par1World.getBlockId(par2 - 1, par3, par4);
+        int var9 = par1World.getBlockId(par2 + 1, par3, par4);
+        int var10 = par1World.getBlockId(par2 - 1, par3, par4 - 1);
+        int var11 = par1World.getBlockId(par2 + 1, par3, par4 - 1);
+        int var12 = par1World.getBlockId(par2 + 1, par3, par4 + 1);
+        int var13 = par1World.getBlockId(par2 - 1, par3, par4 + 1);
+        boolean var14 = var8 == this.blockID || var9 == this.blockID;
+        boolean var15 = var6 == this.blockID || var7 == this.blockID;
+        boolean var16 = var10 == this.blockID || var11 == this.blockID || var12 == this.blockID || var13 == this.blockID;
 
-        for (int l2 = i - 1; l2 <= i + 1; ++l2) {
-            for (int i3 = k - 1; i3 <= k + 1; ++i3) {
-                int j3 = world.getTypeId(l2, j - 1, i3);
-                float f1 = 0.0F;
+        for (int var17 = par2 - 1; var17 <= par2 + 1; ++var17)
+        {
+            for (int var18 = par4 - 1; var18 <= par4 + 1; ++var18)
+            {
+                int var19 = par1World.getBlockId(var17, par3 - 1, var18);
+                float var20 = 0.0F;
 
-                if (j3 == Block.SOIL.id) {
-                    f1 = 1.0F;
-                    if (world.getData(l2, j - 1, i3) > 0) {
-                        f1 = 3.0F;
+                if (var19 == Block.tilledField.blockID)
+                {
+                    var20 = 1.0F;
+
+                    if (par1World.getBlockMetadata(var17, par3 - 1, var18) > 0)
+                    {
+                        var20 = 3.0F;
                     }
                 }
 
-                if (l2 != i || i3 != k) {
-                    f1 /= 4.0F;
+                if (var17 != par2 || var18 != par4)
+                {
+                    var20 /= 4.0F;
                 }
 
-                f += f1;
+                var5 += var20;
             }
         }
 
-        if (flag2 || flag && flag1) {
-            f /= 2.0F;
+        if (var16 || var14 && var15)
+        {
+            var5 /= 2.0F;
         }
 
-        return f;
+        return var5;
     }
 
-    public int a(int i, int j) {
-        return this.textureId;
+    /**
+     * From the specified side and block metadata retrieves the blocks texture. Args: side, metadata
+     */
+    public int getBlockTextureFromSideAndMetadata(int par1, int par2)
+    {
+        return this.blockIndexInTexture;
     }
 
-    public void f() {
-        float f = 0.125F;
-
-        this.a(0.5F - f, 0.0F, 0.5F - f, 0.5F + f, 0.25F, 0.5F + f);
+    /**
+     * Sets the block's bounds for rendering it as an item
+     */
+    public void setBlockBoundsForItemRender()
+    {
+        float var1 = 0.125F;
+        this.setBlockBounds(0.5F - var1, 0.0F, 0.5F - var1, 0.5F + var1, 0.25F, 0.5F + var1);
     }
 
-    public void updateShape(IBlockAccess iblockaccess, int i, int j, int k) {
-        this.maxY = (double) ((float) (iblockaccess.getData(i, j, k) * 2 + 2) / 16.0F);
-        float f = 0.125F;
-
-        this.a(0.5F - f, 0.0F, 0.5F - f, 0.5F + f, (float) this.maxY, 0.5F + f);
+    /**
+     * Updates the blocks bounds based on its current state. Args: world, x, y, z
+     */
+    public void setBlockBoundsBasedOnState(IBlockAccess par1IBlockAccess, int par2, int par3, int par4)
+    {
+        this.maxY = (double)((float)(par1IBlockAccess.getBlockMetadata(par2, par3, par4) * 2 + 2) / 16.0F);
+        float var5 = 0.125F;
+        this.setBlockBounds(0.5F - var5, 0.0F, 0.5F - var5, 0.5F + var5, (float)this.maxY, 0.5F + var5);
     }
 
-    public int d() {
+    /**
+     * The type of render function that is called for this block
+     */
+    public int getRenderType()
+    {
         return 19;
     }
 
-    public void dropNaturally(World world, int i, int j, int k, int l, float f, int i1) {
-        super.dropNaturally(world, i, j, k, l, f, i1);
-        if (!world.isStatic) {
-            Item item = null;
+    /**
+     * Drops the block items with a specified chance of dropping the specified items
+     */
+    public void dropBlockAsItemWithChance(World par1World, int par2, int par3, int par4, int par5, float par6, int par7)
+    {
+        super.dropBlockAsItemWithChance(par1World, par2, par3, par4, par5, par6, par7);
 
-            if (this.blockFruit == Block.PUMPKIN) {
-                item = Item.PUMPKIN_SEEDS;
+        if (!par1World.isRemote)
+        {
+            Item var8 = null;
+
+            if (this.fruitType == Block.pumpkin)
+            {
+                var8 = Item.pumpkinSeeds;
             }
 
-            if (this.blockFruit == Block.MELON) {
-                item = Item.MELON_SEEDS;
+            if (this.fruitType == Block.melon)
+            {
+                var8 = Item.melonSeeds;
             }
 
-            for (int j1 = 0; j1 < 3; ++j1) {
-                if (world.random.nextInt(15) <= l) {
-                    this.b(world, i, j, k, new ItemStack(item));
+            for (int var9 = 0; var9 < 3; ++var9)
+            {
+                if (par1World.rand.nextInt(15) <= par5)
+                {
+                    this.dropBlockAsItem_do(par1World, par2, par3, par4, new ItemStack(var8));
                 }
             }
         }
     }
 
-    public int getDropType(int i, Random random, int j) {
+    /**
+     * Returns the ID of the items to drop on destruction.
+     */
+    public int idDropped(int par1, Random par2Random, int par3)
+    {
         return -1;
     }
 
-    public int a(Random random) {
+    /**
+     * Returns the quantity of items to drop on block destruction.
+     */
+    public int quantityDropped(Random par1Random)
+    {
         return 1;
     }
 }

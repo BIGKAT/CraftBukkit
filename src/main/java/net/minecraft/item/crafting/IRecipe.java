@@ -1,14 +1,21 @@
-package net.minecraft.server;
+package net.minecraft.item.crafting;
 
-public interface IRecipe {
+import net.minecraft.inventory.InventoryCrafting;
+import net.minecraft.item.ItemStack;
+import net.minecraft.world.World;
+public interface IRecipe
+{
 
-    boolean a(InventoryCrafting inventorycrafting, World world);
+    boolean matches(InventoryCrafting inventorycrafting, World world);
 
-    ItemStack a(InventoryCrafting inventorycrafting);
+    ItemStack getCraftingResult(InventoryCrafting inventorycrafting);
 
-    int a();
+    /**
+     * Returns the size of the recipe area
+     */
+    int getRecipeSize();
 
-    ItemStack b();
+    ItemStack getRecipeOutput();
 
     org.bukkit.inventory.Recipe toBukkitRecipe(); // CraftBukkit
 }

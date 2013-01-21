@@ -1,36 +1,56 @@
-package net.minecraft.server;
+package net.minecraft.block;
 
 import java.util.Random;
+import net.minecraft.block.material.Material;
+import net.minecraft.creativetab.CreativeTabs;
+import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.item.Item;
+import net.minecraft.item.ItemStack;
+import net.minecraft.stats.StatList;
+import net.minecraft.world.World;
 
 import org.bukkit.event.block.LeavesDecayEvent; // CraftBukkit
 
-public class BlockLeaves extends BlockTransparant {
+public class BlockLeaves extends BlockLeavesBase
+{
+    /**
+     * The base index in terrain.png corresponding to the fancy version of the leaf texture. This is stored so we can
+     * switch the displayed version between fancy and fast graphics (fast is this index + 1).
+     */
+    private int baseIndexInPNG;
+    public static final String[] LEAF_TYPES = new String[] {"oak", "spruce", "birch", "jungle"};
+    int[] adjacentTreeBlocks;
 
-    private int cD;
-    public static final String[] a = new String[] { "oak", "spruce", "birch", "jungle"};
-    int[] b;
-
-    protected BlockLeaves(int i, int j) {
-        super(i, j, Material.LEAVES, false);
-        this.cD = j;
-        this.b(true);
-        this.a(CreativeModeTab.c);
+    protected BlockLeaves(int par1, int par2)
+    {
+        super(par1, par2, Material.leaves, false);
+        this.baseIndexInPNG = par2;
+        this.setTickRandomly(true);
+        this.setCreativeTab(CreativeTabs.tabDecorations);
     }
 
-    public void remove(World world, int i, int j, int k, int l, int i1) {
-        byte b0 = 1;
-        int j1 = b0 + 1;
+    /**
+     * ejects contained items into the world, and notifies neighbours of an update, as appropriate
+     */
+    public void breakBlock(World par1World, int par2, int par3, int par4, int par5, int par6)
+    {
+        byte var7 = 1;
+        int var8 = var7 + 1;
 
-        if (world.d(i - j1, j - j1, k - j1, i + j1, j + j1, k + j1)) {
-            for (int k1 = -b0; k1 <= b0; ++k1) {
-                for (int l1 = -b0; l1 <= b0; ++l1) {
-                    for (int i2 = -b0; i2 <= b0; ++i2) {
-                        int j2 = world.getTypeId(i + k1, j + l1, k + i2);
+        if (par1World.checkChunksExist(par2 - var8, par3 - var8, par4 - var8, par2 + var8, par3 + var8, par4 + var8))
+        {
+            for (int var9 = -var7; var9 <= var7; ++var9)
+            {
+                for (int var10 = -var7; var10 <= var7; ++var10)
+                {
+                    for (int var11 = -var7; var11 <= var7; ++var11)
+                    {
+                        int var12 = par1World.getBlockId(par2 + var9, par3 + var10, par4 + var11);
 
-                        if (j2 == Block.LEAVES.id) {
-                            int k2 = world.getData(i + k1, j + l1, k + i2);
-
-                            world.setRawData(i + k1, j + l1, k + i2, k2 | 8);
+                        if (var12 == Block.leaves.blockID)
+                        {
+                            int var13 = par1World.getBlockMetadata(par2 + var9, par3 + var10, par4 + var11);
+                            par1World.setBlockMetadata(par2 + var9, par3 + var10, par4 + var11, var13 | 8);
                         }
                     }
                 }
@@ -38,70 +58,98 @@ public class BlockLeaves extends BlockTransparant {
         }
     }
 
-    public void b(World world, int i, int j, int k, Random random) {
-        if (!world.isStatic) {
-            int l = world.getData(i, j, k);
+    /**
+     * Ticks the block if it's been scheduled
+     */
+    public void updateTick(World par1World, int par2, int par3, int par4, Random par5Random)
+    {
+        if (!par1World.isRemote)
+        {
+            int var6 = par1World.getBlockMetadata(par2, par3, par4);
 
-            if ((l & 8) != 0 && (l & 4) == 0) {
-                byte b0 = 4;
-                int i1 = b0 + 1;
-                byte b1 = 32;
-                int j1 = b1 * b1;
-                int k1 = b1 / 2;
+            if ((var6 & 8) != 0 && (var6 & 4) == 0)
+            {
+                byte var7 = 4;
+                int var8 = var7 + 1;
+                byte var9 = 32;
+                int var10 = var9 * var9;
+                int var11 = var9 / 2;
 
-                if (this.b == null) {
-                    this.b = new int[b1 * b1 * b1];
+                if (this.adjacentTreeBlocks == null)
+                {
+                    this.adjacentTreeBlocks = new int[var9 * var9 * var9];
                 }
 
-                int l1;
+                int var12;
 
-                if (world.d(i - i1, j - i1, k - i1, i + i1, j + i1, k + i1)) {
-                    int i2;
-                    int j2;
-                    int k2;
+                if (par1World.checkChunksExist(par2 - var8, par3 - var8, par4 - var8, par2 + var8, par3 + var8, par4 + var8))
+                {
+                    int var13;
+                    int var14;
+                    int var15;
 
-                    for (l1 = -b0; l1 <= b0; ++l1) {
-                        for (i2 = -b0; i2 <= b0; ++i2) {
-                            for (j2 = -b0; j2 <= b0; ++j2) {
-                                k2 = world.getTypeId(i + l1, j + i2, k + j2);
-                                if (k2 == Block.LOG.id) {
-                                    this.b[(l1 + k1) * j1 + (i2 + k1) * b1 + j2 + k1] = 0;
-                                } else if (k2 == Block.LEAVES.id) {
-                                    this.b[(l1 + k1) * j1 + (i2 + k1) * b1 + j2 + k1] = -2;
-                                } else {
-                                    this.b[(l1 + k1) * j1 + (i2 + k1) * b1 + j2 + k1] = -1;
+                    for (var12 = -var7; var12 <= var7; ++var12)
+                    {
+                        for (var13 = -var7; var13 <= var7; ++var13)
+                        {
+                            for (var14 = -var7; var14 <= var7; ++var14)
+                            {
+                                var15 = par1World.getBlockId(par2 + var12, par3 + var13, par4 + var14);
+
+                                if (var15 == Block.wood.blockID)
+                                {
+                                    this.adjacentTreeBlocks[(var12 + var11) * var10 + (var13 + var11) * var9 + var14 + var11] = 0;
+                                }
+                                else if (var15 == Block.leaves.blockID)
+                                {
+                                    this.adjacentTreeBlocks[(var12 + var11) * var10 + (var13 + var11) * var9 + var14 + var11] = -2;
+                                }
+                                else
+                                {
+                                    this.adjacentTreeBlocks[(var12 + var11) * var10 + (var13 + var11) * var9 + var14 + var11] = -1;
                                 }
                             }
                         }
                     }
 
-                    for (l1 = 1; l1 <= 4; ++l1) {
-                        for (i2 = -b0; i2 <= b0; ++i2) {
-                            for (j2 = -b0; j2 <= b0; ++j2) {
-                                for (k2 = -b0; k2 <= b0; ++k2) {
-                                    if (this.b[(i2 + k1) * j1 + (j2 + k1) * b1 + k2 + k1] == l1 - 1) {
-                                        if (this.b[(i2 + k1 - 1) * j1 + (j2 + k1) * b1 + k2 + k1] == -2) {
-                                            this.b[(i2 + k1 - 1) * j1 + (j2 + k1) * b1 + k2 + k1] = l1;
+                    for (var12 = 1; var12 <= 4; ++var12)
+                    {
+                        for (var13 = -var7; var13 <= var7; ++var13)
+                        {
+                            for (var14 = -var7; var14 <= var7; ++var14)
+                            {
+                                for (var15 = -var7; var15 <= var7; ++var15)
+                                {
+                                    if (this.adjacentTreeBlocks[(var13 + var11) * var10 + (var14 + var11) * var9 + var15 + var11] == var12 - 1)
+                                    {
+                                        if (this.adjacentTreeBlocks[(var13 + var11 - 1) * var10 + (var14 + var11) * var9 + var15 + var11] == -2)
+                                        {
+                                            this.adjacentTreeBlocks[(var13 + var11 - 1) * var10 + (var14 + var11) * var9 + var15 + var11] = var12;
                                         }
 
-                                        if (this.b[(i2 + k1 + 1) * j1 + (j2 + k1) * b1 + k2 + k1] == -2) {
-                                            this.b[(i2 + k1 + 1) * j1 + (j2 + k1) * b1 + k2 + k1] = l1;
+                                        if (this.adjacentTreeBlocks[(var13 + var11 + 1) * var10 + (var14 + var11) * var9 + var15 + var11] == -2)
+                                        {
+                                            this.adjacentTreeBlocks[(var13 + var11 + 1) * var10 + (var14 + var11) * var9 + var15 + var11] = var12;
                                         }
 
-                                        if (this.b[(i2 + k1) * j1 + (j2 + k1 - 1) * b1 + k2 + k1] == -2) {
-                                            this.b[(i2 + k1) * j1 + (j2 + k1 - 1) * b1 + k2 + k1] = l1;
+                                        if (this.adjacentTreeBlocks[(var13 + var11) * var10 + (var14 + var11 - 1) * var9 + var15 + var11] == -2)
+                                        {
+                                            this.adjacentTreeBlocks[(var13 + var11) * var10 + (var14 + var11 - 1) * var9 + var15 + var11] = var12;
                                         }
 
-                                        if (this.b[(i2 + k1) * j1 + (j2 + k1 + 1) * b1 + k2 + k1] == -2) {
-                                            this.b[(i2 + k1) * j1 + (j2 + k1 + 1) * b1 + k2 + k1] = l1;
+                                        if (this.adjacentTreeBlocks[(var13 + var11) * var10 + (var14 + var11 + 1) * var9 + var15 + var11] == -2)
+                                        {
+                                            this.adjacentTreeBlocks[(var13 + var11) * var10 + (var14 + var11 + 1) * var9 + var15 + var11] = var12;
                                         }
 
-                                        if (this.b[(i2 + k1) * j1 + (j2 + k1) * b1 + (k2 + k1 - 1)] == -2) {
-                                            this.b[(i2 + k1) * j1 + (j2 + k1) * b1 + (k2 + k1 - 1)] = l1;
+                                        if (this.adjacentTreeBlocks[(var13 + var11) * var10 + (var14 + var11) * var9 + (var15 + var11 - 1)] == -2)
+                                        {
+                                            this.adjacentTreeBlocks[(var13 + var11) * var10 + (var14 + var11) * var9 + (var15 + var11 - 1)] = var12;
                                         }
 
-                                        if (this.b[(i2 + k1) * j1 + (j2 + k1) * b1 + k2 + k1 + 1] == -2) {
-                                            this.b[(i2 + k1) * j1 + (j2 + k1) * b1 + k2 + k1 + 1] = l1;
+                                        if (this.adjacentTreeBlocks[(var13 + var11) * var10 + (var14 + var11) * var9 + var15 + var11 + 1] == -2)
+                                        {
+                                            this.adjacentTreeBlocks[(var13 + var11) * var10 + (var14 + var11) * var9 + var15 + var11 + 1] = var12;
                                         }
                                     }
                                 }
@@ -110,80 +158,127 @@ public class BlockLeaves extends BlockTransparant {
                     }
                 }
 
-                l1 = this.b[k1 * j1 + k1 * b1 + k1];
-                if (l1 >= 0) {
-                    world.setRawData(i, j, k, l & -9);
-                } else {
-                    this.l(world, i, j, k);
+                var12 = this.adjacentTreeBlocks[var11 * var10 + var11 * var9 + var11];
+
+                if (var12 >= 0)
+                {
+                    par1World.setBlockMetadata(par2, par3, par4, var6 & -9);
+                }
+                else
+                {
+                    this.removeLeaves(par1World, par2, par3, par4);
                 }
             }
         }
     }
 
-    private void l(World world, int i, int j, int k) {
+    private void removeLeaves(World par1World, int par2, int par3, int par4)
+    {
         // CraftBukkit start
-        LeavesDecayEvent event = new LeavesDecayEvent(world.getWorld().getBlockAt(i, j, k));
-        world.getServer().getPluginManager().callEvent(event);
+        LeavesDecayEvent event = new LeavesDecayEvent(par1World.getWorld().getBlockAt(par2, par3, par4));
+        par1World.getServer().getPluginManager().callEvent(event);
 
-        if (event.isCancelled()) {
+        if (event.isCancelled())
+        {
             return;
         }
+
         // CraftBukkit end
-
-        this.c(world, i, j, k, world.getData(i, j, k), 0);
-        world.setTypeId(i, j, k, 0);
+        this.dropBlockAsItem(par1World, par2, par3, par4, par1World.getBlockMetadata(par2, par3, par4), 0);
+        par1World.setBlockWithNotify(par2, par3, par4, 0);
     }
 
-    public int a(Random random) {
-        return random.nextInt(20) == 0 ? 1 : 0;
+    /**
+     * Returns the quantity of items to drop on block destruction.
+     */
+    public int quantityDropped(Random par1Random)
+    {
+        return par1Random.nextInt(20) == 0 ? 1 : 0;
     }
 
-    public int getDropType(int i, Random random, int j) {
-        return Block.SAPLING.id;
+    /**
+     * Returns the ID of the items to drop on destruction.
+     */
+    public int idDropped(int par1, Random par2Random, int par3)
+    {
+        return Block.sapling.blockID;
     }
 
-    public void dropNaturally(World world, int i, int j, int k, int l, float f, int i1) {
-        if (!world.isStatic) {
-            byte b0 = 20;
+    /**
+     * Drops the block items with a specified chance of dropping the specified items
+     */
+    public void dropBlockAsItemWithChance(World par1World, int par2, int par3, int par4, int par5, float par6, int par7)
+    {
+        if (!par1World.isRemote)
+        {
+            byte var8 = 20;
 
-            if ((l & 3) == 3) {
-                b0 = 40;
+            if ((par5 & 3) == 3)
+            {
+                var8 = 40;
             }
 
-            if (world.random.nextInt(b0) == 0) {
-                int j1 = this.getDropType(l, world.random, i1);
-
-                this.b(world, i, j, k, new ItemStack(j1, 1, this.getDropData(l)));
+            if (par1World.rand.nextInt(var8) == 0)
+            {
+                int var9 = this.idDropped(par5, par1World.rand, par7);
+                this.dropBlockAsItem_do(par1World, par2, par3, par4, new ItemStack(var9, 1, this.damageDropped(par5)));
             }
 
-            if ((l & 3) == 0 && world.random.nextInt(200) == 0) {
-                this.b(world, i, j, k, new ItemStack(Item.APPLE, 1, 0));
+            if ((par5 & 3) == 0 && par1World.rand.nextInt(200) == 0)
+            {
+                this.dropBlockAsItem_do(par1World, par2, par3, par4, new ItemStack(Item.appleRed, 1, 0));
             }
         }
     }
 
-    public void a(World world, EntityHuman entityhuman, int i, int j, int k, int l) {
-        if (!world.isStatic && entityhuman.bS() != null && entityhuman.bS().id == Item.SHEARS.id) {
-            entityhuman.a(StatisticList.C[this.id], 1);
-            this.b(world, i, j, k, new ItemStack(Block.LEAVES.id, 1, l & 3));
-        } else {
-            super.a(world, entityhuman, i, j, k, l);
+    /**
+     * Called when the player destroys a block with an item that can harvest it. (i, j, k) are the coordinates of the
+     * block and l is the block's subtype/damage.
+     */
+    public void harvestBlock(World par1World, EntityPlayer par2EntityPlayer, int par3, int par4, int par5, int par6)
+    {
+        if (!par1World.isRemote && par2EntityPlayer.getCurrentEquippedItem() != null && par2EntityPlayer.getCurrentEquippedItem().itemID == Item.shears.itemID)
+        {
+            par2EntityPlayer.addStat(StatList.mineBlockStatArray[this.blockID], 1);
+            this.dropBlockAsItem_do(par1World, par3, par4, par5, new ItemStack(Block.leaves.blockID, 1, par6 & 3));
+        }
+        else
+        {
+            super.harvestBlock(par1World, par2EntityPlayer, par3, par4, par5, par6);
         }
     }
 
-    public int getDropData(int i) {
-        return i & 3;
+    /**
+     * Determines the damage on the item the block drops. Used in cloth and wood.
+     */
+    public int damageDropped(int par1)
+    {
+        return par1 & 3;
     }
 
-    public boolean c() {
-        return !this.c;
+    /**
+     * Is this block (a) opaque and (b) a full 1m cube?  This determines whether or not to render the shared face of two
+     * adjacent blocks and also whether the player can attach torches, redstone wire, etc to this block.
+     */
+    public boolean isOpaqueCube()
+    {
+        return !this.graphicsLevel;
     }
 
-    public int a(int i, int j) {
-        return (j & 3) == 1 ? this.textureId + 80 : ((j & 3) == 3 ? this.textureId + 144 : this.textureId);
+    /**
+     * From the specified side and block metadata retrieves the blocks texture. Args: side, metadata
+     */
+    public int getBlockTextureFromSideAndMetadata(int par1, int par2)
+    {
+        return (par2 & 3) == 1 ? this.blockIndexInTexture + 80 : ((par2 & 3) == 3 ? this.blockIndexInTexture + 144 : this.blockIndexInTexture);
     }
 
-    protected ItemStack f_(int i) {
-        return new ItemStack(this.id, 1, i & 3);
+    /**
+     * Returns an item stack containing a single instance of the current block type. 'i' is the block's subtype/damage
+     * and is ignored for blocks which do not support subtypes. Blocks which cannot be harvested should return null.
+     */
+    protected ItemStack createStackedBlock(int par1)
+    {
+        return new ItemStack(this.blockID, 1, par1 & 3);
     }
 }

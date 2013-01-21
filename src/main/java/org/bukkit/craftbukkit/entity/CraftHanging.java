@@ -1,6 +1,5 @@
 package org.bukkit.craftbukkit.entity;
 
-import net.minecraft.server.EntityHanging;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.craftbukkit.CraftServer;
@@ -8,7 +7,7 @@ import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Hanging;
 
 public class CraftHanging extends CraftEntity implements Hanging {
-    public CraftHanging(CraftServer server, EntityHanging entity) {
+    public CraftHanging(CraftServer server, net.minecraft.entity.EntityHanging/*was:EntityHanging*/ entity) {
         super(server, entity);
     }
 
@@ -22,39 +21,39 @@ public class CraftHanging extends CraftEntity implements Hanging {
 
     public boolean setFacingDirection(BlockFace face, boolean force) {
         Block block = getLocation().getBlock().getRelative(getAttachedFace()).getRelative(face.getOppositeFace()).getRelative(getFacing());
-        EntityHanging hanging = getHandle();
-        int x = hanging.x, y = hanging.y, z = hanging.z, dir = hanging.direction;
-        hanging.x = block.getX();
-        hanging.y = block.getY();
-        hanging.z = block.getZ();
+        net.minecraft.entity.EntityHanging/*was:EntityHanging*/ hanging = getHandle();
+        int x = hanging.xPosition/*was:x*/, y = hanging.yPosition/*was:y*/, z = hanging.zPosition/*was:z*/, dir = hanging.hangingDirection/*was:direction*/;
+        hanging.xPosition/*was:x*/ = block.getX();
+        hanging.yPosition/*was:y*/ = block.getY();
+        hanging.zPosition/*was:z*/ = block.getZ();
         switch (face) {
             case SOUTH:
             default:
-                getHandle().setDirection(0);
+                getHandle().setDirection/*was:setDirection*/(0);
                 break;
             case WEST:
-                getHandle().setDirection(1);
+                getHandle().setDirection/*was:setDirection*/(1);
                 break;
             case NORTH:
-                getHandle().setDirection(2);
+                getHandle().setDirection/*was:setDirection*/(2);
                 break;
             case EAST:
-                getHandle().setDirection(3);
+                getHandle().setDirection/*was:setDirection*/(3);
                 break;
         }
-        if (!force && !hanging.survives()) {
+        if (!force && !hanging.onValidSurface/*was:survives*/()) {
             // Revert since it doesn't fit
-            hanging.x = x;
-            hanging.y = y;
-            hanging.z = z;
-            hanging.setDirection(dir);
+            hanging.xPosition/*was:x*/ = x;
+            hanging.yPosition/*was:y*/ = y;
+            hanging.zPosition/*was:z*/ = z;
+            hanging.setDirection/*was:setDirection*/(dir);
             return false;
         }
         return true;
     }
 
     public BlockFace getFacing() {
-        switch (this.getHandle().direction) {
+        switch (this.getHandle().hangingDirection/*was:direction*/) {
             case 0:
             default:
                 return BlockFace.SOUTH;
@@ -68,8 +67,8 @@ public class CraftHanging extends CraftEntity implements Hanging {
     }
 
     @Override
-    public EntityHanging getHandle() {
-        return (EntityHanging) entity;
+    public net.minecraft.entity.EntityHanging/*was:EntityHanging*/ getHandle() {
+        return (net.minecraft.entity.EntityHanging/*was:EntityHanging*/) entity;
     }
 
     @Override

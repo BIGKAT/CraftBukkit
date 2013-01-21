@@ -1,40 +1,54 @@
-package net.minecraft.server;
+package net.minecraft.item;
 
 import org.bukkit.event.player.PlayerFishEvent; // CraftBukkit
+import net.minecraft.creativetab.CreativeTabs;
+import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.entity.projectile.EntityFishHook;
+import net.minecraft.world.World;
 
-public class ItemFishingRod extends Item {
-
-    public ItemFishingRod(int i) {
-        super(i);
-        this.setMaxDurability(64);
-        this.d(1);
-        this.a(CreativeModeTab.i);
+public class ItemFishingRod extends Item
+{
+    public ItemFishingRod(int par1)
+    {
+        super(par1);
+        this.setMaxDamage(64);
+        this.setMaxStackSize(1);
+        this.setCreativeTab(CreativeTabs.tabTools);
     }
 
-    public ItemStack a(ItemStack itemstack, World world, EntityHuman entityhuman) {
-        if (entityhuman.hookedFish != null) {
-            int i = entityhuman.hookedFish.c();
-
-            itemstack.damage(i, entityhuman);
-            entityhuman.bH();
-        } else {
+    /**
+     * Called whenever this item is equipped and the right mouse button is pressed. Args: itemStack, world, entityPlayer
+     */
+    public ItemStack onItemRightClick(ItemStack par1ItemStack, World par2World, EntityPlayer par3EntityPlayer)
+    {
+        if (par3EntityPlayer.fishEntity != null)
+        {
+            int var4 = par3EntityPlayer.fishEntity.catchFish();
+            par1ItemStack.damageItem(var4, par3EntityPlayer);
+            par3EntityPlayer.swingItem();
+        }
+        else
+        {
             // CraftBukkit start
-            PlayerFishEvent playerFishEvent = new PlayerFishEvent((org.bukkit.entity.Player) entityhuman.getBukkitEntity(), null, PlayerFishEvent.State.FISHING);
-            world.getServer().getPluginManager().callEvent(playerFishEvent);
+            PlayerFishEvent playerFishEvent = new PlayerFishEvent((org.bukkit.entity.Player) par3EntityPlayer.getBukkitEntity(), null, PlayerFishEvent.State.FISHING);
+            par2World.getServer().getPluginManager().callEvent(playerFishEvent);
 
-            if (playerFishEvent.isCancelled()) {
-                return itemstack;
+            if (playerFishEvent.isCancelled())
+            {
+                return par1ItemStack;
             }
+
             // CraftBukkit end
+            par2World.playSoundAtEntity(par3EntityPlayer, "random.bow", 0.5F, 0.4F / (itemRand.nextFloat() * 0.4F + 0.8F));
 
-            world.makeSound(entityhuman, "random.bow", 0.5F, 0.4F / (d.nextFloat() * 0.4F + 0.8F));
-            if (!world.isStatic) {
-                world.addEntity(new EntityFishingHook(world, entityhuman));
+            if (!par2World.isRemote)
+            {
+                par2World.spawnEntityInWorld(new EntityFishHook(par2World, par3EntityPlayer));
             }
 
-            entityhuman.bH();
+            par3EntityPlayer.swingItem();
         }
 
-        return itemstack;
+        return par1ItemStack;
     }
 }

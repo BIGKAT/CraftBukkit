@@ -1,10 +1,11 @@
-package net.minecraft.server;
+package net.minecraft.network;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.math.BigInteger;
 import java.net.URL;
 import java.net.URLEncoder;
+import net.minecraft.util.CryptManager;
 
 // CraftBukkit start
 import org.bukkit.craftbukkit.CraftServer;
@@ -13,72 +14,93 @@ import org.bukkit.event.player.AsyncPlayerPreLoginEvent;
 import org.bukkit.event.player.PlayerPreLoginEvent;
 // CraftBukkit end
 
-class ThreadLoginVerifier extends Thread {
-
-    final PendingConnection pendingConnection;
+class ThreadLoginVerifier extends Thread
+{
+    /** The login handler that spawned this thread. */
+    final NetLoginHandler loginHandler;
 
     // CraftBukkit start
     CraftServer server;
 
-    ThreadLoginVerifier(PendingConnection pendingconnection, CraftServer server) {
+    ThreadLoginVerifier(NetLoginHandler pendingconnection, CraftServer server)
+    {
         this.server = server;
         // CraftBukkit end
-        this.pendingConnection = pendingconnection;
+        this.loginHandler = pendingconnection;
     }
 
-    public void run() {
-        try {
-            String s = (new BigInteger(MinecraftEncryption.a(PendingConnection.a(this.pendingConnection), PendingConnection.b(this.pendingConnection).F().getPublic(), PendingConnection.c(this.pendingConnection)))).toString(16);
-            URL url = new URL("http://session.minecraft.net/game/checkserver.jsp?user=" + URLEncoder.encode(PendingConnection.d(this.pendingConnection), "UTF-8") + "&serverId=" + URLEncoder.encode(s, "UTF-8"));
-            BufferedReader bufferedreader = new BufferedReader(new InputStreamReader(url.openStream()));
-            String s1 = bufferedreader.readLine();
+    public void run()
+    {
+        try
+        {
+            String var1 = (new BigInteger(CryptManager.getServerIdHash(NetLoginHandler.getServerId(this.loginHandler), NetLoginHandler.getLoginMinecraftServer(this.loginHandler).getKeyPair().getPublic(), NetLoginHandler.getSharedKey(this.loginHandler)))).toString(16);
+            URL var2 = new URL("http://session.minecraft.net/game/checkserver.jsp?user=" + URLEncoder.encode(NetLoginHandler.getClientUsername(this.loginHandler), "UTF-8") + "&serverId=" + URLEncoder.encode(var1, "UTF-8"));
+            BufferedReader var3 = new BufferedReader(new InputStreamReader(var2.openStream()));
+            String var4 = var3.readLine();
+            var3.close();
 
-            bufferedreader.close();
-            if (!"YES".equals(s1)) {
-                this.pendingConnection.disconnect("Failed to verify username!");
+            if (!"YES".equals(var4))
+            {
+                this.loginHandler.raiseErrorAndDisconnect("Failed to verify username!");
                 return;
             }
 
             // CraftBukkit start
-            if (this.pendingConnection.getSocket() == null) {
+            if (this.loginHandler.getSocket() == null)
+            {
                 return;
             }
 
-            AsyncPlayerPreLoginEvent asyncEvent = new AsyncPlayerPreLoginEvent(PendingConnection.d(this.pendingConnection), this.pendingConnection.getSocket().getInetAddress());
+            AsyncPlayerPreLoginEvent asyncEvent = new AsyncPlayerPreLoginEvent(NetLoginHandler.getClientUsername(this.loginHandler), this.loginHandler.getSocket().getInetAddress());
             this.server.getPluginManager().callEvent(asyncEvent);
 
-            if (PlayerPreLoginEvent.getHandlerList().getRegisteredListeners().length != 0) {
-                final PlayerPreLoginEvent event = new PlayerPreLoginEvent(PendingConnection.d(this.pendingConnection), this.pendingConnection.getSocket().getInetAddress());
-                if (asyncEvent.getResult() != PlayerPreLoginEvent.Result.ALLOWED) {
+            if (PlayerPreLoginEvent.getHandlerList().getRegisteredListeners().length != 0)
+            {
+                final PlayerPreLoginEvent event = new PlayerPreLoginEvent(NetLoginHandler.getClientUsername(this.loginHandler), this.loginHandler.getSocket().getInetAddress());
+
+                if (asyncEvent.getResult() != PlayerPreLoginEvent.Result.ALLOWED)
+                {
                     event.disallow(asyncEvent.getResult(), asyncEvent.getKickMessage());
                 }
-                Waitable<PlayerPreLoginEvent.Result> waitable = new Waitable<PlayerPreLoginEvent.Result>() {
+
+                Waitable<PlayerPreLoginEvent.Result> waitable = new Waitable<PlayerPreLoginEvent.Result>()
+                {
                     @Override
-                    protected PlayerPreLoginEvent.Result evaluate() {
+                    protected PlayerPreLoginEvent.Result evaluate()
+                    {
                         ThreadLoginVerifier.this.server.getPluginManager().callEvent(event);
                         return event.getResult();
-                    }};
+                    }
+                };
+                NetLoginHandler.getLoginMinecraftServer(this.loginHandler).processQueue.add(waitable);
 
-                PendingConnection.b(this.pendingConnection).processQueue.add(waitable);
-                if (waitable.get() != PlayerPreLoginEvent.Result.ALLOWED) {
-                    this.pendingConnection.disconnect(event.getKickMessage());
-                    return;
-                }
-            } else {
-                if (asyncEvent.getLoginResult() != AsyncPlayerPreLoginEvent.Result.ALLOWED) {
-                    this.pendingConnection.disconnect(asyncEvent.getKickMessage());
+                if (waitable.get() != PlayerPreLoginEvent.Result.ALLOWED)
+                {
+                    this.loginHandler.raiseErrorAndDisconnect(event.getKickMessage());
                     return;
                 }
             }
-            // CraftBukkit end
+            else
+            {
+                if (asyncEvent.getLoginResult() != AsyncPlayerPreLoginEvent.Result.ALLOWED)
+                {
+                    this.loginHandler.raiseErrorAndDisconnect(asyncEvent.getKickMessage());
+                    return;
+                }
+            }
 
-            PendingConnection.a(this.pendingConnection, true);
+            // CraftBukkit end
+            NetLoginHandler.func_72531_a(this.loginHandler, true);
             // CraftBukkit start
-        } catch (java.io.IOException exception) {
-            this.pendingConnection.disconnect("Failed to verify username, session authentication server unavailable!");
-        } catch (Exception exception) {
-            this.pendingConnection.disconnect("Failed to verify username!");
-            server.getLogger().log(java.util.logging.Level.WARNING, "Exception verifying " + PendingConnection.d(this.pendingConnection), exception);
+        }
+        catch (java.io.IOException exception)
+        {
+            this.loginHandler.raiseErrorAndDisconnect("Failed to verify username, session authentication server unavailable!");
+        }
+        catch (Exception exception)
+        {
+            this.loginHandler.raiseErrorAndDisconnect("Failed to verify username!");
+            server.getLogger().log(java.util.logging.Level.WARNING, "Exception verifying " + NetLoginHandler.getClientUsername(this.loginHandler), exception);
             // CraftBukkit end
         }
     }

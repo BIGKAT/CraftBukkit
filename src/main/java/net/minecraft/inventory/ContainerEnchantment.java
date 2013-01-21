@@ -1,7 +1,16 @@
-package net.minecraft.server;
+package net.minecraft.inventory;
 
 import java.util.List;
 import java.util.Random;
+import net.minecraft.block.Block;
+import net.minecraft.enchantment.Enchantment;
+import net.minecraft.enchantment.EnchantmentData;
+import net.minecraft.enchantment.EnchantmentHelper;
+import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.entity.player.InventoryPlayer;
+import net.minecraft.item.Item;
+import net.minecraft.item.ItemStack;
+import net.minecraft.world.World;
 
 // CraftBukkit start
 import java.util.Map;
@@ -14,265 +23,357 @@ import org.bukkit.event.enchantment.PrepareItemEnchantEvent;
 import org.bukkit.entity.Player;
 // CraftBukkit end
 
-public class ContainerEnchantTable extends Container {
-
+public class ContainerEnchantment extends Container
+{
     // CraftBukkit - make type specific (changed from IInventory)
-    public ContainerEnchantTableInventory enchantSlots = new ContainerEnchantTableInventory(this, "Enchant", 1);
-    private World world;
-    private int x;
-    private int y;
-    private int z;
-    private Random l = new Random();
-    public long f;
-    public int[] costs = new int[3];
+    public SlotEnchantmentTable tableInventory = new SlotEnchantmentTable(this, "Enchant", 1);
+
+    /** current world (for bookshelf counting) */
+    private World worldPointer;
+    private int posX;
+    private int posY;
+    private int posZ;
+    private Random rand = new Random();
+
+    /** used as seed for EnchantmentNameParts (see GuiEnchantment) */
+    public long nameSeed;
+
+    /** 3-member array storing the enchantment levels of each slot */
+    public int[] enchantLevels = new int[3];
     // CraftBukkit start
     private CraftInventoryView bukkitEntity = null;
     private Player player;
     // CraftBukkit end
 
-    public ContainerEnchantTable(PlayerInventory playerinventory, World world, int i, int j, int k) {
-        this.world = world;
-        this.x = i;
-        this.y = j;
-        this.z = k;
-        this.a((Slot) (new SlotEnchant(this, this.enchantSlots, 0, 25, 47)));
+    public ContainerEnchantment(InventoryPlayer par1InventoryPlayer, World par2World, int par3, int par4, int par5)
+    {
+        this.worldPointer = par2World;
+        this.posX = par3;
+        this.posY = par4;
+        this.posZ = par5;
+        this.addSlotToContainer((Slot)(new SlotEnchantment(this, this.tableInventory, 0, 25, 47)));
+        int var6;
 
-        int l;
-
-        for (l = 0; l < 3; ++l) {
-            for (int i1 = 0; i1 < 9; ++i1) {
-                this.a(new Slot(playerinventory, i1 + l * 9 + 9, 8 + i1 * 18, 84 + l * 18));
+        for (var6 = 0; var6 < 3; ++var6)
+        {
+            for (int var7 = 0; var7 < 9; ++var7)
+            {
+                this.addSlotToContainer(new Slot(par1InventoryPlayer, var7 + var6 * 9 + 9, 8 + var7 * 18, 84 + var6 * 18));
             }
         }
 
-        for (l = 0; l < 9; ++l) {
-            this.a(new Slot(playerinventory, l, 8 + l * 18, 142));
+        for (var6 = 0; var6 < 9; ++var6)
+        {
+            this.addSlotToContainer(new Slot(par1InventoryPlayer, var6, 8 + var6 * 18, 142));
         }
 
         // CraftBukkit start
-        player = (Player) playerinventory.player.getBukkitEntity();
-        enchantSlots.player = player;
+        player = (Player) par1InventoryPlayer.player.getBukkitEntity();
+        tableInventory.player = player;
         // CraftBukkit end
     }
 
-    public void addSlotListener(ICrafting icrafting) {
-        super.addSlotListener(icrafting);
-        icrafting.setContainerData(this, 0, this.costs[0]);
-        icrafting.setContainerData(this, 1, this.costs[1]);
-        icrafting.setContainerData(this, 2, this.costs[2]);
+    public void addCraftingToCrafters(ICrafting par1ICrafting)
+    {
+        super.addCraftingToCrafters(par1ICrafting);
+        par1ICrafting.sendProgressBarUpdate(this, 0, this.enchantLevels[0]);
+        par1ICrafting.sendProgressBarUpdate(this, 1, this.enchantLevels[1]);
+        par1ICrafting.sendProgressBarUpdate(this, 2, this.enchantLevels[2]);
     }
 
-    public void b() {
-        super.b();
+    /**
+     * Looks for changes made in the container, sends them to every listener.
+     */
+    public void detectAndSendChanges()
+    {
+        super.detectAndSendChanges();
 
-        for (int i = 0; i < this.listeners.size(); ++i) {
-            ICrafting icrafting = (ICrafting) this.listeners.get(i);
-
-            icrafting.setContainerData(this, 0, this.costs[0]);
-            icrafting.setContainerData(this, 1, this.costs[1]);
-            icrafting.setContainerData(this, 2, this.costs[2]);
+        for (int var1 = 0; var1 < this.crafters.size(); ++var1)
+        {
+            ICrafting var2 = (ICrafting)this.crafters.get(var1);
+            var2.sendProgressBarUpdate(this, 0, this.enchantLevels[0]);
+            var2.sendProgressBarUpdate(this, 1, this.enchantLevels[1]);
+            var2.sendProgressBarUpdate(this, 2, this.enchantLevels[2]);
         }
     }
 
-    public void a(IInventory iinventory) {
-        if (iinventory == this.enchantSlots) {
-            ItemStack itemstack = iinventory.getItem(0);
-            int i;
+    /**
+     * Callback for when the crafting matrix is changed.
+     */
+    public void onCraftMatrixChanged(IInventory par1IInventory)
+    {
+        if (par1IInventory == this.tableInventory)
+        {
+            ItemStack var2 = par1IInventory.getStackInSlot(0);
+            int var3;
 
-            if (itemstack != null && itemstack.v()) {
-                this.f = this.l.nextLong();
-                if (!this.world.isStatic) {
-                    i = 0;
+            if (var2 != null && var2.isItemEnchantable())
+            {
+                this.nameSeed = this.rand.nextLong();
 
-                    int j;
+                if (!this.worldPointer.isRemote)
+                {
+                    var3 = 0;
+                    int var4;
 
-                    for (j = -1; j <= 1; ++j) {
-                        for (int k = -1; k <= 1; ++k) {
-                            if ((j != 0 || k != 0) && this.world.isEmpty(this.x + k, this.y, this.z + j) && this.world.isEmpty(this.x + k, this.y + 1, this.z + j)) {
-                                if (this.world.getTypeId(this.x + k * 2, this.y, this.z + j * 2) == Block.BOOKSHELF.id) {
-                                    ++i;
+                    for (var4 = -1; var4 <= 1; ++var4)
+                    {
+                        for (int var5 = -1; var5 <= 1; ++var5)
+                        {
+                            if ((var4 != 0 || var5 != 0) && this.worldPointer.isAirBlock(this.posX + var5, this.posY, this.posZ + var4) && this.worldPointer.isAirBlock(this.posX + var5, this.posY + 1, this.posZ + var4))
+                            {
+                                if (this.worldPointer.getBlockId(this.posX + var5 * 2, this.posY, this.posZ + var4 * 2) == Block.bookShelf.blockID)
+                                {
+                                    ++var3;
                                 }
 
-                                if (this.world.getTypeId(this.x + k * 2, this.y + 1, this.z + j * 2) == Block.BOOKSHELF.id) {
-                                    ++i;
+                                if (this.worldPointer.getBlockId(this.posX + var5 * 2, this.posY + 1, this.posZ + var4 * 2) == Block.bookShelf.blockID)
+                                {
+                                    ++var3;
                                 }
 
-                                if (k != 0 && j != 0) {
-                                    if (this.world.getTypeId(this.x + k * 2, this.y, this.z + j) == Block.BOOKSHELF.id) {
-                                        ++i;
+                                if (var5 != 0 && var4 != 0)
+                                {
+                                    if (this.worldPointer.getBlockId(this.posX + var5 * 2, this.posY, this.posZ + var4) == Block.bookShelf.blockID)
+                                    {
+                                        ++var3;
                                     }
 
-                                    if (this.world.getTypeId(this.x + k * 2, this.y + 1, this.z + j) == Block.BOOKSHELF.id) {
-                                        ++i;
+                                    if (this.worldPointer.getBlockId(this.posX + var5 * 2, this.posY + 1, this.posZ + var4) == Block.bookShelf.blockID)
+                                    {
+                                        ++var3;
                                     }
 
-                                    if (this.world.getTypeId(this.x + k, this.y, this.z + j * 2) == Block.BOOKSHELF.id) {
-                                        ++i;
+                                    if (this.worldPointer.getBlockId(this.posX + var5, this.posY, this.posZ + var4 * 2) == Block.bookShelf.blockID)
+                                    {
+                                        ++var3;
                                     }
 
-                                    if (this.world.getTypeId(this.x + k, this.y + 1, this.z + j * 2) == Block.BOOKSHELF.id) {
-                                        ++i;
+                                    if (this.worldPointer.getBlockId(this.posX + var5, this.posY + 1, this.posZ + var4 * 2) == Block.bookShelf.blockID)
+                                    {
+                                        ++var3;
                                     }
                                 }
                             }
                         }
                     }
 
-                    for (j = 0; j < 3; ++j) {
-                        this.costs[j] = EnchantmentManager.a(this.l, j, i, itemstack);
+                    for (var4 = 0; var4 < 3; ++var4)
+                    {
+                        this.enchantLevels[var4] = EnchantmentHelper.calcItemStackEnchantability(this.rand, var4, var3, var2);
                     }
 
                     // CraftBukkit start
-                    CraftItemStack item = CraftItemStack.asCraftMirror(itemstack);
-                    PrepareItemEnchantEvent event = new PrepareItemEnchantEvent(player, this.getBukkitView(), this.world.getWorld().getBlockAt(this.x, this.y, this.z), item, this.costs, i);
-                    this.world.getServer().getPluginManager().callEvent(event);
+                    CraftItemStack item = CraftItemStack.asCraftMirror(var2);
+                    PrepareItemEnchantEvent event = new PrepareItemEnchantEvent(player, this.getBukkitView(), this.worldPointer.getWorld().getBlockAt(this.posX, this.posY, this.posZ), item, this.enchantLevels, var3);
+                    this.worldPointer.getServer().getPluginManager().callEvent(event);
 
-                    if (event.isCancelled()) {
-                        for (i = 0; i < 3; ++i) {
-                            this.costs[i] = 0;
+                    if (event.isCancelled())
+                    {
+                        for (var3 = 0; var3 < 3; ++var3)
+                        {
+                            this.enchantLevels[var3] = 0;
                         }
+
                         return;
                     }
-                    // CraftBukkit end
 
-                    this.b();
+                    // CraftBukkit end
+                    this.detectAndSendChanges();
                 }
-            } else {
-                for (i = 0; i < 3; ++i) {
-                    this.costs[i] = 0;
+            }
+            else
+            {
+                for (var3 = 0; var3 < 3; ++var3)
+                {
+                    this.enchantLevels[var3] = 0;
                 }
             }
         }
     }
 
-    public boolean a(EntityHuman entityhuman, int i) {
-        ItemStack itemstack = this.enchantSlots.getItem(0);
+    /**
+     * enchants the item on the table using the specified slot; also deducts XP from player
+     */
+    public boolean enchantItem(EntityPlayer par1EntityPlayer, int par2)
+    {
+        ItemStack var3 = this.tableInventory.getStackInSlot(0);
 
-        if (this.costs[i] > 0 && itemstack != null && (entityhuman.expLevel >= this.costs[i] || entityhuman.abilities.canInstantlyBuild)) {
-            if (!this.world.isStatic) {
-                List list = EnchantmentManager.b(this.l, itemstack, this.costs[i]);
-                boolean flag = itemstack.id == Item.BOOK.id;
+        if (this.enchantLevels[par2] > 0 && var3 != null && (par1EntityPlayer.experienceLevel >= this.enchantLevels[par2] || par1EntityPlayer.capabilities.isCreativeMode))
+        {
+            if (!this.worldPointer.isRemote)
+            {
+                List var4 = EnchantmentHelper.buildEnchantmentList(this.rand, var3, this.enchantLevels[par2]);
+                boolean var5 = var3.itemID == Item.book.itemID;
 
-                if (list != null) {
+                if (var4 != null)
+                {
                     // CraftBukkit start
                     Map<org.bukkit.enchantments.Enchantment, Integer> enchants = new java.util.HashMap<org.bukkit.enchantments.Enchantment, Integer>();
-                    for (Object obj : list) {
-                        EnchantmentInstance instance = (EnchantmentInstance) obj;
-                        enchants.put(org.bukkit.enchantments.Enchantment.getById(instance.enchantment.id), instance.level);
+
+                    for (Object obj : var4)
+                    {
+                        EnchantmentData instance = (EnchantmentData) obj;
+                        enchants.put(org.bukkit.enchantments.Enchantment.getById(instance.enchantmentobj.effectId), instance.enchantmentLevel);
                     }
-                    CraftItemStack item = CraftItemStack.asCraftMirror(itemstack);
 
-                    EnchantItemEvent event = new EnchantItemEvent((Player) entityhuman.getBukkitEntity(), this.getBukkitView(), this.world.getWorld().getBlockAt(this.x, this.y, this.z), item, this.costs[i], enchants, i);
-                    this.world.getServer().getPluginManager().callEvent(event);
-
+                    CraftItemStack item = CraftItemStack.asCraftMirror(var3);
+                    EnchantItemEvent event = new EnchantItemEvent((Player) par1EntityPlayer.getBukkitEntity(), this.getBukkitView(), this.worldPointer.getWorld().getBlockAt(this.posX, this.posY, this.posZ), item, this.enchantLevels[par2], enchants, par2);
+                    this.worldPointer.getServer().getPluginManager().callEvent(event);
                     int level = event.getExpLevelCost();
-                    if (event.isCancelled() || (level > entityhuman.expLevel && !entityhuman.abilities.canInstantlyBuild) || enchants.isEmpty()) {
+
+                    if (event.isCancelled() || (level > par1EntityPlayer.experienceLevel && !par1EntityPlayer.capabilities.isCreativeMode) || enchants.isEmpty())
+                    {
                         return false;
                     }
 
-                    boolean applied = !flag;
-                    for (Map.Entry<org.bukkit.enchantments.Enchantment, Integer> entry : event.getEnchantsToAdd().entrySet()) {
-                        try {
-                            if (flag) {
+                    boolean applied = !var5;
+
+                    for (Map.Entry<org.bukkit.enchantments.Enchantment, Integer> entry : event.getEnchantsToAdd().entrySet())
+                    {
+                        try
+                        {
+                            if (var5)
+                            {
                                 int enchantId = entry.getKey().getId();
-                                if (Enchantment.byId[enchantId] == null) {
+
+                                if (Enchantment.enchantmentsList[enchantId] == null)
+                                {
                                     continue;
                                 }
 
-                                EnchantmentInstance enchantment = new EnchantmentInstance(enchantId, entry.getValue());
-                                Item.ENCHANTED_BOOK.a(itemstack, enchantment);
+                                EnchantmentData enchantment = new EnchantmentData(enchantId, entry.getValue());
+                                Item.field_92053_bW.func_92060_a(var3, enchantment);
                                 applied = true;
-                                itemstack.id = Item.ENCHANTED_BOOK.id;
+                                var3.itemID = Item.field_92053_bW.itemID;
                                 break;
-                            } else {
+                            }
+                            else
+                            {
                                 item.addEnchantment(entry.getKey(), entry.getValue());
                             }
-                        } catch (IllegalArgumentException e) {
+                        }
+                        catch (IllegalArgumentException e)
+                        {
                             /* Just swallow invalid enchantments */
                         }
                     }
 
                     // Only down level if we've applied the enchantments
-                    if (applied) {
-                        entityhuman.levelDown(-level);
+                    if (applied)
+                    {
+                        par1EntityPlayer.addExperienceLevel(-level);
                     }
-                    // CraftBukkit end
 
-                    this.a(this.enchantSlots);
+                    // CraftBukkit end
+                    this.onCraftMatrixChanged(this.tableInventory);
                 }
             }
 
             return true;
-        } else {
+        }
+        else
+        {
             return false;
         }
     }
 
-    public void b(EntityHuman entityhuman) {
-        super.b(entityhuman);
-        if (!this.world.isStatic) {
-            ItemStack itemstack = this.enchantSlots.splitWithoutUpdate(0);
+    /**
+     * Callback for when the crafting gui is closed.
+     */
+    public void onCraftGuiClosed(EntityPlayer par1EntityPlayer)
+    {
+        super.onCraftGuiClosed(par1EntityPlayer);
 
-            if (itemstack != null) {
-                entityhuman.drop(itemstack);
+        if (!this.worldPointer.isRemote)
+        {
+            ItemStack var2 = this.tableInventory.getStackInSlotOnClosing(0);
+
+            if (var2 != null)
+            {
+                par1EntityPlayer.dropPlayerItem(var2);
             }
         }
     }
 
-    public boolean a(EntityHuman entityhuman) {
-        if (!this.checkReachable) return true; // CraftBukkit
-        return this.world.getTypeId(this.x, this.y, this.z) != Block.ENCHANTMENT_TABLE.id ? false : entityhuman.e((double) this.x + 0.5D, (double) this.y + 0.5D, (double) this.z + 0.5D) <= 64.0D;
+    public boolean canInteractWith(EntityPlayer par1EntityPlayer)
+    {
+        if (!this.checkReachable)
+        {
+            return true;    // CraftBukkit
+        }
+
+        return this.worldPointer.getBlockId(this.posX, this.posY, this.posZ) != Block.enchantmentTable.blockID ? false : par1EntityPlayer.getDistanceSq((double)this.posX + 0.5D, (double)this.posY + 0.5D, (double)this.posZ + 0.5D) <= 64.0D;
     }
 
-    public ItemStack b(EntityHuman entityhuman, int i) {
-        ItemStack itemstack = null;
-        Slot slot = (Slot) this.c.get(i);
+    /**
+     * Called when a player shift-clicks on a slot. You must override this or you will crash when someone does that.
+     */
+    public ItemStack transferStackInSlot(EntityPlayer par1EntityPlayer, int par2)
+    {
+        ItemStack var3 = null;
+        Slot var4 = (Slot)this.inventorySlots.get(par2);
 
-        if (slot != null && slot.d()) {
-            ItemStack itemstack1 = slot.getItem();
+        if (var4 != null && var4.getHasStack())
+        {
+            ItemStack var5 = var4.getStack();
+            var3 = var5.copy();
 
-            itemstack = itemstack1.cloneItemStack();
-            if (i == 0) {
-                if (!this.a(itemstack1, 1, 37, true)) {
+            if (par2 == 0)
+            {
+                if (!this.mergeItemStack(var5, 1, 37, true))
+                {
                     return null;
                 }
-            } else {
-                if (((Slot) this.c.get(0)).d() || !((Slot) this.c.get(0)).isAllowed(itemstack1)) {
+            }
+            else
+            {
+                if (((Slot)this.inventorySlots.get(0)).getHasStack() || !((Slot)this.inventorySlots.get(0)).isItemValid(var5))
+                {
                     return null;
                 }
 
-                if (itemstack1.hasTag() && itemstack1.count == 1) {
-                    ((Slot) this.c.get(0)).set(itemstack1.cloneItemStack());
-                    itemstack1.count = 0;
-                } else if (itemstack1.count >= 1) {
-                    ((Slot) this.c.get(0)).set(new ItemStack(itemstack1.id, 1, itemstack1.getData()));
-                    --itemstack1.count;
+                if (var5.hasTagCompound() && var5.stackSize == 1)
+                {
+                    ((Slot)this.inventorySlots.get(0)).putStack(var5.copy());
+                    var5.stackSize = 0;
+                }
+                else if (var5.stackSize >= 1)
+                {
+                    ((Slot)this.inventorySlots.get(0)).putStack(new ItemStack(var5.itemID, 1, var5.getItemDamage()));
+                    --var5.stackSize;
                 }
             }
 
-            if (itemstack1.count == 0) {
-                slot.set((ItemStack) null);
-            } else {
-                slot.e();
+            if (var5.stackSize == 0)
+            {
+                var4.putStack((ItemStack)null);
+            }
+            else
+            {
+                var4.onSlotChanged();
             }
 
-            if (itemstack1.count == itemstack.count) {
+            if (var5.stackSize == var3.stackSize)
+            {
                 return null;
             }
 
-            slot.a(entityhuman, itemstack1);
+            var4.onPickupFromSlot(par1EntityPlayer, var5);
         }
 
-        return itemstack;
+        return var3;
     }
 
     // CraftBukkit start
-    public CraftInventoryView getBukkitView() {
-        if (bukkitEntity != null) {
+    public CraftInventoryView getBukkitView()
+    {
+        if (bukkitEntity != null)
+        {
             return bukkitEntity;
         }
 
-        CraftInventoryEnchanting inventory = new CraftInventoryEnchanting(this.enchantSlots);
+        CraftInventoryEnchanting inventory = new CraftInventoryEnchanting(this.tableInventory);
         bukkitEntity = new CraftInventoryView(this.player, inventory, this);
         return bukkitEntity;
     }

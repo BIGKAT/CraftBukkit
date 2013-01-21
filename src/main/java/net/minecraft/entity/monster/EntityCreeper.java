@@ -1,158 +1,243 @@
-package net.minecraft.server;
+package net.minecraft.entity.monster;
 
 // CraftBukkit start
 import org.bukkit.craftbukkit.event.CraftEventFactory;
 import org.bukkit.event.entity.ExplosionPrimeEvent;
+import net.minecraft.entity.Entity;
+import net.minecraft.entity.ai.EntityAIAttackOnCollide;
+import net.minecraft.entity.ai.EntityAIAvoidEntity;
+import net.minecraft.entity.ai.EntityAICreeperSwell;
+import net.minecraft.entity.ai.EntityAIHurtByTarget;
+import net.minecraft.entity.ai.EntityAILookIdle;
+import net.minecraft.entity.ai.EntityAINearestAttackableTarget;
+import net.minecraft.entity.ai.EntityAISwimming;
+import net.minecraft.entity.ai.EntityAIWander;
+import net.minecraft.entity.ai.EntityAIWatchClosest;
+import net.minecraft.entity.effect.EntityLightningBolt;
+import net.minecraft.entity.passive.EntityOcelot;
+import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.item.Item;
+import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.util.DamageSource;
+import net.minecraft.world.World;
 // CraftBukkit end
 
-public class EntityCreeper extends EntityMonster {
+public class EntityCreeper extends EntityMob
+{
+    /**
+     * Time when this creeper was last in an active state (Messed up code here, probably causes creeper animation to go
+     * weird)
+     */
+    private int lastActiveTime;
 
-    private int d;
-    private int fuseTicks;
-    private int maxFuseTicks = 30;
+    /**
+     * The amount of time since the creeper was close enough to the player to ignite
+     */
+    private int timeSinceIgnited;
+    private int fuseTime = 30;
+
+    /** Explosion radius for this creeper. */
     private int explosionRadius = 3;
     private int record = -1; // CraftBukkit
 
-    public EntityCreeper(World world) {
-        super(world);
+    public EntityCreeper(World par1World)
+    {
+        super(par1World);
         this.texture = "/mob/creeper.png";
-        this.goalSelector.a(1, new PathfinderGoalFloat(this));
-        this.goalSelector.a(2, new PathfinderGoalSwell(this));
-        this.goalSelector.a(3, new PathfinderGoalAvoidPlayer(this, EntityOcelot.class, 6.0F, 0.25F, 0.3F));
-        this.goalSelector.a(4, new PathfinderGoalMeleeAttack(this, 0.25F, false));
-        this.goalSelector.a(5, new PathfinderGoalRandomStroll(this, 0.2F));
-        this.goalSelector.a(6, new PathfinderGoalLookAtPlayer(this, EntityHuman.class, 8.0F));
-        this.goalSelector.a(6, new PathfinderGoalRandomLookaround(this));
-        this.targetSelector.a(1, new PathfinderGoalNearestAttackableTarget(this, EntityHuman.class, 16.0F, 0, true));
-        this.targetSelector.a(2, new PathfinderGoalHurtByTarget(this, false));
+        this.tasks.addTask(1, new EntityAISwimming(this));
+        this.tasks.addTask(2, new EntityAICreeperSwell(this));
+        this.tasks.addTask(3, new EntityAIAvoidEntity(this, EntityOcelot.class, 6.0F, 0.25F, 0.3F));
+        this.tasks.addTask(4, new EntityAIAttackOnCollide(this, 0.25F, false));
+        this.tasks.addTask(5, new EntityAIWander(this, 0.2F));
+        this.tasks.addTask(6, new EntityAIWatchClosest(this, EntityPlayer.class, 8.0F));
+        this.tasks.addTask(6, new EntityAILookIdle(this));
+        this.targetTasks.addTask(1, new EntityAINearestAttackableTarget(this, EntityPlayer.class, 16.0F, 0, true));
+        this.targetTasks.addTask(2, new EntityAIHurtByTarget(this, false));
     }
 
-    public boolean be() {
+    /**
+     * Returns true if the newer Entity AI code should be run
+     */
+    public boolean isAIEnabled()
+    {
         return true;
     }
 
-    public int as() {
-        return this.getGoalTarget() == null ? 3 : 3 + (this.health - 1);
+    public int func_82143_as()
+    {
+        return this.getAttackTarget() == null ? 3 : 3 + (this.health - 1);
     }
 
-    protected void a(float f) {
-        super.a(f);
-        this.fuseTicks = (int) ((float) this.fuseTicks + f * 1.5F);
-        if (this.fuseTicks > this.maxFuseTicks - 5) {
-            this.fuseTicks = this.maxFuseTicks - 5;
+    /**
+     * Called when the mob is falling. Calculates and applies fall damage.
+     */
+    protected void fall(float par1)
+    {
+        super.fall(par1);
+        this.timeSinceIgnited = (int)((float)this.timeSinceIgnited + par1 * 1.5F);
+
+        if (this.timeSinceIgnited > this.fuseTime - 5)
+        {
+            this.timeSinceIgnited = this.fuseTime - 5;
         }
     }
 
-    public int getMaxHealth() {
+    public int getMaxHealth()
+    {
         return 20;
     }
 
-    protected void a() {
-        super.a();
-        this.datawatcher.a(16, Byte.valueOf((byte) -1));
-        this.datawatcher.a(17, Byte.valueOf((byte) 0));
+    protected void entityInit()
+    {
+        super.entityInit();
+        this.dataWatcher.addObject(16, Byte.valueOf((byte) - 1));
+        this.dataWatcher.addObject(17, Byte.valueOf((byte)0));
     }
 
-    public void b(NBTTagCompound nbttagcompound) {
-        super.b(nbttagcompound);
-        if (this.datawatcher.getByte(17) == 1) {
-            nbttagcompound.setBoolean("powered", true);
+    /**
+     * (abstract) Protected helper method to write subclass entity data to NBT.
+     */
+    public void writeEntityToNBT(NBTTagCompound par1NBTTagCompound)
+    {
+        super.writeEntityToNBT(par1NBTTagCompound);
+
+        if (this.dataWatcher.getWatchableObjectByte(17) == 1)
+        {
+            par1NBTTagCompound.setBoolean("powered", true);
         }
 
-        nbttagcompound.setShort("Fuse", (short) this.maxFuseTicks);
-        nbttagcompound.setByte("ExplosionRadius", (byte) this.explosionRadius);
+        par1NBTTagCompound.setShort("Fuse", (short)this.fuseTime);
+        par1NBTTagCompound.setByte("ExplosionRadius", (byte)this.explosionRadius);
     }
 
-    public void a(NBTTagCompound nbttagcompound) {
-        super.a(nbttagcompound);
-        this.datawatcher.watch(17, Byte.valueOf((byte) (nbttagcompound.getBoolean("powered") ? 1 : 0)));
-        if (nbttagcompound.hasKey("Fuse")) {
-            this.maxFuseTicks = nbttagcompound.getShort("Fuse");
+    /**
+     * (abstract) Protected helper method to read subclass entity data from NBT.
+     */
+    public void readEntityFromNBT(NBTTagCompound par1NBTTagCompound)
+    {
+        super.readEntityFromNBT(par1NBTTagCompound);
+        this.dataWatcher.updateObject(17, Byte.valueOf((byte)(par1NBTTagCompound.getBoolean("powered") ? 1 : 0)));
+
+        if (par1NBTTagCompound.hasKey("Fuse"))
+        {
+            this.fuseTime = par1NBTTagCompound.getShort("Fuse");
         }
 
-        if (nbttagcompound.hasKey("ExplosionRadius")) {
-            this.explosionRadius = nbttagcompound.getByte("ExplosionRadius");
+        if (par1NBTTagCompound.hasKey("ExplosionRadius"))
+        {
+            this.explosionRadius = par1NBTTagCompound.getByte("ExplosionRadius");
         }
     }
 
-    public void j_() {
-        if (this.isAlive()) {
-            this.d = this.fuseTicks;
-            int i = this.o();
+    /**
+     * Called to update the entity's position/logic.
+     */
+    public void onUpdate()
+    {
+        if (this.isEntityAlive())
+        {
+            this.lastActiveTime = this.timeSinceIgnited;
+            int var1 = this.getCreeperState();
 
-            if (i > 0 && this.fuseTicks == 0) {
-                this.makeSound("random.fuse", 1.0F, 0.5F);
+            if (var1 > 0 && this.timeSinceIgnited == 0)
+            {
+                this.playSound("random.fuse", 1.0F, 0.5F);
             }
 
-            this.fuseTicks += i;
-            if (this.fuseTicks < 0) {
-                this.fuseTicks = 0;
+            this.timeSinceIgnited += var1;
+
+            if (this.timeSinceIgnited < 0)
+            {
+                this.timeSinceIgnited = 0;
             }
 
-            if (this.fuseTicks >= this.maxFuseTicks) {
-                this.fuseTicks = this.maxFuseTicks;
-                if (!this.world.isStatic) {
-                    boolean flag = this.world.getGameRules().getBoolean("mobGriefing");
+            if (this.timeSinceIgnited >= this.fuseTime)
+            {
+                this.timeSinceIgnited = this.fuseTime;
+
+                if (!this.worldObj.isRemote)
+                {
+                    boolean var2 = this.worldObj.getGameRules().getGameRuleBooleanValue("mobGriefing");
                     // CraftBukkit start
-                    float radius = this.isPowered() ? 6.0F : 3.0F;
-
+                    float radius = this.getPowered() ? 6.0F : 3.0F;
                     ExplosionPrimeEvent event = new ExplosionPrimeEvent(this.getBukkitEntity(), radius, false);
-                    this.world.getServer().getPluginManager().callEvent(event);
-                    if (!event.isCancelled()) {
-                        this.world.createExplosion(this, this.locX, this.locY, this.locZ, event.getRadius(), event.getFire(), flag);
-                        this.die();
-                    } else {
-                        this.fuseTicks = 0;
+                    this.worldObj.getServer().getPluginManager().callEvent(event);
+
+                    if (!event.isCancelled())
+                    {
+                        this.worldObj.newExplosion(this, this.posX, this.posY, this.posZ, event.getRadius(), event.getFire(), var2);
+                        this.setDead();
                     }
+                    else
+                    {
+                        this.timeSinceIgnited = 0;
+                    }
+
                     // CraftBukkit end
                 }
             }
         }
 
-        super.j_();
+        super.onUpdate();
     }
 
-    protected String aZ() {
+    /**
+     * Returns the sound this mob makes when it is hurt.
+     */
+    protected String getHurtSound()
+    {
         return "mob.creeper.say";
     }
 
-    protected String ba() {
+    /**
+     * Returns the sound this mob makes on death.
+     */
+    protected String getDeathSound()
+    {
         return "mob.creeper.death";
     }
 
-    public void die(DamageSource damagesource) {
+    /**
+     * Called when the mob's health reaches 0.
+     */
+    public void onDeath(DamageSource par1DamageSource)
+    {
         // CraftBukkit start - rearranged the method (super call to end, drop to dropDeathLoot)
-        if (damagesource.getEntity() instanceof EntitySkeleton) {
-            int i = Item.RECORD_1.id + this.random.nextInt(Item.RECORD_12.id - Item.RECORD_1.id + 1);
-
+        if (par1DamageSource.getEntity() instanceof EntitySkeleton)
+        {
+            int i = Item.record13.itemID + this.rand.nextInt(Item.recordWait.itemID - Item.record13.itemID + 1);
             // this.b(i, 1); // CraftBukkit
             this.record = i;
         }
 
-        super.die(damagesource);
+        super.onDeath(par1DamageSource);
         // CraftBukkit end
     }
 
     // CraftBukkit start - whole method
-    protected void dropDeathLoot(boolean flag, int i) {
-        int j = this.getLootId();
-
+    protected void dropDeathLoot(boolean flag, int i)
+    {
+        int j = this.getDropItemId();
         java.util.List<org.bukkit.inventory.ItemStack> loot = new java.util.ArrayList<org.bukkit.inventory.ItemStack>();
 
-        if (j > 0) {
-            int k = this.random.nextInt(3);
+        if (j > 0)
+        {
+            int k = this.rand.nextInt(3);
 
-            if (i > 0) {
-                k += this.random.nextInt(i + 1);
+            if (i > 0)
+            {
+                k += this.rand.nextInt(i + 1);
             }
 
-            if (k > 0) {
+            if (k > 0)
+            {
                 loot.add(new org.bukkit.inventory.ItemStack(j, k));
             }
         }
 
         // Drop a music disc?
-        if (this.record != -1) {
+        if (this.record != -1)
+        {
             loot.add(new org.bukkit.inventory.ItemStack(this.record, 1));
             this.record = -1;
         }
@@ -161,42 +246,70 @@ public class EntityCreeper extends EntityMonster {
     }
     // CraftBukkit end
 
-    public boolean m(Entity entity) {
+    public boolean attackEntityAsMob(Entity par1Entity)
+    {
         return true;
     }
 
-    public boolean isPowered() {
-        return this.datawatcher.getByte(17) == 1;
+    /**
+     * Returns true if the creeper is powered by a lightning bolt.
+     */
+    public boolean getPowered()
+    {
+        return this.dataWatcher.getWatchableObjectByte(17) == 1;
     }
 
-    protected int getLootId() {
-        return Item.SULPHUR.id;
+    /**
+     * Returns the item ID for the item the mob drops on death.
+     */
+    protected int getDropItemId()
+    {
+        return Item.gunpowder.itemID;
     }
 
-    public int o() {
-        return this.datawatcher.getByte(16);
+    /**
+     * Returns the current state of creeper, -1 is idle, 1 is 'in fuse'
+     */
+    public int getCreeperState()
+    {
+        return this.dataWatcher.getWatchableObjectByte(16);
     }
 
-    public void a(int i) {
-        this.datawatcher.watch(16, Byte.valueOf((byte) i));
+    /**
+     * Sets the state of creeper, -1 to idle and 1 to be 'in fuse'
+     */
+    public void setCreeperState(int par1)
+    {
+        this.dataWatcher.updateObject(16, Byte.valueOf((byte)par1));
     }
 
-    public void a(EntityLightning entitylightning) {
-        super.a(entitylightning);
+    /**
+     * Called when a lightning bolt hits the entity.
+     */
+    public void onStruckByLightning(EntityLightningBolt par1EntityLightningBolt)
+    {
+        super.onStruckByLightning(par1EntityLightningBolt);
+
         // CraftBukkit start
-        if (CraftEventFactory.callCreeperPowerEvent(this, entitylightning, org.bukkit.event.entity.CreeperPowerEvent.PowerCause.LIGHTNING).isCancelled()) {
+        if (CraftEventFactory.callCreeperPowerEvent(this, par1EntityLightningBolt, org.bukkit.event.entity.CreeperPowerEvent.PowerCause.LIGHTNING).isCancelled())
+        {
             return;
         }
 
         this.setPowered(true);
     }
 
-    public void setPowered(boolean powered) {
-        if (!powered) {
-            this.datawatcher.watch(17, Byte.valueOf((byte) 0));
-        } else {
-            this.datawatcher.watch(17, Byte.valueOf((byte) 1));
+    public void setPowered(boolean powered)
+    {
+        if (!powered)
+        {
+            this.dataWatcher.updateObject(17, Byte.valueOf((byte) 0));
         }
+        else
+        {
+            this.dataWatcher.updateObject(17, Byte.valueOf((byte) 1));
+        }
+
         // CraftBukkit end
     }
 }

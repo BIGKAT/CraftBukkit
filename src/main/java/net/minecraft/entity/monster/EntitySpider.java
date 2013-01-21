@@ -1,162 +1,261 @@
-package net.minecraft.server;
+package net.minecraft.entity.monster;
 
 import org.bukkit.event.entity.EntityTargetEvent; // CraftBukkit
+import net.minecraft.entity.Entity;
+import net.minecraft.entity.EnumCreatureAttribute;
+import net.minecraft.item.Item;
+import net.minecraft.potion.Potion;
+import net.minecraft.potion.PotionEffect;
+import net.minecraft.util.MathHelper;
+import net.minecraft.world.World;
 
-public class EntitySpider extends EntityMonster {
-
-    public EntitySpider(World world) {
-        super(world);
+public class EntitySpider extends EntityMob
+{
+    public EntitySpider(World par1World)
+    {
+        super(par1World);
         this.texture = "/mob/spider.png";
-        this.a(1.4F, 0.9F);
-        this.bH = 0.8F;
+        this.setSize(1.4F, 0.9F);
+        this.moveSpeed = 0.8F;
     }
 
-    protected void a() {
-        super.a();
-        this.datawatcher.a(16, new Byte((byte) 0));
+    protected void entityInit()
+    {
+        super.entityInit();
+        this.dataWatcher.addObject(16, new Byte((byte)0));
     }
 
-    public void j_() {
-        super.j_();
-        if (!this.world.isStatic) {
-            this.f(this.positionChanged);
+    /**
+     * Called to update the entity's position/logic.
+     */
+    public void onUpdate()
+    {
+        super.onUpdate();
+
+        if (!this.worldObj.isRemote)
+        {
+            this.setBesideClimbableBlock(this.isCollidedHorizontally);
         }
     }
 
-    public int getMaxHealth() {
+    public int getMaxHealth()
+    {
         return 16;
     }
 
-    public double X() {
-        return (double) this.length * 0.75D - 0.5D;
+    /**
+     * Returns the Y offset from the entity's position for any entity riding this one.
+     */
+    public double getMountedYOffset()
+    {
+        return (double)this.height * 0.75D - 0.5D;
     }
 
-    protected Entity findTarget() {
-        float f = this.c(1.0F);
+    /**
+     * Finds the closest player within 16 blocks to attack, or null if this Entity isn't interested in attacking
+     * (Animals, Spiders at day, peaceful PigZombies).
+     */
+    protected Entity findPlayerToAttack()
+    {
+        float var1 = this.getBrightness(1.0F);
 
-        if (f < 0.5F) {
-            double d0 = 16.0D;
-
-            return this.world.findNearbyVulnerablePlayer(this, d0);
-        } else {
+        if (var1 < 0.5F)
+        {
+            double var2 = 16.0D;
+            return this.worldObj.getClosestVulnerablePlayerToEntity(this, var2);
+        }
+        else
+        {
             return null;
         }
     }
 
-    protected String aY() {
+    /**
+     * Returns the sound this mob makes while it's alive.
+     */
+    protected String getLivingSound()
+    {
         return "mob.spider.say";
     }
 
-    protected String aZ() {
+    /**
+     * Returns the sound this mob makes when it is hurt.
+     */
+    protected String getHurtSound()
+    {
         return "mob.spider.say";
     }
 
-    protected String ba() {
+    /**
+     * Returns the sound this mob makes on death.
+     */
+    protected String getDeathSound()
+    {
         return "mob.spider.death";
     }
 
-    protected void a(int i, int j, int k, int l) {
-        this.makeSound("mob.spider.step", 0.15F, 1.0F);
+    /**
+     * Plays step sound at given x, y, z for the entity
+     */
+    protected void playStepSound(int par1, int par2, int par3, int par4)
+    {
+        this.playSound("mob.spider.step", 0.15F, 1.0F);
     }
 
-    protected void a(Entity entity, float f) {
-        float f1 = this.c(1.0F);
+    /**
+     * Basic mob attack. Default to touch of death in EntityCreature. Overridden by each mob to define their attack.
+     */
+    protected void attackEntity(Entity par1Entity, float par2)
+    {
+        float var3 = this.getBrightness(1.0F);
 
-        if (f1 > 0.5F && this.random.nextInt(100) == 0) {
+        if (var3 > 0.5F && this.rand.nextInt(100) == 0)
+        {
             // CraftBukkit start
             EntityTargetEvent event = new EntityTargetEvent(this.getBukkitEntity(), null, EntityTargetEvent.TargetReason.FORGOT_TARGET);
-            this.world.getServer().getPluginManager().callEvent(event);
+            this.worldObj.getServer().getPluginManager().callEvent(event);
 
-            if (!event.isCancelled()) {
-                if (event.getTarget() == null) {
-                    this.target = null;
-                } else {
-                    this.target = ((org.bukkit.craftbukkit.entity.CraftEntity) event.getTarget()).getHandle();
+            if (!event.isCancelled())
+            {
+                if (event.getTarget() == null)
+                {
+                    this.entityToAttack = null;
                 }
+                else
+                {
+                    this.entityToAttack = ((org.bukkit.craftbukkit.entity.CraftEntity) event.getTarget()).getHandle();
+                }
+
                 return;
             }
-            // CraftBukkit end
-        } else {
-            if (f > 2.0F && f < 6.0F && this.random.nextInt(10) == 0) {
-                if (this.onGround) {
-                    double d0 = entity.locX - this.locX;
-                    double d1 = entity.locZ - this.locZ;
-                    float f2 = MathHelper.sqrt(d0 * d0 + d1 * d1);
 
-                    this.motX = d0 / (double) f2 * 0.5D * 0.800000011920929D + this.motX * 0.20000000298023224D;
-                    this.motZ = d1 / (double) f2 * 0.5D * 0.800000011920929D + this.motZ * 0.20000000298023224D;
-                    this.motY = 0.4000000059604645D;
+            // CraftBukkit end
+        }
+        else
+        {
+            if (par2 > 2.0F && par2 < 6.0F && this.rand.nextInt(10) == 0)
+            {
+                if (this.onGround)
+                {
+                    double var4 = par1Entity.posX - this.posX;
+                    double var6 = par1Entity.posZ - this.posZ;
+                    float var8 = MathHelper.sqrt_double(var4 * var4 + var6 * var6);
+                    this.motionX = var4 / (double)var8 * 0.5D * 0.800000011920929D + this.motionX * 0.20000000298023224D;
+                    this.motionZ = var6 / (double)var8 * 0.5D * 0.800000011920929D + this.motionZ * 0.20000000298023224D;
+                    this.motionY = 0.4000000059604645D;
                 }
-            } else {
-                super.a(entity, f);
+            }
+            else
+            {
+                super.attackEntity(par1Entity, par2);
             }
         }
     }
 
-    protected int getLootId() {
-        return Item.STRING.id;
+    /**
+     * Returns the item ID for the item the mob drops on death.
+     */
+    protected int getDropItemId()
+    {
+        return Item.silk.itemID;
     }
 
-    protected void dropDeathLoot(boolean flag, int i) {
+    /**
+     * Drop 0-2 items of this living's type. @param par1 - Whether this entity has recently been hit by a player. @param
+     * par2 - Level of Looting used to kill this mob.
+     */
+    protected void dropFewItems(boolean par1, int par2)
+    {
         // CraftBukkit start - whole method; adapted from super.dropDeathLoot.
         java.util.List<org.bukkit.inventory.ItemStack> loot = new java.util.ArrayList<org.bukkit.inventory.ItemStack>();
+        int k = this.rand.nextInt(3);
 
-        int k = this.random.nextInt(3);
-
-        if (i > 0) {
-            k += this.random.nextInt(i + 1);
+        if (par2 > 0)
+        {
+            k += this.rand.nextInt(par2 + 1);
         }
 
-        if (k > 0) {
-            loot.add(new org.bukkit.inventory.ItemStack(Item.STRING.id, k));
+        if (k > 0)
+        {
+            loot.add(new org.bukkit.inventory.ItemStack(Item.silk.itemID, k));
         }
 
-        if (flag && (this.random.nextInt(3) == 0 || this.random.nextInt(1 + i) > 0)) {
-            loot.add(new org.bukkit.inventory.ItemStack(Item.SPIDER_EYE.id, 1));
+        if (par1 && (this.rand.nextInt(3) == 0 || this.rand.nextInt(1 + par2) > 0))
+        {
+            loot.add(new org.bukkit.inventory.ItemStack(Item.spiderEye.itemID, 1));
         }
 
         org.bukkit.craftbukkit.event.CraftEventFactory.callEntityDeathEvent(this, loot); // raise event even for those times when the entity does not drop loot
         // CraftBukkit end
     }
 
-    public boolean g_() {
-        return this.o();
+    /**
+     * returns true if this entity is by a ladder, false otherwise
+     */
+    public boolean isOnLadder()
+    {
+        return this.isBesideClimbableBlock();
     }
 
-    public void am() {}
+    /**
+     * Sets the Entity inside a web block.
+     */
+    public void setInWeb() {}
 
-    public EnumMonsterType getMonsterType() {
-        return EnumMonsterType.ARTHROPOD;
+    /**
+     * Get this Entity's EnumCreatureAttribute
+     */
+    public EnumCreatureAttribute getCreatureAttribute()
+    {
+        return EnumCreatureAttribute.ARTHROPOD;
     }
 
-    public boolean e(MobEffect mobeffect) {
-        return mobeffect.getEffectId() == MobEffectList.POISON.id ? false : super.e(mobeffect);
+    public boolean isPotionApplicable(PotionEffect par1PotionEffect)
+    {
+        return par1PotionEffect.getPotionID() == Potion.poison.id ? false : super.isPotionApplicable(par1PotionEffect);
     }
 
-    public boolean o() {
-        return (this.datawatcher.getByte(16) & 1) != 0;
+    /**
+     * Returns true if the WatchableObject (Byte) is 0x01 otherwise returns false. The WatchableObject is updated using
+     * setBesideClimableBlock.
+     */
+    public boolean isBesideClimbableBlock()
+    {
+        return (this.dataWatcher.getWatchableObjectByte(16) & 1) != 0;
     }
 
-    public void f(boolean flag) {
-        byte b0 = this.datawatcher.getByte(16);
+    /**
+     * Updates the WatchableObject (Byte) created in entityInit(), setting it to 0x01 if par1 is true or 0x00 if it is
+     * false.
+     */
+    public void setBesideClimbableBlock(boolean par1)
+    {
+        byte var2 = this.dataWatcher.getWatchableObjectByte(16);
 
-        if (flag) {
-            b0 = (byte) (b0 | 1);
-        } else {
-            b0 &= -2;
+        if (par1)
+        {
+            var2 = (byte)(var2 | 1);
+        }
+        else
+        {
+            var2 &= -2;
         }
 
-        this.datawatcher.watch(16, Byte.valueOf(b0));
+        this.dataWatcher.updateObject(16, Byte.valueOf(var2));
     }
 
-    public void bG() {
-        if (this.world.random.nextInt(100) == 0) {
-            EntitySkeleton entityskeleton = new EntitySkeleton(this.world);
-
-            entityskeleton.setPositionRotation(this.locX, this.locY, this.locZ, this.yaw, 0.0F);
-            entityskeleton.bG();
-            this.world.addEntity(entityskeleton);
-            entityskeleton.mount(this);
+    /**
+     * Initialize this creature.
+     */
+    public void initCreature()
+    {
+        if (this.worldObj.rand.nextInt(100) == 0)
+        {
+            EntitySkeleton var1 = new EntitySkeleton(this.worldObj);
+            var1.setLocationAndAngles(this.posX, this.posY, this.posZ, this.rotationYaw, 0.0F);
+            var1.initCreature();
+            this.worldObj.spawnEntityInWorld(var1);
+            var1.mountEntity(this);
         }
     }
 }

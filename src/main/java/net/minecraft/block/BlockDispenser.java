@@ -1,72 +1,127 @@
-package net.minecraft.server;
+package net.minecraft.block;
 
 import java.util.Random;
+import net.minecraft.block.material.Material;
+import net.minecraft.creativetab.CreativeTabs;
+import net.minecraft.dispenser.BehaviorDefaultDispenseItem;
+import net.minecraft.dispenser.IBehaviorDispenseItem;
+import net.minecraft.dispenser.IBlockSource;
+import net.minecraft.dispenser.IPosition;
+import net.minecraft.dispenser.IRegistry;
+import net.minecraft.dispenser.PositionImpl;
+import net.minecraft.dispenser.RegistryDefaulted;
+import net.minecraft.entity.EntityLiving;
+import net.minecraft.entity.item.EntityItem;
+import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.item.ItemStack;
+import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.tileentity.TileEntity;
+import net.minecraft.tileentity.TileEntityDispenser;
+import net.minecraft.util.EnumFacing;
+import net.minecraft.util.MathHelper;
+import net.minecraft.world.World;
 
-public class BlockDispenser extends BlockContainer {
-
-    public static final IRegistry a = new RegistryDefault(new DispenseBehaviorItem());
+public class BlockDispenser extends BlockContainer
+{
+    /** Registry for all dispense behaviors. */
+    public static final IRegistry dispenseBehaviorRegistry = new RegistryDefaulted(new BehaviorDefaultDispenseItem());
     public static boolean eventFired = false; // CraftBukkit
-    private Random b = new Random();
+    private Random random = new Random();
 
-    protected BlockDispenser(int i) {
-        super(i, Material.STONE);
-        this.textureId = 45;
-        this.a(CreativeModeTab.d);
+    protected BlockDispenser(int par1)
+    {
+        super(par1, Material.rock);
+        this.blockIndexInTexture = 45;
+        this.setCreativeTab(CreativeTabs.tabRedstone);
     }
 
-    public int r_() {
+    /**
+     * How many world ticks before ticking
+     */
+    public int tickRate()
+    {
         return 4;
     }
 
-    public int getDropType(int i, Random random, int j) {
-        return Block.DISPENSER.id;
+    /**
+     * Returns the ID of the items to drop on destruction.
+     */
+    public int idDropped(int par1, Random par2Random, int par3)
+    {
+        return Block.dispenser.blockID;
     }
 
-    public void onPlace(World world, int i, int j, int k) {
-        super.onPlace(world, i, j, k);
-        this.l(world, i, j, k);
+    /**
+     * Called whenever the block is added into the world. Args: world, x, y, z
+     */
+    public void onBlockAdded(World par1World, int par2, int par3, int par4)
+    {
+        super.onBlockAdded(par1World, par2, par3, par4);
+        this.setDispenserDefaultDirection(par1World, par2, par3, par4);
     }
 
-    private void l(World world, int i, int j, int k) {
-        if (!world.isStatic) {
-            int l = world.getTypeId(i, j, k - 1);
-            int i1 = world.getTypeId(i, j, k + 1);
-            int j1 = world.getTypeId(i - 1, j, k);
-            int k1 = world.getTypeId(i + 1, j, k);
-            byte b0 = 3;
+    /**
+     * sets Dispenser block direction so that the front faces an non-opaque block; chooses west to be direction if all
+     * surrounding blocks are opaque.
+     */
+    private void setDispenserDefaultDirection(World par1World, int par2, int par3, int par4)
+    {
+        if (!par1World.isRemote)
+        {
+            int var5 = par1World.getBlockId(par2, par3, par4 - 1);
+            int var6 = par1World.getBlockId(par2, par3, par4 + 1);
+            int var7 = par1World.getBlockId(par2 - 1, par3, par4);
+            int var8 = par1World.getBlockId(par2 + 1, par3, par4);
+            byte var9 = 3;
 
-            if (Block.q[l] && !Block.q[i1]) {
-                b0 = 3;
+            if (Block.opaqueCubeLookup[var5] && !Block.opaqueCubeLookup[var6])
+            {
+                var9 = 3;
             }
 
-            if (Block.q[i1] && !Block.q[l]) {
-                b0 = 2;
+            if (Block.opaqueCubeLookup[var6] && !Block.opaqueCubeLookup[var5])
+            {
+                var9 = 2;
             }
 
-            if (Block.q[j1] && !Block.q[k1]) {
-                b0 = 5;
+            if (Block.opaqueCubeLookup[var7] && !Block.opaqueCubeLookup[var8])
+            {
+                var9 = 5;
             }
 
-            if (Block.q[k1] && !Block.q[j1]) {
-                b0 = 4;
+            if (Block.opaqueCubeLookup[var8] && !Block.opaqueCubeLookup[var7])
+            {
+                var9 = 4;
             }
 
-            world.setData(i, j, k, b0);
+            par1World.setBlockMetadataWithNotify(par2, par3, par4, var9);
         }
     }
 
-    public int a(int i) {
-        return i == 1 ? this.textureId + 17 : (i == 0 ? this.textureId + 17 : (i == 3 ? this.textureId + 1 : this.textureId));
+    /**
+     * Returns the block texture based on the side being looked at.  Args: side
+     */
+    public int getBlockTextureFromSide(int par1)
+    {
+        return par1 == 1 ? this.blockIndexInTexture + 17 : (par1 == 0 ? this.blockIndexInTexture + 17 : (par1 == 3 ? this.blockIndexInTexture + 1 : this.blockIndexInTexture));
     }
 
-    public boolean interact(World world, int i, int j, int k, EntityHuman entityhuman, int l, float f, float f1, float f2) {
-        if (world.isStatic) {
+    /**
+     * Called upon block activation (right click on the block.)
+     */
+    public boolean onBlockActivated(World par1World, int par2, int par3, int par4, EntityPlayer par5EntityPlayer, int par6, float par7, float par8, float par9)
+    {
+        if (par1World.isRemote)
+        {
             return true;
-        } else {
-            TileEntityDispenser tileentitydispenser = (TileEntityDispenser) world.getTileEntity(i, j, k);
+        }
+        else
+        {
+            TileEntityDispenser var10 = (TileEntityDispenser)par1World.getBlockTileEntity(par2, par3, par4);
 
-            if (tileentitydispenser != null) {
-                entityhuman.openDispenser(tileentitydispenser);
+            if (var10 != null)
+            {
+                par5EntityPlayer.displayGUIDispenser(var10);
             }
 
             return true;
@@ -74,115 +129,153 @@ public class BlockDispenser extends BlockContainer {
     }
 
     // CraftBukkit - private -> public
-    public void dispense(World world, int i, int j, int k) {
-        SourceBlock sourceblock = new SourceBlock(world, i, j, k);
-        TileEntityDispenser tileentitydispenser = (TileEntityDispenser) sourceblock.getTileEntity();
+    public void dispense(World par1World, int par2, int par3, int par4)
+    {
+        BlockSourceImpl var5 = new BlockSourceImpl(par1World, par2, par3, par4);
+        TileEntityDispenser var6 = (TileEntityDispenser)var5.func_82619_j();
 
-        if (tileentitydispenser != null) {
-            int l = tileentitydispenser.i();
+        if (var6 != null)
+        {
+            int var7 = var6.getRandomStackFromInventory();
 
-            if (l < 0) {
-                world.triggerEffect(1001, i, j, k, 0);
-            } else {
-                ItemStack itemstack = tileentitydispenser.getItem(l);
-                IDispenseBehavior idispensebehavior = (IDispenseBehavior) a.a(itemstack.getItem());
+            if (var7 < 0)
+            {
+                par1World.playAuxSFX(1001, par2, par3, par4, 0);
+            }
+            else
+            {
+                ItemStack var8 = var6.getStackInSlot(var7);
+                IBehaviorDispenseItem var9 = (IBehaviorDispenseItem)dispenseBehaviorRegistry.func_82594_a(var8.getItem());
 
-                if (idispensebehavior != IDispenseBehavior.a) {
-                    ItemStack itemstack1 = idispensebehavior.a(sourceblock, itemstack);
+                if (var9 != IBehaviorDispenseItem.itemDispenseBehaviorProvider)
+                {
+                    ItemStack var10 = var9.dispense(var5, var8);
                     eventFired = false; // CraftBukkit - reset event status
-
-                    tileentitydispenser.setItem(l, itemstack1.count == 0 ? null : itemstack1);
+                    var6.setInventorySlotContents(var7, var10.stackSize == 0 ? null : var10);
                 }
             }
         }
     }
 
-    public void doPhysics(World world, int i, int j, int k, int l) {
-        if (l > 0 && Block.byId[l].isPowerSource()) {
-            boolean flag = world.isBlockIndirectlyPowered(i, j, k) || world.isBlockIndirectlyPowered(i, j + 1, k);
+    /**
+     * Lets the block know when one of its neighbor changes. Doesn't know which neighbor changed (coordinates passed are
+     * their own) Args: x, y, z, neighbor blockID
+     */
+    public void onNeighborBlockChange(World par1World, int par2, int par3, int par4, int par5)
+    {
+        if (par5 > 0 && Block.blocksList[par5].canProvidePower())
+        {
+            boolean var6 = par1World.isBlockIndirectlyGettingPowered(par2, par3, par4) || par1World.isBlockIndirectlyGettingPowered(par2, par3 + 1, par4);
 
-            if (flag) {
-                world.a(i, j, k, this.id, this.r_());
+            if (var6)
+            {
+                par1World.scheduleBlockUpdate(par2, par3, par4, this.blockID, this.tickRate());
             }
         }
     }
 
-    public void b(World world, int i, int j, int k, Random random) {
-        if (!world.isStatic && (world.isBlockIndirectlyPowered(i, j, k) || world.isBlockIndirectlyPowered(i, j + 1, k))) {
-            this.dispense(world, i, j, k);
+    /**
+     * Ticks the block if it's been scheduled
+     */
+    public void updateTick(World par1World, int par2, int par3, int par4, Random par5Random)
+    {
+        if (!par1World.isRemote && (par1World.isBlockIndirectlyGettingPowered(par2, par3, par4) || par1World.isBlockIndirectlyGettingPowered(par2, par3 + 1, par4)))
+        {
+            this.dispense(par1World, par2, par3, par4);
         }
     }
 
-    public TileEntity a(World world) {
+    /**
+     * Returns a new instance of a block's tile entity class. Called on placing the block.
+     */
+    public TileEntity createNewTileEntity(World par1World)
+    {
         return new TileEntityDispenser();
     }
 
-    public void postPlace(World world, int i, int j, int k, EntityLiving entityliving) {
-        int l = MathHelper.floor((double) (entityliving.yaw * 4.0F / 360.0F) + 0.5D) & 3;
+    /**
+     * Called when the block is placed in the world.
+     */
+    public void onBlockPlacedBy(World par1World, int par2, int par3, int par4, EntityLiving par5EntityLiving)
+    {
+        int var6 = MathHelper.floor_double((double)(par5EntityLiving.rotationYaw * 4.0F / 360.0F) + 0.5D) & 3;
 
-        if (l == 0) {
-            world.setData(i, j, k, 2);
+        if (var6 == 0)
+        {
+            par1World.setBlockMetadataWithNotify(par2, par3, par4, 2);
         }
 
-        if (l == 1) {
-            world.setData(i, j, k, 5);
+        if (var6 == 1)
+        {
+            par1World.setBlockMetadataWithNotify(par2, par3, par4, 5);
         }
 
-        if (l == 2) {
-            world.setData(i, j, k, 3);
+        if (var6 == 2)
+        {
+            par1World.setBlockMetadataWithNotify(par2, par3, par4, 3);
         }
 
-        if (l == 3) {
-            world.setData(i, j, k, 4);
+        if (var6 == 3)
+        {
+            par1World.setBlockMetadataWithNotify(par2, par3, par4, 4);
         }
     }
 
-    public void remove(World world, int i, int j, int k, int l, int i1) {
-        TileEntityDispenser tileentitydispenser = (TileEntityDispenser) world.getTileEntity(i, j, k);
+    /**
+     * ejects contained items into the world, and notifies neighbours of an update, as appropriate
+     */
+    public void breakBlock(World par1World, int par2, int par3, int par4, int par5, int par6)
+    {
+        TileEntityDispenser var7 = (TileEntityDispenser)par1World.getBlockTileEntity(par2, par3, par4);
 
-        if (tileentitydispenser != null) {
-            for (int j1 = 0; j1 < tileentitydispenser.getSize(); ++j1) {
-                ItemStack itemstack = tileentitydispenser.getItem(j1);
+        if (var7 != null)
+        {
+            for (int var8 = 0; var8 < var7.getSizeInventory(); ++var8)
+            {
+                ItemStack var9 = var7.getStackInSlot(var8);
 
-                if (itemstack != null) {
-                    float f = this.b.nextFloat() * 0.8F + 0.1F;
-                    float f1 = this.b.nextFloat() * 0.8F + 0.1F;
-                    float f2 = this.b.nextFloat() * 0.8F + 0.1F;
+                if (var9 != null)
+                {
+                    float var10 = this.random.nextFloat() * 0.8F + 0.1F;
+                    float var11 = this.random.nextFloat() * 0.8F + 0.1F;
+                    float var12 = this.random.nextFloat() * 0.8F + 0.1F;
 
-                    while (itemstack.count > 0) {
-                        int k1 = this.b.nextInt(21) + 10;
+                    while (var9.stackSize > 0)
+                    {
+                        int var13 = this.random.nextInt(21) + 10;
 
-                        if (k1 > itemstack.count) {
-                            k1 = itemstack.count;
+                        if (var13 > var9.stackSize)
+                        {
+                            var13 = var9.stackSize;
                         }
 
-                        itemstack.count -= k1;
-                        EntityItem entityitem = new EntityItem(world, (double) ((float) i + f), (double) ((float) j + f1), (double) ((float) k + f2), new ItemStack(itemstack.id, k1, itemstack.getData()));
+                        var9.stackSize -= var13;
+                        EntityItem var14 = new EntityItem(par1World, (double)((float)par2 + var10), (double)((float)par3 + var11), (double)((float)par4 + var12), new ItemStack(var9.itemID, var13, var9.getItemDamage()));
 
-                        if (itemstack.hasTag()) {
-                            entityitem.getItemStack().setTag((NBTTagCompound) itemstack.getTag().clone());
+                        if (var9.hasTagCompound())
+                        {
+                            var14.func_92014_d().setTagCompound((NBTTagCompound)var9.getTagCompound().copy());
                         }
 
-                        float f3 = 0.05F;
-
-                        entityitem.motX = (double) ((float) this.b.nextGaussian() * f3);
-                        entityitem.motY = (double) ((float) this.b.nextGaussian() * f3 + 0.2F);
-                        entityitem.motZ = (double) ((float) this.b.nextGaussian() * f3);
-                        world.addEntity(entityitem);
+                        float var15 = 0.05F;
+                        var14.motionX = (double)((float)this.random.nextGaussian() * var15);
+                        var14.motionY = (double)((float)this.random.nextGaussian() * var15 + 0.2F);
+                        var14.motionZ = (double)((float)this.random.nextGaussian() * var15);
+                        par1World.spawnEntityInWorld(var14);
                     }
                 }
             }
         }
 
-        super.remove(world, i, j, k, l, i1);
+        super.breakBlock(par1World, par2, par3, par4, par5, par6);
     }
 
-    public static IPosition a(ISourceBlock isourceblock) {
-        EnumFacing enumfacing = EnumFacing.a(isourceblock.h());
-        double d0 = isourceblock.getX() + 0.7D * (double) enumfacing.c();
-        double d1 = isourceblock.getY();
-        double d2 = isourceblock.getZ() + 0.7D * (double) enumfacing.e();
-
-        return new Position(d0, d1, d2);
+    public static IPosition func_82525_a(IBlockSource par0IBlockSource)
+    {
+        EnumFacing var1 = EnumFacing.func_82600_a(par0IBlockSource.func_82620_h());
+        double var2 = par0IBlockSource.getX() + 0.7D * (double)var1.func_82601_c();
+        double var4 = par0IBlockSource.getY();
+        double var6 = par0IBlockSource.getZ() + 0.7D * (double)var1.func_82599_e();
+        return new PositionImpl(var2, var4, var6);
     }
 }

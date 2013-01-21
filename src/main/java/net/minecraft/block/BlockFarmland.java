@@ -1,91 +1,145 @@
-package net.minecraft.server;
+package net.minecraft.block;
 
 import java.util.Random;
+import net.minecraft.block.material.Material;
+import net.minecraft.entity.Entity;
+import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.util.AxisAlignedBB;
+import net.minecraft.world.World;
 
 // CraftBukkit start
 import org.bukkit.event.entity.EntityInteractEvent;
 import org.bukkit.craftbukkit.event.CraftEventFactory;
 // CraftBukkit end
 
-public class BlockSoil extends Block {
-
-    protected BlockSoil(int i) {
-        super(i, Material.EARTH);
-        this.textureId = 87;
-        this.b(true);
-        this.a(0.0F, 0.0F, 0.0F, 1.0F, 0.9375F, 1.0F);
-        this.h(255);
+public class BlockFarmland extends Block
+{
+    protected BlockFarmland(int par1)
+    {
+        super(par1, Material.ground);
+        this.blockIndexInTexture = 87;
+        this.setTickRandomly(true);
+        this.setBlockBounds(0.0F, 0.0F, 0.0F, 1.0F, 0.9375F, 1.0F);
+        this.setLightOpacity(255);
     }
 
-    public AxisAlignedBB e(World world, int i, int j, int k) {
-        return AxisAlignedBB.a().a((double) (i + 0), (double) (j + 0), (double) (k + 0), (double) (i + 1), (double) (j + 1), (double) (k + 1));
+    /**
+     * Returns a bounding box from the pool of bounding boxes (this means this box can change after the pool has been
+     * cleared to be reused)
+     */
+    public AxisAlignedBB getCollisionBoundingBoxFromPool(World par1World, int par2, int par3, int par4)
+    {
+        return AxisAlignedBB.getAABBPool().addOrModifyAABBInPool((double)(par2 + 0), (double)(par3 + 0), (double)(par4 + 0), (double)(par2 + 1), (double)(par3 + 1), (double)(par4 + 1));
     }
 
-    public boolean c() {
+    /**
+     * Is this block (a) opaque and (b) a full 1m cube?  This determines whether or not to render the shared face of two
+     * adjacent blocks and also whether the player can attach torches, redstone wire, etc to this block.
+     */
+    public boolean isOpaqueCube()
+    {
         return false;
     }
 
-    public boolean b() {
+    /**
+     * If this block doesn't render as an ordinary block it will return False (examples: signs, buttons, stairs, etc)
+     */
+    public boolean renderAsNormalBlock()
+    {
         return false;
     }
 
-    public int a(int i, int j) {
-        return i == 1 && j > 0 ? this.textureId - 1 : (i == 1 ? this.textureId : 2);
+    /**
+     * From the specified side and block metadata retrieves the blocks texture. Args: side, metadata
+     */
+    public int getBlockTextureFromSideAndMetadata(int par1, int par2)
+    {
+        return par1 == 1 && par2 > 0 ? this.blockIndexInTexture - 1 : (par1 == 1 ? this.blockIndexInTexture : 2);
     }
 
-    public void b(World world, int i, int j, int k, Random random) {
-        if (!this.n(world, i, j, k) && !world.D(i, j + 1, k)) {
-            int l = world.getData(i, j, k);
+    /**
+     * Ticks the block if it's been scheduled
+     */
+    public void updateTick(World par1World, int par2, int par3, int par4, Random par5Random)
+    {
+        if (!this.isWaterNearby(par1World, par2, par3, par4) && !par1World.canLightningStrikeAt(par2, par3 + 1, par4))
+        {
+            int var6 = par1World.getBlockMetadata(par2, par3, par4);
 
-            if (l > 0) {
-                world.setData(i, j, k, l - 1);
-            } else if (!this.l(world, i, j, k)) {
+            if (var6 > 0)
+            {
+                par1World.setBlockMetadataWithNotify(par2, par3, par4, var6 - 1);
+            }
+            else if (!this.isCropsNearby(par1World, par2, par3, par4))
+            {
                 // CraftBukkit start
-                org.bukkit.block.Block block = world.getWorld().getBlockAt(i, j, k);
-                if (CraftEventFactory.callBlockFadeEvent(block, Block.DIRT.id).isCancelled()) {
+                org.bukkit.block.Block block = par1World.getWorld().getBlockAt(par2, par3, par4);
+
+                if (CraftEventFactory.callBlockFadeEvent(block, Block.dirt.blockID).isCancelled())
+                {
                     return;
                 }
-                // CraftBukkit end
 
-                world.setTypeId(i, j, k, Block.DIRT.id);
+                // CraftBukkit end
+                par1World.setBlockWithNotify(par2, par3, par4, Block.dirt.blockID);
             }
-        } else {
-            world.setData(i, j, k, 7);
+        }
+        else
+        {
+            par1World.setBlockMetadataWithNotify(par2, par3, par4, 7);
         }
     }
 
-    public void a(World world, int i, int j, int k, Entity entity, float f) {
-        if (!world.isStatic && world.random.nextFloat() < f - 0.5F) {
-            if (!(entity instanceof EntityHuman) && !world.getGameRules().getBoolean("mobGriefing")) {
+    /**
+     * Block's chance to react to an entity falling on it.
+     */
+    public void onFallenUpon(World par1World, int par2, int par3, int par4, Entity par5Entity, float par6)
+    {
+        if (!par1World.isRemote && par1World.rand.nextFloat() < par6 - 0.5F)
+        {
+            if (!(par5Entity instanceof EntityPlayer) && !par1World.getGameRules().getGameRuleBooleanValue("mobGriefing"))
+            {
                 return;
             }
 
             // CraftBukkit start - interact soil
             org.bukkit.event.Cancellable cancellable;
-            if (entity instanceof EntityHuman) {
-                cancellable = CraftEventFactory.callPlayerInteractEvent((EntityHuman) entity, org.bukkit.event.block.Action.PHYSICAL, i, j, k, -1, null);
-            } else {
-                cancellable = new EntityInteractEvent(entity.getBukkitEntity(), world.getWorld().getBlockAt(i, j, k));
-                world.getServer().getPluginManager().callEvent((EntityInteractEvent) cancellable);
+
+            if (par5Entity instanceof EntityPlayer)
+            {
+                cancellable = CraftEventFactory.callPlayerInteractEvent((EntityPlayer) par5Entity, org.bukkit.event.block.Action.PHYSICAL, par2, par3, par4, -1, null);
+            }
+            else
+            {
+                cancellable = new EntityInteractEvent(par5Entity.getBukkitEntity(), par1World.getWorld().getBlockAt(par2, par3, par4));
+                par1World.getServer().getPluginManager().callEvent((EntityInteractEvent) cancellable);
             }
 
-            if (cancellable.isCancelled()) {
+            if (cancellable.isCancelled())
+            {
                 return;
             }
-            // CraftBukkit end
 
-            world.setTypeId(i, j, k, Block.DIRT.id);
+            // CraftBukkit end
+            par1World.setBlockWithNotify(par2, par3, par4, Block.dirt.blockID);
         }
     }
 
-    private boolean l(World world, int i, int j, int k) {
-        byte b0 = 0;
+    /**
+     * returns true if there is at least one cropblock nearby (x-1 to x+1, y+1, z-1 to z+1)
+     */
+    private boolean isCropsNearby(World par1World, int par2, int par3, int par4)
+    {
+        byte var5 = 0;
 
-        for (int l = i - b0; l <= i + b0; ++l) {
-            for (int i1 = k - b0; i1 <= k + b0; ++i1) {
-                int j1 = world.getTypeId(l, j + 1, i1);
+        for (int var6 = par2 - var5; var6 <= par2 + var5; ++var6)
+        {
+            for (int var7 = par4 - var5; var7 <= par4 + var5; ++var7)
+            {
+                int var8 = par1World.getBlockId(var6, par3 + 1, var7);
 
-                if (j1 == Block.CROPS.id || j1 == Block.MELON_STEM.id || j1 == Block.PUMPKIN_STEM.id || j1 == Block.POTATOES.id || j1 == Block.CARROTS.id) {
+                if (var8 == Block.crops.blockID || var8 == Block.melonStem.blockID || var8 == Block.pumpkinStem.blockID || var8 == Block.potato.blockID || var8 == Block.carrot.blockID)
+                {
                     return true;
                 }
             }
@@ -94,11 +148,19 @@ public class BlockSoil extends Block {
         return false;
     }
 
-    private boolean n(World world, int i, int j, int k) {
-        for (int l = i - 4; l <= i + 4; ++l) {
-            for (int i1 = j; i1 <= j + 1; ++i1) {
-                for (int j1 = k - 4; j1 <= k + 4; ++j1) {
-                    if (world.getMaterial(l, i1, j1) == Material.WATER) {
+    /**
+     * returns true if there's water nearby (x-4 to x+4, y to y+1, k-4 to k+4)
+     */
+    private boolean isWaterNearby(World par1World, int par2, int par3, int par4)
+    {
+        for (int var5 = par2 - 4; var5 <= par2 + 4; ++var5)
+        {
+            for (int var6 = par3; var6 <= par3 + 1; ++var6)
+            {
+                for (int var7 = par4 - 4; var7 <= par4 + 4; ++var7)
+                {
+                    if (par1World.getBlockMaterial(var5, var6, var7) == Material.water)
+                    {
                         return true;
                     }
                 }
@@ -108,16 +170,26 @@ public class BlockSoil extends Block {
         return false;
     }
 
-    public void doPhysics(World world, int i, int j, int k, int l) {
-        super.doPhysics(world, i, j, k, l);
-        Material material = world.getMaterial(i, j + 1, k);
+    /**
+     * Lets the block know when one of its neighbor changes. Doesn't know which neighbor changed (coordinates passed are
+     * their own) Args: x, y, z, neighbor blockID
+     */
+    public void onNeighborBlockChange(World par1World, int par2, int par3, int par4, int par5)
+    {
+        super.onNeighborBlockChange(par1World, par2, par3, par4, par5);
+        Material var6 = par1World.getBlockMaterial(par2, par3 + 1, par4);
 
-        if (material.isBuildable()) {
-            world.setTypeId(i, j, k, Block.DIRT.id);
+        if (var6.isSolid())
+        {
+            par1World.setBlockWithNotify(par2, par3, par4, Block.dirt.blockID);
         }
     }
 
-    public int getDropType(int i, Random random, int j) {
-        return Block.DIRT.getDropType(0, random, j);
+    /**
+     * Returns the ID of the items to drop on destruction.
+     */
+    public int idDropped(int par1, Random par2Random, int par3)
+    {
+        return Block.dirt.idDropped(0, par2Random, par3);
     }
 }

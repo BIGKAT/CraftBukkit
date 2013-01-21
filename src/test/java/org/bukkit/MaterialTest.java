@@ -6,7 +6,6 @@ import static org.hamcrest.Matchers.*;
 import java.util.Collections;
 import java.util.Map;
 
-import net.minecraft.server.Item;
 
 import org.bukkit.support.AbstractTestingBase;
 import org.junit.Test;
@@ -23,11 +22,11 @@ public class MaterialTest extends AbstractTestingBase {
         }
         materials.remove(0); // Purge air.
 
-        for (Item item : Item.byId) {
+        for (net.minecraft.item.Item/*was:Item*/ item : net.minecraft.item.Item/*was:Item*/.itemsList/*was:byId*/) {
             if (item == null) continue;
 
-            int id = item.id;
-            String name = item.getName();
+            int id = item.itemID/*was:id*/;
+            String name = item.getItemName/*was:getName*/();
 
             Material material = materials.remove(id);
 

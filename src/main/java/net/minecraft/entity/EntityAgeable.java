@@ -1,80 +1,134 @@
-package net.minecraft.server;
+package net.minecraft.entity;
 
-public abstract class EntityAgeable extends EntityCreature {
+import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.item.Item;
+import net.minecraft.item.ItemStack;
+import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.world.World;
+public abstract class EntityAgeable extends EntityCreature
+{
     public boolean ageLocked = false; // CraftBukkit
 
-    public EntityAgeable(World world) {
-        super(world);
+    public EntityAgeable(World par1World)
+    {
+        super(par1World);
     }
 
     public abstract EntityAgeable createChild(EntityAgeable entityageable);
 
-    public boolean a(EntityHuman entityhuman) {
-        ItemStack itemstack = entityhuman.inventory.getItemInHand();
+    /**
+     * Called when a player interacts with a mob. e.g. gets milk from a cow, gets into the saddle on a pig.
+     */
+    public boolean interact(EntityPlayer par1EntityPlayer)
+    {
+        ItemStack var2 = par1EntityPlayer.inventory.getCurrentItem();
 
-        if (itemstack != null && itemstack.id == Item.MONSTER_EGG.id && !this.world.isStatic) {
-            Class oclass = EntityTypes.a(itemstack.getData());
+        if (var2 != null && var2.itemID == Item.monsterPlacer.itemID && !this.worldObj.isRemote)
+        {
+            Class var3 = EntityList.getClassFromID(var2.getItemDamage());
 
-            if (oclass != null && oclass.isAssignableFrom(this.getClass())) {
-                EntityAgeable entityageable = this.createChild(this);
+            if (var3 != null && var3.isAssignableFrom(this.getClass()))
+            {
+                EntityAgeable var4 = this.createChild(this);
 
-                if (entityageable != null) {
-                    entityageable.setAge(-24000);
-                    entityageable.setPositionRotation(this.locX, this.locY, this.locZ, 0.0F, 0.0F);
-                    this.world.addEntity(entityageable, org.bukkit.event.entity.CreatureSpawnEvent.SpawnReason.SPAWNER_EGG); // CraftBukkit
-                    if (!entityhuman.abilities.canInstantlyBuild) {
-                        --itemstack.count;
-                        if (itemstack.count == 0) { // CraftBukkit - allow less than 0 stacks as "infinit"
-                            entityhuman.inventory.setItem(entityhuman.inventory.itemInHandIndex, (ItemStack) null);
+                if (var4 != null)
+                {
+                    var4.setGrowingAge(-24000);
+                    var4.setLocationAndAngles(this.posX, this.posY, this.posZ, 0.0F, 0.0F);
+                    this.worldObj.addEntity(var4, org.bukkit.event.entity.CreatureSpawnEvent.SpawnReason.SPAWNER_EGG); // CraftBukkit
+
+                    if (!par1EntityPlayer.capabilities.isCreativeMode)
+                    {
+                        --var2.stackSize;
+
+                        if (var2.stackSize == 0)   // CraftBukkit - allow less than 0 stacks as "infinit"
+                        {
+                            par1EntityPlayer.inventory.setInventorySlotContents(par1EntityPlayer.inventory.currentItem, (ItemStack)null);
                         }
                     }
                 }
             }
         }
 
-        return super.a(entityhuman);
+        return super.interact(par1EntityPlayer);
     }
 
-    protected void a() {
-        super.a();
-        this.datawatcher.a(12, new Integer(0));
+    protected void entityInit()
+    {
+        super.entityInit();
+        this.dataWatcher.addObject(12, new Integer(0));
     }
 
-    public int getAge() {
-        return this.datawatcher.getInt(12);
+    /**
+     * The age value may be negative or positive or zero. If it's negative, it get's incremented on each tick, if it's
+     * positive, it get's decremented each tick. Don't confuse this with EntityLiving.getAge. With a negative value the
+     * Entity is considered a child.
+     */
+    public int getGrowingAge()
+    {
+        return this.dataWatcher.getWatchableObjectInt(12);
     }
 
-    public void setAge(int i) {
-        this.datawatcher.watch(12, Integer.valueOf(i));
+    /**
+     * The age value may be negative or positive or zero. If it's negative, it get's incremented on each tick, if it's
+     * positive, it get's decremented each tick. With a negative value the Entity is considered a child.
+     */
+    public void setGrowingAge(int par1)
+    {
+        this.dataWatcher.updateObject(12, Integer.valueOf(par1));
     }
 
-    public void b(NBTTagCompound nbttagcompound) {
-        super.b(nbttagcompound);
-        nbttagcompound.setInt("Age", this.getAge());
-        nbttagcompound.setBoolean("AgeLocked", this.ageLocked); // CraftBukkit
+    /**
+     * (abstract) Protected helper method to write subclass entity data to NBT.
+     */
+    public void writeEntityToNBT(NBTTagCompound par1NBTTagCompound)
+    {
+        super.writeEntityToNBT(par1NBTTagCompound);
+        par1NBTTagCompound.setInteger("Age", this.getGrowingAge());
+        par1NBTTagCompound.setBoolean("AgeLocked", this.ageLocked); // CraftBukkit
     }
 
-    public void a(NBTTagCompound nbttagcompound) {
-        super.a(nbttagcompound);
-        this.setAge(nbttagcompound.getInt("Age"));
-        this.ageLocked = nbttagcompound.getBoolean("AgeLocked"); // CraftBukkit
+    /**
+     * (abstract) Protected helper method to read subclass entity data from NBT.
+     */
+    public void readEntityFromNBT(NBTTagCompound par1NBTTagCompound)
+    {
+        super.readEntityFromNBT(par1NBTTagCompound);
+        this.setGrowingAge(par1NBTTagCompound.getInteger("Age"));
+        this.ageLocked = par1NBTTagCompound.getBoolean("AgeLocked"); // CraftBukkit
     }
 
-    public void c() {
-        super.c();
-        int i = this.getAge();
+    /**
+     * Called frequently so the entity can update its state every tick as required. For example, zombies and skeletons
+     * use this to react to sunlight and start to burn.
+     */
+    public void onLivingUpdate()
+    {
+        super.onLivingUpdate();
+        int var1 = this.getGrowingAge();
 
-        if (ageLocked) return; // CraftBukkit
-        if (i < 0) {
-            ++i;
-            this.setAge(i);
-        } else if (i > 0) {
-            --i;
-            this.setAge(i);
+        if (ageLocked)
+        {
+            return;    // CraftBukkit
+        }
+
+        if (var1 < 0)
+        {
+            ++var1;
+            this.setGrowingAge(var1);
+        }
+        else if (var1 > 0)
+        {
+            --var1;
+            this.setGrowingAge(var1);
         }
     }
 
-    public boolean isBaby() {
-        return this.getAge() < 0;
+    /**
+     * If Animal, checks if the age timer is negative
+     */
+    public boolean isChild()
+    {
+        return this.getGrowingAge() < 0;
     }
 }

@@ -1,167 +1,224 @@
-package net.minecraft.server;
+package net.minecraft.server.management;
 
 import java.util.ArrayList;
 import java.util.List;
+import net.minecraft.entity.player.EntityPlayerMP;
+import net.minecraft.network.packet.Packet;
+import net.minecraft.network.packet.Packet51MapChunk;
+import net.minecraft.network.packet.Packet52MultiBlockChange;
+import net.minecraft.network.packet.Packet53BlockChange;
+import net.minecraft.tileentity.TileEntity;
+import net.minecraft.world.ChunkCoordIntPair;
 
-class PlayerChunk {
+class PlayerInstance
+{
+    private final List playersInChunk;
 
-    private final List b;
-    private final ChunkCoordIntPair location;
-    private short[] dirtyBlocks;
-    private int dirtyCount;
-    private int f;
+    /** note: this is final */
+    private final ChunkCoordIntPair chunkLocation;
+    private short[] locationOfBlockChange;
+    private int numberOfTilesToUpdate;
+    private int field_73260_f;
     private boolean loaded = false; // CraftBukkit
 
-    final PlayerChunkMap playerChunkMap;
+    final PlayerManager myManager;
 
-    public PlayerChunk(PlayerChunkMap playerchunkmap, int i, int j) {
-        this.playerChunkMap = playerchunkmap;
-        this.b = new ArrayList();
-        this.dirtyBlocks = new short[64];
-        this.dirtyCount = 0;
-        this.location = new ChunkCoordIntPair(i, j);
+    public PlayerInstance(PlayerManager par1PlayerManager, int par2, int par3)
+    {
+        this.myManager = par1PlayerManager;
+        this.playersInChunk = new ArrayList();
+        this.locationOfBlockChange = new short[64];
+        this.numberOfTilesToUpdate = 0;
+        this.chunkLocation = new ChunkCoordIntPair(par2, par3);
         // CraftBukkit start
-        playerchunkmap.a().chunkProviderServer.getChunkAt(i, j, new Runnable() {
-            public void run() {
-                PlayerChunk.this.loaded = true;
+        par1PlayerManager.getWorldServer().theChunkProviderServer.getChunkAt(par2, par3, new Runnable()
+        {
+            public void run()
+            {
+                PlayerInstance.this.loaded = true;
             }
         });
     }
 
-    public void a(final EntityPlayer entityplayer) { // CraftBukkit - added final to argument
-        if (this.b.contains(entityplayer)) {
-            throw new IllegalStateException("Failed to add player. " + entityplayer + " already is in chunk " + this.location.x + ", " + this.location.z);
-        } else {
-            this.b.add(entityplayer);
+    public void addPlayerToChunkWatchingList(final EntityPlayerMP par1EntityPlayerMP)   // CraftBukkit - added final to argument
+    {
+        if (this.playersInChunk.contains(par1EntityPlayerMP))
+        {
+            throw new IllegalStateException("Failed to add player. " + par1EntityPlayerMP + " already is in chunk " + this.chunkLocation.chunkXPos + ", " + this.chunkLocation.chunkZPos);
+        }
+        else
+        {
+            this.playersInChunk.add(par1EntityPlayerMP);
 
             // CraftBukkit start
-            if (this.loaded) {
-                entityplayer.chunkCoordIntPairQueue.add(this.location);
-            } else {
+            if (this.loaded)
+            {
+                par1EntityPlayerMP.loadedChunks.add(this.chunkLocation);
+            }
+            else
+            {
                 // Abuse getChunkAt to add another callback
-                this.playerChunkMap.a().chunkProviderServer.getChunkAt(this.location.x, this.location.z, new Runnable() {
-                    public void run() {
-                        entityplayer.chunkCoordIntPairQueue.add(PlayerChunk.this.location);
+                this.myManager.getWorldServer().theChunkProviderServer.getChunkAt(this.chunkLocation.chunkXPos, this.chunkLocation.chunkZPos, new Runnable()
+                {
+                    public void run()
+                    {
+                        par1EntityPlayerMP.loadedChunks.add(PlayerInstance.this.chunkLocation);
                     }
                 });
             }
+
             // CraftBukkit end
         }
     }
 
-    public void b(EntityPlayer entityplayer) {
-        if (this.b.contains(entityplayer)) {
-            entityplayer.playerConnection.sendPacket(new Packet51MapChunk(PlayerChunkMap.a(this.playerChunkMap).getChunkAt(this.location.x, this.location.z), true, 0));
-            this.b.remove(entityplayer);
-            entityplayer.chunkCoordIntPairQueue.remove(this.location);
-            if (this.b.isEmpty()) {
-                long i = (long) this.location.x + 2147483647L | (long) this.location.z + 2147483647L << 32;
+    public void sendThisChunkToPlayer(EntityPlayerMP par1EntityPlayerMP)
+    {
+        if (this.playersInChunk.contains(par1EntityPlayerMP))
+        {
+            par1EntityPlayerMP.playerNetServerHandler.sendPacketToPlayer(new Packet51MapChunk(PlayerManager.getWorldServer(this.myManager).getChunkFromChunkCoords(this.chunkLocation.chunkXPos, this.chunkLocation.chunkZPos), true, 0));
+            this.playersInChunk.remove(par1EntityPlayerMP);
+            par1EntityPlayerMP.loadedChunks.remove(this.chunkLocation);
 
-                PlayerChunkMap.b(this.playerChunkMap).remove(i);
-                if (this.dirtyCount > 0) {
-                    PlayerChunkMap.c(this.playerChunkMap).remove(this);
+            if (this.playersInChunk.isEmpty())
+            {
+                long var2 = (long)this.chunkLocation.chunkXPos + 2147483647L | (long)this.chunkLocation.chunkZPos + 2147483647L << 32;
+                PlayerManager.getChunkWatchers(this.myManager).remove(var2);
+
+                if (this.numberOfTilesToUpdate > 0)
+                {
+                    PlayerManager.c(this.myManager).remove(this);
                 }
 
-                this.playerChunkMap.a().chunkProviderServer.queueUnload(this.location.x, this.location.z);
+                this.myManager.getWorldServer().theChunkProviderServer.unloadChunksIfNotNearSpawn(this.chunkLocation.chunkXPos, this.chunkLocation.chunkZPos);
             }
         }
     }
 
-    public void a(int i, int j, int k) {
-        if (this.dirtyCount == 0) {
-            PlayerChunkMap.c(this.playerChunkMap).add(this);
+    public void flagChunkForUpdate(int par1, int par2, int par3)
+    {
+        if (this.numberOfTilesToUpdate == 0)
+        {
+            PlayerManager.c(this.myManager).add(this);
         }
 
-        this.f |= 1 << (j >> 4);
-        if (this.dirtyCount < 64) {
-            short short1 = (short) (i << 12 | k << 8 | j);
+        this.field_73260_f |= 1 << (par2 >> 4);
 
-            for (int l = 0; l < this.dirtyCount; ++l) {
-                if (this.dirtyBlocks[l] == short1) {
+        if (this.numberOfTilesToUpdate < 64)
+        {
+            short var4 = (short)(par1 << 12 | par3 << 8 | par2);
+
+            for (int var5 = 0; var5 < this.numberOfTilesToUpdate; ++var5)
+            {
+                if (this.locationOfBlockChange[var5] == var4)
+                {
                     return;
                 }
             }
 
-            this.dirtyBlocks[this.dirtyCount++] = short1;
+            this.locationOfBlockChange[this.numberOfTilesToUpdate++] = var4;
         }
     }
 
-    public void sendAll(Packet packet) {
-        for (int i = 0; i < this.b.size(); ++i) {
-            EntityPlayer entityplayer = (EntityPlayer) this.b.get(i);
+    public void sendToAllPlayersWatchingChunk(Packet par1Packet)
+    {
+        for (int var2 = 0; var2 < this.playersInChunk.size(); ++var2)
+        {
+            EntityPlayerMP var3 = (EntityPlayerMP)this.playersInChunk.get(var2);
 
-            if (!entityplayer.chunkCoordIntPairQueue.contains(this.location)) {
-                entityplayer.playerConnection.sendPacket(packet);
+            if (!var3.loadedChunks.contains(this.chunkLocation))
+            {
+                var3.playerNetServerHandler.sendPacketToPlayer(par1Packet);
             }
         }
     }
 
-    public void a() {
-        if (this.dirtyCount != 0) {
-            int i;
-            int j;
-            int k;
+    public void sendChunkUpdate()
+    {
+        if (this.numberOfTilesToUpdate != 0)
+        {
+            int var1;
+            int var2;
+            int var3;
 
-            if (this.dirtyCount == 1) {
-                i = this.location.x * 16 + (this.dirtyBlocks[0] >> 12 & 15);
-                j = this.dirtyBlocks[0] & 255;
-                k = this.location.z * 16 + (this.dirtyBlocks[0] >> 8 & 15);
-                this.sendAll(new Packet53BlockChange(i, j, k, PlayerChunkMap.a(this.playerChunkMap)));
-                if (PlayerChunkMap.a(this.playerChunkMap).isTileEntity(i, j, k)) {
-                    this.sendTileEntity(PlayerChunkMap.a(this.playerChunkMap).getTileEntity(i, j, k));
+            if (this.numberOfTilesToUpdate == 1)
+            {
+                var1 = this.chunkLocation.chunkXPos * 16 + (this.locationOfBlockChange[0] >> 12 & 15);
+                var2 = this.locationOfBlockChange[0] & 255;
+                var3 = this.chunkLocation.chunkZPos * 16 + (this.locationOfBlockChange[0] >> 8 & 15);
+                this.sendToAllPlayersWatchingChunk(new Packet53BlockChange(var1, var2, var3, PlayerManager.getWorldServer(this.myManager)));
+
+                if (PlayerManager.getWorldServer(this.myManager).blockHasTileEntity(var1, var2, var3))
+                {
+                    this.sendTileToAllPlayersWatchingChunk(PlayerManager.getWorldServer(this.myManager).getBlockTileEntity(var1, var2, var3));
                 }
-            } else {
-                int l;
+            }
+            else
+            {
+                int var4;
 
-                if (this.dirtyCount == 64) {
-                    i = this.location.x * 16;
-                    j = this.location.z * 16;
-                    this.sendAll(new Packet51MapChunk(PlayerChunkMap.a(this.playerChunkMap).getChunkAt(this.location.x, this.location.z), (this.f == 0xFFFF), this.f)); // CraftBukkit - send everything (including biome) if all sections flagged
+                if (this.numberOfTilesToUpdate == 64)
+                {
+                    var1 = this.chunkLocation.chunkXPos * 16;
+                    var2 = this.chunkLocation.chunkZPos * 16;
+                    this.sendToAllPlayersWatchingChunk(new Packet51MapChunk(PlayerManager.getWorldServer(this.myManager).getChunkFromChunkCoords(this.chunkLocation.chunkXPos, this.chunkLocation.chunkZPos), (this.field_73260_f == 0xFFFF), this.field_73260_f)); // CraftBukkit - send everything (including biome) if all sections flagged
 
-                    for (k = 0; k < 16; ++k) {
-                        if ((this.f & 1 << k) != 0) {
-                            l = k << 4;
-                            List list = PlayerChunkMap.a(this.playerChunkMap).getTileEntities(i, l, j, i + 16, l + 16, j + 16);
+                    for (var3 = 0; var3 < 16; ++var3)
+                    {
+                        if ((this.field_73260_f & 1 << var3) != 0)
+                        {
+                            var4 = var3 << 4;
+                            List var5 = PlayerManager.getWorldServer(this.myManager).getAllTileEntityInBox(var1, var4, var2, var1 + 16, var4 + 16, var2 + 16);
 
-                            for (int i1 = 0; i1 < list.size(); ++i1) {
-                                this.sendTileEntity((TileEntity) list.get(i1));
+                            for (int var6 = 0; var6 < var5.size(); ++var6)
+                            {
+                                this.sendTileToAllPlayersWatchingChunk((TileEntity)var5.get(var6));
                             }
                         }
                     }
-                } else {
-                    this.sendAll(new Packet52MultiBlockChange(this.location.x, this.location.z, this.dirtyBlocks, this.dirtyCount, PlayerChunkMap.a(this.playerChunkMap)));
+                }
+                else
+                {
+                    this.sendToAllPlayersWatchingChunk(new Packet52MultiBlockChange(this.chunkLocation.chunkXPos, this.chunkLocation.chunkZPos, this.locationOfBlockChange, this.numberOfTilesToUpdate, PlayerManager.getWorldServer(this.myManager)));
 
-                    for (i = 0; i < this.dirtyCount; ++i) {
-                        j = this.location.x * 16 + (this.dirtyBlocks[i] >> 12 & 15);
-                        k = this.dirtyBlocks[i] & 255;
-                        l = this.location.z * 16 + (this.dirtyBlocks[i] >> 8 & 15);
-                        if (PlayerChunkMap.a(this.playerChunkMap).isTileEntity(j, k, l)) {
-                            this.sendTileEntity(PlayerChunkMap.a(this.playerChunkMap).getTileEntity(j, k, l));
+                    for (var1 = 0; var1 < this.numberOfTilesToUpdate; ++var1)
+                    {
+                        var2 = this.chunkLocation.chunkXPos * 16 + (this.locationOfBlockChange[var1] >> 12 & 15);
+                        var3 = this.locationOfBlockChange[var1] & 255;
+                        var4 = this.chunkLocation.chunkZPos * 16 + (this.locationOfBlockChange[var1] >> 8 & 15);
+
+                        if (PlayerManager.getWorldServer(this.myManager).blockHasTileEntity(var2, var3, var4))
+                        {
+                            this.sendTileToAllPlayersWatchingChunk(PlayerManager.getWorldServer(this.myManager).getBlockTileEntity(var2, var3, var4));
                         }
                     }
                 }
             }
 
-            this.dirtyCount = 0;
-            this.f = 0;
+            this.numberOfTilesToUpdate = 0;
+            this.field_73260_f = 0;
         }
     }
 
-    private void sendTileEntity(TileEntity tileentity) {
-        if (tileentity != null) {
-            Packet packet = tileentity.getUpdatePacket();
+    private void sendTileToAllPlayersWatchingChunk(TileEntity par1TileEntity)
+    {
+        if (par1TileEntity != null)
+        {
+            Packet var2 = par1TileEntity.getDescriptionPacket();
 
-            if (packet != null) {
-                this.sendAll(packet);
+            if (var2 != null)
+            {
+                this.sendToAllPlayersWatchingChunk(var2);
             }
         }
     }
 
-    static ChunkCoordIntPair a(PlayerChunk playerchunk) {
-        return playerchunk.location;
+    static ChunkCoordIntPair getChunkLocation(PlayerInstance par0PlayerInstance)
+    {
+        return par0PlayerInstance.chunkLocation;
     }
 
-    static List b(PlayerChunk playerchunk) {
-        return playerchunk.b;
+    static List getPlayersInChunk(PlayerInstance par0PlayerInstance)
+    {
+        return par0PlayerInstance.playersInChunk;
     }
 }

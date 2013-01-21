@@ -1,65 +1,102 @@
-package net.minecraft.server;
+package net.minecraft.block;
 
 import java.util.Random;
+import net.minecraft.block.material.Material;
+import net.minecraft.creativetab.CreativeTabs;
+import net.minecraft.enchantment.EnchantmentHelper;
+import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.item.ItemStack;
+import net.minecraft.stats.StatList;
+import net.minecraft.world.EnumSkyBlock;
+import net.minecraft.world.World;
 
-public class BlockIce extends BlockHalfTransparant {
-
-    public BlockIce(int i, int j) {
-        super(i, j, Material.ICE, false);
-        this.frictionFactor = 0.98F;
-        this.b(true);
-        this.a(CreativeModeTab.b);
+public class BlockIce extends BlockBreakable
+{
+    public BlockIce(int par1, int par2)
+    {
+        super(par1, par2, Material.ice, false);
+        this.slipperiness = 0.98F;
+        this.setTickRandomly(true);
+        this.setCreativeTab(CreativeTabs.tabBlock);
     }
 
-    public void a(World world, EntityHuman entityhuman, int i, int j, int k, int l) {
-        entityhuman.a(StatisticList.C[this.id], 1);
-        entityhuman.j(0.025F);
-        if (this.s_() && EnchantmentManager.hasSilkTouchEnchantment(entityhuman)) {
-            ItemStack itemstack = this.f_(l);
+    /**
+     * Called when the player destroys a block with an item that can harvest it. (i, j, k) are the coordinates of the
+     * block and l is the block's subtype/damage.
+     */
+    public void harvestBlock(World par1World, EntityPlayer par2EntityPlayer, int par3, int par4, int par5, int par6)
+    {
+        par2EntityPlayer.addStat(StatList.mineBlockStatArray[this.blockID], 1);
+        par2EntityPlayer.addExhaustion(0.025F);
 
-            if (itemstack != null) {
-                this.b(world, i, j, k, itemstack);
+        if (this.canSilkHarvest() && EnchantmentHelper.getSilkTouchModifier(par2EntityPlayer))
+        {
+            ItemStack var9 = this.createStackedBlock(par6);
+
+            if (var9 != null)
+            {
+                this.dropBlockAsItem_do(par1World, par3, par4, par5, var9);
             }
-        } else {
-            if (world.worldProvider.e) {
-                world.setTypeId(i, j, k, 0);
+        }
+        else
+        {
+            if (par1World.provider.isHellWorld)
+            {
+                par1World.setBlockWithNotify(par3, par4, par5, 0);
                 return;
             }
 
-            int i1 = EnchantmentManager.getBonusBlockLootEnchantmentLevel(entityhuman);
+            int var7 = EnchantmentHelper.getFortuneModifier(par2EntityPlayer);
+            this.dropBlockAsItem(par1World, par3, par4, par5, par6, var7);
+            Material var8 = par1World.getBlockMaterial(par3, par4 - 1, par5);
 
-            this.c(world, i, j, k, l, i1);
-            Material material = world.getMaterial(i, j - 1, k);
-
-            if (material.isSolid() || material.isLiquid()) {
-                world.setTypeId(i, j, k, Block.WATER.id);
+            if (var8.blocksMovement() || var8.isLiquid())
+            {
+                par1World.setBlockWithNotify(par3, par4, par5, Block.waterMoving.blockID);
             }
         }
     }
 
-    public int a(Random random) {
+    /**
+     * Returns the quantity of items to drop on block destruction.
+     */
+    public int quantityDropped(Random par1Random)
+    {
         return 0;
     }
 
-    public void b(World world, int i, int j, int k, Random random) {
-        if (world.b(EnumSkyBlock.BLOCK, i, j, k) > 11 - Block.lightBlock[this.id]) {
+    /**
+     * Ticks the block if it's been scheduled
+     */
+    public void updateTick(World par1World, int par2, int par3, int par4, Random par5Random)
+    {
+        if (par1World.getSavedLightValue(EnumSkyBlock.Block, par2, par3, par4) > 11 - Block.lightOpacity[this.blockID])
+        {
             // CraftBukkit start
-            if (org.bukkit.craftbukkit.event.CraftEventFactory.callBlockFadeEvent(world.getWorld().getBlockAt(i, j, k), Block.STATIONARY_WATER.id).isCancelled()) {
+            if (org.bukkit.craftbukkit.event.CraftEventFactory.callBlockFadeEvent(par1World.getWorld().getBlockAt(par2, par3, par4), Block.waterStill.blockID).isCancelled())
+            {
                 return;
             }
+
             // CraftBukkit end
 
-            if (world.worldProvider.e) {
-                world.setTypeId(i, j, k, 0);
+            if (par1World.provider.isHellWorld)
+            {
+                par1World.setBlockWithNotify(par2, par3, par4, 0);
                 return;
             }
 
-            this.c(world, i, j, k, world.getData(i, j, k), 0);
-            world.setTypeId(i, j, k, Block.STATIONARY_WATER.id);
+            this.dropBlockAsItem(par1World, par2, par3, par4, par1World.getBlockMetadata(par2, par3, par4), 0);
+            par1World.setBlockWithNotify(par2, par3, par4, Block.waterStill.blockID);
         }
     }
 
-    public int q_() {
+    /**
+     * Returns the mobility information of the block, 0 = free, 1 = can't push but can move over, 2 = total immobility
+     * and stop pistons
+     */
+    public int getMobilityFlag()
+    {
         return 0;
     }
 }

@@ -1,6 +1,14 @@
-package net.minecraft.server;
+package net.minecraft.tileentity;
 
 import java.util.List;
+import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.inventory.IInventory;
+import net.minecraft.item.Item;
+import net.minecraft.item.ItemPotion;
+import net.minecraft.item.ItemStack;
+import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.nbt.NBTTagList;
+import net.minecraft.potion.PotionHelper;
 
 // CraftBukkit start
 import org.bukkit.craftbukkit.entity.CraftHumanEntity;
@@ -8,12 +16,16 @@ import org.bukkit.entity.HumanEntity;
 import org.bukkit.event.inventory.BrewEvent;
 // CraftBukkit end
 
-public class TileEntityBrewingStand extends TileEntity implements IInventory {
-
-    public ItemStack[] items = new ItemStack[4]; // CraftBukkit private -> public
+public class TileEntityBrewingStand extends TileEntity implements IInventory
+{
+    public ItemStack[] brewingItemStacks = new ItemStack[4]; // CraftBukkit private -> public
     public int brewTime; // CraftBukkit private -> public
-    private int c;
-    private int d;
+
+    /**
+     * an integer with each bit specifying whether that slot of the stand contains a potion
+     */
+    private int filledSlots;
+    private int ingredientID;
 
     public TileEntityBrewingStand() {}
 
@@ -21,238 +33,347 @@ public class TileEntityBrewingStand extends TileEntity implements IInventory {
     public List<HumanEntity> transaction = new java.util.ArrayList<HumanEntity>();
     private int maxStack = 1;
 
-    public void onOpen(CraftHumanEntity who) {
+    public void onOpen(CraftHumanEntity who)
+    {
         transaction.add(who);
     }
 
-    public void onClose(CraftHumanEntity who) {
+    public void onClose(CraftHumanEntity who)
+    {
         transaction.remove(who);
     }
 
-    public List<HumanEntity> getViewers() {
+    public List<HumanEntity> getViewers()
+    {
         return transaction;
     }
 
-    public ItemStack[] getContents() {
-        return this.items;
+    public ItemStack[] getContents()
+    {
+        return this.brewingItemStacks;
     }
 
-    public void setMaxStackSize(int size) {
+    public void setMaxStackSize(int size)
+    {
         maxStack = size;
     }
     // CraftBukkit end
 
-    public String getName() {
+    /**
+     * Returns the name of the inventory.
+     */
+    public String getInvName()
+    {
         return "container.brewing";
     }
 
-    public int getSize() {
-        return this.items.length;
+    /**
+     * Returns the number of slots in the inventory.
+     */
+    public int getSizeInventory()
+    {
+        return this.brewingItemStacks.length;
     }
 
-    public void g() {
-        if (this.brewTime > 0) {
+    /**
+     * Allows the entity to update its state. Overridden in most subclasses, e.g. the mob spawner uses this to count
+     * ticks and creates a new spawn inside its implementation.
+     */
+    public void updateEntity()
+    {
+        if (this.brewTime > 0)
+        {
             --this.brewTime;
-            if (this.brewTime == 0) {
-                this.u();
-                this.update();
-            } else if (!this.k()) {
-                this.brewTime = 0;
-                this.update();
-            } else if (this.d != this.items[3].id) {
-                this.brewTime = 0;
-                this.update();
+
+            if (this.brewTime == 0)
+            {
+                this.brewPotions();
+                this.onInventoryChanged();
             }
-        } else if (this.k()) {
+            else if (!this.canBrew())
+            {
+                this.brewTime = 0;
+                this.onInventoryChanged();
+            }
+            else if (this.ingredientID != this.brewingItemStacks[3].itemID)
+            {
+                this.brewTime = 0;
+                this.onInventoryChanged();
+            }
+        }
+        else if (this.canBrew())
+        {
             this.brewTime = 400;
-            this.d = this.items[3].id;
+            this.ingredientID = this.brewingItemStacks[3].itemID;
         }
 
-        int i = this.i();
+        int var1 = this.getFilledSlots();
 
-        if (i != this.c) {
-            this.c = i;
-            this.world.setData(this.x, this.y, this.z, i);
+        if (var1 != this.filledSlots)
+        {
+            this.filledSlots = var1;
+            this.worldObj.setBlockMetadataWithNotify(this.xCoord, this.yCoord, this.zCoord, var1);
         }
 
-        super.g();
+        super.updateEntity();
     }
 
-    public int x_() {
+    public int getBrewTime()
+    {
         return this.brewTime;
     }
 
-    private boolean k() {
-        if (this.items[3] != null && this.items[3].count > 0) {
-            ItemStack itemstack = this.items[3];
+    private boolean canBrew()
+    {
+        if (this.brewingItemStacks[3] != null && this.brewingItemStacks[3].stackSize > 0)
+        {
+            ItemStack var1 = this.brewingItemStacks[3];
 
-            if (!Item.byId[itemstack.id].v()) {
+            if (!Item.itemsList[var1.itemID].isPotionIngredient())
+            {
                 return false;
-            } else {
-                boolean flag = false;
+            }
+            else
+            {
+                boolean var2 = false;
 
-                for (int i = 0; i < 3; ++i) {
-                    if (this.items[i] != null && this.items[i].id == Item.POTION.id) {
-                        int j = this.items[i].getData();
-                        int k = this.b(j, itemstack);
+                for (int var3 = 0; var3 < 3; ++var3)
+                {
+                    if (this.brewingItemStacks[var3] != null && this.brewingItemStacks[var3].itemID == Item.potion.itemID)
+                    {
+                        int var4 = this.brewingItemStacks[var3].getItemDamage();
+                        int var5 = this.getPotionResult(var4, var1);
 
-                        if (!ItemPotion.g(j) && ItemPotion.g(k)) {
-                            flag = true;
+                        if (!ItemPotion.isSplash(var4) && ItemPotion.isSplash(var5))
+                        {
+                            var2 = true;
                             break;
                         }
 
-                        List list = Item.POTION.f(j);
-                        List list1 = Item.POTION.f(k);
+                        List var6 = Item.potion.getEffects(var4);
+                        List var7 = Item.potion.getEffects(var5);
 
-                        if ((j <= 0 || list != list1) && (list == null || !list.equals(list1) && list1 != null) && j != k) {
-                            flag = true;
+                        if ((var4 <= 0 || var6 != var7) && (var6 == null || !var6.equals(var7) && var7 != null) && var4 != var5)
+                        {
+                            var2 = true;
                             break;
                         }
                     }
                 }
 
-                return flag;
+                return var2;
             }
-        } else {
+        }
+        else
+        {
             return false;
         }
     }
 
-    private void u() {
-        if (this.k()) {
-            ItemStack itemstack = this.items[3];
+    private void brewPotions()
+    {
+        if (this.canBrew())
+        {
+            ItemStack var1 = this.brewingItemStacks[3];
 
             // CraftBukkit start - fire BREW event
-            if (getOwner() != null) {
-                BrewEvent event = new BrewEvent(world.getWorld().getBlockAt(x, y, z), (org.bukkit.inventory.BrewerInventory) this.getOwner().getInventory());
+            if (getOwner() != null)
+            {
+                BrewEvent event = new BrewEvent(worldObj.getWorld().getBlockAt(xCoord, yCoord, zCoord), (org.bukkit.inventory.BrewerInventory) this.getOwner().getInventory());
                 org.bukkit.Bukkit.getPluginManager().callEvent(event);
-                if(event.isCancelled()) {
+
+                if (event.isCancelled())
+                {
                     return;
                 }
             }
+
             // CraftBukkit end
 
-            for (int i = 0; i < 3; ++i) {
-                if (this.items[i] != null && this.items[i].id == Item.POTION.id) {
-                    int j = this.items[i].getData();
-                    int k = this.b(j, itemstack);
-                    List list = Item.POTION.f(j);
-                    List list1 = Item.POTION.f(k);
+            for (int var2 = 0; var2 < 3; ++var2)
+            {
+                if (this.brewingItemStacks[var2] != null && this.brewingItemStacks[var2].itemID == Item.potion.itemID)
+                {
+                    int var3 = this.brewingItemStacks[var2].getItemDamage();
+                    int var4 = this.getPotionResult(var3, var1);
+                    List var5 = Item.potion.getEffects(var3);
+                    List var6 = Item.potion.getEffects(var4);
 
-                    if ((j <= 0 || list != list1) && (list == null || !list.equals(list1) && list1 != null)) {
-                        if (j != k) {
-                            this.items[i].setData(k);
+                    if ((var3 <= 0 || var5 != var6) && (var5 == null || !var5.equals(var6) && var6 != null))
+                    {
+                        if (var3 != var4)
+                        {
+                            this.brewingItemStacks[var2].setItemDamage(var4);
                         }
-                    } else if (!ItemPotion.g(j) && ItemPotion.g(k)) {
-                        this.items[i].setData(k);
+                    }
+                    else if (!ItemPotion.isSplash(var3) && ItemPotion.isSplash(var4))
+                    {
+                        this.brewingItemStacks[var2].setItemDamage(var4);
                     }
                 }
             }
 
-            if (Item.byId[itemstack.id].s()) {
-                this.items[3] = new ItemStack(Item.byId[itemstack.id].r());
-            } else {
-                --this.items[3].count;
-                if (this.items[3].count <= 0) {
-                    this.items[3] = null;
+            if (Item.itemsList[var1.itemID].hasContainerItem())
+            {
+                this.brewingItemStacks[3] = new ItemStack(Item.itemsList[var1.itemID].getContainerItem());
+            }
+            else
+            {
+                --this.brewingItemStacks[3].stackSize;
+
+                if (this.brewingItemStacks[3].stackSize <= 0)
+                {
+                    this.brewingItemStacks[3] = null;
                 }
             }
         }
     }
 
-    private int b(int i, ItemStack itemstack) {
-        return itemstack == null ? i : (Item.byId[itemstack.id].v() ? PotionBrewer.a(i, Item.byId[itemstack.id].u()) : i);
+    /**
+     * The result of brewing a potion of the specified damage value with an ingredient itemstack.
+     */
+    private int getPotionResult(int par1, ItemStack par2ItemStack)
+    {
+        return par2ItemStack == null ? par1 : (Item.itemsList[par2ItemStack.itemID].isPotionIngredient() ? PotionHelper.applyIngredient(par1, Item.itemsList[par2ItemStack.itemID].getPotionEffect()) : par1);
     }
 
-    public void a(NBTTagCompound nbttagcompound) {
-        super.a(nbttagcompound);
-        NBTTagList nbttaglist = nbttagcompound.getList("Items");
+    /**
+     * Reads a tile entity from NBT.
+     */
+    public void readFromNBT(NBTTagCompound par1NBTTagCompound)
+    {
+        super.readFromNBT(par1NBTTagCompound);
+        NBTTagList var2 = par1NBTTagCompound.getTagList("Items");
+        this.brewingItemStacks = new ItemStack[this.getSizeInventory()];
 
-        this.items = new ItemStack[this.getSize()];
+        for (int var3 = 0; var3 < var2.tagCount(); ++var3)
+        {
+            NBTTagCompound var4 = (NBTTagCompound)var2.tagAt(var3);
+            byte var5 = var4.getByte("Slot");
 
-        for (int i = 0; i < nbttaglist.size(); ++i) {
-            NBTTagCompound nbttagcompound1 = (NBTTagCompound) nbttaglist.get(i);
-            byte b0 = nbttagcompound1.getByte("Slot");
-
-            if (b0 >= 0 && b0 < this.items.length) {
-                this.items[b0] = ItemStack.createStack(nbttagcompound1);
+            if (var5 >= 0 && var5 < this.brewingItemStacks.length)
+            {
+                this.brewingItemStacks[var5] = ItemStack.loadItemStackFromNBT(var4);
             }
         }
 
-        this.brewTime = nbttagcompound.getShort("BrewTime");
+        this.brewTime = par1NBTTagCompound.getShort("BrewTime");
     }
 
-    public void b(NBTTagCompound nbttagcompound) {
-        super.b(nbttagcompound);
-        nbttagcompound.setShort("BrewTime", (short) this.brewTime);
-        NBTTagList nbttaglist = new NBTTagList();
+    /**
+     * Writes a tile entity to NBT.
+     */
+    public void writeToNBT(NBTTagCompound par1NBTTagCompound)
+    {
+        super.writeToNBT(par1NBTTagCompound);
+        par1NBTTagCompound.setShort("BrewTime", (short)this.brewTime);
+        NBTTagList var2 = new NBTTagList();
 
-        for (int i = 0; i < this.items.length; ++i) {
-            if (this.items[i] != null) {
-                NBTTagCompound nbttagcompound1 = new NBTTagCompound();
-
-                nbttagcompound1.setByte("Slot", (byte) i);
-                this.items[i].save(nbttagcompound1);
-                nbttaglist.add(nbttagcompound1);
+        for (int var3 = 0; var3 < this.brewingItemStacks.length; ++var3)
+        {
+            if (this.brewingItemStacks[var3] != null)
+            {
+                NBTTagCompound var4 = new NBTTagCompound();
+                var4.setByte("Slot", (byte)var3);
+                this.brewingItemStacks[var3].writeToNBT(var4);
+                var2.appendTag(var4);
             }
         }
 
-        nbttagcompound.set("Items", nbttaglist);
+        par1NBTTagCompound.setTag("Items", var2);
     }
 
-    public ItemStack getItem(int i) {
-        return i >= 0 && i < this.items.length ? this.items[i] : null;
+    /**
+     * Returns the stack in slot i
+     */
+    public ItemStack getStackInSlot(int par1)
+    {
+        return par1 >= 0 && par1 < this.brewingItemStacks.length ? this.brewingItemStacks[par1] : null;
     }
 
-    public ItemStack splitStack(int i, int j) {
-        if (i >= 0 && i < this.items.length) {
-            ItemStack itemstack = this.items[i];
-
-            this.items[i] = null;
-            return itemstack;
-        } else {
+    /**
+     * Removes from an inventory slot (first arg) up to a specified number (second arg) of items and returns them in a
+     * new stack.
+     */
+    public ItemStack decrStackSize(int par1, int par2)
+    {
+        if (par1 >= 0 && par1 < this.brewingItemStacks.length)
+        {
+            ItemStack var3 = this.brewingItemStacks[par1];
+            this.brewingItemStacks[par1] = null;
+            return var3;
+        }
+        else
+        {
             return null;
         }
     }
 
-    public ItemStack splitWithoutUpdate(int i) {
-        if (i >= 0 && i < this.items.length) {
-            ItemStack itemstack = this.items[i];
-
-            this.items[i] = null;
-            return itemstack;
-        } else {
+    /**
+     * When some containers are closed they call this on each slot, then drop whatever it returns as an EntityItem -
+     * like when you close a workbench GUI.
+     */
+    public ItemStack getStackInSlotOnClosing(int par1)
+    {
+        if (par1 >= 0 && par1 < this.brewingItemStacks.length)
+        {
+            ItemStack var2 = this.brewingItemStacks[par1];
+            this.brewingItemStacks[par1] = null;
+            return var2;
+        }
+        else
+        {
             return null;
         }
     }
 
-    public void setItem(int i, ItemStack itemstack) {
-        if (i >= 0 && i < this.items.length) {
-            this.items[i] = itemstack;
+    /**
+     * Sets the given item stack to the specified slot in the inventory (can be crafting or armor sections).
+     */
+    public void setInventorySlotContents(int par1, ItemStack par2ItemStack)
+    {
+        if (par1 >= 0 && par1 < this.brewingItemStacks.length)
+        {
+            this.brewingItemStacks[par1] = par2ItemStack;
         }
     }
 
-    public int getMaxStackSize() {
+    /**
+     * Returns the maximum stack size for a inventory slot. Seems to always be 64, possibly will be extended. *Isn't
+     * this more of a set than a get?*
+     */
+    public int getInventoryStackLimit()
+    {
         return this.maxStack; // CraftBukkit
     }
 
-    public boolean a_(EntityHuman entityhuman) {
-        return this.world.getTileEntity(this.x, this.y, this.z) != this ? false : entityhuman.e((double) this.x + 0.5D, (double) this.y + 0.5D, (double) this.z + 0.5D) <= 64.0D;
+    /**
+     * Do not make give this method the name canInteractWith because it clashes with Container
+     */
+    public boolean isUseableByPlayer(EntityPlayer par1EntityPlayer)
+    {
+        return this.worldObj.getBlockTileEntity(this.xCoord, this.yCoord, this.zCoord) != this ? false : par1EntityPlayer.getDistanceSq((double)this.xCoord + 0.5D, (double)this.yCoord + 0.5D, (double)this.zCoord + 0.5D) <= 64.0D;
     }
 
-    public void startOpen() {}
+    public void openChest() {}
 
-    public void f() {}
+    public void closeChest() {}
 
-    public int i() {
-        int i = 0;
+    /**
+     * returns an integer with each bit specifying wether that slot of the stand contains a potion
+     */
+    public int getFilledSlots()
+    {
+        int var1 = 0;
 
-        for (int j = 0; j < 3; ++j) {
-            if (this.items[j] != null) {
-                i |= 1 << j;
+        for (int var2 = 0; var2 < 3; ++var2)
+        {
+            if (this.brewingItemStacks[var2] != null)
+            {
+                var1 |= 1 << var2;
             }
         }
 
-        return i;
+        return var1;
     }
 }

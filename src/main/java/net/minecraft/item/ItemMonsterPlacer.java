@@ -1,68 +1,100 @@
-package net.minecraft.server;
+package net.minecraft.item;
 
-public class ItemMonsterEgg extends Item {
-
-    public ItemMonsterEgg(int i) {
-        super(i);
-        this.a(true);
-        this.a(CreativeModeTab.f);
+import net.minecraft.block.Block;
+import net.minecraft.creativetab.CreativeTabs;
+import net.minecraft.entity.Entity;
+import net.minecraft.entity.EntityList;
+import net.minecraft.entity.EntityLiving;
+import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.util.Facing;
+import net.minecraft.util.MathHelper;
+import net.minecraft.util.StatCollector;
+import net.minecraft.world.World;
+public class ItemMonsterPlacer extends Item
+{
+    public ItemMonsterPlacer(int par1)
+    {
+        super(par1);
+        this.setHasSubtypes(true);
+        this.setCreativeTab(CreativeTabs.tabMisc);
     }
 
-    public String i(ItemStack itemstack) {
-        String s = ("" + LocaleI18n.get(this.getName() + ".name")).trim();
-        String s1 = EntityTypes.b(itemstack.getData());
+    public String i(ItemStack itemstack)
+    {
+        String s = ("" + StatCollector.translateToLocal(this.getItemName() + ".name")).trim();
+        String s1 = EntityList.getStringFromID(itemstack.getItemDamage());
 
-        if (s1 != null) {
-            s = s + " " + LocaleI18n.get("entity." + s1 + ".name");
+        if (s1 != null)
+        {
+            s = s + " " + StatCollector.translateToLocal("entity." + s1 + ".name");
         }
 
         return s;
     }
 
-    public boolean interactWith(ItemStack itemstack, EntityHuman entityhuman, World world, int i, int j, int k, int l, float f, float f1, float f2) {
-        if (world.isStatic || itemstack.getData() == 48 || itemstack.getData() == 49 || itemstack.getData() == 63 || itemstack.getData() == 64) { // CraftBukkit
+    /**
+     * Callback for item usage. If the item does something special on right clicking, he will have one of those. Return
+     * True if something happen and false if it don't. This is for ITEMS, not BLOCKS
+     */
+    public boolean onItemUse(ItemStack par1ItemStack, EntityPlayer par2EntityPlayer, World par3World, int par4, int par5, int par6, int par7, float par8, float par9, float par10)
+    {
+        if (par3World.isRemote || par1ItemStack.getItemDamage() == 48 || par1ItemStack.getItemDamage() == 49 || par1ItemStack.getItemDamage() == 63 || par1ItemStack.getItemDamage() == 64)   // CraftBukkit
+        {
             return true;
-        } else {
-            int i1 = world.getTypeId(i, j, k);
+        }
+        else
+        {
+            int var11 = par3World.getBlockId(par4, par5, par6);
+            par4 += Facing.offsetsXForSide[par7];
+            par5 += Facing.offsetsYForSide[par7];
+            par6 += Facing.offsetsZForSide[par7];
+            double var12 = 0.0D;
 
-            i += Facing.b[l];
-            j += Facing.c[l];
-            k += Facing.d[l];
-            double d0 = 0.0D;
-
-            if (l == 1 && Block.byId[i1] != null && Block.byId[i1].d() == 11) {
-                d0 = 0.5D;
+            if (par7 == 1 && Block.blocksList[var11] != null && Block.blocksList[var11].getRenderType() == 11)
+            {
+                var12 = 0.5D;
             }
 
-            if (a(world, itemstack.getData(), (double) i + 0.5D, (double) j + d0, (double) k + 0.5D) != null && !entityhuman.abilities.canInstantlyBuild) {
-                --itemstack.count;
+            if (spawnCreature(par3World, par1ItemStack.getItemDamage(), (double)par4 + 0.5D, (double)par5 + var12, (double)par6 + 0.5D) != null && !par2EntityPlayer.capabilities.isCreativeMode)
+            {
+                --par1ItemStack.stackSize;
             }
 
             return true;
         }
     }
 
-    public static Entity a(World world, int i, double d0, double d1, double d2) {
-        if (!EntityTypes.a.containsKey(Integer.valueOf(i))) {
+    /**
+     * Spawns the creature specified by the egg's type in the location specified by the last three parameters.
+     * Parameters: world, entityID, x, y, z.
+     */
+    public static Entity spawnCreature(World par0World, int par1, double par2, double par4, double par6)
+    {
+        if (!EntityList.entityEggs.containsKey(Integer.valueOf(par1)))
+        {
             return null;
-        } else {
-            Entity entity = null;
+        }
+        else
+        {
+            Entity var8 = null;
 
-            for (int j = 0; j < 1; ++j) {
-                entity = EntityTypes.a(i, world);
-                if (entity != null && entity instanceof EntityLiving) {
-                    EntityLiving entityliving = (EntityLiving) entity;
+            for (int var9 = 0; var9 < 1; ++var9)
+            {
+                var8 = EntityList.createEntityByID(par1, par0World);
 
-                    entity.setPositionRotation(d0, d1, d2, MathHelper.g(world.random.nextFloat() * 360.0F), 0.0F);
-                    entityliving.az = entityliving.yaw;
-                    entityliving.ax = entityliving.yaw;
-                    entityliving.bG();
-                    world.addEntity(entity, org.bukkit.event.entity.CreatureSpawnEvent.SpawnReason.SPAWNER_EGG); // CraftBukkit
-                    entityliving.aO();
+                if (var8 != null && var8 instanceof EntityLiving)
+                {
+                    EntityLiving var10 = (EntityLiving)var8;
+                    var8.setLocationAndAngles(par2, par4, par6, MathHelper.wrapAngleTo180_float(par0World.rand.nextFloat() * 360.0F), 0.0F);
+                    var10.rotationYawHead = var10.rotationYaw;
+                    var10.renderYawOffset = var10.rotationYaw;
+                    var10.initCreature();
+                    par0World.addEntity(var8, org.bukkit.event.entity.CreatureSpawnEvent.SpawnReason.SPAWNER_EGG); // CraftBukkit
+                    var10.playLivingSound();
                 }
             }
 
-            return entity;
+            return var8;
         }
     }
 }

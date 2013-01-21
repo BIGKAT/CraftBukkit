@@ -5,29 +5,28 @@ import org.bukkit.inventory.DoubleChestInventory;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 
-import net.minecraft.server.InventoryLargeChest;
 
 public class CraftInventoryDoubleChest extends CraftInventory implements DoubleChestInventory {
     private final CraftInventory left;
     private final CraftInventory right;
 
     public CraftInventoryDoubleChest(CraftInventory left, CraftInventory right) {
-        super(new InventoryLargeChest("Large chest", left.getInventory(), right.getInventory()));
+        super(new net.minecraft.inventory.InventoryLargeChest/*was:InventoryLargeChest*/("Large chest", left.getInventory(), right.getInventory()));
         this.left = left;
         this.right = right;
     }
 
-    public CraftInventoryDoubleChest(InventoryLargeChest largeChest) {
+    public CraftInventoryDoubleChest(net.minecraft.inventory.InventoryLargeChest/*was:InventoryLargeChest*/ largeChest) {
         super(largeChest);
-        if (largeChest.left instanceof InventoryLargeChest) {
-            left = new CraftInventoryDoubleChest((InventoryLargeChest) largeChest.left);
+        if (largeChest.upperChest/*was:left*/ instanceof net.minecraft.inventory.InventoryLargeChest/*was:InventoryLargeChest*/) {
+            left = new CraftInventoryDoubleChest((net.minecraft.inventory.InventoryLargeChest/*was:InventoryLargeChest*/) largeChest.upperChest/*was:left*/);
         } else {
-            left = new CraftInventory(largeChest.left);
+            left = new CraftInventory(largeChest.upperChest/*was:left*/);
         }
-        if (largeChest.right instanceof InventoryLargeChest) {
-            right = new CraftInventoryDoubleChest((InventoryLargeChest) largeChest.right);
+        if (largeChest.lowerChest/*was:right*/ instanceof net.minecraft.inventory.InventoryLargeChest/*was:InventoryLargeChest*/) {
+            right = new CraftInventoryDoubleChest((net.minecraft.inventory.InventoryLargeChest/*was:InventoryLargeChest*/) largeChest.lowerChest/*was:right*/);
         } else {
-            right = new CraftInventory(largeChest.right);
+            right = new CraftInventory(largeChest.lowerChest/*was:right*/);
         }
     }
 

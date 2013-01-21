@@ -1,120 +1,169 @@
-package net.minecraft.server;
+package net.minecraft.inventory;
 
 // CraftBukkit start
 import org.bukkit.craftbukkit.inventory.CraftInventory;
 import org.bukkit.craftbukkit.inventory.CraftInventoryBeacon;
 import org.bukkit.craftbukkit.inventory.CraftInventoryView;
+import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.entity.player.InventoryPlayer;
+import net.minecraft.item.ItemStack;
+import net.minecraft.tileentity.TileEntityBeacon;
 // CraftBukkit end
 
-public class ContainerBeacon extends Container {
+public class ContainerBeacon extends Container
+{
+    private TileEntityBeacon theBeacon;
 
-    private TileEntityBeacon a;
-    private final SlotBeacon f;
-    private int g;
-    private int h;
-    private int i;
+    /**
+     * This beacon's slot where you put in Emerald, Diamond, Gold or Iron Ingot.
+     */
+    private final SlotBeacon beaconSlot;
+    private int field_82865_g;
+    private int field_82867_h;
+    private int field_82868_i;
     // CraftBukkit start
     private CraftInventoryView bukkitEntity = null;
-    private PlayerInventory player;
+    private InventoryPlayer player;
     // CraftBukkit end
 
-    public ContainerBeacon(PlayerInventory playerinventory, TileEntityBeacon tileentitybeacon) {
-        player = playerinventory; // CraftBukkit
-        this.a = tileentitybeacon;
-        this.a(this.f = new SlotBeacon(this, tileentitybeacon, 0, 136, 110));
-        byte b0 = 36;
-        short short1 = 137;
+    public ContainerBeacon(InventoryPlayer par1InventoryPlayer, TileEntityBeacon par2TileEntityBeacon)
+    {
+        player = par1InventoryPlayer; // CraftBukkit
+        this.theBeacon = par2TileEntityBeacon;
+        this.addSlotToContainer(this.beaconSlot = new SlotBeacon(this, par2TileEntityBeacon, 0, 136, 110));
+        byte var3 = 36;
+        short var4 = 137;
+        int var5;
 
-        int i;
-
-        for (i = 0; i < 3; ++i) {
-            for (int j = 0; j < 9; ++j) {
-                this.a(new Slot(playerinventory, j + i * 9 + 9, b0 + j * 18, short1 + i * 18));
+        for (var5 = 0; var5 < 3; ++var5)
+        {
+            for (int var6 = 0; var6 < 9; ++var6)
+            {
+                this.addSlotToContainer(new Slot(par1InventoryPlayer, var6 + var5 * 9 + 9, var3 + var6 * 18, var4 + var5 * 18));
             }
         }
 
-        for (i = 0; i < 9; ++i) {
-            this.a(new Slot(playerinventory, i, b0 + i * 18, 58 + short1));
+        for (var5 = 0; var5 < 9; ++var5)
+        {
+            this.addSlotToContainer(new Slot(par1InventoryPlayer, var5, var3 + var5 * 18, 58 + var4));
         }
 
-        this.g = tileentitybeacon.k();
-        this.h = tileentitybeacon.i();
-        this.i = tileentitybeacon.j();
+        this.field_82865_g = par2TileEntityBeacon.getLevels();
+        this.field_82867_h = par2TileEntityBeacon.getPrimaryEffect();
+        this.field_82868_i = par2TileEntityBeacon.getSecondaryEffect();
     }
 
-    public void addSlotListener(ICrafting icrafting) {
-        super.addSlotListener(icrafting);
-        icrafting.setContainerData(this, 0, this.g);
-        icrafting.setContainerData(this, 1, this.h);
-        icrafting.setContainerData(this, 2, this.i);
+    public void addCraftingToCrafters(ICrafting par1ICrafting)
+    {
+        super.addCraftingToCrafters(par1ICrafting);
+        par1ICrafting.sendProgressBarUpdate(this, 0, this.field_82865_g);
+        par1ICrafting.sendProgressBarUpdate(this, 1, this.field_82867_h);
+        par1ICrafting.sendProgressBarUpdate(this, 2, this.field_82868_i);
     }
 
-    public void b() {
-        super.b();
+    /**
+     * Looks for changes made in the container, sends them to every listener.
+     */
+    public void detectAndSendChanges()
+    {
+        super.detectAndSendChanges();
     }
 
-    public TileEntityBeacon d() {
-        return this.a;
+    /**
+     * Returns the Tile Entity behind this beacon inventory / container
+     */
+    public TileEntityBeacon getBeacon()
+    {
+        return this.theBeacon;
     }
 
-    public boolean a(EntityHuman entityhuman) {
-        if (!this.checkReachable) return true; // CraftBukkit
-        return this.a.a_(entityhuman);
+    public boolean canInteractWith(EntityPlayer par1EntityPlayer)
+    {
+        if (!this.checkReachable)
+        {
+            return true;    // CraftBukkit
+        }
+
+        return this.theBeacon.isUseableByPlayer(par1EntityPlayer);
     }
 
-    public ItemStack b(EntityHuman entityhuman, int i) {
-        ItemStack itemstack = null;
-        Slot slot = (Slot) this.c.get(i);
+    /**
+     * Called when a player shift-clicks on a slot. You must override this or you will crash when someone does that.
+     */
+    public ItemStack transferStackInSlot(EntityPlayer par1EntityPlayer, int par2)
+    {
+        ItemStack var3 = null;
+        Slot var4 = (Slot)this.inventorySlots.get(par2);
 
-        if (slot != null && slot.d()) {
-            ItemStack itemstack1 = slot.getItem();
+        if (var4 != null && var4.getHasStack())
+        {
+            ItemStack var5 = var4.getStack();
+            var3 = var5.copy();
 
-            itemstack = itemstack1.cloneItemStack();
-            if (i == 0) {
-                if (!this.a(itemstack1, 1, 37, true)) {
+            if (par2 == 0)
+            {
+                if (!this.mergeItemStack(var5, 1, 37, true))
+                {
                     return null;
                 }
 
-                slot.a(itemstack1, itemstack);
-            } else if (!this.f.d() && this.f.isAllowed(itemstack1) && itemstack1.count == 1) {
-                if (!this.a(itemstack1, 0, 1, false)) {
+                var4.onSlotChange(var5, var3);
+            }
+            else if (!this.beaconSlot.getHasStack() && this.beaconSlot.isItemValid(var5) && var5.stackSize == 1)
+            {
+                if (!this.mergeItemStack(var5, 0, 1, false))
+                {
                     return null;
                 }
-            } else if (i >= 1 && i < 28) {
-                if (!this.a(itemstack1, 28, 37, false)) {
+            }
+            else if (par2 >= 1 && par2 < 28)
+            {
+                if (!this.mergeItemStack(var5, 28, 37, false))
+                {
                     return null;
                 }
-            } else if (i >= 28 && i < 37) {
-                if (!this.a(itemstack1, 1, 28, false)) {
+            }
+            else if (par2 >= 28 && par2 < 37)
+            {
+                if (!this.mergeItemStack(var5, 1, 28, false))
+                {
                     return null;
                 }
-            } else if (!this.a(itemstack1, 1, 37, false)) {
+            }
+            else if (!this.mergeItemStack(var5, 1, 37, false))
+            {
                 return null;
             }
 
-            if (itemstack1.count == 0) {
-                slot.set((ItemStack) null);
-            } else {
-                slot.e();
+            if (var5.stackSize == 0)
+            {
+                var4.putStack((ItemStack)null);
+            }
+            else
+            {
+                var4.onSlotChanged();
             }
 
-            if (itemstack1.count == itemstack.count) {
+            if (var5.stackSize == var3.stackSize)
+            {
                 return null;
             }
 
-            slot.a(entityhuman, itemstack1);
+            var4.onPickupFromSlot(par1EntityPlayer, var5);
         }
 
-        return itemstack;
+        return var3;
     }
 
     // CraftBukkit start
-    public CraftInventoryView getBukkitView() {
-        if (bukkitEntity != null) {
+    public CraftInventoryView getBukkitView()
+    {
+        if (bukkitEntity != null)
+        {
             return bukkitEntity;
         }
 
-        CraftInventory inventory = new CraftInventoryBeacon(this.a);
+        CraftInventory inventory = new CraftInventoryBeacon(this.theBeacon);
         bukkitEntity = new CraftInventoryView(this.player.player.getBukkitEntity(), inventory, this);
         return bukkitEntity;
     }

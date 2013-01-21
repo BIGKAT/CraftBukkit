@@ -1,104 +1,144 @@
-package net.minecraft.server;
+package net.minecraft.block;
 
 import java.util.Random;
+import net.minecraft.block.material.Material;
+import net.minecraft.world.IBlockAccess;
+import net.minecraft.world.World;
 
 // CraftBukkit start
 import org.bukkit.craftbukkit.event.CraftEventFactory;
 import org.bukkit.event.block.BlockIgniteEvent;
 // CraftBukkit end
 
-public class BlockStationary extends BlockFluids {
+public class BlockStationary extends BlockFluid
+{
+    protected BlockStationary(int par1, Material par2Material)
+    {
+        super(par1, par2Material);
+        this.setTickRandomly(false);
 
-    protected BlockStationary(int i, Material material) {
-        super(i, material);
-        this.b(false);
-        if (material == Material.LAVA) {
-            this.b(true);
+        if (par2Material == Material.lava)
+        {
+            this.setTickRandomly(true);
         }
     }
 
-    public boolean c(IBlockAccess iblockaccess, int i, int j, int k) {
-        return this.material != Material.LAVA;
+    public boolean getBlocksMovement(IBlockAccess par1IBlockAccess, int par2, int par3, int par4)
+    {
+        return this.blockMaterial != Material.lava;
     }
 
-    public void doPhysics(World world, int i, int j, int k, int l) {
-        super.doPhysics(world, i, j, k, l);
-        if (world.getTypeId(i, j, k) == this.id) {
-            this.l(world, i, j, k);
+    /**
+     * Lets the block know when one of its neighbor changes. Doesn't know which neighbor changed (coordinates passed are
+     * their own) Args: x, y, z, neighbor blockID
+     */
+    public void onNeighborBlockChange(World par1World, int par2, int par3, int par4, int par5)
+    {
+        super.onNeighborBlockChange(par1World, par2, par3, par4, par5);
+
+        if (par1World.getBlockId(par2, par3, par4) == this.blockID)
+        {
+            this.setNotStationary(par1World, par2, par3, par4);
         }
     }
 
-    private void l(World world, int i, int j, int k) {
-        int l = world.getData(i, j, k);
-
-        world.suppressPhysics = true;
-        world.setRawTypeIdAndData(i, j, k, this.id - 1, l);
-        world.e(i, j, k, i, j, k);
-        world.a(i, j, k, this.id - 1, this.r_());
-        world.suppressPhysics = false;
+    /**
+     * Changes the block ID to that of an updating fluid.
+     */
+    private void setNotStationary(World par1World, int par2, int par3, int par4)
+    {
+        int var5 = par1World.getBlockMetadata(par2, par3, par4);
+        par1World.editingBlocks = true;
+        par1World.setBlockAndMetadata(par2, par3, par4, this.blockID - 1, var5);
+        par1World.markBlockRangeForRenderUpdate(par2, par3, par4, par2, par3, par4);
+        par1World.scheduleBlockUpdate(par2, par3, par4, this.blockID - 1, this.tickRate());
+        par1World.editingBlocks = false;
     }
 
-    public void b(World world, int i, int j, int k, Random random) {
-        if (this.material == Material.LAVA) {
-            int l = random.nextInt(3);
-
-            int i1;
-            int j1;
-
+    /**
+     * Ticks the block if it's been scheduled
+     */
+    public void updateTick(World par1World, int par2, int par3, int par4, Random par5Random)
+    {
+        if (this.blockMaterial == Material.lava)
+        {
+            int var6 = par5Random.nextInt(3);
+            int var7;
+            int var8;
             // CraftBukkit start - prevent lava putting something on fire
-            org.bukkit.World bworld = world.getWorld();
+            org.bukkit.World bworld = par1World.getWorld();
             BlockIgniteEvent.IgniteCause igniteCause = BlockIgniteEvent.IgniteCause.LAVA;
             // CraftBukkit end
 
-            for (i1 = 0; i1 < l; ++i1) {
-                i += random.nextInt(3) - 1;
-                ++j;
-                k += random.nextInt(3) - 1;
-                j1 = world.getTypeId(i, j, k);
-                if (j1 == 0) {
-                    if (this.n(world, i - 1, j, k) || this.n(world, i + 1, j, k) || this.n(world, i, j, k - 1) || this.n(world, i, j, k + 1) || this.n(world, i, j - 1, k) || this.n(world, i, j + 1, k)) {
+            for (var7 = 0; var7 < var6; ++var7)
+            {
+                par2 += par5Random.nextInt(3) - 1;
+                ++par3;
+                par4 += par5Random.nextInt(3) - 1;
+                var8 = par1World.getBlockId(par2, par3, par4);
+
+                if (var8 == 0)
+                {
+                    if (this.isFlammable(par1World, par2 - 1, par3, par4) || this.isFlammable(par1World, par2 + 1, par3, par4) || this.isFlammable(par1World, par2, par3, par4 - 1) || this.isFlammable(par1World, par2, par3, par4 + 1) || this.isFlammable(par1World, par2, par3 - 1, par4) || this.isFlammable(par1World, par2, par3 + 1, par4))
+                    {
                         // CraftBukkit start - prevent lava putting something on fire
-                        org.bukkit.block.Block block = bworld.getBlockAt(i, j, k);
-                        if (block.getTypeId() != Block.FIRE.id) {
-                            if (CraftEventFactory.callEvent(new BlockIgniteEvent(block, igniteCause, null)).isCancelled()) {
+                        org.bukkit.block.Block block = bworld.getBlockAt(par2, par3, par4);
+
+                        if (block.getTypeId() != Block.fire.blockID)
+                        {
+                            if (CraftEventFactory.callEvent(new BlockIgniteEvent(block, igniteCause, null)).isCancelled())
+                            {
                                 continue;
                             }
                         }
-                        // CraftBukkit end
 
-                        world.setTypeId(i, j, k, Block.FIRE.id);
+                        // CraftBukkit end
+                        par1World.setBlockWithNotify(par2, par3, par4, Block.fire.blockID);
                         return;
                     }
-                } else if (Block.byId[j1].material.isSolid()) {
+                }
+                else if (Block.blocksList[var8].blockMaterial.blocksMovement())
+                {
                     return;
                 }
             }
 
-            if (l == 0) {
-                i1 = i;
-                j1 = k;
+            if (var6 == 0)
+            {
+                var7 = par2;
+                var8 = par4;
 
-                for (int k1 = 0; k1 < 3; ++k1) {
-                    i = i1 + random.nextInt(3) - 1;
-                    k = j1 + random.nextInt(3) - 1;
-                    if (world.isEmpty(i, j + 1, k) && this.n(world, i, j, k)) {
+                for (int var9 = 0; var9 < 3; ++var9)
+                {
+                    par2 = var7 + par5Random.nextInt(3) - 1;
+                    par4 = var8 + par5Random.nextInt(3) - 1;
+
+                    if (par1World.isAirBlock(par2, par3 + 1, par4) && this.isFlammable(par1World, par2, par3, par4))
+                    {
                         // CraftBukkit start - prevent lava putting something on fire
-                        org.bukkit.block.Block block = bworld.getBlockAt(i, j + 1, k);
-                        if (block.getTypeId() != Block.FIRE.id) {
-                            if (CraftEventFactory.callEvent(new BlockIgniteEvent(block, igniteCause, null)).isCancelled()) {
+                        org.bukkit.block.Block block = bworld.getBlockAt(par2, par3 + 1, par4);
+
+                        if (block.getTypeId() != Block.fire.blockID)
+                        {
+                            if (CraftEventFactory.callEvent(new BlockIgniteEvent(block, igniteCause, null)).isCancelled())
+                            {
                                 continue;
                             }
                         }
-                        // CraftBukkit end
 
-                        world.setTypeId(i, j + 1, k, Block.FIRE.id);
+                        // CraftBukkit end
+                        par1World.setBlockWithNotify(par2, par3 + 1, par4, Block.fire.blockID);
                     }
                 }
             }
         }
     }
 
-    private boolean n(World world, int i, int j, int k) {
-        return world.getMaterial(i, j, k).isBurnable();
+    /**
+     * Checks to see if the block is flammable.
+     */
+    private boolean isFlammable(World par1World, int par2, int par3, int par4)
+    {
+        return par1World.getBlockMaterial(par2, par3, par4).getCanBurn();
     }
 }

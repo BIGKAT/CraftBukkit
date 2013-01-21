@@ -1,19 +1,18 @@
 package org.bukkit.craftbukkit.inventory;
 
-import net.minecraft.server.PlayerInventory;
 
 import org.bukkit.entity.HumanEntity;
 import org.bukkit.inventory.EntityEquipment;
 import org.bukkit.inventory.ItemStack;
 
 public class CraftInventoryPlayer extends CraftInventory implements org.bukkit.inventory.PlayerInventory, EntityEquipment {
-    public CraftInventoryPlayer(net.minecraft.server.PlayerInventory inventory) {
+    public CraftInventoryPlayer(/*was:net.minecraft.server.*/net.minecraft.entity.player.InventoryPlayer/*was:PlayerInventory*/ inventory) {
         super(inventory);
     }
 
     @Override
-    public PlayerInventory getInventory() {
-        return (PlayerInventory) inventory;
+    public net.minecraft.entity.player.InventoryPlayer/*was:PlayerInventory*/ getInventory() {
+        return (net.minecraft.entity.player.InventoryPlayer/*was:PlayerInventory*/) inventory;
     }
 
     @Override
@@ -22,7 +21,7 @@ public class CraftInventoryPlayer extends CraftInventory implements org.bukkit.i
     }
 
     public ItemStack getItemInHand() {
-        return CraftItemStack.asCraftMirror(getInventory().getItemInHand());
+        return CraftItemStack.asCraftMirror(getInventory().getCurrentItem/*was:getItemInHand*/());
     }
 
     public void setItemInHand(ItemStack stack) {
@@ -30,7 +29,7 @@ public class CraftInventoryPlayer extends CraftInventory implements org.bukkit.i
     }
 
     public int getHeldItemSlot() {
-        return getInventory().itemInHandIndex;
+        return getInventory().currentItem/*was:itemInHandIndex*/;
     }
 
     public ItemStack getHelmet() {
@@ -66,7 +65,7 @@ public class CraftInventoryPlayer extends CraftInventory implements org.bukkit.i
     }
 
     public ItemStack[] getArmorContents() {
-        net.minecraft.server.ItemStack[] mcItems = getInventory().getArmorContents();
+        /*was:net.minecraft.server.*/net.minecraft.item.ItemStack/*was:ItemStack*/[] mcItems = getInventory().getArmorContents();
         ItemStack[] ret = new ItemStack[mcItems.length];
 
         for (int i = 0; i < mcItems.length; i++) {

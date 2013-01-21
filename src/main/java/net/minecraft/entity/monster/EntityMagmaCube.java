@@ -1,51 +1,83 @@
-package net.minecraft.server;
+package net.minecraft.entity.monster;
 
-public class EntityMagmaCube extends EntitySlime {
-
-    public EntityMagmaCube(World world) {
-        super(world);
+import net.minecraft.item.Item;
+import net.minecraft.world.World;
+public class EntityMagmaCube extends EntitySlime
+{
+    public EntityMagmaCube(World par1World)
+    {
+        super(par1World);
         this.texture = "/mob/lava.png";
-        this.fireProof = true;
-        this.aN = 0.2F;
+        this.isImmuneToFire = true;
+        this.landMovementFactor = 0.2F;
     }
 
-    public boolean canSpawn() {
-        return this.world.difficulty > 0 && this.world.b(this.boundingBox) && this.world.getCubes(this, this.boundingBox).isEmpty() && !this.world.containsLiquid(this.boundingBox);
+    /**
+     * Checks if the entity's current position is a valid location to spawn this entity.
+     */
+    public boolean getCanSpawnHere()
+    {
+        return this.worldObj.difficultySetting > 0 && this.worldObj.checkIfAABBIsClear(this.boundingBox) && this.worldObj.getCollidingBoundingBoxes(this, this.boundingBox).isEmpty() && !this.worldObj.isAnyLiquid(this.boundingBox);
     }
 
-    public int aW() {
-        return this.getSize() * 3;
+    /**
+     * Returns the current armor value as determined by a call to InventoryPlayer.getTotalArmorValue
+     */
+    public int getTotalArmorValue()
+    {
+        return this.getSlimeSize() * 3;
     }
 
-    public float c(float f) {
+    /**
+     * Gets how bright this entity is.
+     */
+    public float getBrightness(float par1)
+    {
         return 1.0F;
     }
 
-    protected String h() {
+    /**
+     * Returns the name of a particle effect that may be randomly created by EntitySlime.onUpdate()
+     */
+    protected String getSlimeParticle()
+    {
         return "flame";
     }
 
-    protected EntitySlime i() {
-        return new EntityMagmaCube(this.world);
+    protected EntitySlime createInstance()
+    {
+        return new EntityMagmaCube(this.worldObj);
     }
 
-    protected int getLootId() {
-        return Item.MAGMA_CREAM.id;
+    /**
+     * Returns the item ID for the item the mob drops on death.
+     */
+    protected int getDropItemId()
+    {
+        return Item.magmaCream.itemID;
     }
 
-    protected void dropDeathLoot(boolean flag, int i) {
+    /**
+     * Drop 0-2 items of this living's type. @param par1 - Whether this entity has recently been hit by a player. @param
+     * par2 - Level of Looting used to kill this mob.
+     */
+    protected void dropFewItems(boolean par1, int par2)
+    {
         // CraftBukkit start - whole method
         java.util.List<org.bukkit.inventory.ItemStack> loot = new java.util.ArrayList<org.bukkit.inventory.ItemStack>();
-        int j = this.getLootId();
+        int j = this.getDropItemId();
 
-        if (j > 0 && this.getSize() > 1) {
-            int k = this.random.nextInt(4) - 2;
+        if (j > 0 && this.getSlimeSize() > 1)
+        {
+            int k = this.rand.nextInt(4) - 2;
 
-            if (i > 0) {
-                k += this.random.nextInt(i + 1);
+            if (par2 > 0)
+            {
+                k += this.rand.nextInt(par2 + 1);
             }
 
-            if (k > 0) {
+            if (k > 0)
+            {
                 loot.add(new org.bukkit.inventory.ItemStack(j, k));
             }
         }
@@ -54,50 +86,94 @@ public class EntityMagmaCube extends EntitySlime {
         // CraftBukkit end
     }
 
-    public boolean isBurning() {
+    /**
+     * Returns true if the entity is on fire. Used by render to add the fire effect on rendering.
+     */
+    public boolean isBurning()
+    {
         return false;
     }
 
-    protected int j() {
-        return super.j() * 4;
+    /**
+     * Gets the amount of time the slime needs to wait between jumps.
+     */
+    protected int getJumpDelay()
+    {
+        return super.getJumpDelay() * 4;
     }
 
-    protected void k() {
-        this.b *= 0.9F;
+    protected void func_70808_l()
+    {
+        this.field_70813_a *= 0.9F;
     }
 
-    protected void bi() {
-        this.motY = (double) (0.42F + (float) this.getSize() * 0.1F);
-        this.am = true;
+    /**
+     * Causes this entity to do an upwards motion (jumping).
+     */
+    protected void jump()
+    {
+        this.motionY = (double)(0.42F + (float)this.getSlimeSize() * 0.1F);
+        this.isAirBorne = true;
     }
 
-    protected void a(float f) {}
+    /**
+     * Called when the mob is falling. Calculates and applies fall damage.
+     */
+    protected void fall(float par1) {}
 
-    protected boolean l() {
+    /**
+     * Indicates weather the slime is able to damage the player (based upon the slime's size)
+     */
+    protected boolean canDamagePlayer()
+    {
         return true;
     }
 
-    protected int m() {
-        return super.m() + 2;
+    /**
+     * Gets the amount of damage dealt to the player when "attacked" by the slime.
+     */
+    protected int getAttackStrength()
+    {
+        return super.getAttackStrength() + 2;
     }
 
-    protected String aZ() {
-        return "mob.slime." + (this.getSize() > 1 ? "big" : "small");
+    /**
+     * Returns the sound this mob makes when it is hurt.
+     */
+    protected String getHurtSound()
+    {
+        return "mob.slime." + (this.getSlimeSize() > 1 ? "big" : "small");
     }
 
-    protected String ba() {
-        return "mob.slime." + (this.getSize() > 1 ? "big" : "small");
+    /**
+     * Returns the sound this mob makes on death.
+     */
+    protected String getDeathSound()
+    {
+        return "mob.slime." + (this.getSlimeSize() > 1 ? "big" : "small");
     }
 
-    protected String n() {
-        return this.getSize() > 1 ? "mob.magmacube.big" : "mob.magmacube.small";
+    /**
+     * Returns the name of the sound played when the slime jumps.
+     */
+    protected String getJumpSound()
+    {
+        return this.getSlimeSize() > 1 ? "mob.magmacube.big" : "mob.magmacube.small";
     }
 
-    public boolean J() {
+    /**
+     * Whether or not the current entity is in lava
+     */
+    public boolean handleLavaMovement()
+    {
         return false;
     }
 
-    protected boolean o() {
+    /**
+     * Returns true if the slime makes a sound when it lands after a jump (based upon the slime's size)
+     */
+    protected boolean makesSoundOnLand()
+    {
         return true;
     }
 }

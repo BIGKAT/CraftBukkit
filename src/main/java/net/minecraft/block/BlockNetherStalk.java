@@ -1,66 +1,109 @@
-package net.minecraft.server;
+package net.minecraft.block;
 
 import java.util.Random;
+import net.minecraft.creativetab.CreativeTabs;
+import net.minecraft.item.Item;
+import net.minecraft.item.ItemStack;
+import net.minecraft.world.World;
 
-public class BlockNetherWart extends BlockFlower {
-
-    protected BlockNetherWart(int i) {
-        super(i, 226);
-        this.b(true);
-        float f = 0.5F;
-
-        this.a(0.5F - f, 0.0F, 0.5F - f, 0.5F + f, 0.25F, 0.5F + f);
-        this.a((CreativeModeTab) null);
+public class BlockNetherStalk extends BlockFlower
+{
+    protected BlockNetherStalk(int par1)
+    {
+        super(par1, 226);
+        this.setTickRandomly(true);
+        float var2 = 0.5F;
+        this.setBlockBounds(0.5F - var2, 0.0F, 0.5F - var2, 0.5F + var2, 0.25F, 0.5F + var2);
+        this.setCreativeTab((CreativeTabs)null);
     }
 
-    protected boolean d_(int i) {
-        return i == Block.SOUL_SAND.id;
+    /**
+     * Gets passed in the blockID of the block below and supposed to return true if its allowed to grow on the type of
+     * blockID passed in. Args: blockID
+     */
+    protected boolean canThisPlantGrowOnThisBlockID(int par1)
+    {
+        return par1 == Block.slowSand.blockID;
     }
 
-    public boolean d(World world, int i, int j, int k) {
-        return this.d_(world.getTypeId(i, j - 1, k));
+    /**
+     * Can this block stay at this position.  Similar to canPlaceBlockAt except gets checked often with plants.
+     */
+    public boolean canBlockStay(World par1World, int par2, int par3, int par4)
+    {
+        return this.canThisPlantGrowOnThisBlockID(par1World.getBlockId(par2, par3 - 1, par4));
     }
 
-    public void b(World world, int i, int j, int k, Random random) {
-        int l = world.getData(i, j, k);
+    /**
+     * Ticks the block if it's been scheduled
+     */
+    public void updateTick(World par1World, int par2, int par3, int par4, Random par5Random)
+    {
+        int var6 = par1World.getBlockMetadata(par2, par3, par4);
 
-        if (l < 3 && random.nextInt(10) == 0) {
-            org.bukkit.craftbukkit.event.CraftEventFactory.handleBlockGrowEvent(world, i, j, k, this.id, ++l); // CraftBukkit
+        if (var6 < 3 && par5Random.nextInt(10) == 0)
+        {
+            org.bukkit.craftbukkit.event.CraftEventFactory.handleBlockGrowEvent(par1World, par2, par3, par4, this.blockID, ++var6); // CraftBukkit
         }
 
-        super.b(world, i, j, k, random);
+        super.updateTick(par1World, par2, par3, par4, par5Random);
     }
 
-    public int a(int i, int j) {
-        return j >= 3 ? this.textureId + 2 : (j > 0 ? this.textureId + 1 : this.textureId);
+    /**
+     * From the specified side and block metadata retrieves the blocks texture. Args: side, metadata
+     */
+    public int getBlockTextureFromSideAndMetadata(int par1, int par2)
+    {
+        return par2 >= 3 ? this.blockIndexInTexture + 2 : (par2 > 0 ? this.blockIndexInTexture + 1 : this.blockIndexInTexture);
     }
 
-    public int d() {
+    /**
+     * The type of render function that is called for this block
+     */
+    public int getRenderType()
+    {
         return 6;
     }
 
-    public void dropNaturally(World world, int i, int j, int k, int l, float f, int i1) {
-        if (!world.isStatic) {
-            int j1 = 1;
+    /**
+     * Drops the block items with a specified chance of dropping the specified items
+     */
+    public void dropBlockAsItemWithChance(World par1World, int par2, int par3, int par4, int par5, float par6, int par7)
+    {
+        if (!par1World.isRemote)
+        {
+            int var8 = 1;
 
-            if (l >= 3) {
-                j1 = 2 + world.random.nextInt(3);
-                if (i1 > 0) {
-                    j1 += world.random.nextInt(i1 + 1);
+            if (par5 >= 3)
+            {
+                var8 = 2 + par1World.rand.nextInt(3);
+
+                if (par7 > 0)
+                {
+                    var8 += par1World.rand.nextInt(par7 + 1);
                 }
             }
 
-            for (int k1 = 0; k1 < j1; ++k1) {
-                this.b(world, i, j, k, new ItemStack(Item.NETHER_STALK));
+            for (int var9 = 0; var9 < var8; ++var9)
+            {
+                this.dropBlockAsItem_do(par1World, par2, par3, par4, new ItemStack(Item.netherStalkSeeds));
             }
         }
     }
 
-    public int getDropType(int i, Random random, int j) {
+    /**
+     * Returns the ID of the items to drop on destruction.
+     */
+    public int idDropped(int par1, Random par2Random, int par3)
+    {
         return 0;
     }
 
-    public int a(Random random) {
+    /**
+     * Returns the quantity of items to drop on block destruction.
+     */
+    public int quantityDropped(Random par1Random)
+    {
         return 0;
     }
 }

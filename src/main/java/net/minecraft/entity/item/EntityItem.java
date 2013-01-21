@@ -1,296 +1,439 @@
-package net.minecraft.server;
+package net.minecraft.entity.item;
 
 import java.util.Iterator;
+import net.minecraft.block.Block;
+import net.minecraft.block.material.Material;
+import net.minecraft.entity.Entity;
+import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.item.Item;
+import net.minecraft.item.ItemStack;
+import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.stats.AchievementList;
+import net.minecraft.stats.StatBase;
+import net.minecraft.util.DamageSource;
+import net.minecraft.util.MathHelper;
+import net.minecraft.util.StatCollector;
+import net.minecraft.world.World;
 
 import org.bukkit.event.player.PlayerPickupItemEvent; // CraftBukkit
 
-public class EntityItem extends Entity {
-
+public class EntityItem extends Entity
+{
+    /**
+     * The age of this EntityItem (used to animate it up and down as well as expire it)
+     */
     public int age;
-    public int pickupDelay;
-    private int d;
-    public float c;
-    private int lastTick = (int) (System.currentTimeMillis() / 50); // CraftBukkit
+    public int delayBeforeCanPickup;
 
-    public EntityItem(World world, double d0, double d1, double d2) {
-        super(world);
+    /** The health of this EntityItem. (For example, damage for tools) */
+    private int health;
+
+    /** The EntityItem's random initial float height. */
+    public float hoverStart;
+    private int lastTick = (int)(System.currentTimeMillis() / 50);  // CraftBukkit
+
+    public EntityItem(World par1World, double par2, double par4, double par6)
+    {
+        super(par1World);
         this.age = 0;
-        this.d = 5;
-        this.c = (float) (Math.random() * 3.141592653589793D * 2.0D);
-        this.a(0.25F, 0.25F);
-        this.height = this.length / 2.0F;
-        this.setPosition(d0, d1, d2);
-        this.yaw = (float) (Math.random() * 360.0D);
-        this.motX = (double) ((float) (Math.random() * 0.20000000298023224D - 0.10000000149011612D));
-        this.motY = 0.20000000298023224D;
-        this.motZ = (double) ((float) (Math.random() * 0.20000000298023224D - 0.10000000149011612D));
+        this.health = 5;
+        this.hoverStart = (float)(Math.random() * 3.141592653589793D * 2.0D);
+        this.setSize(0.25F, 0.25F);
+        this.yOffset = this.height / 2.0F;
+        this.setPosition(par2, par4, par6);
+        this.rotationYaw = (float)(Math.random() * 360.0D);
+        this.motionX = (double)((float)(Math.random() * 0.20000000298023224D - 0.10000000149011612D));
+        this.motionY = 0.20000000298023224D;
+        this.motionZ = (double)((float)(Math.random() * 0.20000000298023224D - 0.10000000149011612D));
     }
 
-    public EntityItem(World world, double d0, double d1, double d2, ItemStack itemstack) {
-        this(world, d0, d1, d2);
+    public EntityItem(World par1World, double par2, double par4, double par6, ItemStack par8ItemStack)
+    {
+        this(par1World, par2, par4, par6);
+
         // CraftBukkit start - Can't set null items in the datawatcher
-        if (itemstack == null || itemstack.getItem() == null) {
+        if (par8ItemStack == null || par8ItemStack.getItem() == null)
+        {
             return;
         }
+
         // CraftBukkit end
-        this.setItemStack(itemstack);
+        this.func_92013_a(par8ItemStack);
     }
 
-    protected boolean f_() {
+    /**
+     * returns if this entity triggers Block.onEntityWalking on the blocks they walk on. used for spiders and wolves to
+     * prevent them from trampling crops
+     */
+    protected boolean canTriggerWalking()
+    {
         return false;
     }
 
-    public EntityItem(World world) {
-        super(world);
+    public EntityItem(World par1World)
+    {
+        super(par1World);
         this.age = 0;
-        this.d = 5;
-        this.c = (float) (Math.random() * 3.141592653589793D * 2.0D);
-        this.a(0.25F, 0.25F);
-        this.height = this.length / 2.0F;
+        this.health = 5;
+        this.hoverStart = (float)(Math.random() * 3.141592653589793D * 2.0D);
+        this.setSize(0.25F, 0.25F);
+        this.yOffset = this.height / 2.0F;
     }
 
-    protected void a() {
-        this.getDataWatcher().a(10, 5);
+    protected void entityInit()
+    {
+        this.getDataWatcher().addObjectByDataType(10, 5);
     }
 
-    public void j_() {
-        super.j_();
+    /**
+     * Called to update the entity's position/logic.
+     */
+    public void onUpdate()
+    {
+        super.onUpdate();
         // CraftBukkit start
-        int currentTick = (int) (System.currentTimeMillis() / 50);
-        this.pickupDelay -= (currentTick - this.lastTick);
+        int currentTick = (int)(System.currentTimeMillis() / 50);
+        this.delayBeforeCanPickup -= (currentTick - this.lastTick);
         this.lastTick = currentTick;
         // CraftBukkit end
+        this.prevPosX = this.posX;
+        this.prevPosY = this.posY;
+        this.prevPosZ = this.posZ;
+        this.motionY -= 0.03999999910593033D;
+        this.noClip = this.pushOutOfBlocks(this.posX, (this.boundingBox.minY + this.boundingBox.maxY) / 2.0D, this.posZ);
+        this.moveEntity(this.motionX, this.motionY, this.motionZ);
+        boolean var1 = (int)this.prevPosX != (int)this.posX || (int)this.prevPosY != (int)this.posY || (int)this.prevPosZ != (int)this.posZ;
 
-        this.lastX = this.locX;
-        this.lastY = this.locY;
-        this.lastZ = this.locZ;
-        this.motY -= 0.03999999910593033D;
-        this.Y = this.i(this.locX, (this.boundingBox.b + this.boundingBox.e) / 2.0D, this.locZ);
-        this.move(this.motX, this.motY, this.motZ);
-        boolean flag = (int) this.lastX != (int) this.locX || (int) this.lastY != (int) this.locY || (int) this.lastZ != (int) this.locZ;
-
-        if (flag || this.ticksLived % 25 == 0) {
-            if (this.world.getMaterial(MathHelper.floor(this.locX), MathHelper.floor(this.locY), MathHelper.floor(this.locZ)) == Material.LAVA) {
-                this.motY = 0.20000000298023224D;
-                this.motX = (double) ((this.random.nextFloat() - this.random.nextFloat()) * 0.2F);
-                this.motZ = (double) ((this.random.nextFloat() - this.random.nextFloat()) * 0.2F);
-                this.makeSound("random.fizz", 0.4F, 2.0F + this.random.nextFloat() * 0.4F);
+        if (var1 || this.ticksExisted % 25 == 0)
+        {
+            if (this.worldObj.getBlockMaterial(MathHelper.floor_double(this.posX), MathHelper.floor_double(this.posY), MathHelper.floor_double(this.posZ)) == Material.lava)
+            {
+                this.motionY = 0.20000000298023224D;
+                this.motionX = (double)((this.rand.nextFloat() - this.rand.nextFloat()) * 0.2F);
+                this.motionZ = (double)((this.rand.nextFloat() - this.rand.nextFloat()) * 0.2F);
+                this.playSound("random.fizz", 0.4F, 2.0F + this.rand.nextFloat() * 0.4F);
             }
 
-            if (!this.world.isStatic) {
-                this.g();
-            }
-        }
-
-        float f = 0.98F;
-
-        if (this.onGround) {
-            f = 0.58800006F;
-            int i = this.world.getTypeId(MathHelper.floor(this.locX), MathHelper.floor(this.boundingBox.b) - 1, MathHelper.floor(this.locZ));
-
-            if (i > 0) {
-                f = Block.byId[i].frictionFactor * 0.98F;
+            if (!this.worldObj.isRemote)
+            {
+                this.func_85054_d();
             }
         }
 
-        this.motX *= (double) f;
-        this.motY *= 0.9800000190734863D;
-        this.motZ *= (double) f;
-        if (this.onGround) {
-            this.motY *= -0.5D;
+        float var2 = 0.98F;
+
+        if (this.onGround)
+        {
+            var2 = 0.58800006F;
+            int var3 = this.worldObj.getBlockId(MathHelper.floor_double(this.posX), MathHelper.floor_double(this.boundingBox.minY) - 1, MathHelper.floor_double(this.posZ));
+
+            if (var3 > 0)
+            {
+                var2 = Block.blocksList[var3].slipperiness * 0.98F;
+            }
+        }
+
+        this.motionX *= (double)var2;
+        this.motionY *= 0.9800000190734863D;
+        this.motionZ *= (double)var2;
+
+        if (this.onGround)
+        {
+            this.motionY *= -0.5D;
         }
 
         ++this.age;
-        if (!this.world.isStatic && this.age >= 6000) {
+
+        if (!this.worldObj.isRemote && this.age >= 6000)
+        {
             // CraftBukkit start
-            if (org.bukkit.craftbukkit.event.CraftEventFactory.callItemDespawnEvent(this).isCancelled()) {
+            if (org.bukkit.craftbukkit.event.CraftEventFactory.callItemDespawnEvent(this).isCancelled())
+            {
                 this.age = 0;
                 return;
             }
+
             // CraftBukkit end
-            this.die();
+            this.setDead();
         }
     }
 
-    private void g() {
-        Iterator iterator = this.world.a(EntityItem.class, this.boundingBox.grow(0.5D, 0.0D, 0.5D)).iterator();
+    private void func_85054_d()
+    {
+        Iterator var1 = this.worldObj.getEntitiesWithinAABB(EntityItem.class, this.boundingBox.expand(0.5D, 0.0D, 0.5D)).iterator();
 
-        while (iterator.hasNext()) {
-            EntityItem entityitem = (EntityItem) iterator.next();
-
-            this.a(entityitem);
+        while (var1.hasNext())
+        {
+            EntityItem var2 = (EntityItem)var1.next();
+            this.combineItems(var2);
         }
     }
 
-    public boolean a(EntityItem entityitem) {
-        if (entityitem == this) {
+    /**
+     * Tries to merge this item with the item passed as the parameter. Returns true if successful. Either this item or
+     * the other item will  be removed from the world.
+     */
+    public boolean combineItems(EntityItem par1EntityItem)
+    {
+        if (par1EntityItem == this)
+        {
             return false;
-        } else if (entityitem.isAlive() && this.isAlive()) {
-            ItemStack itemstack = this.getItemStack();
-            ItemStack itemstack1 = entityitem.getItemStack();
+        }
+        else if (par1EntityItem.isEntityAlive() && this.isEntityAlive())
+        {
+            ItemStack var2 = this.func_92014_d();
+            ItemStack var3 = par1EntityItem.func_92014_d();
 
-            if (itemstack1.getItem() != itemstack.getItem()) {
+            if (var3.getItem() != var2.getItem())
+            {
                 return false;
-            } else if (itemstack1.hasTag() ^ itemstack.hasTag()) {
+            }
+            else if (var3.hasTagCompound() ^ var2.hasTagCompound())
+            {
                 return false;
-            } else if (itemstack1.hasTag() && !itemstack1.getTag().equals(itemstack.getTag())) {
+            }
+            else if (var3.hasTagCompound() && !var3.getTagCompound().equals(var2.getTagCompound()))
+            {
                 return false;
-            } else if (itemstack1.getItem().l() && itemstack1.getData() != itemstack.getData()) {
+            }
+            else if (var3.getItem().getHasSubtypes() && var3.getItemDamage() != var2.getItemDamage())
+            {
                 return false;
-            } else if (itemstack1.count < itemstack.count) {
-                return entityitem.a(this);
-            } else if (itemstack1.count + itemstack.count > itemstack1.getMaxStackSize()) {
+            }
+            else if (var3.stackSize < var2.stackSize)
+            {
+                return par1EntityItem.combineItems(this);
+            }
+            else if (var3.stackSize + var2.stackSize > var3.getMaxStackSize())
+            {
                 return false;
-            } else {
-                itemstack1.count += itemstack.count;
-                entityitem.pickupDelay = Math.max(entityitem.pickupDelay, this.pickupDelay);
-                entityitem.age = Math.min(entityitem.age, this.age);
-                entityitem.setItemStack(itemstack1);
-                this.die();
+            }
+            else
+            {
+                var3.stackSize += var2.stackSize;
+                par1EntityItem.delayBeforeCanPickup = Math.max(par1EntityItem.delayBeforeCanPickup, this.delayBeforeCanPickup);
+                par1EntityItem.age = Math.min(par1EntityItem.age, this.age);
+                par1EntityItem.func_92013_a(var3);
+                this.setDead();
                 return true;
             }
-        } else {
+        }
+        else
+        {
             return false;
         }
     }
 
-    public void c() {
+    public void func_70288_d()
+    {
         this.age = 4800;
     }
 
-    public boolean I() {
-        return this.world.a(this.boundingBox, Material.WATER, (Entity) this);
+    /**
+     * Returns if this entity is in water and will end up adding the waters velocity to the entity
+     */
+    public boolean handleWaterMovement()
+    {
+        return this.worldObj.handleMaterialAcceleration(this.boundingBox, Material.water, (Entity) this);
     }
 
-    protected void burn(int i) {
-        this.damageEntity(DamageSource.FIRE, i);
+    /**
+     * Will deal the specified amount of damage to the entity if the entity isn't immune to fire damage. Args:
+     * amountDamage
+     */
+    protected void dealFireDamage(int par1)
+    {
+        this.attackEntityFrom(DamageSource.inFire, par1);
     }
 
-    public boolean damageEntity(DamageSource damagesource, int i) {
-        if (this.isInvulnerable()) {
+    /**
+     * Called when the entity is attacked.
+     */
+    public boolean attackEntityFrom(DamageSource par1DamageSource, int par2)
+    {
+        if (this.isEntityInvulnerable())
+        {
             return false;
-        } else if (this.getItemStack() != null && this.getItemStack().id == Item.NETHER_STAR.id && damagesource == DamageSource.EXPLOSION) {
+        }
+        else if (this.func_92014_d() != null && this.func_92014_d().itemID == Item.netherStar.itemID && par1DamageSource == DamageSource.explosion)
+        {
             return false;
-        } else {
-            this.K();
-            this.d -= i;
-            if (this.d <= 0) {
-                this.die();
+        }
+        else
+        {
+            this.setBeenAttacked();
+            this.health -= par2;
+
+            if (this.health <= 0)
+            {
+                this.setDead();
             }
 
             return false;
         }
     }
 
-    public void b(NBTTagCompound nbttagcompound) {
-        nbttagcompound.setShort("Health", (short) ((byte) this.d));
-        nbttagcompound.setShort("Age", (short) this.age);
-        if (this.getItemStack() != null) {
-            nbttagcompound.setCompound("Item", this.getItemStack().save(new NBTTagCompound()));
+    /**
+     * (abstract) Protected helper method to write subclass entity data to NBT.
+     */
+    public void writeEntityToNBT(NBTTagCompound par1NBTTagCompound)
+    {
+        par1NBTTagCompound.setShort("Health", (short)((byte)this.health));
+        par1NBTTagCompound.setShort("Age", (short)this.age);
+
+        if (this.func_92014_d() != null)
+        {
+            par1NBTTagCompound.setCompoundTag("Item", this.func_92014_d().writeToNBT(new NBTTagCompound()));
         }
     }
 
-    public void a(NBTTagCompound nbttagcompound) {
-        this.d = nbttagcompound.getShort("Health") & 255;
-        this.age = nbttagcompound.getShort("Age");
-        NBTTagCompound nbttagcompound1 = nbttagcompound.getCompound("Item");
+    /**
+     * (abstract) Protected helper method to read subclass entity data from NBT.
+     */
+    public void readEntityFromNBT(NBTTagCompound par1NBTTagCompound)
+    {
+        this.health = par1NBTTagCompound.getShort("Health") & 255;
+        this.age = par1NBTTagCompound.getShort("Age");
+        NBTTagCompound var2 = par1NBTTagCompound.getCompoundTag("Item");
 
         // CraftBukkit start
-        if (nbttagcompound1 != null) {
-            ItemStack itemstack = ItemStack.createStack(nbttagcompound1);
-            if (itemstack != null) {
-                this.setItemStack(itemstack);
-            } else {
-                this.die();
+        if (var2 != null)
+        {
+            ItemStack itemstack = ItemStack.loadItemStackFromNBT(var2);
+
+            if (itemstack != null)
+            {
+                this.func_92013_a(itemstack);
             }
-        } else {
-            this.die();
+            else
+            {
+                this.setDead();
+            }
         }
+        else
+        {
+            this.setDead();
+        }
+
         // CraftBukkit end
-        if (this.getItemStack() == null) {
-            this.die();
+        if (this.func_92014_d() == null)
+        {
+            this.setDead();
         }
     }
 
-    public void c_(EntityHuman entityhuman) {
-        if (!this.world.isStatic) {
-            ItemStack itemstack = this.getItemStack();
-            int i = itemstack.count;
-
+    /**
+     * Called by a player entity when they collide with an entity
+     */
+    public void onCollideWithPlayer(EntityPlayer par1EntityPlayer)
+    {
+        if (!this.worldObj.isRemote)
+        {
+            ItemStack var2 = this.func_92014_d();
+            int var3 = var2.stackSize;
             // CraftBukkit start
-            int canHold = entityhuman.inventory.canHold(itemstack);
-            int remaining = itemstack.count - canHold;
+            int canHold = par1EntityPlayer.inventory.canHold(var2);
+            int remaining = var2.stackSize - canHold;
 
-            if (this.pickupDelay <= 0 && canHold > 0) {
-                itemstack.count = canHold;
-                PlayerPickupItemEvent event = new PlayerPickupItemEvent((org.bukkit.entity.Player) entityhuman.getBukkitEntity(), (org.bukkit.entity.Item) this.getBukkitEntity(), remaining);
-                event.setCancelled(!entityhuman.canPickUpLoot);
-                this.world.getServer().getPluginManager().callEvent(event);
-                itemstack.count = canHold + remaining;
+            if (this.delayBeforeCanPickup <= 0 && canHold > 0)
+            {
+                var2.stackSize = canHold;
+                PlayerPickupItemEvent event = new PlayerPickupItemEvent((org.bukkit.entity.Player) par1EntityPlayer.getBukkitEntity(), (org.bukkit.entity.Item) this.getBukkitEntity(), remaining);
+                event.setCancelled(!par1EntityPlayer.canPickUpLoot);
+                this.worldObj.getServer().getPluginManager().callEvent(event);
+                var2.stackSize = canHold + remaining;
 
-                if (event.isCancelled()) {
+                if (event.isCancelled())
+                {
                     return;
                 }
 
                 // Possibly < 0; fix here so we do not have to modify code below
-                this.pickupDelay = 0;
+                this.delayBeforeCanPickup = 0;
             }
+
             // CraftBukkit end
 
-            if (this.pickupDelay == 0 && entityhuman.inventory.pickup(itemstack)) {
-                if (itemstack.id == Block.LOG.id) {
-                    entityhuman.a((Statistic) AchievementList.g);
+            if (this.delayBeforeCanPickup == 0 && par1EntityPlayer.inventory.addItemStackToInventory(var2))
+            {
+                if (var2.itemID == Block.wood.blockID)
+                {
+                    par1EntityPlayer.triggerAchievement((StatBase) AchievementList.mineWood);
                 }
 
-                if (itemstack.id == Item.LEATHER.id) {
-                    entityhuman.a((Statistic) AchievementList.t);
+                if (var2.itemID == Item.leather.itemID)
+                {
+                    par1EntityPlayer.triggerAchievement((StatBase) AchievementList.killCow);
                 }
 
-                if (itemstack.id == Item.DIAMOND.id) {
-                    entityhuman.a((Statistic) AchievementList.w);
+                if (var2.itemID == Item.diamond.itemID)
+                {
+                    par1EntityPlayer.triggerAchievement((StatBase) AchievementList.diamonds);
                 }
 
-                if (itemstack.id == Item.BLAZE_ROD.id) {
-                    entityhuman.a((Statistic) AchievementList.z);
+                if (var2.itemID == Item.blazeRod.itemID)
+                {
+                    par1EntityPlayer.triggerAchievement((StatBase) AchievementList.blazeRod);
                 }
 
-                this.makeSound("random.pop", 0.2F, ((this.random.nextFloat() - this.random.nextFloat()) * 0.7F + 1.0F) * 2.0F);
-                entityhuman.receive(this, i);
-                if (itemstack.count <= 0) {
-                    this.die();
+                this.playSound("random.pop", 0.2F, ((this.rand.nextFloat() - this.rand.nextFloat()) * 0.7F + 1.0F) * 2.0F);
+                par1EntityPlayer.onItemPickup(this, var3);
+
+                if (var2.stackSize <= 0)
+                {
+                    this.setDead();
                 }
             }
         }
     }
 
-    public String getLocalizedName() {
-        return LocaleI18n.get("item." + this.getItemStack().a());
+    /**
+     * Gets the username of the entity.
+     */
+    public String getEntityName()
+    {
+        return StatCollector.translateToLocal("item." + this.func_92014_d().getItemName());
     }
 
-    public boolean aq() {
+    /**
+     * If returns false, the item will not inflict any damage against entities.
+     */
+    public boolean canAttackWithItem()
+    {
         return false;
     }
 
-    public void b(int i) {
-        super.b(i);
-        if (!this.world.isStatic) {
-            this.g();
+    /**
+     * Teleports the entity to another dimension. Params: Dimension number to teleport to
+     */
+    public void travelToDimension(int par1)
+    {
+        super.travelToDimension(par1);
+
+        if (!this.worldObj.isRemote)
+        {
+            this.func_85054_d();
         }
     }
 
-    public ItemStack getItemStack() {
-        ItemStack itemstack = this.getDataWatcher().getItemStack(10);
+    public ItemStack func_92014_d()
+    {
+        ItemStack var1 = this.getDataWatcher().getWatchableObjectItemStack(10);
 
-        if (itemstack == null) {
-            System.out.println("Item entity " + this.id + " has no item?!");
-            return new ItemStack(Block.STONE);
-        } else {
-            return itemstack;
+        if (var1 == null)
+        {
+            System.out.println("Item entity " + this.entityId + " has no item?!");
+            return new ItemStack(Block.stone);
+        }
+        else
+        {
+            return var1;
         }
     }
 
-    public void setItemStack(ItemStack itemstack) {
-        this.getDataWatcher().watch(10, itemstack);
-        this.getDataWatcher().h(10);
+    public void func_92013_a(ItemStack par1ItemStack)
+    {
+        this.getDataWatcher().updateObject(10, par1ItemStack);
+        this.getDataWatcher().func_82708_h(10);
     }
 }

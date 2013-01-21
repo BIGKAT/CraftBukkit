@@ -1,183 +1,250 @@
-package net.minecraft.server;
+package net.minecraft.item;
 
 // CraftBukkit start
 import org.bukkit.craftbukkit.event.CraftEventFactory;
 import org.bukkit.craftbukkit.inventory.CraftItemStack;
 import org.bukkit.event.player.PlayerBucketEmptyEvent;
 import org.bukkit.event.player.PlayerBucketFillEvent;
+import net.minecraft.block.Block;
+import net.minecraft.block.material.Material;
+import net.minecraft.creativetab.CreativeTabs;
+import net.minecraft.entity.passive.EntityCow;
+import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.util.EnumMovingObjectType;
+import net.minecraft.util.MovingObjectPosition;
+import net.minecraft.world.World;
 // CraftBukkit end
 
-public class ItemBucket extends Item {
+public class ItemBucket extends Item
+{
+    /** field for checking if the bucket has been filled. */
+    private int isFull;
 
-    private int a;
-
-    public ItemBucket(int i, int j) {
-        super(i);
+    public ItemBucket(int par1, int par2)
+    {
+        super(par1);
         this.maxStackSize = 1;
-        this.a = j;
-        this.a(CreativeModeTab.f);
+        this.isFull = par2;
+        this.setCreativeTab(CreativeTabs.tabMisc);
     }
 
-    public ItemStack a(ItemStack itemstack, World world, EntityHuman entityhuman) {
-        float f = 1.0F;
-        double d0 = entityhuman.lastX + (entityhuman.locX - entityhuman.lastX) * (double) f;
-        double d1 = entityhuman.lastY + (entityhuman.locY - entityhuman.lastY) * (double) f + 1.62D - (double) entityhuman.height;
-        double d2 = entityhuman.lastZ + (entityhuman.locZ - entityhuman.lastZ) * (double) f;
-        boolean flag = this.a == 0;
-        MovingObjectPosition movingobjectposition = this.a(world, entityhuman, flag);
+    /**
+     * Called whenever this item is equipped and the right mouse button is pressed. Args: itemStack, world, entityPlayer
+     */
+    public ItemStack onItemRightClick(ItemStack par1ItemStack, World par2World, EntityPlayer par3EntityPlayer)
+    {
+        float var4 = 1.0F;
+        double var5 = par3EntityPlayer.prevPosX + (par3EntityPlayer.posX - par3EntityPlayer.prevPosX) * (double)var4;
+        double var7 = par3EntityPlayer.prevPosY + (par3EntityPlayer.posY - par3EntityPlayer.prevPosY) * (double)var4 + 1.62D - (double)par3EntityPlayer.yOffset;
+        double var9 = par3EntityPlayer.prevPosZ + (par3EntityPlayer.posZ - par3EntityPlayer.prevPosZ) * (double)var4;
+        boolean var11 = this.isFull == 0;
+        MovingObjectPosition var12 = this.getMovingObjectPositionFromPlayer(par2World, par3EntityPlayer, var11);
 
-        if (movingobjectposition == null) {
-            return itemstack;
-        } else {
-            if (movingobjectposition.type == EnumMovingObjectType.TILE) {
-                int i = movingobjectposition.b;
-                int j = movingobjectposition.c;
-                int k = movingobjectposition.d;
+        if (var12 == null)
+        {
+            return par1ItemStack;
+        }
+        else
+        {
+            if (var12.typeOfHit == EnumMovingObjectType.TILE)
+            {
+                int var13 = var12.blockX;
+                int var14 = var12.blockY;
+                int var15 = var12.blockZ;
 
-                if (!world.a(entityhuman, i, j, k)) {
-                    return itemstack;
+                if (!par2World.canMineBlock(par3EntityPlayer, var13, var14, var15))
+                {
+                    return par1ItemStack;
                 }
 
-                if (this.a == 0) {
-                    if (!entityhuman.a(i, j, k, movingobjectposition.face, itemstack)) {
-                        return itemstack;
+                if (this.isFull == 0)
+                {
+                    if (!par3EntityPlayer.canPlayerEdit(var13, var14, var15, var12.sideHit, par1ItemStack))
+                    {
+                        return par1ItemStack;
                     }
 
-                    if (world.getMaterial(i, j, k) == Material.WATER && world.getData(i, j, k) == 0) {
+                    if (par2World.getBlockMaterial(var13, var14, var15) == Material.water && par2World.getBlockMetadata(var13, var14, var15) == 0)
+                    {
                         // CraftBukkit start
-                        PlayerBucketFillEvent event = CraftEventFactory.callPlayerBucketFillEvent(entityhuman, i, j, k, -1, itemstack, Item.WATER_BUCKET);
+                        PlayerBucketFillEvent event = CraftEventFactory.callPlayerBucketFillEvent(par3EntityPlayer, var13, var14, var15, -1, par1ItemStack, Item.bucketWater);
 
-                        if (event.isCancelled()) {
-                            return itemstack;
+                        if (event.isCancelled())
+                        {
+                            return par1ItemStack;
                         }
+
                         // CraftBukkit end
-                        world.setTypeId(i, j, k, 0);
-                        if (entityhuman.abilities.canInstantlyBuild) {
-                            return itemstack;
+                        par2World.setBlockWithNotify(var13, var14, var15, 0);
+
+                        if (par3EntityPlayer.capabilities.isCreativeMode)
+                        {
+                            return par1ItemStack;
                         }
 
                         ItemStack result = CraftItemStack.asNMSCopy(event.getItemStack()); // CraftBukkit - TODO: Check this stuff later... Not sure how this behavior should work
-                        if (--itemstack.count <= 0) {
+
+                        if (--par1ItemStack.stackSize <= 0)
+                        {
                             return result; // CraftBukkit
                         }
 
-                        if (!entityhuman.inventory.pickup(result)) { // CraftBukkit
-                            entityhuman.drop(CraftItemStack.asNMSCopy(event.getItemStack())); // CraftBukkit
+                        if (!par3EntityPlayer.inventory.addItemStackToInventory(result))   // CraftBukkit
+                        {
+                            par3EntityPlayer.dropPlayerItem(CraftItemStack.asNMSCopy(event.getItemStack())); // CraftBukkit
                         }
 
-                        return itemstack;
+                        return par1ItemStack;
                     }
 
-                    if (world.getMaterial(i, j, k) == Material.LAVA && world.getData(i, j, k) == 0) {
+                    if (par2World.getBlockMaterial(var13, var14, var15) == Material.lava && par2World.getBlockMetadata(var13, var14, var15) == 0)
+                    {
                         // CraftBukkit start
-                        PlayerBucketFillEvent event = CraftEventFactory.callPlayerBucketFillEvent(entityhuman, i, j, k, -1, itemstack, Item.LAVA_BUCKET);
+                        PlayerBucketFillEvent event = CraftEventFactory.callPlayerBucketFillEvent(par3EntityPlayer, var13, var14, var15, -1, par1ItemStack, Item.bucketLava);
 
-                        if (event.isCancelled()) {
-                            return itemstack;
+                        if (event.isCancelled())
+                        {
+                            return par1ItemStack;
                         }
+
                         // CraftBukkit end
-                        world.setTypeId(i, j, k, 0);
-                        if (entityhuman.abilities.canInstantlyBuild) {
-                            return itemstack;
+                        par2World.setBlockWithNotify(var13, var14, var15, 0);
+
+                        if (par3EntityPlayer.capabilities.isCreativeMode)
+                        {
+                            return par1ItemStack;
                         }
 
                         ItemStack result = CraftItemStack.asNMSCopy(event.getItemStack()); // CraftBukkit - TODO: Check this stuff later... Not sure how this behavior should work
-                        if (--itemstack.count <= 0) {
+
+                        if (--par1ItemStack.stackSize <= 0)
+                        {
                             return result; // CraftBukkit
                         }
 
-                        if (!entityhuman.inventory.pickup(result)) { // CraftBukkit
-                            entityhuman.drop(CraftItemStack.asNMSCopy(event.getItemStack())); // CraftBukkit
+                        if (!par3EntityPlayer.inventory.addItemStackToInventory(result))   // CraftBukkit
+                        {
+                            par3EntityPlayer.dropPlayerItem(CraftItemStack.asNMSCopy(event.getItemStack())); // CraftBukkit
                         }
 
-                        return itemstack;
+                        return par1ItemStack;
                     }
-                } else {
-                    if (this.a < 0) {
+                }
+                else
+                {
+                    if (this.isFull < 0)
+                    {
                         // CraftBukkit start
-                        PlayerBucketEmptyEvent event = CraftEventFactory.callPlayerBucketEmptyEvent(entityhuman, i, j, k, movingobjectposition.face, itemstack);
+                        PlayerBucketEmptyEvent event = CraftEventFactory.callPlayerBucketEmptyEvent(par3EntityPlayer, var13, var14, var15, var12.sideHit, par1ItemStack);
 
-                        if (event.isCancelled()) {
-                            return itemstack;
+                        if (event.isCancelled())
+                        {
+                            return par1ItemStack;
                         }
 
                         return CraftItemStack.asNMSCopy(event.getItemStack());
                     }
 
-                    int clickedX = i, clickedY = j, clickedZ = k;
+                    int clickedX = var13, clickedY = var14, clickedZ = var15;
                     // CraftBukkit end
 
-                    if (movingobjectposition.face == 0) {
-                        --j;
+                    if (var12.sideHit == 0)
+                    {
+                        --var14;
                     }
 
-                    if (movingobjectposition.face == 1) {
-                        ++j;
+                    if (var12.sideHit == 1)
+                    {
+                        ++var14;
                     }
 
-                    if (movingobjectposition.face == 2) {
-                        --k;
+                    if (var12.sideHit == 2)
+                    {
+                        --var15;
                     }
 
-                    if (movingobjectposition.face == 3) {
-                        ++k;
+                    if (var12.sideHit == 3)
+                    {
+                        ++var15;
                     }
 
-                    if (movingobjectposition.face == 4) {
-                        --i;
+                    if (var12.sideHit == 4)
+                    {
+                        --var13;
                     }
 
-                    if (movingobjectposition.face == 5) {
-                        ++i;
+                    if (var12.sideHit == 5)
+                    {
+                        ++var13;
                     }
 
-                    if (!entityhuman.a(i, j, k, movingobjectposition.face, itemstack)) {
-                        return itemstack;
+                    if (!par3EntityPlayer.canPlayerEdit(var13, var14, var15, var12.sideHit, par1ItemStack))
+                    {
+                        return par1ItemStack;
                     }
 
                     // CraftBukkit start
-                    PlayerBucketEmptyEvent event = CraftEventFactory.callPlayerBucketEmptyEvent(entityhuman, clickedX, clickedY, clickedZ, movingobjectposition.face, itemstack);
+                    PlayerBucketEmptyEvent event = CraftEventFactory.callPlayerBucketEmptyEvent(par3EntityPlayer, clickedX, clickedY, clickedZ, var12.sideHit, par1ItemStack);
 
-                    if (event.isCancelled()) {
-                        return itemstack;
+                    if (event.isCancelled())
+                    {
+                        return par1ItemStack;
                     }
+
                     // CraftBukkit end
 
-                    if (this.a(world, d0, d1, d2, i, j, k) && !entityhuman.abilities.canInstantlyBuild) {
+                    if (this.tryPlaceContainedLiquid(par2World, var5, var7, var9, var13, var14, var15) && !par3EntityPlayer.capabilities.isCreativeMode)
+                    {
                         return CraftItemStack.asNMSCopy(event.getItemStack()); // CraftBukkit
                     }
                 }
-            } else if (this.a == 0 && movingobjectposition.entity instanceof EntityCow) {
+            }
+            else if (this.isFull == 0 && var12.entityHit instanceof EntityCow)
+            {
                 // CraftBukkit start - This codepath seems to be *NEVER* called
-                org.bukkit.Location loc = movingobjectposition.entity.getBukkitEntity().getLocation();
-                PlayerBucketFillEvent event = CraftEventFactory.callPlayerBucketFillEvent(entityhuman, loc.getBlockX(), loc.getBlockY(), loc.getBlockZ(), -1, itemstack, Item.MILK_BUCKET);
+                org.bukkit.Location loc = var12.entityHit.getBukkitEntity().getLocation();
+                PlayerBucketFillEvent event = CraftEventFactory.callPlayerBucketFillEvent(par3EntityPlayer, loc.getBlockX(), loc.getBlockY(), loc.getBlockZ(), -1, par1ItemStack, Item.bucketMilk);
 
-                if (event.isCancelled()) {
-                    return itemstack;
+                if (event.isCancelled())
+                {
+                    return par1ItemStack;
                 }
 
                 return CraftItemStack.asNMSCopy(event.getItemStack());
                 // CraftBukkit end
             }
 
-            return itemstack;
+            return par1ItemStack;
         }
     }
 
-    public boolean a(World world, double d0, double d1, double d2, int i, int j, int k) {
-        if (this.a <= 0) {
+    /**
+     * Attempts to place the liquid contained inside the bucket.
+     */
+    public boolean tryPlaceContainedLiquid(World par1World, double par2, double par4, double par6, int par8, int par9, int par10)
+    {
+        if (this.isFull <= 0)
+        {
             return false;
-        } else if (!world.isEmpty(i, j, k) && world.getMaterial(i, j, k).isBuildable()) {
+        }
+        else if (!par1World.isAirBlock(par8, par9, par10) && par1World.getBlockMaterial(par8, par9, par10).isSolid())
+        {
             return false;
-        } else {
-            if (world.worldProvider.e && this.a == Block.WATER.id) {
-                world.makeSound(d0 + 0.5D, d1 + 0.5D, d2 + 0.5D, "random.fizz", 0.5F, 2.6F + (world.random.nextFloat() - world.random.nextFloat()) * 0.8F);
+        }
+        else
+        {
+            if (par1World.provider.isHellWorld && this.isFull == Block.waterMoving.blockID)
+            {
+                par1World.playSoundEffect(par2 + 0.5D, par4 + 0.5D, par6 + 0.5D, "random.fizz", 0.5F, 2.6F + (par1World.rand.nextFloat() - par1World.rand.nextFloat()) * 0.8F);
 
-                for (int l = 0; l < 8; ++l) {
-                    world.addParticle("largesmoke", (double) i + Math.random(), (double) j + Math.random(), (double) k + Math.random(), 0.0D, 0.0D, 0.0D);
+                for (int var11 = 0; var11 < 8; ++var11)
+                {
+                    par1World.spawnParticle("largesmoke", (double)par8 + Math.random(), (double)par9 + Math.random(), (double)par10 + Math.random(), 0.0D, 0.0D, 0.0D);
                 }
-            } else {
-                world.setTypeIdAndData(i, j, k, this.a, 0);
+            }
+            else
+            {
+                par1World.setBlockAndMetadataWithNotify(par8, par9, par10, this.isFull, 0);
             }
 
             return true;

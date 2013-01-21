@@ -1,30 +1,45 @@
-package net.minecraft.server;
+package net.minecraft.inventory;
 
 import org.bukkit.craftbukkit.entity.CraftHumanEntity; // CraftBukkit
+import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.item.ItemStack;
 
-public interface IInventory {
+public interface IInventory
+{
+    /**
+     * Returns the number of slots in the inventory.
+     */
+    int getSizeInventory();
 
-    int getSize();
+    ItemStack getStackInSlot(int i);
 
-    ItemStack getItem(int i);
+    ItemStack decrStackSize(int i, int j);
 
-    ItemStack splitStack(int i, int j);
+    ItemStack getStackInSlotOnClosing(int i);
 
-    ItemStack splitWithoutUpdate(int i);
+    void setInventorySlotContents(int i, ItemStack itemstack);
 
-    void setItem(int i, ItemStack itemstack);
+    /**
+     * Returns the name of the inventory.
+     */
+    String getInvName();
 
-    String getName();
+    /**
+     * Returns the maximum stack size for a inventory slot. Seems to always be 64, possibly will be extended. *Isn't
+     * this more of a set than a get?*
+     */
+    int getInventoryStackLimit();
 
-    int getMaxStackSize();
+    /**
+     * Called when an the contents of an Inventory change, usually
+     */
+    void onInventoryChanged();
 
-    void update();
+    boolean isUseableByPlayer(EntityPlayer entityhuman);
 
-    boolean a_(EntityHuman entityhuman);
+    void openChest();
 
-    void startOpen();
-
-    void f();
+    void closeChest();
 
     // CraftBukkit start
     ItemStack[] getContents();

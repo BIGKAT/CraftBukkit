@@ -26,7 +26,7 @@ public class PotionTest extends AbstractTestingBase {
 
     @Test
     public void testEffectCompleteness() throws Throwable {
-        Map<Integer, ?> effectDurations = Util.getInternalState(net.minecraft.server.PotionBrewer.class, null, org.bukkit.craftbukkit.CraftServer.isUsingMappingCB ? "effectDurations" : "potionRequirements"); // CBMCP
+        Map<Integer, ?> effectDurations = Util.getInternalState(net.minecraft.potion.PotionHelper/*was:PotionBrewer*/.class, null, org.bukkit.craftbukkit.CraftServer.isUsingMappingCB ? "effectDurations" : "potionRequirements"); // CBMCP
 
         Map<PotionType, String> effects = new EnumMap(PotionType.class);
         for (int id : effectDurations.keySet()) {

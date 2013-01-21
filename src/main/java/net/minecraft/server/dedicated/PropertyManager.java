@@ -1,4 +1,4 @@
-package net.minecraft.server;
+package net.minecraft.server.dedicated;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -10,49 +10,66 @@ import java.util.logging.Logger;
 
 import joptsimple.OptionSet; // CraftBukkit
 
-public class PropertyManager {
-
-    public static Logger a = Logger.getLogger("Minecraft");
+public class PropertyManager
+{
+    /** Reference to the logger. */
+    public static Logger logger = Logger.getLogger("Minecraft");
     public Properties properties = new Properties(); // CraftBukkit - private -> public
-    private File c;
+    private File associatedFile;
 
-    public PropertyManager(File file1) {
-        this.c = file1;
-        if (file1.exists()) {
-            FileInputStream fileinputstream = null;
+    public PropertyManager(File par1File)
+    {
+        this.associatedFile = par1File;
 
-            try {
-                fileinputstream = new FileInputStream(file1);
-                this.properties.load(fileinputstream);
-            } catch (Exception exception) {
-                a.log(Level.WARNING, "Failed to load " + file1, exception);
-                this.a();
-            } finally {
-                if (fileinputstream != null) {
-                    try {
-                        fileinputstream.close();
-                    } catch (IOException ioexception) {
+        if (par1File.exists())
+        {
+            FileInputStream var2 = null;
+
+            try
+            {
+                var2 = new FileInputStream(par1File);
+                this.properties.load(var2);
+            }
+            catch (Exception var12)
+            {
+                logger.log(Level.WARNING, "Failed to load " + par1File, var12);
+                this.logMessageAndSave();
+            }
+            finally
+            {
+                if (var2 != null)
+                {
+                    try
+                    {
+                        var2.close();
+                    }
+                    catch (IOException var11)
+                    {
                         ;
                     }
                 }
             }
-        } else {
-            a.log(Level.WARNING, file1 + " does not exist");
-            this.a();
+        }
+        else
+        {
+            logger.log(Level.WARNING, par1File + " does not exist");
+            this.logMessageAndSave();
         }
     }
 
     // CraftBukkit start
     private OptionSet options = null;
 
-    public PropertyManager(final OptionSet options) {
+    public PropertyManager(final OptionSet options)
+    {
         this((File) options.valueOf("config"));
-
         this.options = options;
     }
 
-    private <T> T getOverride(String name, T value) {
-        if ((this.options != null) && (this.options.has(name))) {
+    private <T> T getOverride(String name, T value)
+    {
+        if ((this.options != null) && (this.options.has(name)))
+        {
             return (T) this.options.valueOf(name);
         }
 
@@ -60,68 +77,115 @@ public class PropertyManager {
     }
     // CraftBukkit end
 
-    public void a() {
-        a.log(Level.INFO, "Generating new properties file");
-        this.savePropertiesFile();
+    /**
+     * logs an info message then calls saveSettingsToFile Yes this appears to be a potential stack overflow - these 2
+     * functions call each other repeatdly if an exception occurs.
+     */
+    public void logMessageAndSave()
+    {
+        logger.log(Level.INFO, "Generating new properties file");
+        this.saveProperties();
     }
 
-    public void savePropertiesFile() {
-        FileOutputStream fileoutputstream = null;
+    /**
+     * Writes the properties to the properties file.
+     */
+    public void saveProperties()
+    {
+        FileOutputStream var1 = null;
 
-        try {
+        try
+        {
             // CraftBukkit start - Don't attempt writing to file if it's read only
-            if (this.c.exists() && !this.c.canWrite()) {
+            if (this.associatedFile.exists() && !this.associatedFile.canWrite())
+            {
                 return;
             }
+
             // CraftBukkit end
-            fileoutputstream = new FileOutputStream(this.c);
-            this.properties.store(fileoutputstream, "Minecraft server properties");
-        } catch (Exception exception) {
-            a.log(Level.WARNING, "Failed to save " + this.c, exception);
-            this.a();
-        } finally {
-            if (fileoutputstream != null) {
-                try {
-                    fileoutputstream.close();
-                } catch (IOException ioexception) {
+            var1 = new FileOutputStream(this.associatedFile);
+            this.properties.store(var1, "Minecraft server properties");
+        }
+        catch (Exception var11)
+        {
+            logger.log(Level.WARNING, "Failed to save " + this.associatedFile, var11);
+            this.logMessageAndSave();
+        }
+        finally
+        {
+            if (var1 != null)
+            {
+                try
+                {
+                    var1.close();
+                }
+                catch (IOException var10)
+                {
                     ;
                 }
             }
         }
     }
 
-    public File c() {
-        return this.c;
+    /**
+     * Returns this PropertyManager's file object used for property saving.
+     */
+    public File getPropertiesFile()
+    {
+        return this.associatedFile;
     }
 
-    public String getString(String s, String s1) {
-        if (!this.properties.containsKey(s)) {
-            this.properties.setProperty(s, s1);
-            this.savePropertiesFile();
+    /**
+     * Gets a property. If it does not exist, set it to the specified value.
+     */
+    public String getProperty(String par1Str, String par2Str)
+    {
+        if (!this.properties.containsKey(par1Str))
+        {
+            this.properties.setProperty(par1Str, par2Str);
+            this.saveProperties();
         }
 
-        return this.getOverride(s, this.properties.getProperty(s, s1)); // CraftBukkit
+        return this.getOverride(par1Str, this.properties.getProperty(par1Str, par2Str)); // CraftBukkit
     }
 
-    public int getInt(String s, int i) {
-        try {
-            return this.getOverride(s, Integer.parseInt(this.getString(s, "" + i))); // CraftBukkit
-        } catch (Exception exception) {
-            this.properties.setProperty(s, "" + i);
-            return this.getOverride(s, i); // CraftBukkit
+    /**
+     * Gets an integer property. If it does not exist, set it to the specified value.
+     */
+    public int getIntProperty(String par1Str, int par2)
+    {
+        try
+        {
+            return this.getOverride(par1Str, Integer.parseInt(this.getProperty(par1Str, "" + par2))); // CraftBukkit
+        }
+        catch (Exception var4)
+        {
+            this.properties.setProperty(par1Str, "" + par2);
+            return this.getOverride(par1Str, par2); // CraftBukkit
         }
     }
 
-    public boolean getBoolean(String s, boolean flag) {
-        try {
-            return this.getOverride(s, Boolean.parseBoolean(this.getString(s, "" + flag))); // CraftBukkit
-        } catch (Exception exception) {
-            this.properties.setProperty(s, "" + flag);
-            return this.getOverride(s, flag); // CraftBukkit
+    /**
+     * Gets a boolean property. If it does not exist, set it to the specified value.
+     */
+    public boolean getBooleanProperty(String par1Str, boolean par2)
+    {
+        try
+        {
+            return this.getOverride(par1Str, Boolean.parseBoolean(this.getProperty(par1Str, "" + par2))); // CraftBukkit
+        }
+        catch (Exception var4)
+        {
+            this.properties.setProperty(par1Str, "" + par2);
+            return this.getOverride(par1Str, par2); // CraftBukkit
         }
     }
 
-    public void a(String s, Object object) {
-        this.properties.setProperty(s, "" + object);
+    /**
+     * Saves an Object with the given property name.
+     */
+    public void setProperty(String par1Str, Object par2Obj)
+    {
+        this.properties.setProperty(par1Str, "" + par2Obj);
     }
 }

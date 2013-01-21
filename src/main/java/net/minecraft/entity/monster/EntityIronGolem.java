@@ -1,191 +1,294 @@
-package net.minecraft.server;
+package net.minecraft.entity.monster;
 
 import org.bukkit.craftbukkit.inventory.CraftItemStack; // CraftBukkit
+import net.minecraft.block.Block;
+import net.minecraft.entity.Entity;
+import net.minecraft.entity.EntityLiving;
+import net.minecraft.entity.ai.EntityAIAttackOnCollide;
+import net.minecraft.entity.ai.EntityAIDefendVillage;
+import net.minecraft.entity.ai.EntityAIHurtByTarget;
+import net.minecraft.entity.ai.EntityAILookAtVillager;
+import net.minecraft.entity.ai.EntityAILookIdle;
+import net.minecraft.entity.ai.EntityAIMoveThroughVillage;
+import net.minecraft.entity.ai.EntityAIMoveTowardsTarget;
+import net.minecraft.entity.ai.EntityAIMoveTwardsRestriction;
+import net.minecraft.entity.ai.EntityAINearestAttackableTarget;
+import net.minecraft.entity.ai.EntityAIWander;
+import net.minecraft.entity.ai.EntityAIWatchClosest;
+import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.item.Item;
+import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.util.ChunkCoordinates;
+import net.minecraft.util.DamageSource;
+import net.minecraft.util.MathHelper;
+import net.minecraft.village.Village;
+import net.minecraft.world.World;
 
-public class EntityIronGolem extends EntityGolem {
+public class EntityIronGolem extends EntityGolem
+{
+    /** deincrements, and a distance-to-home check is done at 0 */
+    private int homeCheckTimer = 0;
+    Village villageObj = null;
+    private int attackTimer;
+    private int holdRoseTick;
 
-    private int e = 0;
-    Village d = null;
-    private int f;
-    private int g;
-
-    public EntityIronGolem(World world) {
-        super(world);
+    public EntityIronGolem(World par1World)
+    {
+        super(par1World);
         this.texture = "/mob/villager_golem.png";
-        this.a(1.4F, 2.9F);
-        this.getNavigation().a(true);
-        this.goalSelector.a(1, new PathfinderGoalMeleeAttack(this, 0.25F, true));
-        this.goalSelector.a(2, new PathfinderGoalMoveTowardsTarget(this, 0.22F, 32.0F));
-        this.goalSelector.a(3, new PathfinderGoalMoveThroughVillage(this, 0.16F, true));
-        this.goalSelector.a(4, new PathfinderGoalMoveTowardsRestriction(this, 0.16F));
-        this.goalSelector.a(5, new PathfinderGoalOfferFlower(this));
-        this.goalSelector.a(6, new PathfinderGoalRandomStroll(this, 0.16F));
-        this.goalSelector.a(7, new PathfinderGoalLookAtPlayer(this, EntityHuman.class, 6.0F));
-        this.goalSelector.a(8, new PathfinderGoalRandomLookaround(this));
-        this.targetSelector.a(1, new PathfinderGoalDefendVillage(this));
-        this.targetSelector.a(2, new PathfinderGoalHurtByTarget(this, false));
-        this.targetSelector.a(3, new PathfinderGoalNearestAttackableTarget(this, EntityLiving.class, 16.0F, 0, false, true, IMonster.a));
+        this.setSize(1.4F, 2.9F);
+        this.getNavigator().setAvoidsWater(true);
+        this.tasks.addTask(1, new EntityAIAttackOnCollide(this, 0.25F, true));
+        this.tasks.addTask(2, new EntityAIMoveTowardsTarget(this, 0.22F, 32.0F));
+        this.tasks.addTask(3, new EntityAIMoveThroughVillage(this, 0.16F, true));
+        this.tasks.addTask(4, new EntityAIMoveTwardsRestriction(this, 0.16F));
+        this.tasks.addTask(5, new EntityAILookAtVillager(this));
+        this.tasks.addTask(6, new EntityAIWander(this, 0.16F));
+        this.tasks.addTask(7, new EntityAIWatchClosest(this, EntityPlayer.class, 6.0F));
+        this.tasks.addTask(8, new EntityAILookIdle(this));
+        this.targetTasks.addTask(1, new EntityAIDefendVillage(this));
+        this.targetTasks.addTask(2, new EntityAIHurtByTarget(this, false));
+        this.targetTasks.addTask(3, new EntityAINearestAttackableTarget(this, EntityLiving.class, 16.0F, 0, false, true, IMob.mobSelector));
     }
 
-    protected void a() {
-        super.a();
-        this.datawatcher.a(16, Byte.valueOf((byte) 0));
+    protected void entityInit()
+    {
+        super.entityInit();
+        this.dataWatcher.addObject(16, Byte.valueOf((byte)0));
     }
 
-    public boolean be() {
+    /**
+     * Returns true if the newer Entity AI code should be run
+     */
+    public boolean isAIEnabled()
+    {
         return true;
     }
 
-    protected void bm() {
-        if (--this.e <= 0) {
-            this.e = 70 + this.random.nextInt(50);
-            this.d = this.world.villages.getClosestVillage(MathHelper.floor(this.locX), MathHelper.floor(this.locY), MathHelper.floor(this.locZ), 32);
-            if (this.d == null) {
-                this.aL();
-            } else {
-                ChunkCoordinates chunkcoordinates = this.d.getCenter();
+    /**
+     * main AI tick function, replaces updateEntityActionState
+     */
+    protected void updateAITick()
+    {
+        if (--this.homeCheckTimer <= 0)
+        {
+            this.homeCheckTimer = 70 + this.rand.nextInt(50);
+            this.villageObj = this.worldObj.villageCollectionObj.findNearestVillage(MathHelper.floor_double(this.posX), MathHelper.floor_double(this.posY), MathHelper.floor_double(this.posZ), 32);
 
-                this.b(chunkcoordinates.x, chunkcoordinates.y, chunkcoordinates.z, (int) ((float) this.d.getSize() * 0.6F));
+            if (this.villageObj == null)
+            {
+                this.detachHome();
+            }
+            else
+            {
+                ChunkCoordinates var1 = this.villageObj.getCenter();
+                this.setHomeArea(var1.posX, var1.posY, var1.posZ, (int)((float)this.villageObj.getVillageRadius() * 0.6F));
             }
         }
 
-        super.bm();
+        super.updateAITick();
     }
 
-    public int getMaxHealth() {
+    public int getMaxHealth()
+    {
         return 100;
     }
 
-    protected int g(int i) {
-        return i;
+    /**
+     * Decrements the entity's air supply when underwater
+     */
+    protected int decreaseAirSupply(int par1)
+    {
+        return par1;
     }
 
-    protected void o(Entity entity) {
-        if (entity instanceof IMonster && this.aB().nextInt(20) == 0) {
-            this.setGoalTarget((EntityLiving) entity);
+    protected void collideWithEntity(Entity par1Entity)
+    {
+        if (par1Entity instanceof IMob && this.getRNG().nextInt(20) == 0)
+        {
+            this.setAttackTarget((EntityLiving)par1Entity);
         }
 
-        super.o(entity);
+        super.collideWithEntity(par1Entity);
     }
 
-    public void c() {
-        super.c();
-        if (this.f > 0) {
-            --this.f;
+    /**
+     * Called frequently so the entity can update its state every tick as required. For example, zombies and skeletons
+     * use this to react to sunlight and start to burn.
+     */
+    public void onLivingUpdate()
+    {
+        super.onLivingUpdate();
+
+        if (this.attackTimer > 0)
+        {
+            --this.attackTimer;
         }
 
-        if (this.g > 0) {
-            --this.g;
+        if (this.holdRoseTick > 0)
+        {
+            --this.holdRoseTick;
         }
 
-        if (this.motX * this.motX + this.motZ * this.motZ > 2.500000277905201E-7D && this.random.nextInt(5) == 0) {
-            int i = MathHelper.floor(this.locX);
-            int j = MathHelper.floor(this.locY - 0.20000000298023224D - (double) this.height);
-            int k = MathHelper.floor(this.locZ);
-            int l = this.world.getTypeId(i, j, k);
+        if (this.motionX * this.motionX + this.motionZ * this.motionZ > 2.500000277905201E-7D && this.rand.nextInt(5) == 0)
+        {
+            int var1 = MathHelper.floor_double(this.posX);
+            int var2 = MathHelper.floor_double(this.posY - 0.20000000298023224D - (double)this.yOffset);
+            int var3 = MathHelper.floor_double(this.posZ);
+            int var4 = this.worldObj.getBlockId(var1, var2, var3);
 
-            if (l > 0) {
-                this.world.addParticle("tilecrack_" + l + "_" + this.world.getData(i, j, k), this.locX + ((double) this.random.nextFloat() - 0.5D) * (double) this.width, this.boundingBox.b + 0.1D, this.locZ + ((double) this.random.nextFloat() - 0.5D) * (double) this.width, 4.0D * ((double) this.random.nextFloat() - 0.5D), 0.5D, ((double) this.random.nextFloat() - 0.5D) * 4.0D);
+            if (var4 > 0)
+            {
+                this.worldObj.spawnParticle("tilecrack_" + var4 + "_" + this.worldObj.getBlockMetadata(var1, var2, var3), this.posX + ((double)this.rand.nextFloat() - 0.5D) * (double)this.width, this.boundingBox.minY + 0.1D, this.posZ + ((double)this.rand.nextFloat() - 0.5D) * (double)this.width, 4.0D * ((double)this.rand.nextFloat() - 0.5D), 0.5D, ((double)this.rand.nextFloat() - 0.5D) * 4.0D);
             }
         }
     }
 
-    public boolean a(Class oclass) {
-        return this.p() && EntityHuman.class.isAssignableFrom(oclass) ? false : super.a(oclass);
+    /**
+     * Returns true if this entity can attack entities of the specified class.
+     */
+    public boolean canAttackClass(Class par1Class)
+    {
+        return this.isPlayerCreated() && EntityPlayer.class.isAssignableFrom(par1Class) ? false : super.canAttackClass(par1Class);
     }
 
-    public void b(NBTTagCompound nbttagcompound) {
-        super.b(nbttagcompound);
-        nbttagcompound.setBoolean("PlayerCreated", this.p());
+    /**
+     * (abstract) Protected helper method to write subclass entity data to NBT.
+     */
+    public void writeEntityToNBT(NBTTagCompound par1NBTTagCompound)
+    {
+        super.writeEntityToNBT(par1NBTTagCompound);
+        par1NBTTagCompound.setBoolean("PlayerCreated", this.isPlayerCreated());
     }
 
-    public void a(NBTTagCompound nbttagcompound) {
-        super.a(nbttagcompound);
-        this.setPlayerCreated(nbttagcompound.getBoolean("PlayerCreated"));
+    /**
+     * (abstract) Protected helper method to read subclass entity data from NBT.
+     */
+    public void readEntityFromNBT(NBTTagCompound par1NBTTagCompound)
+    {
+        super.readEntityFromNBT(par1NBTTagCompound);
+        this.setPlayerCreated(par1NBTTagCompound.getBoolean("PlayerCreated"));
     }
 
-    public boolean m(Entity entity) {
-        this.f = 10;
-        this.world.broadcastEntityEffect(this, (byte) 4);
-        boolean flag = entity.damageEntity(DamageSource.mobAttack(this), 7 + this.random.nextInt(15));
+    public boolean attackEntityAsMob(Entity par1Entity)
+    {
+        this.attackTimer = 10;
+        this.worldObj.setEntityState(this, (byte)4);
+        boolean var2 = par1Entity.attackEntityFrom(DamageSource.causeMobDamage(this), 7 + this.rand.nextInt(15));
 
-        if (flag) {
-            entity.motY += 0.4000000059604645D;
+        if (var2)
+        {
+            par1Entity.motionY += 0.4000000059604645D;
         }
 
-        this.makeSound("mob.irongolem.throw", 1.0F, 1.0F);
-        return flag;
+        this.playSound("mob.irongolem.throw", 1.0F, 1.0F);
+        return var2;
     }
 
-    public Village m() {
-        return this.d;
+    public Village getVillage()
+    {
+        return this.villageObj;
     }
 
-    public void f(boolean flag) {
-        this.g = flag ? 400 : 0;
-        this.world.broadcastEntityEffect(this, (byte) 11);
+    public void setHoldingRose(boolean par1)
+    {
+        this.holdRoseTick = par1 ? 400 : 0;
+        this.worldObj.setEntityState(this, (byte)11);
     }
 
-    protected String aY() {
+    /**
+     * Returns the sound this mob makes while it's alive.
+     */
+    protected String getLivingSound()
+    {
         return "none";
     }
 
-    protected String aZ() {
+    /**
+     * Returns the sound this mob makes when it is hurt.
+     */
+    protected String getHurtSound()
+    {
         return "mob.irongolem.hit";
     }
 
-    protected String ba() {
+    /**
+     * Returns the sound this mob makes on death.
+     */
+    protected String getDeathSound()
+    {
         return "mob.irongolem.death";
     }
 
-    protected void a(int i, int j, int k, int l) {
-        this.makeSound("mob.irongolem.walk", 1.0F, 1.0F);
+    /**
+     * Plays step sound at given x, y, z for the entity
+     */
+    protected void playStepSound(int par1, int par2, int par3, int par4)
+    {
+        this.playSound("mob.irongolem.walk", 1.0F, 1.0F);
     }
 
-    protected void dropDeathLoot(boolean flag, int i) {
+    /**
+     * Drop 0-2 items of this living's type. @param par1 - Whether this entity has recently been hit by a player. @param
+     * par2 - Level of Looting used to kill this mob.
+     */
+    protected void dropFewItems(boolean par1, int par2)
+    {
         // CraftBukkit start
         java.util.List<org.bukkit.inventory.ItemStack> loot = new java.util.ArrayList<org.bukkit.inventory.ItemStack>();
-        int j = this.random.nextInt(3);
-
+        int j = this.rand.nextInt(3);
         int k;
 
-        if (j > 0) {
-            loot.add(CraftItemStack.asNewCraftStack(Item.byId[Block.RED_ROSE.id], j));
+        if (j > 0)
+        {
+            loot.add(CraftItemStack.asNewCraftStack(Item.itemsList[Block.plantRed.blockID], j));
         }
 
-        k = 3 + this.random.nextInt(3);
+        k = 3 + this.rand.nextInt(3);
 
-        if (k > 0) {
-            loot.add(CraftItemStack.asNewCraftStack(Item.IRON_INGOT, k));
+        if (k > 0)
+        {
+            loot.add(CraftItemStack.asNewCraftStack(Item.ingotIron, k));
         }
 
         org.bukkit.craftbukkit.event.CraftEventFactory.callEntityDeathEvent(this, loot);
         // CraftBukkit end
     }
 
-    public int o() {
-        return this.g;
+    public int getHoldRoseTick()
+    {
+        return this.holdRoseTick;
     }
 
-    public boolean p() {
-        return (this.datawatcher.getByte(16) & 1) != 0;
+    public boolean isPlayerCreated()
+    {
+        return (this.dataWatcher.getWatchableObjectByte(16) & 1) != 0;
     }
 
-    public void setPlayerCreated(boolean flag) {
-        byte b0 = this.datawatcher.getByte(16);
+    public void setPlayerCreated(boolean par1)
+    {
+        byte var2 = this.dataWatcher.getWatchableObjectByte(16);
 
-        if (flag) {
-            this.datawatcher.watch(16, Byte.valueOf((byte) (b0 | 1)));
-        } else {
-            this.datawatcher.watch(16, Byte.valueOf((byte) (b0 & -2)));
+        if (par1)
+        {
+            this.dataWatcher.updateObject(16, Byte.valueOf((byte)(var2 | 1)));
+        }
+        else
+        {
+            this.dataWatcher.updateObject(16, Byte.valueOf((byte)(var2 & -2)));
         }
     }
 
-    public void die(DamageSource damagesource) {
-        if (!this.p() && this.killer != null && this.d != null) {
-            this.d.a(this.killer.getName(), -5);
+    /**
+     * Called when the mob's health reaches 0.
+     */
+    public void onDeath(DamageSource par1DamageSource)
+    {
+        if (!this.isPlayerCreated() && this.attackingPlayer != null && this.villageObj != null)
+        {
+            this.villageObj.setReputationForPlayer(this.attackingPlayer.getCommandSenderName(), -5);
         }
 
-        super.die(damagesource);
+        super.onDeath(par1DamageSource);
     }
 }

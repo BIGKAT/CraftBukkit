@@ -1,110 +1,153 @@
-package net.minecraft.server;
+package net.minecraft.item;
 
-public class ItemDoor extends Item {
+import net.minecraft.block.Block;
+import net.minecraft.block.material.Material;
+import net.minecraft.creativetab.CreativeTabs;
+import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.entity.player.EntityPlayerMP;
+import net.minecraft.network.packet.Packet53BlockChange;
+import net.minecraft.util.MathHelper;
+import net.minecraft.world.World;
+public class ItemDoor extends Item
+{
+    private Material doorMaterial;
 
-    private Material a;
-
-    public ItemDoor(int i, Material material) {
-        super(i);
-        this.a = material;
+    public ItemDoor(int par1, Material par2Material)
+    {
+        super(par1);
+        this.doorMaterial = par2Material;
         this.maxStackSize = 1;
-        this.a(CreativeModeTab.d);
+        this.setCreativeTab(CreativeTabs.tabRedstone);
     }
 
-    public boolean interactWith(ItemStack itemstack, EntityHuman entityhuman, World world, int i, int j, int k, int l, float f, float f1, float f2) {
-        if (l != 1) {
+    /**
+     * Callback for item usage. If the item does something special on right clicking, he will have one of those. Return
+     * True if something happen and false if it don't. This is for ITEMS, not BLOCKS
+     */
+    public boolean onItemUse(ItemStack par1ItemStack, EntityPlayer par2EntityPlayer, World par3World, int par4, int par5, int par6, int par7, float par8, float par9, float par10)
+    {
+        if (par7 != 1)
+        {
             return false;
-        } else {
-            ++j;
-            Block block;
+        }
+        else
+        {
+            ++par5;
+            Block var11;
 
-            if (this.a == Material.WOOD) {
-                block = Block.WOODEN_DOOR;
-            } else {
-                block = Block.IRON_DOOR_BLOCK;
+            if (this.doorMaterial == Material.wood)
+            {
+                var11 = Block.doorWood;
+            }
+            else
+            {
+                var11 = Block.doorSteel;
             }
 
-            if (entityhuman.a(i, j, k, l, itemstack) && entityhuman.a(i, j + 1, k, l, itemstack)) {
-                if (!block.canPlace(world, i, j, k)) {
+            if (par2EntityPlayer.canPlayerEdit(par4, par5, par6, par7, par1ItemStack) && par2EntityPlayer.canPlayerEdit(par4, par5 + 1, par6, par7, par1ItemStack))
+            {
+                if (!var11.canPlaceBlockAt(par3World, par4, par5, par6))
+                {
                     return false;
-                } else {
-                    int i1 = MathHelper.floor((double) ((entityhuman.yaw + 180.0F) * 4.0F / 360.0F) - 0.5D) & 3;
+                }
+                else
+                {
+                    int var12 = MathHelper.floor_double((double)((par2EntityPlayer.rotationYaw + 180.0F) * 4.0F / 360.0F) - 0.5D) & 3;
 
                     // CraftBukkit start
-                    if (!place(world, i, j, k, i1, block, entityhuman)) {
+                    if (!place(par3World, par4, par5, par6, var12, var11, par2EntityPlayer))
+                    {
                         return false;
                     }
-                    // CraftBukkit end
 
-                    --itemstack.count;
+                    // CraftBukkit end
+                    --par1ItemStack.stackSize;
                     return true;
                 }
-            } else {
+            }
+            else
+            {
                 return false;
             }
         }
     }
 
-    public static void place(World world, int i, int j, int k, int l, Block block) {
+    public static void placeDoorBlock(World par0World, int par1, int par2, int par3, int par4, Block par5Block)
+    {
         // CraftBukkit start
-        place(world, i, j, k, l, block, null);
+        place(par0World, par1, par2, par3, par4, par5Block, null);
     }
 
-    public static boolean place(World world, int i, int j, int k, int l, Block block, EntityHuman entityhuman) {
+    public static boolean place(World world, int i, int j, int k, int l, Block block, EntityPlayer entityhuman)
+    {
         // CraftBukkit end
         byte b0 = 0;
         byte b1 = 0;
 
-        if (l == 0) {
+        if (l == 0)
+        {
             b1 = 1;
         }
 
-        if (l == 1) {
+        if (l == 1)
+        {
             b0 = -1;
         }
 
-        if (l == 2) {
+        if (l == 2)
+        {
             b1 = -1;
         }
 
-        if (l == 3) {
+        if (l == 3)
+        {
             b0 = 1;
         }
 
-        int i1 = (world.t(i - b0, j, k - b1) ? 1 : 0) + (world.t(i - b0, j + 1, k - b1) ? 1 : 0);
-        int j1 = (world.t(i + b0, j, k + b1) ? 1 : 0) + (world.t(i + b0, j + 1, k + b1) ? 1 : 0);
-        boolean flag = world.getTypeId(i - b0, j, k - b1) == block.id || world.getTypeId(i - b0, j + 1, k - b1) == block.id;
-        boolean flag1 = world.getTypeId(i + b0, j, k + b1) == block.id || world.getTypeId(i + b0, j + 1, k + b1) == block.id;
+        int i1 = (world.isBlockNormalCube(i - b0, j, k - b1) ? 1 : 0) + (world.isBlockNormalCube(i - b0, j + 1, k - b1) ? 1 : 0);
+        int j1 = (world.isBlockNormalCube(i + b0, j, k + b1) ? 1 : 0) + (world.isBlockNormalCube(i + b0, j + 1, k + b1) ? 1 : 0);
+        boolean flag = world.getBlockId(i - b0, j, k - b1) == block.blockID || world.getBlockId(i - b0, j + 1, k - b1) == block.blockID;
+        boolean flag1 = world.getBlockId(i + b0, j, k + b1) == block.blockID || world.getBlockId(i + b0, j + 1, k + b1) == block.blockID;
         boolean flag2 = false;
 
-        if (flag && !flag1) {
+        if (flag && !flag1)
+        {
             flag2 = true;
-        } else if (j1 > i1) {
+        }
+        else if (j1 > i1)
+        {
             flag2 = true;
         }
 
-        world.suppressPhysics = true;
+        world.editingBlocks = true;
+
         // CraftBukkit start
-        if (entityhuman != null) {
-            if(!ItemBlock.processBlockPlace(world, entityhuman, null, i, j, k, block.id, l)) {
-                ((EntityPlayer) entityhuman).playerConnection.sendPacket(new Packet53BlockChange(i, j + 1, k, world));
+        if (entityhuman != null)
+        {
+            if (!ItemBlock.processBlockPlace(world, entityhuman, null, i, j, k, block.blockID, l))
+            {
+                ((EntityPlayerMP) entityhuman).playerNetServerHandler.sendPacketToPlayer(new Packet53BlockChange(i, j + 1, k, world));
                 return false;
             }
 
-            if (world.getTypeId(i, j, k) != block.id) {
-                ((EntityPlayer) entityhuman).playerConnection.sendPacket(new Packet53BlockChange(i, j + 1, k, world));
+            if (world.getBlockId(i, j, k) != block.blockID)
+            {
+                ((EntityPlayerMP) entityhuman).playerNetServerHandler.sendPacketToPlayer(new Packet53BlockChange(i, j + 1, k, world));
                 return true;
             }
 
-            world.suppressPhysics = true;
-        } else {
-            world.setTypeIdAndData(i, j, k, block.id, l);
+            world.editingBlocks = true;
         }
+        else
+        {
+            world.setBlockAndMetadataWithNotify(i, j, k, block.blockID, l);
+        }
+
         // CraftBukkit end
-        world.setTypeIdAndData(i, j + 1, k, block.id, 8 | (flag2 ? 1 : 0));
-        world.suppressPhysics = false;
-        world.applyPhysics(i, j, k, block.id);
-        world.applyPhysics(i, j + 1, k, block.id);
+        world.setBlockAndMetadataWithNotify(i, j + 1, k, block.blockID, 8 | (flag2 ? 1 : 0));
+        world.editingBlocks = false;
+        world.notifyBlocksOfNeighborChange(i, j, k, block.blockID);
+        world.notifyBlocksOfNeighborChange(i, j + 1, k, block.blockID);
         return true; // CraftBukkit
     }
 }

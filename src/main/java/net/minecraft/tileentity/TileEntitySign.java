@@ -1,50 +1,77 @@
-package net.minecraft.server;
+package net.minecraft.tileentity;
 
-public class TileEntitySign extends TileEntity {
+import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.network.packet.Packet;
+import net.minecraft.network.packet.Packet130UpdateSign;
+public class TileEntitySign extends TileEntity
+{
+    /** An array of four strings storing the lines of text on the sign. */
+    public String[] signText = new String[] {"", "", "", ""};
 
-    public String[] lines = new String[] { "", "", "", ""};
-    public int b = -1;
+    /**
+     * The index of the line currently being edited. Only used on client side, but defined on both. Note this is only
+     * really used when the > < are going to be visible.
+     */
+    public int lineBeingEdited = -1;
     public boolean isEditable = true; // CraftBukkit - privite -> public
 
     public TileEntitySign() {}
 
-    public void b(NBTTagCompound nbttagcompound) {
-        super.b(nbttagcompound);
-        nbttagcompound.setString("Text1", this.lines[0]);
-        nbttagcompound.setString("Text2", this.lines[1]);
-        nbttagcompound.setString("Text3", this.lines[2]);
-        nbttagcompound.setString("Text4", this.lines[3]);
+    /**
+     * Writes a tile entity to NBT.
+     */
+    public void writeToNBT(NBTTagCompound par1NBTTagCompound)
+    {
+        super.writeToNBT(par1NBTTagCompound);
+        par1NBTTagCompound.setString("Text1", this.signText[0]);
+        par1NBTTagCompound.setString("Text2", this.signText[1]);
+        par1NBTTagCompound.setString("Text3", this.signText[2]);
+        par1NBTTagCompound.setString("Text4", this.signText[3]);
     }
 
-    public void a(NBTTagCompound nbttagcompound) {
+    /**
+     * Reads a tile entity from NBT.
+     */
+    public void readFromNBT(NBTTagCompound par1NBTTagCompound)
+    {
         this.isEditable = false;
-        super.a(nbttagcompound);
+        super.readFromNBT(par1NBTTagCompound);
 
-        for (int i = 0; i < 4; ++i) {
-            this.lines[i] = nbttagcompound.getString("Text" + (i + 1));
-            if (this.lines[i].length() > 15) {
-                this.lines[i] = this.lines[i].substring(0, 15);
+        for (int var2 = 0; var2 < 4; ++var2)
+        {
+            this.signText[var2] = par1NBTTagCompound.getString("Text" + (var2 + 1));
+
+            if (this.signText[var2].length() > 15)
+            {
+                this.signText[var2] = this.signText[var2].substring(0, 15);
             }
         }
     }
 
-    public Packet getUpdatePacket() {
-        String[] astring = new String[4];
+    /**
+     * Overriden in a sign to provide the text.
+     */
+    public Packet getDescriptionPacket()
+    {
+        String[] var1 = new String[4];
 
         // CraftBukkit start - limit sign text to 15 chars per line
-        for (int i = 0; i < 4; ++i) {
-            astring[i] = this.lines[i];
+        for (int i = 0; i < 4; ++i)
+        {
+            var1[i] = this.signText[i];
 
-            if (this.lines[i].length() > 15) {
-                astring[i] = this.lines[i].substring(0, 15);
+            if (this.signText[i].length() > 15)
+            {
+                var1[i] = this.signText[i].substring(0, 15);
             }
         }
-        // CraftBukkit end
 
-        return new Packet130UpdateSign(this.x, this.y, this.z, astring);
+        // CraftBukkit end
+        return new Packet130UpdateSign(this.xCoord, this.yCoord, this.zCoord, var1);
     }
 
-    public boolean a() {
+    public boolean isEditable()
+    {
         return this.isEditable;
     }
 }

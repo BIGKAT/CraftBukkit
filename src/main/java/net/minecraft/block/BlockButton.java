@@ -1,297 +1,446 @@
-package net.minecraft.server;
+package net.minecraft.block;
 
 import java.util.List;
 import java.util.Random;
+import net.minecraft.block.material.Material;
+import net.minecraft.creativetab.CreativeTabs;
+import net.minecraft.entity.Entity;
+import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.entity.projectile.EntityArrow;
+import net.minecraft.util.AxisAlignedBB;
+import net.minecraft.world.IBlockAccess;
+import net.minecraft.world.World;
 
 // CraftBukkit start
 import org.bukkit.event.block.BlockRedstoneEvent;
 import org.bukkit.event.entity.EntityInteractEvent;
 // CraftBukkit end
 
-public class BlockButton extends Block {
+public class BlockButton extends Block
+{
+    /** Whether this button is sensible to arrows, used by wooden buttons. */
+    private final boolean sensible;
 
-    private final boolean a;
-
-    protected BlockButton(int i, int j, boolean flag) {
-        super(i, j, Material.ORIENTABLE);
-        this.b(true);
-        this.a(CreativeModeTab.d);
-        this.a = flag;
+    protected BlockButton(int par1, int par2, boolean par3)
+    {
+        super(par1, par2, Material.circuits);
+        this.setTickRandomly(true);
+        this.setCreativeTab(CreativeTabs.tabRedstone);
+        this.sensible = par3;
     }
 
-    public AxisAlignedBB e(World world, int i, int j, int k) {
+    /**
+     * Returns a bounding box from the pool of bounding boxes (this means this box can change after the pool has been
+     * cleared to be reused)
+     */
+    public AxisAlignedBB getCollisionBoundingBoxFromPool(World par1World, int par2, int par3, int par4)
+    {
         return null;
     }
 
-    public int r_() {
-        return this.a ? 30 : 20;
+    /**
+     * How many world ticks before ticking
+     */
+    public int tickRate()
+    {
+        return this.sensible ? 30 : 20;
     }
 
-    public boolean c() {
+    /**
+     * Is this block (a) opaque and (b) a full 1m cube?  This determines whether or not to render the shared face of two
+     * adjacent blocks and also whether the player can attach torches, redstone wire, etc to this block.
+     */
+    public boolean isOpaqueCube()
+    {
         return false;
     }
 
-    public boolean b() {
+    /**
+     * If this block doesn't render as an ordinary block it will return False (examples: signs, buttons, stairs, etc)
+     */
+    public boolean renderAsNormalBlock()
+    {
         return false;
     }
 
-    public boolean canPlace(World world, int i, int j, int k, int l) {
-        return l == 2 && world.t(i, j, k + 1) ? true : (l == 3 && world.t(i, j, k - 1) ? true : (l == 4 && world.t(i + 1, j, k) ? true : l == 5 && world.t(i - 1, j, k)));
+    /**
+     * checks to see if you can place this block can be placed on that side of a block: BlockLever overrides
+     */
+    public boolean canPlaceBlockOnSide(World par1World, int par2, int par3, int par4, int par5)
+    {
+        return par5 == 2 && par1World.isBlockNormalCube(par2, par3, par4 + 1) ? true : (par5 == 3 && par1World.isBlockNormalCube(par2, par3, par4 - 1) ? true : (par5 == 4 && par1World.isBlockNormalCube(par2 + 1, par3, par4) ? true : par5 == 5 && par1World.isBlockNormalCube(par2 - 1, par3, par4)));
     }
 
-    public boolean canPlace(World world, int i, int j, int k) {
-        return world.t(i - 1, j, k) ? true : (world.t(i + 1, j, k) ? true : (world.t(i, j, k - 1) ? true : world.t(i, j, k + 1)));
+    /**
+     * Checks to see if its valid to put this block at the specified coordinates. Args: world, x, y, z
+     */
+    public boolean canPlaceBlockAt(World par1World, int par2, int par3, int par4)
+    {
+        return par1World.isBlockNormalCube(par2 - 1, par3, par4) ? true : (par1World.isBlockNormalCube(par2 + 1, par3, par4) ? true : (par1World.isBlockNormalCube(par2, par3, par4 - 1) ? true : par1World.isBlockNormalCube(par2, par3, par4 + 1)));
     }
 
-    public int getPlacedData(World world, int i, int j, int k, int l, float f, float f1, float f2, int i1) {
-        int j1 = world.getData(i, j, k);
-        int k1 = j1 & 8;
+    /**
+     * Called when a block is placed using its ItemBlock. Args: World, X, Y, Z, side, hitX, hitY, hitZ, block metadata
+     */
+    public int onBlockPlaced(World par1World, int par2, int par3, int par4, int par5, float par6, float par7, float par8, int par9)
+    {
+        int var10 = par1World.getBlockMetadata(par2, par3, par4);
+        int var11 = var10 & 8;
+        var10 &= 7;
 
-        j1 &= 7;
-        if (l == 2 && world.t(i, j, k + 1)) {
-            j1 = 4;
-        } else if (l == 3 && world.t(i, j, k - 1)) {
-            j1 = 3;
-        } else if (l == 4 && world.t(i + 1, j, k)) {
-            j1 = 2;
-        } else if (l == 5 && world.t(i - 1, j, k)) {
-            j1 = 1;
-        } else {
-            j1 = this.l(world, i, j, k);
+        if (par5 == 2 && par1World.isBlockNormalCube(par2, par3, par4 + 1))
+        {
+            var10 = 4;
+        }
+        else if (par5 == 3 && par1World.isBlockNormalCube(par2, par3, par4 - 1))
+        {
+            var10 = 3;
+        }
+        else if (par5 == 4 && par1World.isBlockNormalCube(par2 + 1, par3, par4))
+        {
+            var10 = 2;
+        }
+        else if (par5 == 5 && par1World.isBlockNormalCube(par2 - 1, par3, par4))
+        {
+            var10 = 1;
+        }
+        else
+        {
+            var10 = this.getOrientation(par1World, par2, par3, par4);
         }
 
-        return j1 + k1;
+        return var10 + var11;
     }
 
-    private int l(World world, int i, int j, int k) {
-        return world.t(i - 1, j, k) ? 1 : (world.t(i + 1, j, k) ? 2 : (world.t(i, j, k - 1) ? 3 : (world.t(i, j, k + 1) ? 4 : 1)));
+    /**
+     * Get side which this button is facing.
+     */
+    private int getOrientation(World par1World, int par2, int par3, int par4)
+    {
+        return par1World.isBlockNormalCube(par2 - 1, par3, par4) ? 1 : (par1World.isBlockNormalCube(par2 + 1, par3, par4) ? 2 : (par1World.isBlockNormalCube(par2, par3, par4 - 1) ? 3 : (par1World.isBlockNormalCube(par2, par3, par4 + 1) ? 4 : 1)));
     }
 
-    public void doPhysics(World world, int i, int j, int k, int l) {
-        if (this.n(world, i, j, k)) {
-            int i1 = world.getData(i, j, k) & 7;
-            boolean flag = false;
+    /**
+     * Lets the block know when one of its neighbor changes. Doesn't know which neighbor changed (coordinates passed are
+     * their own) Args: x, y, z, neighbor blockID
+     */
+    public void onNeighborBlockChange(World par1World, int par2, int par3, int par4, int par5)
+    {
+        if (this.redundantCanPlaceBlockAt(par1World, par2, par3, par4))
+        {
+            int var6 = par1World.getBlockMetadata(par2, par3, par4) & 7;
+            boolean var7 = false;
 
-            if (!world.t(i - 1, j, k) && i1 == 1) {
-                flag = true;
+            if (!par1World.isBlockNormalCube(par2 - 1, par3, par4) && var6 == 1)
+            {
+                var7 = true;
             }
 
-            if (!world.t(i + 1, j, k) && i1 == 2) {
-                flag = true;
+            if (!par1World.isBlockNormalCube(par2 + 1, par3, par4) && var6 == 2)
+            {
+                var7 = true;
             }
 
-            if (!world.t(i, j, k - 1) && i1 == 3) {
-                flag = true;
+            if (!par1World.isBlockNormalCube(par2, par3, par4 - 1) && var6 == 3)
+            {
+                var7 = true;
             }
 
-            if (!world.t(i, j, k + 1) && i1 == 4) {
-                flag = true;
+            if (!par1World.isBlockNormalCube(par2, par3, par4 + 1) && var6 == 4)
+            {
+                var7 = true;
             }
 
-            if (flag) {
-                this.c(world, i, j, k, world.getData(i, j, k), 0);
-                world.setTypeId(i, j, k, 0);
+            if (var7)
+            {
+                this.dropBlockAsItem(par1World, par2, par3, par4, par1World.getBlockMetadata(par2, par3, par4), 0);
+                par1World.setBlockWithNotify(par2, par3, par4, 0);
             }
         }
     }
 
-    private boolean n(World world, int i, int j, int k) {
-        if (!this.canPlace(world, i, j, k)) {
-            this.c(world, i, j, k, world.getData(i, j, k), 0);
-            world.setTypeId(i, j, k, 0);
+    /**
+     * This method is redundant, check it out...
+     */
+    private boolean redundantCanPlaceBlockAt(World par1World, int par2, int par3, int par4)
+    {
+        if (!this.canPlaceBlockAt(par1World, par2, par3, par4))
+        {
+            this.dropBlockAsItem(par1World, par2, par3, par4, par1World.getBlockMetadata(par2, par3, par4), 0);
+            par1World.setBlockWithNotify(par2, par3, par4, 0);
             return false;
-        } else {
+        }
+        else
+        {
             return true;
         }
     }
 
-    public void updateShape(IBlockAccess iblockaccess, int i, int j, int k) {
-        int l = iblockaccess.getData(i, j, k);
-
-        this.e(l);
+    /**
+     * Updates the blocks bounds based on its current state. Args: world, x, y, z
+     */
+    public void setBlockBoundsBasedOnState(IBlockAccess par1IBlockAccess, int par2, int par3, int par4)
+    {
+        int var5 = par1IBlockAccess.getBlockMetadata(par2, par3, par4);
+        this.func_82534_e(var5);
     }
 
-    private void e(int i) {
-        int j = i & 7;
-        boolean flag = (i & 8) > 0;
-        float f = 0.375F;
-        float f1 = 0.625F;
-        float f2 = 0.1875F;
-        float f3 = 0.125F;
+    private void func_82534_e(int par1)
+    {
+        int var2 = par1 & 7;
+        boolean var3 = (par1 & 8) > 0;
+        float var4 = 0.375F;
+        float var5 = 0.625F;
+        float var6 = 0.1875F;
+        float var7 = 0.125F;
 
-        if (flag) {
-            f3 = 0.0625F;
+        if (var3)
+        {
+            var7 = 0.0625F;
         }
 
-        if (j == 1) {
-            this.a(0.0F, f, 0.5F - f2, f3, f1, 0.5F + f2);
-        } else if (j == 2) {
-            this.a(1.0F - f3, f, 0.5F - f2, 1.0F, f1, 0.5F + f2);
-        } else if (j == 3) {
-            this.a(0.5F - f2, f, 0.0F, 0.5F + f2, f1, f3);
-        } else if (j == 4) {
-            this.a(0.5F - f2, f, 1.0F - f3, 0.5F + f2, f1, 1.0F);
+        if (var2 == 1)
+        {
+            this.setBlockBounds(0.0F, var4, 0.5F - var6, var7, var5, 0.5F + var6);
+        }
+        else if (var2 == 2)
+        {
+            this.setBlockBounds(1.0F - var7, var4, 0.5F - var6, 1.0F, var5, 0.5F + var6);
+        }
+        else if (var2 == 3)
+        {
+            this.setBlockBounds(0.5F - var6, var4, 0.0F, 0.5F + var6, var5, var7);
+        }
+        else if (var2 == 4)
+        {
+            this.setBlockBounds(0.5F - var6, var4, 1.0F - var7, 0.5F + var6, var5, 1.0F);
         }
     }
 
-    public void attack(World world, int i, int j, int k, EntityHuman entityhuman) {}
+    /**
+     * Called when the block is clicked by a player. Args: x, y, z, entityPlayer
+     */
+    public void onBlockClicked(World par1World, int par2, int par3, int par4, EntityPlayer par5EntityPlayer) {}
 
-    public boolean interact(World world, int i, int j, int k, EntityHuman entityhuman, int l, float f, float f1, float f2) {
-        int i1 = world.getData(i, j, k);
-        int j1 = i1 & 7;
-        int k1 = 8 - (i1 & 8);
+    /**
+     * Called upon block activation (right click on the block.)
+     */
+    public boolean onBlockActivated(World par1World, int par2, int par3, int par4, EntityPlayer par5EntityPlayer, int par6, float par7, float par8, float par9)
+    {
+        int var10 = par1World.getBlockMetadata(par2, par3, par4);
+        int var11 = var10 & 7;
+        int var12 = 8 - (var10 & 8);
 
-        if (k1 == 0) {
+        if (var12 == 0)
+        {
             return true;
-        } else {
+        }
+        else
+        {
             // CraftBukkit start
-            org.bukkit.block.Block block = world.getWorld().getBlockAt(i, j, k);
-            int old = (k1 != 8) ? 1 : 0;
-            int current = (k1 == 8) ? 1 : 0;
-
+            org.bukkit.block.Block block = par1World.getWorld().getBlockAt(par2, par3, par4);
+            int old = (var12 != 8) ? 1 : 0;
+            int current = (var12 == 8) ? 1 : 0;
             BlockRedstoneEvent eventRedstone = new BlockRedstoneEvent(block, old, current);
-            world.getServer().getPluginManager().callEvent(eventRedstone);
+            par1World.getServer().getPluginManager().callEvent(eventRedstone);
 
-            if ((eventRedstone.getNewCurrent() > 0) != (k1 == 8)) {
+            if ((eventRedstone.getNewCurrent() > 0) != (var12 == 8))
+            {
                 return true;
             }
-            // CraftBukkit end
 
-            world.setData(i, j, k, j1 + k1);
-            world.e(i, j, k, i, j, k);
-            world.makeSound((double) i + 0.5D, (double) j + 0.5D, (double) k + 0.5D, "random.click", 0.3F, 0.6F);
-            this.d(world, i, j, k, j1);
-            world.a(i, j, k, this.id, this.r_());
+            // CraftBukkit end
+            par1World.setBlockMetadataWithNotify(par2, par3, par4, var11 + var12);
+            par1World.markBlockRangeForRenderUpdate(par2, par3, par4, par2, par3, par4);
+            par1World.playSoundEffect((double)par2 + 0.5D, (double)par3 + 0.5D, (double)par4 + 0.5D, "random.click", 0.3F, 0.6F);
+            this.func_82536_d(par1World, par2, par3, par4, var11);
+            par1World.scheduleBlockUpdate(par2, par3, par4, this.blockID, this.tickRate());
             return true;
         }
     }
 
-    public void remove(World world, int i, int j, int k, int l, int i1) {
-        if ((i1 & 8) > 0) {
-            int j1 = i1 & 7;
-
-            this.d(world, i, j, k, j1);
+    /**
+     * ejects contained items into the world, and notifies neighbours of an update, as appropriate
+     */
+    public void breakBlock(World par1World, int par2, int par3, int par4, int par5, int par6)
+    {
+        if ((par6 & 8) > 0)
+        {
+            int var7 = par6 & 7;
+            this.func_82536_d(par1World, par2, par3, par4, var7);
         }
 
-        super.remove(world, i, j, k, l, i1);
+        super.breakBlock(par1World, par2, par3, par4, par5, par6);
     }
 
-    public boolean b(IBlockAccess iblockaccess, int i, int j, int k, int l) {
-        return (iblockaccess.getData(i, j, k) & 8) > 0;
+    /**
+     * Returns true if the block is emitting indirect/weak redstone power on the specified side. If isBlockNormalCube
+     * returns true, standard redstone propagation rules will apply instead and this will not be called. Args: World, X,
+     * Y, Z, side. Note that the side is reversed - eg it is 1 (up) when checking the bottom of the block.
+     */
+    public boolean isProvidingWeakPower(IBlockAccess par1IBlockAccess, int par2, int par3, int par4, int par5)
+    {
+        return (par1IBlockAccess.getBlockMetadata(par2, par3, par4) & 8) > 0;
     }
 
-    public boolean c(IBlockAccess iblockaccess, int i, int j, int k, int l) {
-        int i1 = iblockaccess.getData(i, j, k);
+    /**
+     * Returns true if the block is emitting direct/strong redstone power on the specified side. Args: World, X, Y, Z,
+     * side. Note that the side is reversed - eg it is 1 (up) when checking the bottom of the block.
+     */
+    public boolean isProvidingStrongPower(IBlockAccess par1IBlockAccess, int par2, int par3, int par4, int par5)
+    {
+        int var6 = par1IBlockAccess.getBlockMetadata(par2, par3, par4);
 
-        if ((i1 & 8) == 0) {
+        if ((var6 & 8) == 0)
+        {
             return false;
-        } else {
-            int j1 = i1 & 7;
-
-            return j1 == 5 && l == 1 ? true : (j1 == 4 && l == 2 ? true : (j1 == 3 && l == 3 ? true : (j1 == 2 && l == 4 ? true : j1 == 1 && l == 5)));
+        }
+        else
+        {
+            int var7 = var6 & 7;
+            return var7 == 5 && par5 == 1 ? true : (var7 == 4 && par5 == 2 ? true : (var7 == 3 && par5 == 3 ? true : (var7 == 2 && par5 == 4 ? true : var7 == 1 && par5 == 5)));
         }
     }
 
-    public boolean isPowerSource() {
+    /**
+     * Can this block provide power. Only wire currently seems to have this change based on its state.
+     */
+    public boolean canProvidePower()
+    {
         return true;
     }
 
-    public void b(World world, int i, int j, int k, Random random) {
-        if (!world.isStatic) {
-            int l = world.getData(i, j, k);
+    /**
+     * Ticks the block if it's been scheduled
+     */
+    public void updateTick(World par1World, int par2, int par3, int par4, Random par5Random)
+    {
+        if (!par1World.isRemote)
+        {
+            int var6 = par1World.getBlockMetadata(par2, par3, par4);
 
-            if ((l & 8) != 0) {
+            if ((var6 & 8) != 0)
+            {
                 // CraftBukkit start
-                org.bukkit.block.Block block = world.getWorld().getBlockAt(i, j, k);
-
+                org.bukkit.block.Block block = par1World.getWorld().getBlockAt(par2, par3, par4);
                 BlockRedstoneEvent eventRedstone = new BlockRedstoneEvent(block, 1, 0);
-                world.getServer().getPluginManager().callEvent(eventRedstone);
+                par1World.getServer().getPluginManager().callEvent(eventRedstone);
 
-                if (eventRedstone.getNewCurrent() > 0) {
+                if (eventRedstone.getNewCurrent() > 0)
+                {
                     return;
                 }
+
                 // CraftBukkit end
 
-                if (this.a) {
-                    this.o(world, i, j, k);
-                } else {
-                    world.setData(i, j, k, l & 7);
-                    int i1 = l & 7;
-
-                    this.d(world, i, j, k, i1);
-                    world.makeSound((double) i + 0.5D, (double) j + 0.5D, (double) k + 0.5D, "random.click", 0.3F, 0.5F);
-                    world.e(i, j, k, i, j, k);
+                if (this.sensible)
+                {
+                    this.func_82535_o(par1World, par2, par3, par4);
+                }
+                else
+                {
+                    par1World.setBlockMetadataWithNotify(par2, par3, par4, var6 & 7);
+                    int var7 = var6 & 7;
+                    this.func_82536_d(par1World, par2, par3, par4, var7);
+                    par1World.playSoundEffect((double)par2 + 0.5D, (double)par3 + 0.5D, (double)par4 + 0.5D, "random.click", 0.3F, 0.5F);
+                    par1World.markBlockRangeForRenderUpdate(par2, par3, par4, par2, par3, par4);
                 }
             }
         }
     }
 
-    public void f() {
-        float f = 0.1875F;
-        float f1 = 0.125F;
-        float f2 = 0.125F;
-
-        this.a(0.5F - f, 0.5F - f1, 0.5F - f2, 0.5F + f, 0.5F + f1, 0.5F + f2);
+    /**
+     * Sets the block's bounds for rendering it as an item
+     */
+    public void setBlockBoundsForItemRender()
+    {
+        float var1 = 0.1875F;
+        float var2 = 0.125F;
+        float var3 = 0.125F;
+        this.setBlockBounds(0.5F - var1, 0.5F - var2, 0.5F - var3, 0.5F + var1, 0.5F + var2, 0.5F + var3);
     }
 
-    public void a(World world, int i, int j, int k, Entity entity) {
-        if (!world.isStatic) {
-            if (this.a) {
-                if ((world.getData(i, j, k) & 8) == 0) {
+    /**
+     * Triggered whenever an entity collides with this block (enters into the block). Args: world, x, y, z, entity
+     */
+    public void onEntityCollidedWithBlock(World par1World, int par2, int par3, int par4, Entity par5Entity)
+    {
+        if (!par1World.isRemote)
+        {
+            if (this.sensible)
+            {
+                if ((par1World.getBlockMetadata(par2, par3, par4) & 8) == 0)
+                {
                     // CraftBukkit start - Call interaction when entities (currently arrows) hit wooden buttons
-                    EntityInteractEvent event = new EntityInteractEvent(entity.getBukkitEntity(), world.getWorld().getBlockAt(i, j, k));
-                    world.getServer().getPluginManager().callEvent(event);
+                    EntityInteractEvent event = new EntityInteractEvent(par5Entity.getBukkitEntity(), par1World.getWorld().getBlockAt(par2, par3, par4));
+                    par1World.getServer().getPluginManager().callEvent(event);
 
-                    if (event.isCancelled()) {
+                    if (event.isCancelled())
+                    {
                         return;
                     }
+
                     // CraftBukkit end
-                    this.o(world, i, j, k);
+                    this.func_82535_o(par1World, par2, par3, par4);
                 }
             }
         }
     }
 
-    private void o(World world, int i, int j, int k) {
-        int l = world.getData(i, j, k);
-        int i1 = l & 7;
-        boolean flag = (l & 8) != 0;
+    private void func_82535_o(World par1World, int par2, int par3, int par4)
+    {
+        int var5 = par1World.getBlockMetadata(par2, par3, par4);
+        int var6 = var5 & 7;
+        boolean var7 = (var5 & 8) != 0;
+        this.func_82534_e(var5);
+        List var9 = par1World.getEntitiesWithinAABB(EntityArrow.class, AxisAlignedBB.getAABBPool().addOrModifyAABBInPool((double)par2 + this.minX, (double)par3 + this.minY, (double)par4 + this.minZ, (double)par2 + this.maxX, (double)par3 + this.maxY, (double)par4 + this.maxZ));
+        boolean var8 = !var9.isEmpty();
 
-        this.e(l);
-        List list = world.a(EntityArrow.class, AxisAlignedBB.a().a((double) i + this.minX, (double) j + this.minY, (double) k + this.minZ, (double) i + this.maxX, (double) j + this.maxY, (double) k + this.maxZ));
-        boolean flag1 = !list.isEmpty();
-
-        if (flag1 && !flag) {
-            world.setData(i, j, k, i1 | 8);
-            this.d(world, i, j, k, i1);
-            world.e(i, j, k, i, j, k);
-            world.makeSound((double) i + 0.5D, (double) j + 0.5D, (double) k + 0.5D, "random.click", 0.3F, 0.6F);
+        if (var8 && !var7)
+        {
+            par1World.setBlockMetadataWithNotify(par2, par3, par4, var6 | 8);
+            this.func_82536_d(par1World, par2, par3, par4, var6);
+            par1World.markBlockRangeForRenderUpdate(par2, par3, par4, par2, par3, par4);
+            par1World.playSoundEffect((double)par2 + 0.5D, (double)par3 + 0.5D, (double)par4 + 0.5D, "random.click", 0.3F, 0.6F);
         }
 
-        if (!flag1 && flag) {
-            world.setData(i, j, k, i1);
-            this.d(world, i, j, k, i1);
-            world.e(i, j, k, i, j, k);
-            world.makeSound((double) i + 0.5D, (double) j + 0.5D, (double) k + 0.5D, "random.click", 0.3F, 0.5F);
+        if (!var8 && var7)
+        {
+            par1World.setBlockMetadataWithNotify(par2, par3, par4, var6);
+            this.func_82536_d(par1World, par2, par3, par4, var6);
+            par1World.markBlockRangeForRenderUpdate(par2, par3, par4, par2, par3, par4);
+            par1World.playSoundEffect((double)par2 + 0.5D, (double)par3 + 0.5D, (double)par4 + 0.5D, "random.click", 0.3F, 0.5F);
         }
 
-        if (flag1) {
-            world.a(i, j, k, this.id, this.r_());
+        if (var8)
+        {
+            par1World.scheduleBlockUpdate(par2, par3, par4, this.blockID, this.tickRate());
         }
     }
 
-    private void d(World world, int i, int j, int k, int l) {
-        world.applyPhysics(i, j, k, this.id);
-        if (l == 1) {
-            world.applyPhysics(i - 1, j, k, this.id);
-        } else if (l == 2) {
-            world.applyPhysics(i + 1, j, k, this.id);
-        } else if (l == 3) {
-            world.applyPhysics(i, j, k - 1, this.id);
-        } else if (l == 4) {
-            world.applyPhysics(i, j, k + 1, this.id);
-        } else {
-            world.applyPhysics(i, j - 1, k, this.id);
+    private void func_82536_d(World par1World, int par2, int par3, int par4, int par5)
+    {
+        par1World.notifyBlocksOfNeighborChange(par2, par3, par4, this.blockID);
+
+        if (par5 == 1)
+        {
+            par1World.notifyBlocksOfNeighborChange(par2 - 1, par3, par4, this.blockID);
+        }
+        else if (par5 == 2)
+        {
+            par1World.notifyBlocksOfNeighborChange(par2 + 1, par3, par4, this.blockID);
+        }
+        else if (par5 == 3)
+        {
+            par1World.notifyBlocksOfNeighborChange(par2, par3, par4 - 1, this.blockID);
+        }
+        else if (par5 == 4)
+        {
+            par1World.notifyBlocksOfNeighborChange(par2, par3, par4 + 1, this.blockID);
+        }
+        else
+        {
+            par1World.notifyBlocksOfNeighborChange(par2, par3 - 1, par4, this.blockID);
         }
     }
 }

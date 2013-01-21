@@ -1,23 +1,30 @@
-package net.minecraft.server;
+package net.minecraft.inventory;
 
 // CraftBukkit start
 import org.bukkit.craftbukkit.inventory.CraftInventoryFurnace;
 import org.bukkit.craftbukkit.inventory.CraftInventoryView;
+import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.entity.player.InventoryPlayer;
+import net.minecraft.item.ItemStack;
+import net.minecraft.item.crafting.FurnaceRecipes;
+import net.minecraft.tileentity.TileEntityFurnace;
 // CraftBukkit end
 
-public class ContainerFurnace extends Container {
-
+public class ContainerFurnace extends Container
+{
     private TileEntityFurnace furnace;
-    private int f = 0;
-    private int g = 0;
-    private int h = 0;
+    private int lastCookTime = 0;
+    private int lastBurnTime = 0;
+    private int lastItemBurnTime = 0;
 
     // CraftBukkit start
     private CraftInventoryView bukkitEntity = null;
-    private PlayerInventory player;
+    private InventoryPlayer player;
 
-    public CraftInventoryView getBukkitView() {
-        if (bukkitEntity != null) {
+    public CraftInventoryView getBukkitView()
+    {
+        if (bukkitEntity != null)
+        {
             return bukkitEntity;
         }
 
@@ -27,109 +34,151 @@ public class ContainerFurnace extends Container {
     }
     // CraftBukkit end
 
-    public ContainerFurnace(PlayerInventory playerinventory, TileEntityFurnace tileentityfurnace) {
-        this.furnace = tileentityfurnace;
-        this.a(new Slot(tileentityfurnace, 0, 56, 17));
-        this.a(new Slot(tileentityfurnace, 1, 56, 53));
-        this.a(new SlotFurnaceResult(playerinventory.player, tileentityfurnace, 2, 116, 35));
-        this.player = playerinventory; // CraftBukkit - save player
+    public ContainerFurnace(InventoryPlayer par1InventoryPlayer, TileEntityFurnace par2TileEntityFurnace)
+    {
+        this.furnace = par2TileEntityFurnace;
+        this.addSlotToContainer(new Slot(par2TileEntityFurnace, 0, 56, 17));
+        this.addSlotToContainer(new Slot(par2TileEntityFurnace, 1, 56, 53));
+        this.addSlotToContainer(new SlotFurnace(par1InventoryPlayer.player, par2TileEntityFurnace, 2, 116, 35));
+        this.player = par1InventoryPlayer; // CraftBukkit - save player
+        int var3;
 
-        int i;
-
-        for (i = 0; i < 3; ++i) {
-            for (int j = 0; j < 9; ++j) {
-                this.a(new Slot(playerinventory, j + i * 9 + 9, 8 + j * 18, 84 + i * 18));
+        for (var3 = 0; var3 < 3; ++var3)
+        {
+            for (int var4 = 0; var4 < 9; ++var4)
+            {
+                this.addSlotToContainer(new Slot(par1InventoryPlayer, var4 + var3 * 9 + 9, 8 + var4 * 18, 84 + var3 * 18));
             }
         }
 
-        for (i = 0; i < 9; ++i) {
-            this.a(new Slot(playerinventory, i, 8 + i * 18, 142));
+        for (var3 = 0; var3 < 9; ++var3)
+        {
+            this.addSlotToContainer(new Slot(par1InventoryPlayer, var3, 8 + var3 * 18, 142));
         }
     }
 
-    public void addSlotListener(ICrafting icrafting) {
-        super.addSlotListener(icrafting);
-        icrafting.setContainerData(this, 0, this.furnace.cookTime);
-        icrafting.setContainerData(this, 1, this.furnace.burnTime);
-        icrafting.setContainerData(this, 2, this.furnace.ticksForCurrentFuel);
+    public void addCraftingToCrafters(ICrafting par1ICrafting)
+    {
+        super.addCraftingToCrafters(par1ICrafting);
+        par1ICrafting.sendProgressBarUpdate(this, 0, this.furnace.furnaceCookTime);
+        par1ICrafting.sendProgressBarUpdate(this, 1, this.furnace.furnaceBurnTime);
+        par1ICrafting.sendProgressBarUpdate(this, 2, this.furnace.currentItemBurnTime);
     }
 
-    public void b() {
-        super.b();
+    /**
+     * Looks for changes made in the container, sends them to every listener.
+     */
+    public void detectAndSendChanges()
+    {
+        super.detectAndSendChanges();
 
-        for (int i = 0; i < this.listeners.size(); ++i) {
-            ICrafting icrafting = (ICrafting) this.listeners.get(i);
+        for (int var1 = 0; var1 < this.crafters.size(); ++var1)
+        {
+            ICrafting var2 = (ICrafting)this.crafters.get(var1);
 
-            if (this.f != this.furnace.cookTime) {
-                icrafting.setContainerData(this, 0, this.furnace.cookTime);
+            if (this.lastCookTime != this.furnace.furnaceCookTime)
+            {
+                var2.sendProgressBarUpdate(this, 0, this.furnace.furnaceCookTime);
             }
 
-            if (this.g != this.furnace.burnTime) {
-                icrafting.setContainerData(this, 1, this.furnace.burnTime);
+            if (this.lastBurnTime != this.furnace.furnaceBurnTime)
+            {
+                var2.sendProgressBarUpdate(this, 1, this.furnace.furnaceBurnTime);
             }
 
-            if (this.h != this.furnace.ticksForCurrentFuel) {
-                icrafting.setContainerData(this, 2, this.furnace.ticksForCurrentFuel);
+            if (this.lastItemBurnTime != this.furnace.currentItemBurnTime)
+            {
+                var2.sendProgressBarUpdate(this, 2, this.furnace.currentItemBurnTime);
             }
         }
 
-        this.f = this.furnace.cookTime;
-        this.g = this.furnace.burnTime;
-        this.h = this.furnace.ticksForCurrentFuel;
+        this.lastCookTime = this.furnace.furnaceCookTime;
+        this.lastBurnTime = this.furnace.furnaceBurnTime;
+        this.lastItemBurnTime = this.furnace.currentItemBurnTime;
     }
 
-    public boolean a(EntityHuman entityhuman) {
-        if (!this.checkReachable) return true; // CraftBukkit
-        return this.furnace.a_(entityhuman);
+    public boolean canInteractWith(EntityPlayer par1EntityPlayer)
+    {
+        if (!this.checkReachable)
+        {
+            return true;    // CraftBukkit
+        }
+
+        return this.furnace.isUseableByPlayer(par1EntityPlayer);
     }
 
-    public ItemStack b(EntityHuman entityhuman, int i) {
-        ItemStack itemstack = null;
-        Slot slot = (Slot) this.c.get(i);
+    /**
+     * Called when a player shift-clicks on a slot. You must override this or you will crash when someone does that.
+     */
+    public ItemStack transferStackInSlot(EntityPlayer par1EntityPlayer, int par2)
+    {
+        ItemStack var3 = null;
+        Slot var4 = (Slot)this.inventorySlots.get(par2);
 
-        if (slot != null && slot.d()) {
-            ItemStack itemstack1 = slot.getItem();
+        if (var4 != null && var4.getHasStack())
+        {
+            ItemStack var5 = var4.getStack();
+            var3 = var5.copy();
 
-            itemstack = itemstack1.cloneItemStack();
-            if (i == 2) {
-                if (!this.a(itemstack1, 3, 39, true)) {
+            if (par2 == 2)
+            {
+                if (!this.mergeItemStack(var5, 3, 39, true))
+                {
                     return null;
                 }
 
-                slot.a(itemstack1, itemstack);
-            } else if (i != 1 && i != 0) {
-                if (RecipesFurnace.getInstance().getResult(itemstack1.getItem().id) != null) {
-                    if (!this.a(itemstack1, 0, 1, false)) {
+                var4.onSlotChange(var5, var3);
+            }
+            else if (par2 != 1 && par2 != 0)
+            {
+                if (FurnaceRecipes.smelting().getSmeltingResult(var5.getItem().itemID) != null)
+                {
+                    if (!this.mergeItemStack(var5, 0, 1, false))
+                    {
                         return null;
                     }
-                } else if (TileEntityFurnace.isFuel(itemstack1)) {
-                    if (!this.a(itemstack1, 1, 2, false)) {
+                }
+                else if (TileEntityFurnace.isItemFuel(var5))
+                {
+                    if (!this.mergeItemStack(var5, 1, 2, false))
+                    {
                         return null;
                     }
-                } else if (i >= 3 && i < 30) {
-                    if (!this.a(itemstack1, 30, 39, false)) {
+                }
+                else if (par2 >= 3 && par2 < 30)
+                {
+                    if (!this.mergeItemStack(var5, 30, 39, false))
+                    {
                         return null;
                     }
-                } else if (i >= 30 && i < 39 && !this.a(itemstack1, 3, 30, false)) {
+                }
+                else if (par2 >= 30 && par2 < 39 && !this.mergeItemStack(var5, 3, 30, false))
+                {
                     return null;
                 }
-            } else if (!this.a(itemstack1, 3, 39, false)) {
+            }
+            else if (!this.mergeItemStack(var5, 3, 39, false))
+            {
                 return null;
             }
 
-            if (itemstack1.count == 0) {
-                slot.set((ItemStack) null);
-            } else {
-                slot.e();
+            if (var5.stackSize == 0)
+            {
+                var4.putStack((ItemStack)null);
+            }
+            else
+            {
+                var4.onSlotChanged();
             }
 
-            if (itemstack1.count == itemstack.count) {
+            if (var5.stackSize == var3.stackSize)
+            {
                 return null;
             }
 
-            slot.a(entityhuman, itemstack1);
+            var4.onPickupFromSlot(par1EntityPlayer, var5);
         }
 
-        return itemstack;
+        return var3;
     }
 }

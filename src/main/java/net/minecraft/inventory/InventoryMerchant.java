@@ -1,182 +1,272 @@
-package net.minecraft.server;
+package net.minecraft.inventory;
 
 // CraftBukkit start
 import java.util.List;
 import org.bukkit.craftbukkit.entity.CraftHumanEntity;
 import org.bukkit.entity.HumanEntity;
+import net.minecraft.entity.IMerchant;
+import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.item.ItemStack;
+import net.minecraft.village.MerchantRecipe;
+import net.minecraft.village.MerchantRecipeList;
 // CraftBukkit end
 
-public class InventoryMerchant implements IInventory {
-
-    private final IMerchant merchant;
-    private ItemStack[] itemsInSlots = new ItemStack[3];
-    private final EntityHuman player;
-    private MerchantRecipe recipe;
-    private int e;
+public class InventoryMerchant implements IInventory
+{
+    private final IMerchant theMerchant;
+    private ItemStack[] theInventory = new ItemStack[3];
+    private final EntityPlayer thePlayer;
+    private MerchantRecipe currentRecipe;
+    private int currentRecipeIndex;
 
     // CraftBukkit start
     public List<HumanEntity> transaction = new java.util.ArrayList<HumanEntity>();
     private int maxStack = MAX_STACK;
 
-    public ItemStack[] getContents() {
-        return this.itemsInSlots;
+    public ItemStack[] getContents()
+    {
+        return this.theInventory;
     }
 
-    public void onOpen(CraftHumanEntity who) {
+    public void onOpen(CraftHumanEntity who)
+    {
         transaction.add(who);
     }
 
-    public void onClose(CraftHumanEntity who) {
+    public void onClose(CraftHumanEntity who)
+    {
         transaction.remove(who);
     }
 
-    public List<HumanEntity> getViewers() {
+    public List<HumanEntity> getViewers()
+    {
         return transaction;
     }
 
-    public void setMaxStackSize(int i) {
+    public void setMaxStackSize(int i)
+    {
         maxStack = i;
     }
 
-    public org.bukkit.inventory.InventoryHolder getOwner() {
-        return player.getBukkitEntity();
+    public org.bukkit.inventory.InventoryHolder getOwner()
+    {
+        return thePlayer.getBukkitEntity();
     }
     // CraftBukkit end
 
-    public InventoryMerchant(EntityHuman entityhuman, IMerchant imerchant) {
-        this.player = entityhuman;
-        this.merchant = imerchant;
+    public InventoryMerchant(EntityPlayer par1EntityPlayer, IMerchant par2IMerchant)
+    {
+        this.thePlayer = par1EntityPlayer;
+        this.theMerchant = par2IMerchant;
     }
 
-    public int getSize() {
-        return this.itemsInSlots.length;
+    /**
+     * Returns the number of slots in the inventory.
+     */
+    public int getSizeInventory()
+    {
+        return this.theInventory.length;
     }
 
-    public ItemStack getItem(int i) {
-        return this.itemsInSlots[i];
+    /**
+     * Returns the stack in slot i
+     */
+    public ItemStack getStackInSlot(int par1)
+    {
+        return this.theInventory[par1];
     }
 
-    public ItemStack splitStack(int i, int j) {
-        if (this.itemsInSlots[i] != null) {
-            ItemStack itemstack;
+    /**
+     * Removes from an inventory slot (first arg) up to a specified number (second arg) of items and returns them in a
+     * new stack.
+     */
+    public ItemStack decrStackSize(int par1, int par2)
+    {
+        if (this.theInventory[par1] != null)
+        {
+            ItemStack var3;
 
-            if (i == 2) {
-                itemstack = this.itemsInSlots[i];
-                this.itemsInSlots[i] = null;
-                return itemstack;
-            } else if (this.itemsInSlots[i].count <= j) {
-                itemstack = this.itemsInSlots[i];
-                this.itemsInSlots[i] = null;
-                if (this.d(i)) {
-                    this.g();
-                }
-
-                return itemstack;
-            } else {
-                itemstack = this.itemsInSlots[i].a(j);
-                if (this.itemsInSlots[i].count == 0) {
-                    this.itemsInSlots[i] = null;
-                }
-
-                if (this.d(i)) {
-                    this.g();
-                }
-
-                return itemstack;
+            if (par1 == 2)
+            {
+                var3 = this.theInventory[par1];
+                this.theInventory[par1] = null;
+                return var3;
             }
-        } else {
+            else if (this.theInventory[par1].stackSize <= par2)
+            {
+                var3 = this.theInventory[par1];
+                this.theInventory[par1] = null;
+
+                if (this.inventoryResetNeededOnSlotChange(par1))
+                {
+                    this.resetRecipeAndSlots();
+                }
+
+                return var3;
+            }
+            else
+            {
+                var3 = this.theInventory[par1].splitStack(par2);
+
+                if (this.theInventory[par1].stackSize == 0)
+                {
+                    this.theInventory[par1] = null;
+                }
+
+                if (this.inventoryResetNeededOnSlotChange(par1))
+                {
+                    this.resetRecipeAndSlots();
+                }
+
+                return var3;
+            }
+        }
+        else
+        {
             return null;
         }
     }
 
-    private boolean d(int i) {
-        return i == 0 || i == 1;
+    /**
+     * if par1 slot has changed, does resetRecipeAndSlots need to be called?
+     */
+    private boolean inventoryResetNeededOnSlotChange(int par1)
+    {
+        return par1 == 0 || par1 == 1;
     }
 
-    public ItemStack splitWithoutUpdate(int i) {
-        if (this.itemsInSlots[i] != null) {
-            ItemStack itemstack = this.itemsInSlots[i];
-
-            this.itemsInSlots[i] = null;
-            return itemstack;
-        } else {
+    /**
+     * When some containers are closed they call this on each slot, then drop whatever it returns as an EntityItem -
+     * like when you close a workbench GUI.
+     */
+    public ItemStack getStackInSlotOnClosing(int par1)
+    {
+        if (this.theInventory[par1] != null)
+        {
+            ItemStack var2 = this.theInventory[par1];
+            this.theInventory[par1] = null;
+            return var2;
+        }
+        else
+        {
             return null;
         }
     }
 
-    public void setItem(int i, ItemStack itemstack) {
-        this.itemsInSlots[i] = itemstack;
-        if (itemstack != null && itemstack.count > this.getMaxStackSize()) {
-            itemstack.count = this.getMaxStackSize();
+    /**
+     * Sets the given item stack to the specified slot in the inventory (can be crafting or armor sections).
+     */
+    public void setInventorySlotContents(int par1, ItemStack par2ItemStack)
+    {
+        this.theInventory[par1] = par2ItemStack;
+
+        if (par2ItemStack != null && par2ItemStack.stackSize > this.getInventoryStackLimit())
+        {
+            par2ItemStack.stackSize = this.getInventoryStackLimit();
         }
 
-        if (this.d(i)) {
-            this.g();
+        if (this.inventoryResetNeededOnSlotChange(par1))
+        {
+            this.resetRecipeAndSlots();
         }
     }
 
-    public String getName() {
+    /**
+     * Returns the name of the inventory.
+     */
+    public String getInvName()
+    {
         return "mob.villager";
     }
 
-    public int getMaxStackSize() {
+    /**
+     * Returns the maximum stack size for a inventory slot. Seems to always be 64, possibly will be extended. *Isn't
+     * this more of a set than a get?*
+     */
+    public int getInventoryStackLimit()
+    {
         return maxStack; // CraftBukkit
     }
 
-    public boolean a_(EntityHuman entityhuman) {
-        return this.merchant.m_() == entityhuman;
+    /**
+     * Do not make give this method the name canInteractWith because it clashes with Container
+     */
+    public boolean isUseableByPlayer(EntityPlayer par1EntityPlayer)
+    {
+        return this.theMerchant.getCustomer() == par1EntityPlayer;
     }
 
-    public void startOpen() {}
+    public void openChest() {}
 
-    public void f() {}
+    public void closeChest() {}
 
-    public void update() {
-        this.g();
+    /**
+     * Called when an the contents of an Inventory change, usually
+     */
+    public void onInventoryChanged()
+    {
+        this.resetRecipeAndSlots();
     }
 
-    public void g() {
-        this.recipe = null;
-        ItemStack itemstack = this.itemsInSlots[0];
-        ItemStack itemstack1 = this.itemsInSlots[1];
+    public void resetRecipeAndSlots()
+    {
+        this.currentRecipe = null;
+        ItemStack var1 = this.theInventory[0];
+        ItemStack var2 = this.theInventory[1];
 
-        if (itemstack == null) {
-            itemstack = itemstack1;
-            itemstack1 = null;
+        if (var1 == null)
+        {
+            var1 = var2;
+            var2 = null;
         }
 
-        if (itemstack == null) {
-            this.setItem(2, (ItemStack) null);
-        } else {
-            MerchantRecipeList merchantrecipelist = this.merchant.getOffers(this.player);
+        if (var1 == null)
+        {
+            this.setInventorySlotContents(2, (ItemStack)null);
+        }
+        else
+        {
+            MerchantRecipeList var3 = this.theMerchant.getRecipes(this.thePlayer);
 
-            if (merchantrecipelist != null) {
-                MerchantRecipe merchantrecipe = merchantrecipelist.a(itemstack, itemstack1, this.e);
+            if (var3 != null)
+            {
+                MerchantRecipe var4 = var3.canRecipeBeUsed(var1, var2, this.currentRecipeIndex);
 
-                if (merchantrecipe != null && !merchantrecipe.g()) {
-                    this.recipe = merchantrecipe;
-                    this.setItem(2, merchantrecipe.getBuyItem3().cloneItemStack());
-                } else if (itemstack1 != null) {
-                    merchantrecipe = merchantrecipelist.a(itemstack1, itemstack, this.e);
-                    if (merchantrecipe != null && !merchantrecipe.g()) {
-                        this.recipe = merchantrecipe;
-                        this.setItem(2, merchantrecipe.getBuyItem3().cloneItemStack());
-                    } else {
-                        this.setItem(2, (ItemStack) null);
+                if (var4 != null && !var4.func_82784_g())
+                {
+                    this.currentRecipe = var4;
+                    this.setInventorySlotContents(2, var4.getItemToSell().copy());
+                }
+                else if (var2 != null)
+                {
+                    var4 = var3.canRecipeBeUsed(var2, var1, this.currentRecipeIndex);
+
+                    if (var4 != null && !var4.func_82784_g())
+                    {
+                        this.currentRecipe = var4;
+                        this.setInventorySlotContents(2, var4.getItemToSell().copy());
                     }
-                } else {
-                    this.setItem(2, (ItemStack) null);
+                    else
+                    {
+                        this.setInventorySlotContents(2, (ItemStack)null);
+                    }
+                }
+                else
+                {
+                    this.setInventorySlotContents(2, (ItemStack)null);
                 }
             }
         }
     }
 
-    public MerchantRecipe getRecipe() {
-        return this.recipe;
+    public MerchantRecipe getCurrentRecipe()
+    {
+        return this.currentRecipe;
     }
 
-    public void c(int i) {
-        this.e = i;
-        this.g();
+    public void setCurrentRecipeIndex(int par1)
+    {
+        this.currentRecipeIndex = par1;
+        this.resetRecipeAndSlots();
     }
 }

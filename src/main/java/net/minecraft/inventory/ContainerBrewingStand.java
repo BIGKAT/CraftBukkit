@@ -1,124 +1,173 @@
-package net.minecraft.server;
+package net.minecraft.inventory;
 
 // CraftBukkit start
 import org.bukkit.craftbukkit.inventory.CraftInventory;
 import org.bukkit.craftbukkit.inventory.CraftInventoryView;
+import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.entity.player.InventoryPlayer;
+import net.minecraft.item.ItemStack;
+import net.minecraft.tileentity.TileEntityBrewingStand;
 // CraftBukkit end
 
-public class ContainerBrewingStand extends Container {
+public class ContainerBrewingStand extends Container
+{
+    private TileEntityBrewingStand tileBrewingStand;
 
-    private TileEntityBrewingStand brewingStand;
-    private final Slot f;
-    private int g = 0;
+    /** Instance of Slot. */
+    private final Slot theSlot;
+    private int brewTime = 0;
     // CraftBukkit start
     private CraftInventoryView bukkitEntity = null;
-    private PlayerInventory player;
+    private InventoryPlayer player;
     // CraftBukkit end
 
-    public ContainerBrewingStand(PlayerInventory playerinventory, TileEntityBrewingStand tileentitybrewingstand) {
-        player = playerinventory; // CraftBukkit
-        this.brewingStand = tileentitybrewingstand;
-        this.a(new SlotPotionBottle(playerinventory.player, tileentitybrewingstand, 0, 56, 46));
-        this.a(new SlotPotionBottle(playerinventory.player, tileentitybrewingstand, 1, 79, 53));
-        this.a(new SlotPotionBottle(playerinventory.player, tileentitybrewingstand, 2, 102, 46));
-        this.f = this.a(new SlotBrewing(this, tileentitybrewingstand, 3, 79, 17));
+    public ContainerBrewingStand(InventoryPlayer par1InventoryPlayer, TileEntityBrewingStand par2TileEntityBrewingStand)
+    {
+        player = par1InventoryPlayer; // CraftBukkit
+        this.tileBrewingStand = par2TileEntityBrewingStand;
+        this.addSlotToContainer(new SlotBrewingStandPotion(par1InventoryPlayer.player, par2TileEntityBrewingStand, 0, 56, 46));
+        this.addSlotToContainer(new SlotBrewingStandPotion(par1InventoryPlayer.player, par2TileEntityBrewingStand, 1, 79, 53));
+        this.addSlotToContainer(new SlotBrewingStandPotion(par1InventoryPlayer.player, par2TileEntityBrewingStand, 2, 102, 46));
+        this.theSlot = this.addSlotToContainer(new SlotBrewingStandIngredient(this, par2TileEntityBrewingStand, 3, 79, 17));
+        int var3;
 
-        int i;
-
-        for (i = 0; i < 3; ++i) {
-            for (int j = 0; j < 9; ++j) {
-                this.a(new Slot(playerinventory, j + i * 9 + 9, 8 + j * 18, 84 + i * 18));
+        for (var3 = 0; var3 < 3; ++var3)
+        {
+            for (int var4 = 0; var4 < 9; ++var4)
+            {
+                this.addSlotToContainer(new Slot(par1InventoryPlayer, var4 + var3 * 9 + 9, 8 + var4 * 18, 84 + var3 * 18));
             }
         }
 
-        for (i = 0; i < 9; ++i) {
-            this.a(new Slot(playerinventory, i, 8 + i * 18, 142));
+        for (var3 = 0; var3 < 9; ++var3)
+        {
+            this.addSlotToContainer(new Slot(par1InventoryPlayer, var3, 8 + var3 * 18, 142));
         }
     }
 
-    public void addSlotListener(ICrafting icrafting) {
-        super.addSlotListener(icrafting);
-        icrafting.setContainerData(this, 0, this.brewingStand.x_());
+    public void addCraftingToCrafters(ICrafting par1ICrafting)
+    {
+        super.addCraftingToCrafters(par1ICrafting);
+        par1ICrafting.sendProgressBarUpdate(this, 0, this.tileBrewingStand.getBrewTime());
     }
 
-    public void b() {
-        super.b();
+    /**
+     * Looks for changes made in the container, sends them to every listener.
+     */
+    public void detectAndSendChanges()
+    {
+        super.detectAndSendChanges();
 
-        for (int i = 0; i < this.listeners.size(); ++i) {
-            ICrafting icrafting = (ICrafting) this.listeners.get(i);
+        for (int var1 = 0; var1 < this.crafters.size(); ++var1)
+        {
+            ICrafting var2 = (ICrafting)this.crafters.get(var1);
 
-            if (this.g != this.brewingStand.x_()) {
-                icrafting.setContainerData(this, 0, this.brewingStand.x_());
+            if (this.brewTime != this.tileBrewingStand.getBrewTime())
+            {
+                var2.sendProgressBarUpdate(this, 0, this.tileBrewingStand.getBrewTime());
             }
         }
 
-        this.g = this.brewingStand.x_();
+        this.brewTime = this.tileBrewingStand.getBrewTime();
     }
 
-    public boolean a(EntityHuman entityhuman) {
-        if (!this.checkReachable) return true; // CraftBukkit
-        return this.brewingStand.a_(entityhuman);
+    public boolean canInteractWith(EntityPlayer par1EntityPlayer)
+    {
+        if (!this.checkReachable)
+        {
+            return true;    // CraftBukkit
+        }
+
+        return this.tileBrewingStand.isUseableByPlayer(par1EntityPlayer);
     }
 
-    public ItemStack b(EntityHuman entityhuman, int i) {
-        ItemStack itemstack = null;
-        Slot slot = (Slot) this.c.get(i);
+    /**
+     * Called when a player shift-clicks on a slot. You must override this or you will crash when someone does that.
+     */
+    public ItemStack transferStackInSlot(EntityPlayer par1EntityPlayer, int par2)
+    {
+        ItemStack var3 = null;
+        Slot var4 = (Slot)this.inventorySlots.get(par2);
 
-        if (slot != null && slot.d()) {
-            ItemStack itemstack1 = slot.getItem();
+        if (var4 != null && var4.getHasStack())
+        {
+            ItemStack var5 = var4.getStack();
+            var3 = var5.copy();
 
-            itemstack = itemstack1.cloneItemStack();
-            if ((i < 0 || i > 2) && i != 3) {
-                if (!this.f.d() && this.f.isAllowed(itemstack1)) {
-                    if (!this.a(itemstack1, 3, 4, false)) {
+            if ((par2 < 0 || par2 > 2) && par2 != 3)
+            {
+                if (!this.theSlot.getHasStack() && this.theSlot.isItemValid(var5))
+                {
+                    if (!this.mergeItemStack(var5, 3, 4, false))
+                    {
                         return null;
                     }
-                } else if (SlotPotionBottle.a_(itemstack)) {
-                    if (!this.a(itemstack1, 0, 3, false)) {
+                }
+                else if (SlotBrewingStandPotion.canHoldPotion(var3))
+                {
+                    if (!this.mergeItemStack(var5, 0, 3, false))
+                    {
                         return null;
                     }
-                } else if (i >= 4 && i < 31) {
-                    if (!this.a(itemstack1, 31, 40, false)) {
+                }
+                else if (par2 >= 4 && par2 < 31)
+                {
+                    if (!this.mergeItemStack(var5, 31, 40, false))
+                    {
                         return null;
                     }
-                } else if (i >= 31 && i < 40) {
-                    if (!this.a(itemstack1, 4, 31, false)) {
+                }
+                else if (par2 >= 31 && par2 < 40)
+                {
+                    if (!this.mergeItemStack(var5, 4, 31, false))
+                    {
                         return null;
                     }
-                } else if (!this.a(itemstack1, 4, 40, false)) {
+                }
+                else if (!this.mergeItemStack(var5, 4, 40, false))
+                {
                     return null;
                 }
-            } else {
-                if (!this.a(itemstack1, 4, 40, true)) {
+            }
+            else
+            {
+                if (!this.mergeItemStack(var5, 4, 40, true))
+                {
                     return null;
                 }
 
-                slot.a(itemstack1, itemstack);
+                var4.onSlotChange(var5, var3);
             }
 
-            if (itemstack1.count == 0) {
-                slot.set((ItemStack) null);
-            } else {
-                slot.e();
+            if (var5.stackSize == 0)
+            {
+                var4.putStack((ItemStack)null);
+            }
+            else
+            {
+                var4.onSlotChanged();
             }
 
-            if (itemstack1.count == itemstack.count) {
+            if (var5.stackSize == var3.stackSize)
+            {
                 return null;
             }
 
-            slot.a(entityhuman, itemstack1);
+            var4.onPickupFromSlot(par1EntityPlayer, var5);
         }
 
-        return itemstack;
+        return var3;
     }
 
     // CraftBukkit start
-    public CraftInventoryView getBukkitView() {
-        if (bukkitEntity != null) {
+    public CraftInventoryView getBukkitView()
+    {
+        if (bukkitEntity != null)
+        {
             return bukkitEntity;
         }
 
-        CraftInventory inventory = new CraftInventory(this.brewingStand);
+        CraftInventory inventory = new CraftInventory(this.tileBrewingStand);
         bukkitEntity = new CraftInventoryView(this.player.player.getBukkitEntity(), inventory, this);
         return bukkitEntity;
     }

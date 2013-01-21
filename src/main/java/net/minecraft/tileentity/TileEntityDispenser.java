@@ -1,6 +1,11 @@
-package net.minecraft.server;
+package net.minecraft.tileentity;
 
 import java.util.Random;
+import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.inventory.IInventory;
+import net.minecraft.item.ItemStack;
+import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.nbt.NBTTagList;
 
 // CraftBukkit start
 import java.util.List;
@@ -9,160 +14,239 @@ import org.bukkit.craftbukkit.entity.CraftHumanEntity;
 import org.bukkit.entity.HumanEntity;
 // CraftBukkit end
 
-public class TileEntityDispenser extends TileEntity implements IInventory {
+public class TileEntityDispenser extends TileEntity implements IInventory
+{
+    private ItemStack[] dispenserContents = new ItemStack[9];
 
-    private ItemStack[] items = new ItemStack[9];
-    private Random b = new Random();
+    /**
+     * random number generator for instance. Used in random item stack selection.
+     */
+    private Random dispenserRandom = new Random();
 
     // CraftBukkit start
     public List<HumanEntity> transaction = new java.util.ArrayList<HumanEntity>();
     private int maxStack = MAX_STACK;
 
-    public ItemStack[] getContents() {
-        return this.items;
+    public ItemStack[] getContents()
+    {
+        return this.dispenserContents;
     }
 
-    public void onOpen(CraftHumanEntity who) {
+    public void onOpen(CraftHumanEntity who)
+    {
         transaction.add(who);
     }
 
-    public void onClose(CraftHumanEntity who) {
+    public void onClose(CraftHumanEntity who)
+    {
         transaction.remove(who);
     }
 
-    public List<HumanEntity> getViewers() {
+    public List<HumanEntity> getViewers()
+    {
         return transaction;
     }
 
-    public void setMaxStackSize(int size) {
+    public void setMaxStackSize(int size)
+    {
         maxStack = size;
     }
     // CraftBukkit end
 
     public TileEntityDispenser() {}
 
-    public int getSize() {
+    /**
+     * Returns the number of slots in the inventory.
+     */
+    public int getSizeInventory()
+    {
         return 9;
     }
 
-    public ItemStack getItem(int i) {
-        return this.items[i];
+    /**
+     * Returns the stack in slot i
+     */
+    public ItemStack getStackInSlot(int par1)
+    {
+        return this.dispenserContents[par1];
     }
 
-    public ItemStack splitStack(int i, int j) {
-        if (this.items[i] != null) {
-            ItemStack itemstack;
+    /**
+     * Removes from an inventory slot (first arg) up to a specified number (second arg) of items and returns them in a
+     * new stack.
+     */
+    public ItemStack decrStackSize(int par1, int par2)
+    {
+        if (this.dispenserContents[par1] != null)
+        {
+            ItemStack var3;
 
-            if (this.items[i].count <= j) {
-                itemstack = this.items[i];
-                this.items[i] = null;
-                this.update();
-                return itemstack;
-            } else {
-                itemstack = this.items[i].a(j);
-                if (this.items[i].count == 0) {
-                    this.items[i] = null;
+            if (this.dispenserContents[par1].stackSize <= par2)
+            {
+                var3 = this.dispenserContents[par1];
+                this.dispenserContents[par1] = null;
+                this.onInventoryChanged();
+                return var3;
+            }
+            else
+            {
+                var3 = this.dispenserContents[par1].splitStack(par2);
+
+                if (this.dispenserContents[par1].stackSize == 0)
+                {
+                    this.dispenserContents[par1] = null;
                 }
 
-                this.update();
-                return itemstack;
+                this.onInventoryChanged();
+                return var3;
             }
-        } else {
+        }
+        else
+        {
             return null;
         }
     }
 
-    public ItemStack splitWithoutUpdate(int i) {
-        if (this.items[i] != null) {
-            ItemStack itemstack = this.items[i];
-
-            this.items[i] = null;
-            return itemstack;
-        } else {
+    /**
+     * When some containers are closed they call this on each slot, then drop whatever it returns as an EntityItem -
+     * like when you close a workbench GUI.
+     */
+    public ItemStack getStackInSlotOnClosing(int par1)
+    {
+        if (this.dispenserContents[par1] != null)
+        {
+            ItemStack var2 = this.dispenserContents[par1];
+            this.dispenserContents[par1] = null;
+            return var2;
+        }
+        else
+        {
             return null;
         }
     }
 
-    public int i() {
-        int i = -1;
-        int j = 1;
+    public int getRandomStackFromInventory()
+    {
+        int var1 = -1;
+        int var2 = 1;
 
-        for (int k = 0; k < this.items.length; ++k) {
-            if (this.items[k] != null && this.b.nextInt(j++) == 0) {
-                if (this.items[k].count == 0) continue; // CraftBukkit
-                i = k;
+        for (int var3 = 0; var3 < this.dispenserContents.length; ++var3)
+        {
+            if (this.dispenserContents[var3] != null && this.dispenserRandom.nextInt(var2++) == 0)
+            {
+                if (this.dispenserContents[var3].stackSize == 0)
+                {
+                    continue;    // CraftBukkit
+                }
+
+                var1 = var3;
             }
         }
 
-        return i;
+        return var1;
     }
 
-    public void setItem(int i, ItemStack itemstack) {
-        this.items[i] = itemstack;
-        if (itemstack != null && itemstack.count > this.getMaxStackSize()) {
-            itemstack.count = this.getMaxStackSize();
+    /**
+     * Sets the given item stack to the specified slot in the inventory (can be crafting or armor sections).
+     */
+    public void setInventorySlotContents(int par1, ItemStack par2ItemStack)
+    {
+        this.dispenserContents[par1] = par2ItemStack;
+
+        if (par2ItemStack != null && par2ItemStack.stackSize > this.getInventoryStackLimit())
+        {
+            par2ItemStack.stackSize = this.getInventoryStackLimit();
         }
 
-        this.update();
+        this.onInventoryChanged();
     }
 
-    public int addItem(ItemStack itemstack) {
-        for (int i = 0; i < this.items.length; ++i) {
-            if (this.items[i] == null || this.items[i].id == 0) {
-                this.items[i] = itemstack;
-                return i;
+    /**
+     * Add item stack in first available inventory slot
+     */
+    public int addItem(ItemStack par1ItemStack)
+    {
+        for (int var2 = 0; var2 < this.dispenserContents.length; ++var2)
+        {
+            if (this.dispenserContents[var2] == null || this.dispenserContents[var2].itemID == 0)
+            {
+                this.dispenserContents[var2] = par1ItemStack;
+                return var2;
             }
         }
 
         return -1;
     }
 
-    public String getName() {
+    /**
+     * Returns the name of the inventory.
+     */
+    public String getInvName()
+    {
         return "container.dispenser";
     }
 
-    public void a(NBTTagCompound nbttagcompound) {
-        super.a(nbttagcompound);
-        NBTTagList nbttaglist = nbttagcompound.getList("Items");
+    /**
+     * Reads a tile entity from NBT.
+     */
+    public void readFromNBT(NBTTagCompound par1NBTTagCompound)
+    {
+        super.readFromNBT(par1NBTTagCompound);
+        NBTTagList var2 = par1NBTTagCompound.getTagList("Items");
+        this.dispenserContents = new ItemStack[this.getSizeInventory()];
 
-        this.items = new ItemStack[this.getSize()];
+        for (int var3 = 0; var3 < var2.tagCount(); ++var3)
+        {
+            NBTTagCompound var4 = (NBTTagCompound)var2.tagAt(var3);
+            int var5 = var4.getByte("Slot") & 255;
 
-        for (int i = 0; i < nbttaglist.size(); ++i) {
-            NBTTagCompound nbttagcompound1 = (NBTTagCompound) nbttaglist.get(i);
-            int j = nbttagcompound1.getByte("Slot") & 255;
-
-            if (j >= 0 && j < this.items.length) {
-                this.items[j] = ItemStack.createStack(nbttagcompound1);
+            if (var5 >= 0 && var5 < this.dispenserContents.length)
+            {
+                this.dispenserContents[var5] = ItemStack.loadItemStackFromNBT(var4);
             }
         }
     }
 
-    public void b(NBTTagCompound nbttagcompound) {
-        super.b(nbttagcompound);
-        NBTTagList nbttaglist = new NBTTagList();
+    /**
+     * Writes a tile entity to NBT.
+     */
+    public void writeToNBT(NBTTagCompound par1NBTTagCompound)
+    {
+        super.writeToNBT(par1NBTTagCompound);
+        NBTTagList var2 = new NBTTagList();
 
-        for (int i = 0; i < this.items.length; ++i) {
-            if (this.items[i] != null) {
-                NBTTagCompound nbttagcompound1 = new NBTTagCompound();
-
-                nbttagcompound1.setByte("Slot", (byte) i);
-                this.items[i].save(nbttagcompound1);
-                nbttaglist.add(nbttagcompound1);
+        for (int var3 = 0; var3 < this.dispenserContents.length; ++var3)
+        {
+            if (this.dispenserContents[var3] != null)
+            {
+                NBTTagCompound var4 = new NBTTagCompound();
+                var4.setByte("Slot", (byte)var3);
+                this.dispenserContents[var3].writeToNBT(var4);
+                var2.appendTag(var4);
             }
         }
 
-        nbttagcompound.set("Items", nbttaglist);
+        par1NBTTagCompound.setTag("Items", var2);
     }
 
-    public int getMaxStackSize() {
+    /**
+     * Returns the maximum stack size for a inventory slot. Seems to always be 64, possibly will be extended. *Isn't
+     * this more of a set than a get?*
+     */
+    public int getInventoryStackLimit()
+    {
         return maxStack; // CraftBukkit
     }
 
-    public boolean a_(EntityHuman entityhuman) {
-        return this.world.getTileEntity(this.x, this.y, this.z) != this ? false : entityhuman.e((double) this.x + 0.5D, (double) this.y + 0.5D, (double) this.z + 0.5D) <= 64.0D;
+    /**
+     * Do not make give this method the name canInteractWith because it clashes with Container
+     */
+    public boolean isUseableByPlayer(EntityPlayer par1EntityPlayer)
+    {
+        return this.worldObj.getBlockTileEntity(this.xCoord, this.yCoord, this.zCoord) != this ? false : par1EntityPlayer.getDistanceSq((double)this.xCoord + 0.5D, (double)this.yCoord + 0.5D, (double)this.zCoord + 0.5D) <= 64.0D;
     }
 
-    public void startOpen() {}
+    public void openChest() {}
 
-    public void f() {}
+    public void closeChest() {}
 }

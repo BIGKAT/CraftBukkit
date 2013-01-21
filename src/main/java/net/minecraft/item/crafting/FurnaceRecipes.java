@@ -1,52 +1,70 @@
-package net.minecraft.server;
+package net.minecraft.item.crafting;
 
 import java.util.HashMap;
 import java.util.Map;
+import net.minecraft.block.Block;
+import net.minecraft.item.Item;
+import net.minecraft.item.ItemStack;
 
-public class RecipesFurnace {
+public class FurnaceRecipes
+{
+    private static final FurnaceRecipes smeltingBase = new FurnaceRecipes();
+    public Map smeltingList = new HashMap(); // CraftBukkit - private -> public
+    private Map experienceList = new HashMap();
 
-    private static final RecipesFurnace a = new RecipesFurnace();
-    public Map recipes = new HashMap(); // CraftBukkit - private -> public
-    private Map c = new HashMap();
-
-    public static final RecipesFurnace getInstance() {
-        return a;
+    /**
+     * Used to call methods addSmelting and getSmeltingResult.
+     */
+    public static final FurnaceRecipes smelting()
+    {
+        return smeltingBase;
     }
 
-    public RecipesFurnace() { // CraftBukkit - private -> public
-        this.registerRecipe(Block.IRON_ORE.id, new ItemStack(Item.IRON_INGOT), 0.7F);
-        this.registerRecipe(Block.GOLD_ORE.id, new ItemStack(Item.GOLD_INGOT), 1.0F);
-        this.registerRecipe(Block.DIAMOND_ORE.id, new ItemStack(Item.DIAMOND), 1.0F);
-        this.registerRecipe(Block.SAND.id, new ItemStack(Block.GLASS), 0.1F);
-        this.registerRecipe(Item.PORK.id, new ItemStack(Item.GRILLED_PORK), 0.35F);
-        this.registerRecipe(Item.RAW_BEEF.id, new ItemStack(Item.COOKED_BEEF), 0.35F);
-        this.registerRecipe(Item.RAW_CHICKEN.id, new ItemStack(Item.COOKED_CHICKEN), 0.35F);
-        this.registerRecipe(Item.RAW_FISH.id, new ItemStack(Item.COOKED_FISH), 0.35F);
-        this.registerRecipe(Block.COBBLESTONE.id, new ItemStack(Block.STONE), 0.1F);
-        this.registerRecipe(Item.CLAY_BALL.id, new ItemStack(Item.CLAY_BRICK), 0.3F);
-        this.registerRecipe(Block.CACTUS.id, new ItemStack(Item.INK_SACK, 1, 2), 0.2F);
-        this.registerRecipe(Block.LOG.id, new ItemStack(Item.COAL, 1, 1), 0.15F);
-        this.registerRecipe(Block.EMERALD_ORE.id, new ItemStack(Item.EMERALD), 1.0F);
-        this.registerRecipe(Item.POTATO.id, new ItemStack(Item.POTATO_BAKED), 0.35F);
-        this.registerRecipe(Block.COAL_ORE.id, new ItemStack(Item.COAL), 0.1F);
-        this.registerRecipe(Block.REDSTONE_ORE.id, new ItemStack(Item.REDSTONE), 0.7F);
-        this.registerRecipe(Block.LAPIS_ORE.id, new ItemStack(Item.INK_SACK, 1, 4), 0.2F);
+    public FurnaceRecipes()   // CraftBukkit - private -> public
+    {
+        this.addSmelting(Block.oreIron.blockID, new ItemStack(Item.ingotIron), 0.7F);
+        this.addSmelting(Block.oreGold.blockID, new ItemStack(Item.ingotGold), 1.0F);
+        this.addSmelting(Block.oreDiamond.blockID, new ItemStack(Item.diamond), 1.0F);
+        this.addSmelting(Block.sand.blockID, new ItemStack(Block.glass), 0.1F);
+        this.addSmelting(Item.porkRaw.itemID, new ItemStack(Item.porkCooked), 0.35F);
+        this.addSmelting(Item.beefRaw.itemID, new ItemStack(Item.beefCooked), 0.35F);
+        this.addSmelting(Item.chickenRaw.itemID, new ItemStack(Item.chickenCooked), 0.35F);
+        this.addSmelting(Item.fishRaw.itemID, new ItemStack(Item.fishCooked), 0.35F);
+        this.addSmelting(Block.cobblestone.blockID, new ItemStack(Block.stone), 0.1F);
+        this.addSmelting(Item.clay.itemID, new ItemStack(Item.brick), 0.3F);
+        this.addSmelting(Block.cactus.blockID, new ItemStack(Item.dyePowder, 1, 2), 0.2F);
+        this.addSmelting(Block.wood.blockID, new ItemStack(Item.coal, 1, 1), 0.15F);
+        this.addSmelting(Block.oreEmerald.blockID, new ItemStack(Item.emerald), 1.0F);
+        this.addSmelting(Item.potato.itemID, new ItemStack(Item.bakedPotato), 0.35F);
+        this.addSmelting(Block.oreCoal.blockID, new ItemStack(Item.coal), 0.1F);
+        this.addSmelting(Block.oreRedstone.blockID, new ItemStack(Item.redstone), 0.7F);
+        this.addSmelting(Block.oreLapis.blockID, new ItemStack(Item.dyePowder, 1, 4), 0.2F);
     }
 
-    public void registerRecipe(int i, ItemStack itemstack, float f) {
-        this.recipes.put(Integer.valueOf(i), itemstack);
-        this.c.put(Integer.valueOf(itemstack.id), Float.valueOf(f));
+    /**
+     * Adds a smelting recipe.
+     */
+    public void addSmelting(int par1, ItemStack par2ItemStack, float par3)
+    {
+        this.smeltingList.put(Integer.valueOf(par1), par2ItemStack);
+        this.experienceList.put(Integer.valueOf(par2ItemStack.itemID), Float.valueOf(par3));
     }
 
-    public ItemStack getResult(int i) {
-        return (ItemStack) this.recipes.get(Integer.valueOf(i));
+    /**
+     * Returns the smelting result of an item.
+     */
+    public ItemStack getSmeltingResult(int par1)
+    {
+        return (ItemStack)this.smeltingList.get(Integer.valueOf(par1));
     }
 
-    public Map getRecipes() {
-        return this.recipes;
+    public Map getSmeltingList()
+    {
+        return this.smeltingList;
     }
 
-    public float c(int i) {
-        return this.c.containsKey(Integer.valueOf(i)) ? ((Float) this.c.get(Integer.valueOf(i))).floatValue() : 0.0F;
+    public float getExperience(int par1)
+    {
+        return this.experienceList.containsKey(Integer.valueOf(par1)) ? ((Float)this.experienceList.get(Integer.valueOf(par1))).floatValue() : 0.0F;
     }
 }

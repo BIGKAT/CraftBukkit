@@ -1,195 +1,297 @@
-package net.minecraft.server;
+package net.minecraft.block;
 
 import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
+import net.minecraft.block.material.Material;
+import net.minecraft.entity.Entity;
+import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.item.Item;
+import net.minecraft.util.AxisAlignedBB;
+import net.minecraft.util.Direction;
+import net.minecraft.world.IBlockAccess;
+import net.minecraft.world.World;
 
 import org.bukkit.event.entity.EntityInteractEvent; // CraftBukkit
 
-public class BlockTripwire extends Block {
-
-    public BlockTripwire(int i) {
-        super(i, 173, Material.ORIENTABLE);
-        this.a(0.0F, 0.0F, 0.0F, 1.0F, 0.15625F, 1.0F);
-        this.b(true);
+public class BlockTripWire extends Block
+{
+    public BlockTripWire(int par1)
+    {
+        super(par1, 173, Material.circuits);
+        this.setBlockBounds(0.0F, 0.0F, 0.0F, 1.0F, 0.15625F, 1.0F);
+        this.setTickRandomly(true);
     }
 
-    public int r_() {
+    /**
+     * How many world ticks before ticking
+     */
+    public int tickRate()
+    {
         return 10;
     }
 
-    public AxisAlignedBB e(World world, int i, int j, int k) {
+    /**
+     * Returns a bounding box from the pool of bounding boxes (this means this box can change after the pool has been
+     * cleared to be reused)
+     */
+    public AxisAlignedBB getCollisionBoundingBoxFromPool(World par1World, int par2, int par3, int par4)
+    {
         return null;
     }
 
-    public boolean c() {
+    /**
+     * Is this block (a) opaque and (b) a full 1m cube?  This determines whether or not to render the shared face of two
+     * adjacent blocks and also whether the player can attach torches, redstone wire, etc to this block.
+     */
+    public boolean isOpaqueCube()
+    {
         return false;
     }
 
-    public boolean b() {
+    /**
+     * If this block doesn't render as an ordinary block it will return False (examples: signs, buttons, stairs, etc)
+     */
+    public boolean renderAsNormalBlock()
+    {
         return false;
     }
 
-    public int d() {
+    /**
+     * The type of render function that is called for this block
+     */
+    public int getRenderType()
+    {
         return 30;
     }
 
-    public int getDropType(int i, Random random, int j) {
-        return Item.STRING.id;
+    /**
+     * Returns the ID of the items to drop on destruction.
+     */
+    public int idDropped(int par1, Random par2Random, int par3)
+    {
+        return Item.silk.itemID;
     }
 
-    public void doPhysics(World world, int i, int j, int k, int l) {
-        int i1 = world.getData(i, j, k);
-        boolean flag = (i1 & 2) == 2;
-        boolean flag1 = !world.v(i, j - 1, k);
+    /**
+     * Lets the block know when one of its neighbor changes. Doesn't know which neighbor changed (coordinates passed are
+     * their own) Args: x, y, z, neighbor blockID
+     */
+    public void onNeighborBlockChange(World par1World, int par2, int par3, int par4, int par5)
+    {
+        int var6 = par1World.getBlockMetadata(par2, par3, par4);
+        boolean var7 = (var6 & 2) == 2;
+        boolean var8 = !par1World.doesBlockHaveSolidTopSurface(par2, par3 - 1, par4);
 
-        if (flag != flag1) {
-            this.c(world, i, j, k, i1, 0);
-            world.setTypeId(i, j, k, 0);
+        if (var7 != var8)
+        {
+            this.dropBlockAsItem(par1World, par2, par3, par4, var6, 0);
+            par1World.setBlockWithNotify(par2, par3, par4, 0);
         }
     }
 
-    public void updateShape(IBlockAccess iblockaccess, int i, int j, int k) {
-        int l = iblockaccess.getData(i, j, k);
-        boolean flag = (l & 4) == 4;
-        boolean flag1 = (l & 2) == 2;
+    /**
+     * Updates the blocks bounds based on its current state. Args: world, x, y, z
+     */
+    public void setBlockBoundsBasedOnState(IBlockAccess par1IBlockAccess, int par2, int par3, int par4)
+    {
+        int var5 = par1IBlockAccess.getBlockMetadata(par2, par3, par4);
+        boolean var6 = (var5 & 4) == 4;
+        boolean var7 = (var5 & 2) == 2;
 
-        if (!flag1) {
-            this.a(0.0F, 0.0F, 0.0F, 1.0F, 0.09375F, 1.0F);
-        } else if (!flag) {
-            this.a(0.0F, 0.0F, 0.0F, 1.0F, 0.5F, 1.0F);
-        } else {
-            this.a(0.0F, 0.0625F, 0.0F, 1.0F, 0.15625F, 1.0F);
+        if (!var7)
+        {
+            this.setBlockBounds(0.0F, 0.0F, 0.0F, 1.0F, 0.09375F, 1.0F);
+        }
+        else if (!var6)
+        {
+            this.setBlockBounds(0.0F, 0.0F, 0.0F, 1.0F, 0.5F, 1.0F);
+        }
+        else
+        {
+            this.setBlockBounds(0.0F, 0.0625F, 0.0F, 1.0F, 0.15625F, 1.0F);
         }
     }
 
-    public void onPlace(World world, int i, int j, int k) {
-        int l = world.v(i, j - 1, k) ? 0 : 2;
-
-        world.setData(i, j, k, l);
-        this.d(world, i, j, k, l);
+    /**
+     * Called whenever the block is added into the world. Args: world, x, y, z
+     */
+    public void onBlockAdded(World par1World, int par2, int par3, int par4)
+    {
+        int var5 = par1World.doesBlockHaveSolidTopSurface(par2, par3 - 1, par4) ? 0 : 2;
+        par1World.setBlockMetadataWithNotify(par2, par3, par4, var5);
+        this.func_72149_e(par1World, par2, par3, par4, var5);
     }
 
-    public void remove(World world, int i, int j, int k, int l, int i1) {
-        this.d(world, i, j, k, i1 | 1);
+    /**
+     * ejects contained items into the world, and notifies neighbours of an update, as appropriate
+     */
+    public void breakBlock(World par1World, int par2, int par3, int par4, int par5, int par6)
+    {
+        this.func_72149_e(par1World, par2, par3, par4, par6 | 1);
     }
 
-    public void a(World world, int i, int j, int k, int l, EntityHuman entityhuman) {
-        if (!world.isStatic) {
-            if (entityhuman.bS() != null && entityhuman.bS().id == Item.SHEARS.id) {
-                world.setData(i, j, k, l | 8);
+    /**
+     * Called when the block is attempted to be harvested
+     */
+    public void onBlockHarvested(World par1World, int par2, int par3, int par4, int par5, EntityPlayer par6EntityPlayer)
+    {
+        if (!par1World.isRemote)
+        {
+            if (par6EntityPlayer.getCurrentEquippedItem() != null && par6EntityPlayer.getCurrentEquippedItem().itemID == Item.shears.itemID)
+            {
+                par1World.setBlockMetadataWithNotify(par2, par3, par4, par5 | 8);
             }
         }
     }
 
-    private void d(World world, int i, int j, int k, int l) {
-        int i1 = 0;
+    private void func_72149_e(World par1World, int par2, int par3, int par4, int par5)
+    {
+        int var6 = 0;
 
-        while (i1 < 2) {
-            int j1 = 1;
+        while (var6 < 2)
+        {
+            int var7 = 1;
 
-            while (true) {
-                if (j1 < 42) {
-                    int k1 = i + Direction.a[i1] * j1;
-                    int l1 = k + Direction.b[i1] * j1;
-                    int i2 = world.getTypeId(k1, j, l1);
+            while (true)
+            {
+                if (var7 < 42)
+                {
+                    int var8 = par2 + Direction.offsetX[var6] * var7;
+                    int var9 = par4 + Direction.offsetZ[var6] * var7;
+                    int var10 = par1World.getBlockId(var8, par3, var9);
 
-                    if (i2 == Block.TRIPWIRE_SOURCE.id) {
-                        int j2 = world.getData(k1, j, l1) & 3;
+                    if (var10 == Block.tripWireSource.blockID)
+                    {
+                        int var11 = par1World.getBlockMetadata(var8, par3, var9) & 3;
 
-                        if (j2 == Direction.f[i1]) {
-                            Block.TRIPWIRE_SOURCE.a(world, k1, j, l1, i2, world.getData(k1, j, l1), true, j1, l);
+                        if (var11 == Direction.footInvisibleFaceRemap[var6])
+                        {
+                            Block.tripWireSource.func_72143_a(par1World, var8, par3, var9, var10, par1World.getBlockMetadata(var8, par3, var9), true, var7, par5);
                         }
-                    } else if (i2 == Block.TRIPWIRE.id) {
-                        ++j1;
+                    }
+                    else if (var10 == Block.tripWire.blockID)
+                    {
+                        ++var7;
                         continue;
                     }
                 }
 
-                ++i1;
+                ++var6;
                 break;
             }
         }
     }
 
-    public void a(World world, int i, int j, int k, Entity entity) {
-        if (!world.isStatic) {
-            if ((world.getData(i, j, k) & 1) != 1) {
-                this.l(world, i, j, k);
+    /**
+     * Triggered whenever an entity collides with this block (enters into the block). Args: world, x, y, z, entity
+     */
+    public void onEntityCollidedWithBlock(World par1World, int par2, int par3, int par4, Entity par5Entity)
+    {
+        if (!par1World.isRemote)
+        {
+            if ((par1World.getBlockMetadata(par2, par3, par4) & 1) != 1)
+            {
+                this.updateTripWireState(par1World, par2, par3, par4);
             }
         }
     }
 
-    public void b(World world, int i, int j, int k, Random random) {
-        if (!world.isStatic) {
-            if ((world.getData(i, j, k) & 1) == 1) {
-                this.l(world, i, j, k);
+    /**
+     * Ticks the block if it's been scheduled
+     */
+    public void updateTick(World par1World, int par2, int par3, int par4, Random par5Random)
+    {
+        if (!par1World.isRemote)
+        {
+            if ((par1World.getBlockMetadata(par2, par3, par4) & 1) == 1)
+            {
+                this.updateTripWireState(par1World, par2, par3, par4);
             }
         }
     }
 
-    private void l(World world, int i, int j, int k) {
-        int l = world.getData(i, j, k);
-        boolean flag = (l & 1) == 1;
-        boolean flag1 = false;
-        List list = world.getEntities((Entity) null, AxisAlignedBB.a().a((double) i + this.minX, (double) j + this.minY, (double) k + this.minZ, (double) i + this.maxX, (double) j + this.maxY, (double) k + this.maxZ));
+    private void updateTripWireState(World par1World, int par2, int par3, int par4)
+    {
+        int var5 = par1World.getBlockMetadata(par2, par3, par4);
+        boolean var6 = (var5 & 1) == 1;
+        boolean var7 = false;
+        List var8 = par1World.getEntitiesWithinAABBExcludingEntity((Entity)null, AxisAlignedBB.getAABBPool().addOrModifyAABBInPool((double)par2 + this.minX, (double)par3 + this.minY, (double)par4 + this.minZ, (double)par2 + this.maxX, (double)par3 + this.maxY, (double)par4 + this.maxZ));
 
-        if (!list.isEmpty()) {
-            Iterator iterator = list.iterator();
+        if (!var8.isEmpty())
+        {
+            Iterator var9 = var8.iterator();
 
-            while (iterator.hasNext()) {
-                Entity entity = (Entity) iterator.next();
+            while (var9.hasNext())
+            {
+                Entity var10 = (Entity)var9.next();
 
-                if (!entity.au()) {
-                    flag1 = true;
+                if (!var10.doesEntityNotTriggerPressurePlate())
+                {
+                    var7 = true;
                     break;
                 }
             }
         }
 
         // CraftBukkit start
-        org.bukkit.World bworld = world.getWorld();
-        org.bukkit.plugin.PluginManager manager = world.getServer().getPluginManager();
+        org.bukkit.World bworld = par1World.getWorld();
+        org.bukkit.plugin.PluginManager manager = par1World.getServer().getPluginManager();
 
-        if (flag != flag1) {
-            if (flag1) {
-                for (Object object : list) {
-                    if (object != null) {
+        if (var6 != var7)
+        {
+            if (var7)
+            {
+                for (Object object : var8)
+                {
+                    if (object != null)
+                    {
                         org.bukkit.event.Cancellable cancellable;
 
-                        if (object instanceof EntityHuman) {
-                            cancellable = org.bukkit.craftbukkit.event.CraftEventFactory.callPlayerInteractEvent((EntityHuman) object, org.bukkit.event.block.Action.PHYSICAL, i, j, k, -1, null);
-                        } else if (object instanceof Entity) {
-                            cancellable = new EntityInteractEvent(((Entity) object).getBukkitEntity(), bworld.getBlockAt(i, j, k));
+                        if (object instanceof EntityPlayer)
+                        {
+                            cancellable = org.bukkit.craftbukkit.event.CraftEventFactory.callPlayerInteractEvent((EntityPlayer) object, org.bukkit.event.block.Action.PHYSICAL, par2, par3, par4, -1, null);
+                        }
+                        else if (object instanceof Entity)
+                        {
+                            cancellable = new EntityInteractEvent(((Entity) object).getBukkitEntity(), bworld.getBlockAt(par2, par3, par4));
                             manager.callEvent((EntityInteractEvent) cancellable);
-                        } else {
+                        }
+                        else
+                        {
                             continue;
                         }
 
-                        if (cancellable.isCancelled()) {
+                        if (cancellable.isCancelled())
+                        {
                             return;
                         }
                     }
                 }
             }
         }
+
         // CraftBukkit end
 
-        if (flag1 && !flag) {
-            l |= 1;
+        if (var7 && !var6)
+        {
+            var5 |= 1;
         }
 
-        if (!flag1 && flag) {
-            l &= -2;
+        if (!var7 && var6)
+        {
+            var5 &= -2;
         }
 
-        if (flag1 != flag) {
-            world.setData(i, j, k, l);
-            this.d(world, i, j, k, l);
+        if (var7 != var6)
+        {
+            par1World.setBlockMetadataWithNotify(par2, par3, par4, var5);
+            this.func_72149_e(par1World, par2, par3, par4, var5);
         }
 
-        if (flag1) {
-            world.a(i, j, k, this.id, this.r_());
+        if (var7)
+        {
+            par1World.scheduleBlockUpdate(par2, par3, par4, this.blockID, this.tickRate());
         }
     }
 }

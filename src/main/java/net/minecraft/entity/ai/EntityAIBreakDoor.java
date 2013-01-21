@@ -1,59 +1,85 @@
-package net.minecraft.server;
+package net.minecraft.entity.ai;
 
-public class PathfinderGoalBreakDoor extends PathfinderGoalDoorInteract {
+import net.minecraft.entity.EntityLiving;
+public class EntityAIBreakDoor extends EntityAIDoorInteract
+{
+    private int breakingTime;
+    private int field_75358_j = -1;
 
-    private int i;
-    private int j = -1;
-
-    public PathfinderGoalBreakDoor(EntityLiving entityliving) {
-        super(entityliving);
+    public EntityAIBreakDoor(EntityLiving par1EntityLiving)
+    {
+        super(par1EntityLiving);
     }
 
-    public boolean a() {
-        return !super.a() ? false : (!this.a.world.getGameRules().getBoolean("mobGriefing") ? false : !this.e.a_(this.a.world, this.b, this.c, this.d));
+    /**
+     * Returns whether the EntityAIBase should begin execution.
+     */
+    public boolean shouldExecute()
+    {
+        return !super.shouldExecute() ? false : (!this.theEntity.worldObj.getGameRules().getGameRuleBooleanValue("mobGriefing") ? false : !this.targetDoor.isDoorOpen(this.theEntity.worldObj, this.entityPosX, this.entityPosY, this.entityPosZ));
     }
 
-    public void c() {
-        super.c();
-        this.i = 0;
+    /**
+     * Execute a one shot task or start executing a continuous task
+     */
+    public void startExecuting()
+    {
+        super.startExecuting();
+        this.breakingTime = 0;
     }
 
-    public boolean b() {
-        double d0 = this.a.e((double) this.b, (double) this.c, (double) this.d);
-
-        return this.i <= 240 && !this.e.a_(this.a.world, this.b, this.c, this.d) && d0 < 4.0D;
+    /**
+     * Returns whether an in-progress EntityAIBase should continue executing
+     */
+    public boolean continueExecuting()
+    {
+        double var1 = this.theEntity.getDistanceSq((double)this.entityPosX, (double)this.entityPosY, (double)this.entityPosZ);
+        return this.breakingTime <= 240 && !this.targetDoor.isDoorOpen(this.theEntity.worldObj, this.entityPosX, this.entityPosY, this.entityPosZ) && var1 < 4.0D;
     }
 
-    public void d() {
-        super.d();
-        this.a.world.g(this.a.id, this.b, this.c, this.d, -1);
+    /**
+     * Resets the task
+     */
+    public void resetTask()
+    {
+        super.resetTask();
+        this.theEntity.worldObj.destroyBlockInWorldPartially(this.theEntity.entityId, this.entityPosX, this.entityPosY, this.entityPosZ, -1);
     }
 
-    public void e() {
-        super.e();
-        if (this.a.aB().nextInt(20) == 0) {
-            this.a.world.triggerEffect(1010, this.b, this.c, this.d, 0);
+    /**
+     * Updates the task
+     */
+    public void updateTask()
+    {
+        super.updateTask();
+
+        if (this.theEntity.getRNG().nextInt(20) == 0)
+        {
+            this.theEntity.worldObj.playAuxSFX(1010, this.entityPosX, this.entityPosY, this.entityPosZ, 0);
         }
 
-        ++this.i;
-        int i = (int) ((float) this.i / 240.0F * 10.0F);
+        ++this.breakingTime;
+        int var1 = (int)((float)this.breakingTime / 240.0F * 10.0F);
 
-        if (i != this.j) {
-            this.a.world.g(this.a.id, this.b, this.c, this.d, i);
-            this.j = i;
+        if (var1 != this.field_75358_j)
+        {
+            this.theEntity.worldObj.destroyBlockInWorldPartially(this.theEntity.entityId, this.entityPosX, this.entityPosY, this.entityPosZ, var1);
+            this.field_75358_j = var1;
         }
 
-        if (this.i == 240 && this.a.world.difficulty == 3) {
+        if (this.breakingTime == 240 && this.theEntity.worldObj.difficultySetting == 3)
+        {
             // CraftBukkit start
-            if (org.bukkit.craftbukkit.event.CraftEventFactory.callEntityBreakDoorEvent(this.a, this.b, this.c, this.d).isCancelled()) {
-                this.e();
+            if (org.bukkit.craftbukkit.event.CraftEventFactory.callEntityBreakDoorEvent(this.theEntity, this.entityPosX, this.entityPosY, this.entityPosZ).isCancelled())
+            {
+                this.updateTask();
                 return;
             }
-            // CraftBukkit end
 
-            this.a.world.setTypeId(this.b, this.c, this.d, 0);
-            this.a.world.triggerEffect(1012, this.b, this.c, this.d, 0);
-            this.a.world.triggerEffect(2001, this.b, this.c, this.d, this.e.id);
+            // CraftBukkit end
+            this.theEntity.worldObj.setBlockWithNotify(this.entityPosX, this.entityPosY, this.entityPosZ, 0);
+            this.theEntity.worldObj.playAuxSFX(1012, this.entityPosX, this.entityPosY, this.entityPosZ, 0);
+            this.theEntity.worldObj.playAuxSFX(2001, this.entityPosX, this.entityPosY, this.entityPosZ, this.targetDoor.blockID);
         }
     }
 }

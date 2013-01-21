@@ -1,6 +1,25 @@
-package net.minecraft.server;
+package net.minecraft.entity.item;
 
 import java.util.List;
+import net.minecraft.block.Block;
+import net.minecraft.block.BlockRail;
+import net.minecraft.entity.Entity;
+import net.minecraft.entity.EntityLiving;
+import net.minecraft.entity.monster.EntityIronGolem;
+import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.inventory.IInventory;
+import net.minecraft.item.Item;
+import net.minecraft.item.ItemStack;
+import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.nbt.NBTTagList;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.gui.IUpdatePlayerListBox;
+import net.minecraft.util.AxisAlignedBB;
+import net.minecraft.util.DamageSource;
+import net.minecraft.util.MathHelper;
+import net.minecraft.util.Vec3;
+import net.minecraft.world.World;
+import net.minecraft.world.WorldServer;
 
 // CraftBukkit start
 import org.bukkit.Location;
@@ -14,23 +33,30 @@ import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.craftbukkit.entity.CraftHumanEntity;
 // CraftBukkit end
 
-public class EntityMinecart extends Entity implements IInventory {
+public class EntityMinecart extends Entity implements IInventory
+{
+    /** Array of item stacks stored in minecart (for storage minecarts). */
+    private ItemStack[] cargoItems;
+    private int fuel;
+    private boolean field_70499_f;
 
-    private ItemStack[] items;
-    private int e;
-    private boolean f;
-    public int type;
-    public double b;
-    public double c;
-    private final IUpdatePlayerListBox g;
-    private boolean h;
-    private static final int[][][] matrix = new int[][][] { { { 0, 0, -1}, { 0, 0, 1}}, { { -1, 0, 0}, { 1, 0, 0}}, { { -1, -1, 0}, { 1, 0, 0}}, { { -1, 0, 0}, { 1, -1, 0}}, { { 0, 0, -1}, { 0, -1, 1}}, { { 0, -1, -1}, { 0, 0, 1}}, { { 0, 0, 1}, { 1, 0, 0}}, { { 0, 0, 1}, { -1, 0, 0}}, { { 0, 0, -1}, { -1, 0, 0}}, { { 0, 0, -1}, { 1, 0, 0}}};
-    private int j;
-    private double at;
-    private double au;
-    private double av;
-    private double aw;
-    private double ax;
+    /** The type of minecart, 2 for powered, 1 for storage. */
+    public int minecartType;
+    public double pushX;
+    public double pushZ;
+    private final IUpdatePlayerListBox field_82344_g;
+    private boolean field_82345_h;
+
+    /** Minecart rotational logic matrix */
+    private static final int[][][] matrix = new int[][][] {{{0, 0, -1}, {0, 0, 1}}, {{ -1, 0, 0}, {1, 0, 0}}, {{ -1, -1, 0}, {1, 0, 0}}, {{ -1, 0, 0}, {1, -1, 0}}, {{0, 0, -1}, {0, -1, 1}}, {{0, -1, -1}, {0, 0, 1}}, {{0, 0, 1}, {1, 0, 0}}, {{0, 0, 1}, { -1, 0, 0}}, {{0, 0, -1}, { -1, 0, 0}}, {{0, 0, -1}, {1, 0, 0}}};
+
+    /** appears to be the progress of the turn */
+    private int turnProgress;
+    private double minecartX;
+    private double minecartY;
+    private double minecartZ;
+    private double minecartYaw;
+    private double minecartPitch;
 
     // CraftBukkit start
     public boolean slowWhenEmpty = true;
@@ -44,1004 +70,1327 @@ public class EntityMinecart extends Entity implements IInventory {
     public List<HumanEntity> transaction = new java.util.ArrayList<HumanEntity>();
     private int maxStack = MAX_STACK;
 
-    public ItemStack[] getContents() {
-        return this.items;
+    public ItemStack[] getContents()
+    {
+        return this.cargoItems;
     }
 
-    public void onOpen(CraftHumanEntity who) {
+    public void onOpen(CraftHumanEntity who)
+    {
         transaction.add(who);
     }
 
-    public void onClose(CraftHumanEntity who) {
+    public void onClose(CraftHumanEntity who)
+    {
         transaction.remove(who);
     }
 
-    public List<HumanEntity> getViewers() {
+    public List<HumanEntity> getViewers()
+    {
         return transaction;
     }
 
-    public InventoryHolder getOwner() {
+    public InventoryHolder getOwner()
+    {
         org.bukkit.entity.Entity cart = getBukkitEntity();
-        if(cart instanceof InventoryHolder) return (InventoryHolder) cart;
+
+        if (cart instanceof InventoryHolder)
+        {
+            return (InventoryHolder) cart;
+        }
+
         return null;
     }
 
-    public void setMaxStackSize(int size) {
+    public void setMaxStackSize(int size)
+    {
         maxStack = size;
     }
     // CraftBukkit end
 
-    public EntityMinecart(World world) {
-        super(world);
-        this.items = new ItemStack[27]; // CraftBukkit
-        this.e = 0;
-        this.f = false;
-        this.h = true;
-        this.m = true;
-        this.a(0.98F, 0.7F);
-        this.height = this.length / 2.0F;
-        this.g = world != null ? world.a(this) : null;
+    public EntityMinecart(World par1World)
+    {
+        super(par1World);
+        this.cargoItems = new ItemStack[27]; // CraftBukkit
+        this.fuel = 0;
+        this.field_70499_f = false;
+        this.field_82345_h = true;
+        this.preventEntitySpawning = true;
+        this.setSize(0.98F, 0.7F);
+        this.yOffset = this.height / 2.0F;
+        this.field_82344_g = par1World != null ? par1World.func_82735_a(this) : null;
     }
 
-    protected boolean f_() {
+    /**
+     * returns if this entity triggers Block.onEntityWalking on the blocks they walk on. used for spiders and wolves to
+     * prevent them from trampling crops
+     */
+    protected boolean canTriggerWalking()
+    {
         return false;
     }
 
-    protected void a() {
-        this.datawatcher.a(16, new Byte((byte) 0));
-        this.datawatcher.a(17, new Integer(0));
-        this.datawatcher.a(18, new Integer(1));
-        this.datawatcher.a(19, new Integer(0));
+    protected void entityInit()
+    {
+        this.dataWatcher.addObject(16, new Byte((byte)0));
+        this.dataWatcher.addObject(17, new Integer(0));
+        this.dataWatcher.addObject(18, new Integer(1));
+        this.dataWatcher.addObject(19, new Integer(0));
     }
 
-    public AxisAlignedBB g(Entity entity) {
-        return entity.M() ? entity.boundingBox : null;
+    /**
+     * Returns a boundingBox used to collide the entity with other entities and blocks. This enables the entity to be
+     * pushable on contact, like boats or minecarts.
+     */
+    public AxisAlignedBB getCollisionBox(Entity par1Entity)
+    {
+        return par1Entity.canBePushed() ? par1Entity.boundingBox : null;
     }
 
-    public AxisAlignedBB E() {
+    /**
+     * returns the bounding box for this entity
+     */
+    public AxisAlignedBB getBoundingBox()
+    {
         return null;
     }
 
-    public boolean M() {
+    /**
+     * Returns true if this entity should push and be pushed by other entities when colliding.
+     */
+    public boolean canBePushed()
+    {
         return true;
     }
 
-    public EntityMinecart(World world, double d0, double d1, double d2, int i) {
-        this(world);
-        this.setPosition(d0, d1 + (double) this.height, d2);
-        this.motX = 0.0D;
-        this.motY = 0.0D;
-        this.motZ = 0.0D;
-        this.lastX = d0;
-        this.lastY = d1;
-        this.lastZ = d2;
-        this.type = i;
-
-        this.world.getServer().getPluginManager().callEvent(new org.bukkit.event.vehicle.VehicleCreateEvent((Vehicle) this.getBukkitEntity())); // CraftBukkit
+    public EntityMinecart(World par1World, double par2, double par4, double par6, int par8)
+    {
+        this(par1World);
+        this.setPosition(par2, par4 + (double)this.yOffset, par6);
+        this.motionX = 0.0D;
+        this.motionY = 0.0D;
+        this.motionZ = 0.0D;
+        this.prevPosX = par2;
+        this.prevPosY = par4;
+        this.prevPosZ = par6;
+        this.minecartType = par8;
+        this.worldObj.getServer().getPluginManager().callEvent(new org.bukkit.event.vehicle.VehicleCreateEvent((Vehicle) this.getBukkitEntity())); // CraftBukkit
     }
 
-    public double X() {
-        return (double) this.length * 0.0D - 0.30000001192092896D;
+    /**
+     * Returns the Y offset from the entity's position for any entity riding this one.
+     */
+    public double getMountedYOffset()
+    {
+        return (double)this.height * 0.0D - 0.30000001192092896D;
     }
 
-    public boolean damageEntity(DamageSource damagesource, int i) {
-        if (this.isInvulnerable()) {
+    /**
+     * Called when the entity is attacked.
+     */
+    public boolean attackEntityFrom(DamageSource par1DamageSource, int par2)
+    {
+        if (this.isEntityInvulnerable())
+        {
             return false;
-        } else {
-            if (!this.world.isStatic && !this.dead) {
+        }
+        else
+        {
+            if (!this.worldObj.isRemote && !this.isDead)
+            {
                 // CraftBukkit start
                 Vehicle vehicle = (Vehicle) this.getBukkitEntity();
-                org.bukkit.entity.Entity passenger = (damagesource.getEntity() == null) ? null : damagesource.getEntity().getBukkitEntity();
+                org.bukkit.entity.Entity passenger = (par1DamageSource.getEntity() == null) ? null : par1DamageSource.getEntity().getBukkitEntity();
+                VehicleDamageEvent event = new VehicleDamageEvent(vehicle, passenger, par2);
+                this.worldObj.getServer().getPluginManager().callEvent(event);
 
-                VehicleDamageEvent event = new VehicleDamageEvent(vehicle, passenger, i);
-                this.world.getServer().getPluginManager().callEvent(event);
-
-                if (event.isCancelled()) {
+                if (event.isCancelled())
+                {
                     return true;
                 }
 
-                i = event.getDamage();
+                par2 = event.getDamage();
                 // CraftBukkit end
+                this.func_70494_i(-this.func_70493_k());
+                this.func_70497_h(10);
+                this.setBeenAttacked();
+                this.setDamage(this.getDamage() + par2 * 10);
 
-                this.i(-this.k());
-                this.h(10);
-                this.K();
-                this.setDamage(this.getDamage() + i * 10);
-                if (damagesource.getEntity() instanceof EntityHuman && ((EntityHuman) damagesource.getEntity()).abilities.canInstantlyBuild) {
+                if (par1DamageSource.getEntity() instanceof EntityPlayer && ((EntityPlayer)par1DamageSource.getEntity()).capabilities.isCreativeMode)
+                {
                     this.setDamage(100);
                 }
 
-                if (this.getDamage() > 40) {
-                    if (this.passenger != null) {
-                        this.passenger.mount(this);
+                if (this.getDamage() > 40)
+                {
+                    if (this.riddenByEntity != null)
+                    {
+                        this.riddenByEntity.mountEntity(this);
                     }
 
                     // CraftBukkit start
                     VehicleDestroyEvent destroyEvent = new VehicleDestroyEvent(vehicle, passenger);
-                    this.world.getServer().getPluginManager().callEvent(destroyEvent);
+                    this.worldObj.getServer().getPluginManager().callEvent(destroyEvent);
 
-                    if (destroyEvent.isCancelled()) {
+                    if (destroyEvent.isCancelled())
+                    {
                         this.setDamage(40); // Maximize damage so this doesn't get triggered again right away
                         return true;
                     }
+
                     // CraftBukkit end
+                    this.setDead();
+                    this.dropItemWithOffset(Item.minecartEmpty.itemID, 1, 0.0F);
 
-                    this.die();
-                    this.a(Item.MINECART.id, 1, 0.0F);
-                    if (this.type == 1) {
-                        EntityMinecart entityminecart = this;
+                    if (this.minecartType == 1)
+                    {
+                        EntityMinecart var3 = this;
 
-                        for (int j = 0; j < entityminecart.getSize(); ++j) {
-                            ItemStack itemstack = entityminecart.getItem(j);
+                        for (int var4 = 0; var4 < var3.getSizeInventory(); ++var4)
+                        {
+                            ItemStack var5 = var3.getStackInSlot(var4);
 
-                            if (itemstack != null) {
-                                float f = this.random.nextFloat() * 0.8F + 0.1F;
-                                float f1 = this.random.nextFloat() * 0.8F + 0.1F;
-                                float f2 = this.random.nextFloat() * 0.8F + 0.1F;
+                            if (var5 != null)
+                            {
+                                float var6 = this.rand.nextFloat() * 0.8F + 0.1F;
+                                float var7 = this.rand.nextFloat() * 0.8F + 0.1F;
+                                float var8 = this.rand.nextFloat() * 0.8F + 0.1F;
 
-                                while (itemstack.count > 0) {
-                                    int k = this.random.nextInt(21) + 10;
+                                while (var5.stackSize > 0)
+                                {
+                                    int var9 = this.rand.nextInt(21) + 10;
 
-                                    if (k > itemstack.count) {
-                                        k = itemstack.count;
+                                    if (var9 > var5.stackSize)
+                                    {
+                                        var9 = var5.stackSize;
                                     }
 
-                                    itemstack.count -= k;
+                                    var5.stackSize -= var9;
                                     // CraftBukkit - include enchantments in the new itemstack
-                                    EntityItem entityitem = new EntityItem(this.world, this.locX + (double) f, this.locY + (double) f1, this.locZ + (double) f2, org.bukkit.craftbukkit.inventory.CraftItemStack.copyNMSStack(itemstack, k));
-                                    float f3 = 0.05F;
-
-                                    entityitem.motX = (double) ((float) this.random.nextGaussian() * f3);
-                                    entityitem.motY = (double) ((float) this.random.nextGaussian() * f3 + 0.2F);
-                                    entityitem.motZ = (double) ((float) this.random.nextGaussian() * f3);
-                                    this.world.addEntity(entityitem);
+                                    EntityItem var10 = new EntityItem(this.worldObj, this.posX + (double) var6, this.posY + (double) var7, this.posZ + (double) var8, org.bukkit.craftbukkit.inventory.CraftItemStack.copyNMSStack(var5, var9));
+                                    float var11 = 0.05F;
+                                    var10.motionX = (double)((float)this.rand.nextGaussian() * var11);
+                                    var10.motionY = (double)((float)this.rand.nextGaussian() * var11 + 0.2F);
+                                    var10.motionZ = (double)((float)this.rand.nextGaussian() * var11);
+                                    this.worldObj.spawnEntityInWorld(var10);
                                 }
                             }
                         }
 
-                        this.a(Block.CHEST.id, 1, 0.0F);
-                    } else if (this.type == 2) {
-                        this.a(Block.FURNACE.id, 1, 0.0F);
+                        this.dropItemWithOffset(Block.chest.blockID, 1, 0.0F);
+                    }
+                    else if (this.minecartType == 2)
+                    {
+                        this.dropItemWithOffset(Block.stoneOvenIdle.blockID, 1, 0.0F);
                     }
                 }
 
                 return true;
-            } else {
+            }
+            else
+            {
                 return true;
             }
         }
     }
 
-    public boolean L() {
-        return !this.dead;
+    /**
+     * Returns true if other Entities should be prevented from moving through this Entity.
+     */
+    public boolean canBeCollidedWith()
+    {
+        return !this.isDead;
     }
 
-    public void die() {
-        if (this.h) {
-            for (int i = 0; i < this.getSize(); ++i) {
-                ItemStack itemstack = this.getItem(i);
+    /**
+     * Will get destroyed next tick.
+     */
+    public void setDead()
+    {
+        if (this.field_82345_h)
+        {
+            for (int var1 = 0; var1 < this.getSizeInventory(); ++var1)
+            {
+                ItemStack var2 = this.getStackInSlot(var1);
 
-                if (itemstack != null) {
-                    float f = this.random.nextFloat() * 0.8F + 0.1F;
-                    float f1 = this.random.nextFloat() * 0.8F + 0.1F;
-                    float f2 = this.random.nextFloat() * 0.8F + 0.1F;
+                if (var2 != null)
+                {
+                    float var3 = this.rand.nextFloat() * 0.8F + 0.1F;
+                    float var4 = this.rand.nextFloat() * 0.8F + 0.1F;
+                    float var5 = this.rand.nextFloat() * 0.8F + 0.1F;
 
-                    while (itemstack.count > 0) {
-                        int j = this.random.nextInt(21) + 10;
+                    while (var2.stackSize > 0)
+                    {
+                        int var6 = this.rand.nextInt(21) + 10;
 
-                        if (j > itemstack.count) {
-                            j = itemstack.count;
+                        if (var6 > var2.stackSize)
+                        {
+                            var6 = var2.stackSize;
                         }
 
-                        itemstack.count -= j;
-                        EntityItem entityitem = new EntityItem(this.world, this.locX + (double) f, this.locY + (double) f1, this.locZ + (double) f2, new ItemStack(itemstack.id, j, itemstack.getData()));
+                        var2.stackSize -= var6;
+                        EntityItem var7 = new EntityItem(this.worldObj, this.posX + (double)var3, this.posY + (double)var4, this.posZ + (double)var5, new ItemStack(var2.itemID, var6, var2.getItemDamage()));
 
-                        if (itemstack.hasTag()) {
-                            entityitem.getItemStack().setTag((NBTTagCompound) itemstack.getTag().clone());
+                        if (var2.hasTagCompound())
+                        {
+                            var7.func_92014_d().setTagCompound((NBTTagCompound)var2.getTagCompound().copy());
                         }
 
-                        float f3 = 0.05F;
-
-                        entityitem.motX = (double) ((float) this.random.nextGaussian() * f3);
-                        entityitem.motY = (double) ((float) this.random.nextGaussian() * f3 + 0.2F);
-                        entityitem.motZ = (double) ((float) this.random.nextGaussian() * f3);
-                        this.world.addEntity(entityitem);
+                        float var8 = 0.05F;
+                        var7.motionX = (double)((float)this.rand.nextGaussian() * var8);
+                        var7.motionY = (double)((float)this.rand.nextGaussian() * var8 + 0.2F);
+                        var7.motionZ = (double)((float)this.rand.nextGaussian() * var8);
+                        this.worldObj.spawnEntityInWorld(var7);
                     }
                 }
             }
         }
 
-        super.die();
-        if (this.g != null) {
-            this.g.a();
+        super.setDead();
+
+        if (this.field_82344_g != null)
+        {
+            this.field_82344_g.update();
         }
     }
 
-    public void b(int i) {
-        this.h = false;
-        super.b(i);
+    /**
+     * Teleports the entity to another dimension. Params: Dimension number to teleport to
+     */
+    public void travelToDimension(int par1)
+    {
+        this.field_82345_h = false;
+        super.travelToDimension(par1);
     }
 
-    public void j_() {
+    /**
+     * Called to update the entity's position/logic.
+     */
+    public void onUpdate()
+    {
         // CraftBukkit start
-        double prevX = this.locX;
-        double prevY = this.locY;
-        double prevZ = this.locZ;
-        float prevYaw = this.yaw;
-        float prevPitch = this.pitch;
+        double prevX = this.posX;
+        double prevY = this.posY;
+        double prevZ = this.posZ;
+        float prevYaw = this.rotationYaw;
+        float prevPitch = this.rotationPitch;
         // CraftBukkit end
 
-        if (this.g != null) {
-            this.g.a();
+        if (this.field_82344_g != null)
+        {
+            this.field_82344_g.update();
         }
 
-        if (this.j() > 0) {
-            this.h(this.j() - 1);
+        if (this.func_70496_j() > 0)
+        {
+            this.func_70497_h(this.func_70496_j() - 1);
         }
 
-        if (this.getDamage() > 0) {
+        if (this.getDamage() > 0)
+        {
             this.setDamage(this.getDamage() - 1);
         }
 
-        if (this.locY < -64.0D) {
-            this.C();
+        if (this.posY < -64.0D)
+        {
+            this.kill();
         }
 
-        if (this.h() && this.random.nextInt(4) == 0) {
-            this.world.addParticle("largesmoke", this.locX, this.locY + 0.8D, this.locZ, 0.0D, 0.0D, 0.0D);
+        if (this.isMinecartPowered() && this.rand.nextInt(4) == 0)
+        {
+            this.worldObj.spawnParticle("largesmoke", this.posX, this.posY + 0.8D, this.posZ, 0.0D, 0.0D, 0.0D);
         }
 
-        int i;
+        int var2;
 
-        if (!this.world.isStatic && this.world instanceof WorldServer) {
-            this.world.methodProfiler.a("portal");
-            MinecraftServer minecraftserver = ((WorldServer) this.world).getMinecraftServer();
+        if (!this.worldObj.isRemote && this.worldObj instanceof WorldServer)
+        {
+            this.worldObj.theProfiler.startSection("portal");
+            MinecraftServer var1 = ((WorldServer)this.worldObj).getMinecraftServer();
+            var2 = this.getMaxInPortalTime();
 
-            i = this.z();
-            if (this.ao) {
-                if (minecraftserver.getAllowNether()) {
-                    if (this.vehicle == null && this.ap++ >= i) {
-                        this.ap = i;
-                        this.portalCooldown = this.ab();
-                        byte b0;
+            if (this.inPortal)
+            {
+                if (var1.getAllowNether())
+                {
+                    if (this.ridingEntity == null && this.field_82153_h++ >= var2)
+                    {
+                        this.field_82153_h = var2;
+                        this.timeUntilPortal = this.getPortalCooldown();
+                        byte var3;
 
-                        if (this.world.worldProvider.dimension == -1) {
-                            b0 = 0;
-                        } else {
-                            b0 = -1;
+                        if (this.worldObj.provider.dimensionId == -1)
+                        {
+                            var3 = 0;
+                        }
+                        else
+                        {
+                            var3 = -1;
                         }
 
-                        this.b(b0);
+                        this.travelToDimension(var3);
                     }
 
-                    this.ao = false;
+                    this.inPortal = false;
                 }
-            } else {
-                if (this.ap > 0) {
-                    this.ap -= 4;
+            }
+            else
+            {
+                if (this.field_82153_h > 0)
+                {
+                    this.field_82153_h -= 4;
                 }
 
-                if (this.ap < 0) {
-                    this.ap = 0;
+                if (this.field_82153_h < 0)
+                {
+                    this.field_82153_h = 0;
                 }
             }
 
-            if (this.portalCooldown > 0) {
-                --this.portalCooldown;
+            if (this.timeUntilPortal > 0)
+            {
+                --this.timeUntilPortal;
             }
 
-            this.world.methodProfiler.b();
+            this.worldObj.theProfiler.endSection();
         }
 
-        if (this.world.isStatic) {
-            if (this.j > 0) {
-                double d0 = this.locX + (this.at - this.locX) / (double) this.j;
-                double d1 = this.locY + (this.au - this.locY) / (double) this.j;
-                double d2 = this.locZ + (this.av - this.locZ) / (double) this.j;
-                double d3 = MathHelper.g(this.aw - (double) this.yaw);
-
-                this.yaw = (float) ((double) this.yaw + d3 / (double) this.j);
-                this.pitch = (float) ((double) this.pitch + (this.ax - (double) this.pitch) / (double) this.j);
-                --this.j;
-                this.setPosition(d0, d1, d2);
-                this.b(this.yaw, this.pitch);
-            } else {
-                this.setPosition(this.locX, this.locY, this.locZ);
-                this.b(this.yaw, this.pitch);
+        if (this.worldObj.isRemote)
+        {
+            if (this.turnProgress > 0)
+            {
+                double var46 = this.posX + (this.minecartX - this.posX) / (double)this.turnProgress;
+                double var48 = this.posY + (this.minecartY - this.posY) / (double)this.turnProgress;
+                double var5 = this.posZ + (this.minecartZ - this.posZ) / (double)this.turnProgress;
+                double var7 = MathHelper.wrapAngleTo180_double(this.minecartYaw - (double)this.rotationYaw);
+                this.rotationYaw = (float)((double)this.rotationYaw + var7 / (double)this.turnProgress);
+                this.rotationPitch = (float)((double)this.rotationPitch + (this.minecartPitch - (double)this.rotationPitch) / (double)this.turnProgress);
+                --this.turnProgress;
+                this.setPosition(var46, var48, var5);
+                this.setRotation(this.rotationYaw, this.rotationPitch);
             }
-        } else {
-            this.lastX = this.locX;
-            this.lastY = this.locY;
-            this.lastZ = this.locZ;
-            this.motY -= 0.03999999910593033D;
-            int j = MathHelper.floor(this.locX);
-            i = MathHelper.floor(this.locY);
-            int k = MathHelper.floor(this.locZ);
+            else
+            {
+                this.setPosition(this.posX, this.posY, this.posZ);
+                this.setRotation(this.rotationYaw, this.rotationPitch);
+            }
+        }
+        else
+        {
+            this.prevPosX = this.posX;
+            this.prevPosY = this.posY;
+            this.prevPosZ = this.posZ;
+            this.motionY -= 0.03999999910593033D;
+            int var45 = MathHelper.floor_double(this.posX);
+            var2 = MathHelper.floor_double(this.posY);
+            int var47 = MathHelper.floor_double(this.posZ);
 
-            if (BlockMinecartTrack.e_(this.world, j, i - 1, k)) {
-                --i;
+            if (BlockRail.isRailBlockAt(this.worldObj, var45, var2 - 1, var47))
+            {
+                --var2;
             }
 
             // CraftBukkit
-            double d4 = this.maxSpeed;
-            double d5 = 0.0078125D;
-            int l = this.world.getTypeId(j, i, k);
+            double var4 = this.maxSpeed;
+            double var6 = 0.0078125D;
+            int var8 = this.worldObj.getBlockId(var45, var2, var47);
 
-            if (BlockMinecartTrack.e(l)) {
+            if (BlockRail.isRailBlock(var8))
+            {
                 this.fallDistance = 0.0F;
-                Vec3D vec3d = this.a(this.locX, this.locY, this.locZ);
-                int i1 = this.world.getData(j, i, k);
+                Vec3 var9 = this.func_70489_a(this.posX, this.posY, this.posZ);
+                int var10 = this.worldObj.getBlockMetadata(var45, var2, var47);
+                this.posY = (double)var2;
+                boolean var11 = false;
+                boolean var12 = false;
 
-                this.locY = (double) i;
-                boolean flag = false;
-                boolean flag1 = false;
-
-                if (l == Block.GOLDEN_RAIL.id) {
-                    flag = (i1 & 8) != 0;
-                    flag1 = !flag;
+                if (var8 == Block.railPowered.blockID)
+                {
+                    var11 = (var10 & 8) != 0;
+                    var12 = !var11;
                 }
 
-                if (((BlockMinecartTrack) Block.byId[l]).p()) {
-                    i1 &= 7;
+                if (((BlockRail)Block.blocksList[var8]).isPowered())
+                {
+                    var10 &= 7;
                 }
 
-                if (i1 >= 2 && i1 <= 5) {
-                    this.locY = (double) (i + 1);
+                if (var10 >= 2 && var10 <= 5)
+                {
+                    this.posY = (double)(var2 + 1);
                 }
 
-                if (i1 == 2) {
-                    this.motX -= d5;
+                if (var10 == 2)
+                {
+                    this.motionX -= var6;
                 }
 
-                if (i1 == 3) {
-                    this.motX += d5;
+                if (var10 == 3)
+                {
+                    this.motionX += var6;
                 }
 
-                if (i1 == 4) {
-                    this.motZ += d5;
+                if (var10 == 4)
+                {
+                    this.motionZ += var6;
                 }
 
-                if (i1 == 5) {
-                    this.motZ -= d5;
+                if (var10 == 5)
+                {
+                    this.motionZ -= var6;
                 }
 
-                int[][] aint = matrix[i1];
-                double d6 = (double) (aint[1][0] - aint[0][0]);
-                double d7 = (double) (aint[1][2] - aint[0][2]);
-                double d8 = Math.sqrt(d6 * d6 + d7 * d7);
-                double d9 = this.motX * d6 + this.motZ * d7;
+                int[][] var13 = matrix[var10];
+                double var14 = (double)(var13[1][0] - var13[0][0]);
+                double var16 = (double)(var13[1][2] - var13[0][2]);
+                double var18 = Math.sqrt(var14 * var14 + var16 * var16);
+                double var20 = this.motionX * var14 + this.motionZ * var16;
 
-                if (d9 < 0.0D) {
-                    d6 = -d6;
-                    d7 = -d7;
+                if (var20 < 0.0D)
+                {
+                    var14 = -var14;
+                    var16 = -var16;
                 }
 
-                double d10 = Math.sqrt(this.motX * this.motX + this.motZ * this.motZ);
+                double var22 = Math.sqrt(this.motionX * this.motionX + this.motionZ * this.motionZ);
+                this.motionX = var22 * var14 / var18;
+                this.motionZ = var22 * var16 / var18;
+                double var24;
+                double var26;
 
-                this.motX = d10 * d6 / d8;
-                this.motZ = d10 * d7 / d8;
-                double d11;
-                double d12;
+                if (this.riddenByEntity != null)
+                {
+                    var26 = this.riddenByEntity.motionX * this.riddenByEntity.motionX + this.riddenByEntity.motionZ * this.riddenByEntity.motionZ;
+                    var24 = this.motionX * this.motionX + this.motionZ * this.motionZ;
 
-                if (this.passenger != null) {
-                    d12 = this.passenger.motX * this.passenger.motX + this.passenger.motZ * this.passenger.motZ;
-                    d11 = this.motX * this.motX + this.motZ * this.motZ;
-                    if (d12 > 1.0E-4D && d11 < 0.01D) {
-                        this.motX += this.passenger.motX * 0.1D;
-                        this.motZ += this.passenger.motZ * 0.1D;
-                        flag1 = false;
+                    if (var26 > 1.0E-4D && var24 < 0.01D)
+                    {
+                        this.motionX += this.riddenByEntity.motionX * 0.1D;
+                        this.motionZ += this.riddenByEntity.motionZ * 0.1D;
+                        var12 = false;
                     }
                 }
 
-                if (flag1) {
-                    d12 = Math.sqrt(this.motX * this.motX + this.motZ * this.motZ);
-                    if (d12 < 0.03D) {
-                        this.motX *= 0.0D;
-                        this.motY *= 0.0D;
-                        this.motZ *= 0.0D;
-                    } else {
-                        this.motX *= 0.5D;
-                        this.motY *= 0.0D;
-                        this.motZ *= 0.5D;
+                if (var12)
+                {
+                    var26 = Math.sqrt(this.motionX * this.motionX + this.motionZ * this.motionZ);
+
+                    if (var26 < 0.03D)
+                    {
+                        this.motionX *= 0.0D;
+                        this.motionY *= 0.0D;
+                        this.motionZ *= 0.0D;
+                    }
+                    else
+                    {
+                        this.motionX *= 0.5D;
+                        this.motionY *= 0.0D;
+                        this.motionZ *= 0.5D;
                     }
                 }
 
-                d12 = 0.0D;
-                d11 = (double) j + 0.5D + (double) aint[0][0] * 0.5D;
-                double d13 = (double) k + 0.5D + (double) aint[0][2] * 0.5D;
-                double d14 = (double) j + 0.5D + (double) aint[1][0] * 0.5D;
-                double d15 = (double) k + 0.5D + (double) aint[1][2] * 0.5D;
+                var26 = 0.0D;
+                var24 = (double) var45 + 0.5D + (double) var13[0][0] * 0.5D;
+                double var28 = (double)var47 + 0.5D + (double)var13[0][2] * 0.5D;
+                double var30 = (double)var45 + 0.5D + (double)var13[1][0] * 0.5D;
+                double var32 = (double)var47 + 0.5D + (double)var13[1][2] * 0.5D;
+                var14 = var30 - var24;
+                var16 = var32 - var28;
+                double var34;
+                double var36;
 
-                d6 = d14 - d11;
-                d7 = d15 - d13;
-                double d16;
-                double d17;
-
-                if (d6 == 0.0D) {
-                    this.locX = (double) j + 0.5D;
-                    d12 = this.locZ - (double) k;
-                } else if (d7 == 0.0D) {
-                    this.locZ = (double) k + 0.5D;
-                    d12 = this.locX - (double) j;
-                } else {
-                    d16 = this.locX - d11;
-                    d17 = this.locZ - d13;
-                    d12 = (d16 * d6 + d17 * d7) * 2.0D;
+                if (var14 == 0.0D)
+                {
+                    this.posX = (double)var45 + 0.5D;
+                    var26 = this.posZ - (double) var47;
+                }
+                else if (var16 == 0.0D)
+                {
+                    this.posZ = (double)var47 + 0.5D;
+                    var26 = this.posX - (double) var45;
+                }
+                else
+                {
+                    var34 = this.posX - var24;
+                    var36 = this.posZ - var28;
+                    var26 = (var34 * var14 + var36 * var16) * 2.0D;
                 }
 
-                this.locX = d11 + d6 * d12;
-                this.locZ = d13 + d7 * d12;
-                this.setPosition(this.locX, this.locY + (double) this.height, this.locZ);
-                d16 = this.motX;
-                d17 = this.motZ;
-                if (this.passenger != null) {
-                    d16 *= 0.75D;
-                    d17 *= 0.75D;
+                this.posX = var24 + var14 * var26;
+                this.posZ = var28 + var16 * var26;
+                this.setPosition(this.posX, this.posY + (double)this.yOffset, this.posZ);
+                var34 = this.motionX;
+                var36 = this.motionZ;
+
+                if (this.riddenByEntity != null)
+                {
+                    var34 *= 0.75D;
+                    var36 *= 0.75D;
                 }
 
-                if (d16 < -d4) {
-                    d16 = -d4;
+                if (var34 < -var4)
+                {
+                    var34 = -var4;
                 }
 
-                if (d16 > d4) {
-                    d16 = d4;
+                if (var34 > var4)
+                {
+                    var34 = var4;
                 }
 
-                if (d17 < -d4) {
-                    d17 = -d4;
+                if (var36 < -var4)
+                {
+                    var36 = -var4;
                 }
 
-                if (d17 > d4) {
-                    d17 = d4;
+                if (var36 > var4)
+                {
+                    var36 = var4;
                 }
 
-                this.move(d16, 0.0D, d17);
-                if (aint[0][1] != 0 && MathHelper.floor(this.locX) - j == aint[0][0] && MathHelper.floor(this.locZ) - k == aint[0][2]) {
-                    this.setPosition(this.locX, this.locY + (double) aint[0][1], this.locZ);
-                } else if (aint[1][1] != 0 && MathHelper.floor(this.locX) - j == aint[1][0] && MathHelper.floor(this.locZ) - k == aint[1][2]) {
-                    this.setPosition(this.locX, this.locY + (double) aint[1][1], this.locZ);
+                this.moveEntity(var34, 0.0D, var36);
+
+                if (var13[0][1] != 0 && MathHelper.floor_double(this.posX) - var45 == var13[0][0] && MathHelper.floor_double(this.posZ) - var47 == var13[0][2])
+                {
+                    this.setPosition(this.posX, this.posY + (double)var13[0][1], this.posZ);
+                }
+                else if (var13[1][1] != 0 && MathHelper.floor_double(this.posX) - var45 == var13[1][0] && MathHelper.floor_double(this.posZ) - var47 == var13[1][2])
+                {
+                    this.setPosition(this.posX, this.posY + (double)var13[1][1], this.posZ);
                 }
 
                 // CraftBukkit
-                if (this.passenger != null || !this.slowWhenEmpty) {
-                    this.motX *= 0.996999979019165D;
-                    this.motY *= 0.0D;
-                    this.motZ *= 0.996999979019165D;
-                } else {
-                    if (this.type == 2) {
-                        double d18 = this.b * this.b + this.c * this.c;
+                if (this.riddenByEntity != null || !this.slowWhenEmpty)
+                {
+                    this.motionX *= 0.996999979019165D;
+                    this.motionY *= 0.0D;
+                    this.motionZ *= 0.996999979019165D;
+                }
+                else
+                {
+                    if (this.minecartType == 2)
+                    {
+                        double var38 = this.pushX * this.pushX + this.pushZ * this.pushZ;
 
-                        if (d18 > 1.0E-4D) {
-                            d18 = (double) MathHelper.sqrt(d18);
-                            this.b /= d18;
-                            this.c /= d18;
-                            double d19 = 0.04D;
-
-                            this.motX *= 0.800000011920929D;
-                            this.motY *= 0.0D;
-                            this.motZ *= 0.800000011920929D;
-                            this.motX += this.b * d19;
-                            this.motZ += this.c * d19;
-                        } else {
-                            this.motX *= 0.8999999761581421D;
-                            this.motY *= 0.0D;
-                            this.motZ *= 0.8999999761581421D;
+                        if (var38 > 1.0E-4D)
+                        {
+                            var38 = (double)MathHelper.sqrt_double(var38);
+                            this.pushX /= var38;
+                            this.pushZ /= var38;
+                            double var40 = 0.04D;
+                            this.motionX *= 0.800000011920929D;
+                            this.motionY *= 0.0D;
+                            this.motionZ *= 0.800000011920929D;
+                            this.motionX += this.pushX * var40;
+                            this.motionZ += this.pushZ * var40;
+                        }
+                        else
+                        {
+                            this.motionX *= 0.8999999761581421D;
+                            this.motionY *= 0.0D;
+                            this.motionZ *= 0.8999999761581421D;
                         }
                     }
 
-                    this.motX *= 0.9599999785423279D;
-                    this.motY *= 0.0D;
-                    this.motZ *= 0.9599999785423279D;
+                    this.motionX *= 0.9599999785423279D;
+                    this.motionY *= 0.0D;
+                    this.motionZ *= 0.9599999785423279D;
                 }
 
-                Vec3D vec3d1 = this.a(this.locX, this.locY, this.locZ);
+                Vec3 var54 = this.func_70489_a(this.posX, this.posY, this.posZ);
 
-                if (vec3d1 != null && vec3d != null) {
-                    double d20 = (vec3d.d - vec3d1.d) * 0.05D;
+                if (var54 != null && var9 != null)
+                {
+                    double var39 = (var9.yCoord - var54.yCoord) * 0.05D;
+                    var22 = Math.sqrt(this.motionX * this.motionX + this.motionZ * this.motionZ);
 
-                    d10 = Math.sqrt(this.motX * this.motX + this.motZ * this.motZ);
-                    if (d10 > 0.0D) {
-                        this.motX = this.motX / d10 * (d10 + d20);
-                        this.motZ = this.motZ / d10 * (d10 + d20);
+                    if (var22 > 0.0D)
+                    {
+                        this.motionX = this.motionX / var22 * (var22 + var39);
+                        this.motionZ = this.motionZ / var22 * (var22 + var39);
                     }
 
-                    this.setPosition(this.locX, vec3d1.d, this.locZ);
+                    this.setPosition(this.posX, var54.yCoord, this.posZ);
                 }
 
-                int j1 = MathHelper.floor(this.locX);
-                int k1 = MathHelper.floor(this.locZ);
+                int var53 = MathHelper.floor_double(this.posX);
+                int var55 = MathHelper.floor_double(this.posZ);
 
-                if (j1 != j || k1 != k) {
-                    d10 = Math.sqrt(this.motX * this.motX + this.motZ * this.motZ);
-                    this.motX = d10 * (double) (j1 - j);
-                    this.motZ = d10 * (double) (k1 - k);
+                if (var53 != var45 || var55 != var47)
+                {
+                    var22 = Math.sqrt(this.motionX * this.motionX + this.motionZ * this.motionZ);
+                    this.motionX = var22 * (double)(var53 - var45);
+                    this.motionZ = var22 * (double)(var55 - var47);
                 }
 
-                double d21;
+                double var41;
 
-                if (this.type == 2) {
-                    d21 = this.b * this.b + this.c * this.c;
-                    if (d21 > 1.0E-4D && this.motX * this.motX + this.motZ * this.motZ > 0.001D) {
-                        d21 = (double) MathHelper.sqrt(d21);
-                        this.b /= d21;
-                        this.c /= d21;
-                        if (this.b * this.motX + this.c * this.motZ < 0.0D) {
-                            this.b = 0.0D;
-                            this.c = 0.0D;
-                        } else {
-                            this.b = this.motX;
-                            this.c = this.motZ;
+                if (this.minecartType == 2)
+                {
+                    var41 = this.pushX * this.pushX + this.pushZ * this.pushZ;
+
+                    if (var41 > 1.0E-4D && this.motionX * this.motionX + this.motionZ * this.motionZ > 0.001D)
+                    {
+                        var41 = (double)MathHelper.sqrt_double(var41);
+                        this.pushX /= var41;
+                        this.pushZ /= var41;
+
+                        if (this.pushX * this.motionX + this.pushZ * this.motionZ < 0.0D)
+                        {
+                            this.pushX = 0.0D;
+                            this.pushZ = 0.0D;
+                        }
+                        else
+                        {
+                            this.pushX = this.motionX;
+                            this.pushZ = this.motionZ;
                         }
                     }
                 }
 
-                if (flag) {
-                    d21 = Math.sqrt(this.motX * this.motX + this.motZ * this.motZ);
-                    if (d21 > 0.01D) {
-                        double d22 = 0.06D;
+                if (var11)
+                {
+                    var41 = Math.sqrt(this.motionX * this.motionX + this.motionZ * this.motionZ);
 
-                        this.motX += this.motX / d21 * d22;
-                        this.motZ += this.motZ / d21 * d22;
-                    } else if (i1 == 1) {
-                        if (this.world.t(j - 1, i, k)) {
-                            this.motX = 0.02D;
-                        } else if (this.world.t(j + 1, i, k)) {
-                            this.motX = -0.02D;
+                    if (var41 > 0.01D)
+                    {
+                        double var43 = 0.06D;
+                        this.motionX += this.motionX / var41 * var43;
+                        this.motionZ += this.motionZ / var41 * var43;
+                    }
+                    else if (var10 == 1)
+                    {
+                        if (this.worldObj.isBlockNormalCube(var45 - 1, var2, var47))
+                        {
+                            this.motionX = 0.02D;
                         }
-                    } else if (i1 == 0) {
-                        if (this.world.t(j, i, k - 1)) {
-                            this.motZ = 0.02D;
-                        } else if (this.world.t(j, i, k + 1)) {
-                            this.motZ = -0.02D;
+                        else if (this.worldObj.isBlockNormalCube(var45 + 1, var2, var47))
+                        {
+                            this.motionX = -0.02D;
+                        }
+                    }
+                    else if (var10 == 0)
+                    {
+                        if (this.worldObj.isBlockNormalCube(var45, var2, var47 - 1))
+                        {
+                            this.motionZ = 0.02D;
+                        }
+                        else if (this.worldObj.isBlockNormalCube(var45, var2, var47 + 1))
+                        {
+                            this.motionZ = -0.02D;
                         }
                     }
                 }
-            } else {
-                if (this.motX < -d4) {
-                    this.motX = -d4;
+            }
+            else
+            {
+                if (this.motionX < -var4)
+                {
+                    this.motionX = -var4;
                 }
 
-                if (this.motX > d4) {
-                    this.motX = d4;
+                if (this.motionX > var4)
+                {
+                    this.motionX = var4;
                 }
 
-                if (this.motZ < -d4) {
-                    this.motZ = -d4;
+                if (this.motionZ < -var4)
+                {
+                    this.motionZ = -var4;
                 }
 
-                if (this.motZ > d4) {
-                    this.motZ = d4;
+                if (this.motionZ > var4)
+                {
+                    this.motionZ = var4;
                 }
 
-                if (this.onGround) {
+                if (this.onGround)
+                {
                     // CraftBukkit start
-                    this.motX *= this.derailedX;
-                    this.motY *= this.derailedY;
-                    this.motZ *= this.derailedZ;
+                    this.motionX *= this.derailedX;
+                    this.motionY *= this.derailedY;
+                    this.motionZ *= this.derailedZ;
                     // CraftBukkit end
                 }
 
-                this.move(this.motX, this.motY, this.motZ);
-                if (!this.onGround) {
+                this.moveEntity(this.motionX, this.motionY, this.motionZ);
+
+                if (!this.onGround)
+                {
                     // CraftBukkit start
-                    this.motX *= this.flyingX;
-                    this.motY *= this.flyingY;
-                    this.motZ *= this.flyingZ;
+                    this.motionX *= this.flyingX;
+                    this.motionY *= this.flyingY;
+                    this.motionZ *= this.flyingZ;
                     // CraftBukkit end
                 }
             }
 
-            this.D();
-            this.pitch = 0.0F;
-            double d23 = this.lastX - this.locX;
-            double d24 = this.lastZ - this.locZ;
+            this.doBlockCollisions();
+            this.rotationPitch = 0.0F;
+            double var49 = this.prevPosX - this.posX;
+            double var50 = this.prevPosZ - this.posZ;
 
-            if (d23 * d23 + d24 * d24 > 0.001D) {
-                this.yaw = (float) (Math.atan2(d24, d23) * 180.0D / 3.141592653589793D);
-                if (this.f) {
-                    this.yaw += 180.0F;
+            if (var49 * var49 + var50 * var50 > 0.001D)
+            {
+                this.rotationYaw = (float)(Math.atan2(var50, var49) * 180.0D / 3.141592653589793D);
+
+                if (this.field_70499_f)
+                {
+                    this.rotationYaw += 180.0F;
                 }
             }
 
-            double d25 = (double) MathHelper.g(this.yaw - this.lastYaw);
+            double var51 = (double)MathHelper.wrapAngleTo180_float(this.rotationYaw - this.prevRotationYaw);
 
-            if (d25 < -170.0D || d25 >= 170.0D) {
-                this.yaw += 180.0F;
-                this.f = !this.f;
+            if (var51 < -170.0D || var51 >= 170.0D)
+            {
+                this.rotationYaw += 180.0F;
+                this.field_70499_f = !this.field_70499_f;
             }
 
-            this.b(this.yaw, this.pitch);
-
+            this.setRotation(this.rotationYaw, this.rotationPitch);
             // CraftBukkit start
-            org.bukkit.World bworld = this.world.getWorld();
+            org.bukkit.World bworld = this.worldObj.getWorld();
             Location from = new Location(bworld, prevX, prevY, prevZ, prevYaw, prevPitch);
-            Location to = new Location(bworld, this.locX, this.locY, this.locZ, this.yaw, this.pitch);
+            Location to = new Location(bworld, this.posX, this.posY, this.posZ, this.rotationYaw, this.rotationPitch);
             Vehicle vehicle = (Vehicle) this.getBukkitEntity();
+            this.worldObj.getServer().getPluginManager().callEvent(new org.bukkit.event.vehicle.VehicleUpdateEvent(vehicle));
 
-            this.world.getServer().getPluginManager().callEvent(new org.bukkit.event.vehicle.VehicleUpdateEvent(vehicle));
-
-            if (!from.equals(to)) {
-                this.world.getServer().getPluginManager().callEvent(new org.bukkit.event.vehicle.VehicleMoveEvent(vehicle, from, to));
+            if (!from.equals(to))
+            {
+                this.worldObj.getServer().getPluginManager().callEvent(new org.bukkit.event.vehicle.VehicleMoveEvent(vehicle, from, to));
             }
+
             // CraftBukkit end
+            List var15 = this.worldObj.getEntitiesWithinAABBExcludingEntity(this, this.boundingBox.expand(0.20000000298023224D, 0.0D, 0.20000000298023224D));
 
-            List list = this.world.getEntities(this, this.boundingBox.grow(0.20000000298023224D, 0.0D, 0.20000000298023224D));
+            if (var15 != null && !var15.isEmpty())
+            {
+                for (int var52 = 0; var52 < var15.size(); ++var52)
+                {
+                    Entity var17 = (Entity)var15.get(var52);
 
-            if (list != null && !list.isEmpty()) {
-                for (int l1 = 0; l1 < list.size(); ++l1) {
-                    Entity entity = (Entity) list.get(l1);
-
-                    if (entity != this.passenger && entity.M() && entity instanceof EntityMinecart) {
-                        entity.collide(this);
+                    if (var17 != this.riddenByEntity && var17.canBePushed() && var17 instanceof EntityMinecart)
+                    {
+                        var17.applyEntityCollision(this);
                     }
                 }
             }
 
-            if (this.passenger != null && this.passenger.dead) {
-                if (this.passenger.vehicle == this) {
-                    this.passenger.vehicle = null;
+            if (this.riddenByEntity != null && this.riddenByEntity.isDead)
+            {
+                if (this.riddenByEntity.ridingEntity == this)
+                {
+                    this.riddenByEntity.ridingEntity = null;
                 }
 
-                this.passenger = null;
+                this.riddenByEntity = null;
             }
 
-            if (this.e > 0) {
-                --this.e;
+            if (this.fuel > 0)
+            {
+                --this.fuel;
             }
 
-            if (this.e <= 0) {
-                this.b = this.c = 0.0D;
+            if (this.fuel <= 0)
+            {
+                this.pushX = this.pushZ = 0.0D;
             }
 
-            this.e(this.e > 0);
+            this.setMinecartPowered(this.fuel > 0);
         }
     }
 
-    public Vec3D a(double d0, double d1, double d2) {
-        int i = MathHelper.floor(d0);
-        int j = MathHelper.floor(d1);
-        int k = MathHelper.floor(d2);
+    public Vec3 func_70489_a(double par1, double par3, double par5)
+    {
+        int var7 = MathHelper.floor_double(par1);
+        int var8 = MathHelper.floor_double(par3);
+        int var9 = MathHelper.floor_double(par5);
 
-        if (BlockMinecartTrack.e_(this.world, i, j - 1, k)) {
-            --j;
+        if (BlockRail.isRailBlockAt(this.worldObj, var7, var8 - 1, var9))
+        {
+            --var8;
         }
 
-        int l = this.world.getTypeId(i, j, k);
+        int var10 = this.worldObj.getBlockId(var7, var8, var9);
 
-        if (BlockMinecartTrack.e(l)) {
-            int i1 = this.world.getData(i, j, k);
+        if (BlockRail.isRailBlock(var10))
+        {
+            int var11 = this.worldObj.getBlockMetadata(var7, var8, var9);
+            par3 = (double)var8;
 
-            d1 = (double) j;
-            if (((BlockMinecartTrack) Block.byId[l]).p()) {
-                i1 &= 7;
+            if (((BlockRail)Block.blocksList[var10]).isPowered())
+            {
+                var11 &= 7;
             }
 
-            if (i1 >= 2 && i1 <= 5) {
-                d1 = (double) (j + 1);
+            if (var11 >= 2 && var11 <= 5)
+            {
+                par3 = (double)(var8 + 1);
             }
 
-            int[][] aint = matrix[i1];
-            double d3 = 0.0D;
-            double d4 = (double) i + 0.5D + (double) aint[0][0] * 0.5D;
-            double d5 = (double) j + 0.5D + (double) aint[0][1] * 0.5D;
-            double d6 = (double) k + 0.5D + (double) aint[0][2] * 0.5D;
-            double d7 = (double) i + 0.5D + (double) aint[1][0] * 0.5D;
-            double d8 = (double) j + 0.5D + (double) aint[1][1] * 0.5D;
-            double d9 = (double) k + 0.5D + (double) aint[1][2] * 0.5D;
-            double d10 = d7 - d4;
-            double d11 = (d8 - d5) * 2.0D;
-            double d12 = d9 - d6;
+            int[][] var12 = matrix[var11];
+            double var13 = 0.0D;
+            double var15 = (double)var7 + 0.5D + (double)var12[0][0] * 0.5D;
+            double var17 = (double)var8 + 0.5D + (double)var12[0][1] * 0.5D;
+            double var19 = (double)var9 + 0.5D + (double)var12[0][2] * 0.5D;
+            double var21 = (double)var7 + 0.5D + (double)var12[1][0] * 0.5D;
+            double var23 = (double)var8 + 0.5D + (double)var12[1][1] * 0.5D;
+            double var25 = (double)var9 + 0.5D + (double)var12[1][2] * 0.5D;
+            double var27 = var21 - var15;
+            double var29 = (var23 - var17) * 2.0D;
+            double var31 = var25 - var19;
 
-            if (d10 == 0.0D) {
-                d0 = (double) i + 0.5D;
-                d3 = d2 - (double) k;
-            } else if (d12 == 0.0D) {
-                d2 = (double) k + 0.5D;
-                d3 = d0 - (double) i;
-            } else {
-                double d13 = d0 - d4;
-                double d14 = d2 - d6;
-
-                d3 = (d13 * d10 + d14 * d12) * 2.0D;
+            if (var27 == 0.0D)
+            {
+                par1 = (double)var7 + 0.5D;
+                var13 = par5 - (double)var9;
+            }
+            else if (var31 == 0.0D)
+            {
+                par5 = (double)var9 + 0.5D;
+                var13 = par1 - (double)var7;
+            }
+            else
+            {
+                double var33 = par1 - var15;
+                double var35 = par5 - var19;
+                var13 = (var33 * var27 + var35 * var31) * 2.0D;
             }
 
-            d0 = d4 + d10 * d3;
-            d1 = d5 + d11 * d3;
-            d2 = d6 + d12 * d3;
-            if (d11 < 0.0D) {
-                ++d1;
+            par1 = var15 + var27 * var13;
+            par3 = var17 + var29 * var13;
+            par5 = var19 + var31 * var13;
+
+            if (var29 < 0.0D)
+            {
+                ++par3;
             }
 
-            if (d11 > 0.0D) {
-                d1 += 0.5D;
+            if (var29 > 0.0D)
+            {
+                par3 += 0.5D;
             }
 
-            return this.world.getVec3DPool().create(d0, d1, d2);
-        } else {
+            return this.worldObj.getWorldVec3Pool().getVecFromPool(par1, par3, par5);
+        }
+        else
+        {
             return null;
         }
     }
 
-    protected void b(NBTTagCompound nbttagcompound) {
-        nbttagcompound.setInt("Type", this.type);
-        if (this.type == 2) {
-            nbttagcompound.setDouble("PushX", this.b);
-            nbttagcompound.setDouble("PushZ", this.c);
-            nbttagcompound.setShort("Fuel", (short) this.e);
-        } else if (this.type == 1) {
-            NBTTagList nbttaglist = new NBTTagList();
+    /**
+     * (abstract) Protected helper method to write subclass entity data to NBT.
+     */
+    protected void writeEntityToNBT(NBTTagCompound par1NBTTagCompound)
+    {
+        par1NBTTagCompound.setInteger("Type", this.minecartType);
 
-            for (int i = 0; i < this.items.length; ++i) {
-                if (this.items[i] != null) {
-                    NBTTagCompound nbttagcompound1 = new NBTTagCompound();
+        if (this.minecartType == 2)
+        {
+            par1NBTTagCompound.setDouble("PushX", this.pushX);
+            par1NBTTagCompound.setDouble("PushZ", this.pushZ);
+            par1NBTTagCompound.setShort("Fuel", (short)this.fuel);
+        }
+        else if (this.minecartType == 1)
+        {
+            NBTTagList var2 = new NBTTagList();
 
-                    nbttagcompound1.setByte("Slot", (byte) i);
-                    this.items[i].save(nbttagcompound1);
-                    nbttaglist.add(nbttagcompound1);
+            for (int var3 = 0; var3 < this.cargoItems.length; ++var3)
+            {
+                if (this.cargoItems[var3] != null)
+                {
+                    NBTTagCompound var4 = new NBTTagCompound();
+                    var4.setByte("Slot", (byte)var3);
+                    this.cargoItems[var3].writeToNBT(var4);
+                    var2.appendTag(var4);
                 }
             }
 
-            nbttagcompound.set("Items", nbttaglist);
+            par1NBTTagCompound.setTag("Items", var2);
         }
     }
 
-    protected void a(NBTTagCompound nbttagcompound) {
-        this.type = nbttagcompound.getInt("Type");
-        if (this.type == 2) {
-            this.b = nbttagcompound.getDouble("PushX");
-            this.c = nbttagcompound.getDouble("PushZ");
-            this.e = nbttagcompound.getShort("Fuel");
-        } else if (this.type == 1) {
-            NBTTagList nbttaglist = nbttagcompound.getList("Items");
+    /**
+     * (abstract) Protected helper method to read subclass entity data from NBT.
+     */
+    protected void readEntityFromNBT(NBTTagCompound par1NBTTagCompound)
+    {
+        this.minecartType = par1NBTTagCompound.getInteger("Type");
 
-            this.items = new ItemStack[this.getSize()];
+        if (this.minecartType == 2)
+        {
+            this.pushX = par1NBTTagCompound.getDouble("PushX");
+            this.pushZ = par1NBTTagCompound.getDouble("PushZ");
+            this.fuel = par1NBTTagCompound.getShort("Fuel");
+        }
+        else if (this.minecartType == 1)
+        {
+            NBTTagList var2 = par1NBTTagCompound.getTagList("Items");
+            this.cargoItems = new ItemStack[this.getSizeInventory()];
 
-            for (int i = 0; i < nbttaglist.size(); ++i) {
-                NBTTagCompound nbttagcompound1 = (NBTTagCompound) nbttaglist.get(i);
-                int j = nbttagcompound1.getByte("Slot") & 255;
+            for (int var3 = 0; var3 < var2.tagCount(); ++var3)
+            {
+                NBTTagCompound var4 = (NBTTagCompound)var2.tagAt(var3);
+                int var5 = var4.getByte("Slot") & 255;
 
-                if (j >= 0 && j < this.items.length) {
-                    this.items[j] = ItemStack.createStack(nbttagcompound1);
+                if (var5 >= 0 && var5 < this.cargoItems.length)
+                {
+                    this.cargoItems[var5] = ItemStack.loadItemStackFromNBT(var4);
                 }
             }
         }
     }
 
-    public void collide(Entity entity) {
-        if (!this.world.isStatic) {
-            if (entity != this.passenger) {
+    /**
+     * Applies a velocity to each of the entities pushing them away from each other. Args: entity
+     */
+    public void applyEntityCollision(Entity par1Entity)
+    {
+        if (!this.worldObj.isRemote)
+        {
+            if (par1Entity != this.riddenByEntity)
+            {
                 // CraftBukkit start
                 Vehicle vehicle = (Vehicle) this.getBukkitEntity();
-                org.bukkit.entity.Entity hitEntity = (entity == null) ? null : entity.getBukkitEntity();
-
+                org.bukkit.entity.Entity hitEntity = (par1Entity == null) ? null : par1Entity.getBukkitEntity();
                 VehicleEntityCollisionEvent collisionEvent = new VehicleEntityCollisionEvent(vehicle, hitEntity);
-                this.world.getServer().getPluginManager().callEvent(collisionEvent);
+                this.worldObj.getServer().getPluginManager().callEvent(collisionEvent);
 
-                if (collisionEvent.isCancelled()) {
+                if (collisionEvent.isCancelled())
+                {
                     return;
                 }
+
                 // CraftBukkit end
 
-                if (entity instanceof EntityLiving && !(entity instanceof EntityHuman) && !(entity instanceof EntityIronGolem) && this.type == 0 && this.motX * this.motX + this.motZ * this.motZ > 0.01D && this.passenger == null && entity.vehicle == null) {
-                    entity.mount(this);
+                if (par1Entity instanceof EntityLiving && !(par1Entity instanceof EntityPlayer) && !(par1Entity instanceof EntityIronGolem) && this.minecartType == 0 && this.motionX * this.motionX + this.motionZ * this.motionZ > 0.01D && this.riddenByEntity == null && par1Entity.ridingEntity == null)
+                {
+                    par1Entity.mountEntity(this);
                 }
 
-                double d0 = entity.locX - this.locX;
-                double d1 = entity.locZ - this.locZ;
-                double d2 = d0 * d0 + d1 * d1;
+                double var2 = par1Entity.posX - this.posX;
+                double var4 = par1Entity.posZ - this.posZ;
+                double var6 = var2 * var2 + var4 * var4;
 
                 // CraftBukkit - collision
-                if (d2 >= 9.999999747378752E-5D && !collisionEvent.isCollisionCancelled()) {
-                    d2 = (double) MathHelper.sqrt(d2);
-                    d0 /= d2;
-                    d1 /= d2;
-                    double d3 = 1.0D / d2;
+                if (var6 >= 9.999999747378752E-5D && !collisionEvent.isCollisionCancelled())
+                {
+                    var6 = (double)MathHelper.sqrt_double(var6);
+                    var2 /= var6;
+                    var4 /= var6;
+                    double var8 = 1.0D / var6;
 
-                    if (d3 > 1.0D) {
-                        d3 = 1.0D;
+                    if (var8 > 1.0D)
+                    {
+                        var8 = 1.0D;
                     }
 
-                    d0 *= d3;
-                    d1 *= d3;
-                    d0 *= 0.10000000149011612D;
-                    d1 *= 0.10000000149011612D;
-                    d0 *= (double) (1.0F - this.Z);
-                    d1 *= (double) (1.0F - this.Z);
-                    d0 *= 0.5D;
-                    d1 *= 0.5D;
-                    if (entity instanceof EntityMinecart) {
-                        double d4 = entity.locX - this.locX;
-                        double d5 = entity.locZ - this.locZ;
-                        Vec3D vec3d = this.world.getVec3DPool().create(d4, 0.0D, d5).a();
-                        Vec3D vec3d1 = this.world.getVec3DPool().create((double) MathHelper.cos(this.yaw * 3.1415927F / 180.0F), 0.0D, (double) MathHelper.sin(this.yaw * 3.1415927F / 180.0F)).a();
-                        double d6 = Math.abs(vec3d.b(vec3d1));
+                    var2 *= var8;
+                    var4 *= var8;
+                    var2 *= 0.10000000149011612D;
+                    var4 *= 0.10000000149011612D;
+                    var2 *= (double)(1.0F - this.entityCollisionReduction);
+                    var4 *= (double)(1.0F - this.entityCollisionReduction);
+                    var2 *= 0.5D;
+                    var4 *= 0.5D;
 
-                        if (d6 < 0.800000011920929D) {
+                    if (par1Entity instanceof EntityMinecart)
+                    {
+                        double var10 = par1Entity.posX - this.posX;
+                        double var12 = par1Entity.posZ - this.posZ;
+                        Vec3 var14 = this.worldObj.getWorldVec3Pool().getVecFromPool(var10, 0.0D, var12).normalize();
+                        Vec3 var15 = this.worldObj.getWorldVec3Pool().getVecFromPool((double) MathHelper.cos(this.rotationYaw * 3.1415927F / 180.0F), 0.0D, (double) MathHelper.sin(this.rotationYaw * 3.1415927F / 180.0F)).normalize();
+                        double var16 = Math.abs(var14.dotProduct(var15));
+
+                        if (var16 < 0.800000011920929D)
+                        {
                             return;
                         }
 
-                        double d7 = entity.motX + this.motX;
-                        double d8 = entity.motZ + this.motZ;
+                        double var18 = par1Entity.motionX + this.motionX;
+                        double var20 = par1Entity.motionZ + this.motionZ;
 
-                        if (((EntityMinecart) entity).type == 2 && this.type != 2) {
-                            this.motX *= 0.20000000298023224D;
-                            this.motZ *= 0.20000000298023224D;
-                            this.g(entity.motX - d0, 0.0D, entity.motZ - d1);
-                            entity.motX *= 0.949999988079071D;
-                            entity.motZ *= 0.949999988079071D;
-                        } else if (((EntityMinecart) entity).type != 2 && this.type == 2) {
-                            entity.motX *= 0.20000000298023224D;
-                            entity.motZ *= 0.20000000298023224D;
-                            entity.g(this.motX + d0, 0.0D, this.motZ + d1);
-                            this.motX *= 0.949999988079071D;
-                            this.motZ *= 0.949999988079071D;
-                        } else {
-                            d7 /= 2.0D;
-                            d8 /= 2.0D;
-                            this.motX *= 0.20000000298023224D;
-                            this.motZ *= 0.20000000298023224D;
-                            this.g(d7 - d0, 0.0D, d8 - d1);
-                            entity.motX *= 0.20000000298023224D;
-                            entity.motZ *= 0.20000000298023224D;
-                            entity.g(d7 + d0, 0.0D, d8 + d1);
+                        if (((EntityMinecart)par1Entity).minecartType == 2 && this.minecartType != 2)
+                        {
+                            this.motionX *= 0.20000000298023224D;
+                            this.motionZ *= 0.20000000298023224D;
+                            this.addVelocity(par1Entity.motionX - var2, 0.0D, par1Entity.motionZ - var4);
+                            par1Entity.motionX *= 0.949999988079071D;
+                            par1Entity.motionZ *= 0.949999988079071D;
                         }
-                    } else {
-                        this.g(-d0, 0.0D, -d1);
-                        entity.g(d0 / 4.0D, 0.0D, d1 / 4.0D);
+                        else if (((EntityMinecart)par1Entity).minecartType != 2 && this.minecartType == 2)
+                        {
+                            par1Entity.motionX *= 0.20000000298023224D;
+                            par1Entity.motionZ *= 0.20000000298023224D;
+                            par1Entity.addVelocity(this.motionX + var2, 0.0D, this.motionZ + var4);
+                            this.motionX *= 0.949999988079071D;
+                            this.motionZ *= 0.949999988079071D;
+                        }
+                        else
+                        {
+                            var18 /= 2.0D;
+                            var20 /= 2.0D;
+                            this.motionX *= 0.20000000298023224D;
+                            this.motionZ *= 0.20000000298023224D;
+                            this.addVelocity(var18 - var2, 0.0D, var20 - var4);
+                            par1Entity.motionX *= 0.20000000298023224D;
+                            par1Entity.motionZ *= 0.20000000298023224D;
+                            par1Entity.addVelocity(var18 + var2, 0.0D, var20 + var4);
+                        }
+                    }
+                    else
+                    {
+                        this.addVelocity(-var2, 0.0D, -var4);
+                        par1Entity.addVelocity(var2 / 4.0D, 0.0D, var4 / 4.0D);
                     }
                 }
             }
         }
     }
 
-    public int getSize() {
+    /**
+     * Returns the number of slots in the inventory.
+     */
+    public int getSizeInventory()
+    {
         return 27;
     }
 
-    public ItemStack getItem(int i) {
-        return this.items[i];
+    /**
+     * Returns the stack in slot i
+     */
+    public ItemStack getStackInSlot(int par1)
+    {
+        return this.cargoItems[par1];
     }
 
-    public ItemStack splitStack(int i, int j) {
-        if (this.items[i] != null) {
-            ItemStack itemstack;
+    /**
+     * Removes from an inventory slot (first arg) up to a specified number (second arg) of items and returns them in a
+     * new stack.
+     */
+    public ItemStack decrStackSize(int par1, int par2)
+    {
+        if (this.cargoItems[par1] != null)
+        {
+            ItemStack var3;
 
-            if (this.items[i].count <= j) {
-                itemstack = this.items[i];
-                this.items[i] = null;
-                return itemstack;
-            } else {
-                itemstack = this.items[i].a(j);
-                if (this.items[i].count == 0) {
-                    this.items[i] = null;
+            if (this.cargoItems[par1].stackSize <= par2)
+            {
+                var3 = this.cargoItems[par1];
+                this.cargoItems[par1] = null;
+                return var3;
+            }
+            else
+            {
+                var3 = this.cargoItems[par1].splitStack(par2);
+
+                if (this.cargoItems[par1].stackSize == 0)
+                {
+                    this.cargoItems[par1] = null;
                 }
 
-                return itemstack;
+                return var3;
             }
-        } else {
+        }
+        else
+        {
             return null;
         }
     }
 
-    public ItemStack splitWithoutUpdate(int i) {
-        if (this.items[i] != null) {
-            ItemStack itemstack = this.items[i];
-
-            this.items[i] = null;
-            return itemstack;
-        } else {
+    /**
+     * When some containers are closed they call this on each slot, then drop whatever it returns as an EntityItem -
+     * like when you close a workbench GUI.
+     */
+    public ItemStack getStackInSlotOnClosing(int par1)
+    {
+        if (this.cargoItems[par1] != null)
+        {
+            ItemStack var2 = this.cargoItems[par1];
+            this.cargoItems[par1] = null;
+            return var2;
+        }
+        else
+        {
             return null;
         }
     }
 
-    public void setItem(int i, ItemStack itemstack) {
-        this.items[i] = itemstack;
-        if (itemstack != null && itemstack.count > this.getMaxStackSize()) {
-            itemstack.count = this.getMaxStackSize();
+    /**
+     * Sets the given item stack to the specified slot in the inventory (can be crafting or armor sections).
+     */
+    public void setInventorySlotContents(int par1, ItemStack par2ItemStack)
+    {
+        this.cargoItems[par1] = par2ItemStack;
+
+        if (par2ItemStack != null && par2ItemStack.stackSize > this.getInventoryStackLimit())
+        {
+            par2ItemStack.stackSize = this.getInventoryStackLimit();
         }
     }
 
-    public String getName() {
+    /**
+     * Returns the name of the inventory.
+     */
+    public String getInvName()
+    {
         return "container.minecart";
     }
 
-    public int getMaxStackSize() {
+    /**
+     * Returns the maximum stack size for a inventory slot. Seems to always be 64, possibly will be extended. *Isn't
+     * this more of a set than a get?*
+     */
+    public int getInventoryStackLimit()
+    {
         return maxStack; // CraftBukkit
     }
 
-    public void update() {}
+    /**
+     * Called when an the contents of an Inventory change, usually
+     */
+    public void onInventoryChanged() {}
 
-    public boolean a(EntityHuman entityhuman) {
-        if (this.type == 0) {
-            if (this.passenger != null && this.passenger instanceof EntityHuman && this.passenger != entityhuman) {
+    /**
+     * Called when a player interacts with a mob. e.g. gets milk from a cow, gets into the saddle on a pig.
+     */
+    public boolean interact(EntityPlayer par1EntityPlayer)
+    {
+        if (this.minecartType == 0)
+        {
+            if (this.riddenByEntity != null && this.riddenByEntity instanceof EntityPlayer && this.riddenByEntity != par1EntityPlayer)
+            {
                 return true;
             }
 
-            if (!this.world.isStatic) {
-                entityhuman.mount(this);
+            if (!this.worldObj.isRemote)
+            {
+                par1EntityPlayer.mountEntity(this);
             }
-        } else if (this.type == 1) {
-            if (!this.world.isStatic) {
-                entityhuman.openContainer(this);
+        }
+        else if (this.minecartType == 1)
+        {
+            if (!this.worldObj.isRemote)
+            {
+                par1EntityPlayer.displayGUIChest(this);
             }
-        } else if (this.type == 2) {
-            ItemStack itemstack = entityhuman.inventory.getItemInHand();
+        }
+        else if (this.minecartType == 2)
+        {
+            ItemStack var2 = par1EntityPlayer.inventory.getCurrentItem();
 
-            if (itemstack != null && itemstack.id == Item.COAL.id) {
-                if (--itemstack.count == 0) {
-                    entityhuman.inventory.setItem(entityhuman.inventory.itemInHandIndex, (ItemStack) null);
+            if (var2 != null && var2.itemID == Item.coal.itemID)
+            {
+                if (--var2.stackSize == 0)
+                {
+                    par1EntityPlayer.inventory.setInventorySlotContents(par1EntityPlayer.inventory.currentItem, (ItemStack)null);
                 }
 
-                this.e += 3600;
+                this.fuel += 3600;
             }
 
-            this.b = this.locX - entityhuman.locX;
-            this.c = this.locZ - entityhuman.locZ;
+            this.pushX = this.posX - par1EntityPlayer.posX;
+            this.pushZ = this.posZ - par1EntityPlayer.posZ;
         }
 
         return true;
     }
 
-    public boolean a_(EntityHuman entityhuman) {
-        return this.dead ? false : entityhuman.e(this) <= 64.0D;
+    /**
+     * Do not make give this method the name canInteractWith because it clashes with Container
+     */
+    public boolean isUseableByPlayer(EntityPlayer par1EntityPlayer)
+    {
+        return this.isDead ? false : par1EntityPlayer.getDistanceSqToEntity(this) <= 64.0D;
     }
 
-    protected boolean h() {
-        return (this.datawatcher.getByte(16) & 1) != 0;
+    /**
+     * Is this minecart powered (Fuel > 0)
+     */
+    protected boolean isMinecartPowered()
+    {
+        return (this.dataWatcher.getWatchableObjectByte(16) & 1) != 0;
     }
 
-    protected void e(boolean flag) {
-        if (flag) {
-            this.datawatcher.watch(16, Byte.valueOf((byte) (this.datawatcher.getByte(16) | 1)));
-        } else {
-            this.datawatcher.watch(16, Byte.valueOf((byte) (this.datawatcher.getByte(16) & -2)));
+    /**
+     * Set if this minecart is powered (Fuel > 0)
+     */
+    protected void setMinecartPowered(boolean par1)
+    {
+        if (par1)
+        {
+            this.dataWatcher.updateObject(16, Byte.valueOf((byte)(this.dataWatcher.getWatchableObjectByte(16) | 1)));
+        }
+        else
+        {
+            this.dataWatcher.updateObject(16, Byte.valueOf((byte)(this.dataWatcher.getWatchableObjectByte(16) & -2)));
         }
     }
 
-    public void startOpen() {}
+    public void openChest() {}
 
-    public void f() {}
+    public void closeChest() {}
 
-    public void setDamage(int i) {
-        this.datawatcher.watch(19, Integer.valueOf(i));
+    /**
+     * Sets the current amount of damage the minecart has taken. Decreases over time. The cart breaks when this is over
+     * 40.
+     */
+    public void setDamage(int par1)
+    {
+        this.dataWatcher.updateObject(19, Integer.valueOf(par1));
     }
 
-    public int getDamage() {
-        return this.datawatcher.getInt(19);
+    /**
+     * Gets the current amount of damage the minecart has taken. Decreases over time. The cart breaks when this is over
+     * 40.
+     */
+    public int getDamage()
+    {
+        return this.dataWatcher.getWatchableObjectInt(19);
     }
 
-    public void h(int i) {
-        this.datawatcher.watch(17, Integer.valueOf(i));
+    public void func_70497_h(int par1)
+    {
+        this.dataWatcher.updateObject(17, Integer.valueOf(par1));
     }
 
-    public int j() {
-        return this.datawatcher.getInt(17);
+    public int func_70496_j()
+    {
+        return this.dataWatcher.getWatchableObjectInt(17);
     }
 
-    public void i(int i) {
-        this.datawatcher.watch(18, Integer.valueOf(i));
+    public void func_70494_i(int par1)
+    {
+        this.dataWatcher.updateObject(18, Integer.valueOf(par1));
     }
 
-    public int k() {
-        return this.datawatcher.getInt(18);
+    public int func_70493_k()
+    {
+        return this.dataWatcher.getWatchableObjectInt(18);
     }
 
     // CraftBukkit start - methods for getting and setting flying and derailed velocity modifiers
-    public Vector getFlyingVelocityMod() {
+    public Vector getFlyingVelocityMod()
+    {
         return new Vector(flyingX, flyingY, flyingZ);
     }
 
-    public void setFlyingVelocityMod(Vector flying) {
+    public void setFlyingVelocityMod(Vector flying)
+    {
         flyingX = flying.getX();
         flyingY = flying.getY();
         flyingZ = flying.getZ();
     }
 
-    public Vector getDerailedVelocityMod() {
+    public Vector getDerailedVelocityMod()
+    {
         return new Vector(derailedX, derailedY, derailedZ);
     }
 
-    public void setDerailedVelocityMod(Vector derailed) {
+    public void setDerailedVelocityMod(Vector derailed)
+    {
         derailedX = derailed.getX();
         derailedY = derailed.getY();
         derailedZ = derailed.getZ();

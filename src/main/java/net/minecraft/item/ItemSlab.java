@@ -1,42 +1,68 @@
-package net.minecraft.server;
+package net.minecraft.item;
 
-public class ItemStep extends ItemBlock {
+import net.minecraft.block.BlockHalfSlab;
+import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.world.World;
+public class ItemSlab extends ItemBlock
+{
+    private final boolean isFullBlock;
 
-    private final boolean a;
-    private final BlockStepAbstract b;
-    private final BlockStepAbstract c;
+    /** Instance of BlockHalfSlab. */
+    private final BlockHalfSlab theHalfSlab;
 
-    public ItemStep(int i, BlockStepAbstract blockstepabstract, BlockStepAbstract blockstepabstract1, boolean flag) {
-        super(i);
-        this.b = blockstepabstract;
-        this.c = blockstepabstract1;
-        this.a = flag;
-        this.setMaxDurability(0);
-        this.a(true);
+    /** Instance of BlockHalfSlab. */
+    private final BlockHalfSlab theHalfSlab2;
+
+    public ItemSlab(int par1, BlockHalfSlab par2BlockHalfSlab, BlockHalfSlab par3BlockHalfSlab, boolean par4)
+    {
+        super(par1);
+        this.theHalfSlab = par2BlockHalfSlab;
+        this.theHalfSlab2 = par3BlockHalfSlab;
+        this.isFullBlock = par4;
+        this.setMaxDamage(0);
+        this.setHasSubtypes(true);
     }
 
-    public int filterData(int i) {
-        return i;
+    /**
+     * Returns the metadata of the block which this Item (ItemBlock) can place
+     */
+    public int getMetadata(int par1)
+    {
+        return par1;
     }
 
-    public String d(ItemStack itemstack) {
-        return this.b.d(itemstack.getData());
+    public String getItemNameIS(ItemStack par1ItemStack)
+    {
+        return this.theHalfSlab.getFullSlabName(par1ItemStack.getItemDamage());
     }
 
-    public boolean interactWith(ItemStack itemstack, EntityHuman entityhuman, World world, int i, int j, int k, int l, float f, float f1, float f2) {
-        if (this.a) {
-            return super.interactWith(itemstack, entityhuman, world, i, j, k, l, f, f1, f2);
-        } else if (itemstack.count == 0) {
+    /**
+     * Callback for item usage. If the item does something special on right clicking, he will have one of those. Return
+     * True if something happen and false if it don't. This is for ITEMS, not BLOCKS
+     */
+    public boolean onItemUse(ItemStack par1ItemStack, EntityPlayer par2EntityPlayer, World par3World, int par4, int par5, int par6, int par7, float par8, float par9, float par10)
+    {
+        if (this.isFullBlock)
+        {
+            return super.onItemUse(par1ItemStack, par2EntityPlayer, par3World, par4, par5, par6, par7, par8, par9, par10);
+        }
+        else if (par1ItemStack.stackSize == 0)
+        {
             return false;
-        } else if (!entityhuman.a(i, j, k, l, itemstack)) {
+        }
+        else if (!par2EntityPlayer.canPlayerEdit(par4, par5, par6, par7, par1ItemStack))
+        {
             return false;
-        } else {
-            int i1 = world.getTypeId(i, j, k);
-            int j1 = world.getData(i, j, k);
-            int k1 = j1 & 7;
-            boolean flag = (j1 & 8) != 0;
+        }
+        else
+        {
+            int var11 = par3World.getBlockId(par4, par5, par6);
+            int var12 = par3World.getBlockMetadata(par4, par5, par6);
+            int var13 = var12 & 7;
+            boolean var14 = (var12 & 8) != 0;
 
-            if ((l == 1 && !flag || l == 0 && flag) && i1 == this.b.id && k1 == itemstack.getData()) {
+            if ((par7 == 1 && !var14 || par7 == 0 && var14) && var11 == this.theHalfSlab.blockID && var13 == par1ItemStack.getItemDamage())
+            {
                 // CraftBukkit start - handle in processBlockPlace()
                 /*
                 if (world.b(this.c.e(world, i, j, k)) && world.setTypeIdAndData(i, j, k, this.c.id, k1)) {
@@ -44,47 +70,59 @@ public class ItemStep extends ItemBlock {
                     --itemstack.count;
                 }
                 */
-                if (world.b(this.c.e(world, i, j, k))) {
-                    processBlockPlace(world, entityhuman, itemstack, i, j, k, this.c.id, k1);
+                if (par3World.checkIfAABBIsClear(this.theHalfSlab2.getCollisionBoundingBoxFromPool(par3World, par4, par5, par6)))
+                {
+                    processBlockPlace(par3World, par2EntityPlayer, par1ItemStack, par4, par5, par6, this.theHalfSlab2.blockID, var13);
                 }
+
                 // CraftBukkit end
                 return true;
-            } else {
-                return this.a(itemstack, entityhuman, world, i, j, k, l) ? true : super.interactWith(itemstack, entityhuman, world, i, j, k, l, f, f1, f2);
+            }
+            else
+            {
+                return this.func_77888_a(par1ItemStack, par2EntityPlayer, par3World, par4, par5, par6, par7) ? true : super.onItemUse(par1ItemStack, par2EntityPlayer, par3World, par4, par5, par6, par7, par8, par9, par10);
             }
         }
     }
 
-    private boolean a(ItemStack itemstack, EntityHuman entityhuman, World world, int i, int j, int k, int l) {
-        if (l == 0) {
-            --j;
+    private boolean func_77888_a(ItemStack par1ItemStack, EntityPlayer par2EntityPlayer, World par3World, int par4, int par5, int par6, int par7)
+    {
+        if (par7 == 0)
+        {
+            --par5;
         }
 
-        if (l == 1) {
-            ++j;
+        if (par7 == 1)
+        {
+            ++par5;
         }
 
-        if (l == 2) {
-            --k;
+        if (par7 == 2)
+        {
+            --par6;
         }
 
-        if (l == 3) {
-            ++k;
+        if (par7 == 3)
+        {
+            ++par6;
         }
 
-        if (l == 4) {
-            --i;
+        if (par7 == 4)
+        {
+            --par4;
         }
 
-        if (l == 5) {
-            ++i;
+        if (par7 == 5)
+        {
+            ++par4;
         }
 
-        int i1 = world.getTypeId(i, j, k);
-        int j1 = world.getData(i, j, k);
-        int k1 = j1 & 7;
+        int var8 = par3World.getBlockId(par4, par5, par6);
+        int var9 = par3World.getBlockMetadata(par4, par5, par6);
+        int var10 = var9 & 7;
 
-        if (i1 == this.b.id && k1 == itemstack.getData()) {
+        if (var8 == this.theHalfSlab.blockID && var10 == par1ItemStack.getItemDamage())
+        {
             // CraftBukkit start - handle in processBlockPlace()
             /*
             if (world.b(this.c.e(world, i, j, k)) && world.setTypeIdAndData(i, j, k, this.c.id, k1)) {
@@ -92,12 +130,16 @@ public class ItemStep extends ItemBlock {
                 --itemstack.count;
             }
             */
-            if (world.b(this.c.e(world, i, j, k))) {
-                processBlockPlace(world, entityhuman, itemstack, i, j, k, this.c.id, k1);
+            if (par3World.checkIfAABBIsClear(this.theHalfSlab2.getCollisionBoundingBoxFromPool(par3World, par4, par5, par6)))
+            {
+                processBlockPlace(par3World, par2EntityPlayer, par1ItemStack, par4, par5, par6, this.theHalfSlab2.blockID, var10);
             }
+
             // CraftBukkit end
             return true;
-        } else {
+        }
+        else
+        {
             return false;
         }
     }

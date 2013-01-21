@@ -1,135 +1,194 @@
-package net.minecraft.server;
+package net.minecraft.block;
 
 import java.util.Random;
+import net.minecraft.block.material.Material;
+import net.minecraft.world.IBlockAccess;
+import net.minecraft.world.World;
 
 // CraftBukkit start
 import org.bukkit.block.BlockFace;
 import org.bukkit.event.block.BlockFromToEvent;
 // CraftBukkit end
 
-public class BlockFlowing extends BlockFluids {
+public class BlockFlowing extends BlockFluid
+{
+    /**
+     * Number of horizontally adjacent liquid source blocks. Diagonal doesn't count. Only source blocks of the same
+     * liquid as the block using the field are counted.
+     */
+    int numAdjacentSources = 0;
 
-    int a = 0;
-    boolean[] b = new boolean[4];
-    int[] c = new int[4];
+    /**
+     * Indicates whether the flow direction is optimal. Each array index corresponds to one of the four cardinal
+     * directions.
+     */
+    boolean[] isOptimalFlowDirection = new boolean[4];
 
-    protected BlockFlowing(int i, Material material) {
-        super(i, material);
+    /**
+     * The estimated cost to flow in a given direction from the current point. Each array index corresponds to one of
+     * the four cardinal directions.
+     */
+    int[] flowCost = new int[4];
+
+    protected BlockFlowing(int par1, Material par2Material)
+    {
+        super(par1, par2Material);
     }
 
-    private void l(World world, int i, int j, int k) {
-        int l = world.getData(i, j, k);
-
-        world.setRawTypeIdAndData(i, j, k, this.id + 1, l);
-        world.e(i, j, k, i, j, k);
+    /**
+     * Updates the flow for the BlockFlowing object.
+     */
+    private void updateFlow(World par1World, int par2, int par3, int par4)
+    {
+        int var5 = par1World.getBlockMetadata(par2, par3, par4);
+        par1World.setBlockAndMetadata(par2, par3, par4, this.blockID + 1, var5);
+        par1World.markBlockRangeForRenderUpdate(par2, par3, par4, par2, par3, par4);
     }
 
-    public boolean c(IBlockAccess iblockaccess, int i, int j, int k) {
-        return this.material != Material.LAVA;
+    public boolean getBlocksMovement(IBlockAccess par1IBlockAccess, int par2, int par3, int par4)
+    {
+        return this.blockMaterial != Material.lava;
     }
 
-    public void b(World world, int i, int j, int k, Random random) {
+    /**
+     * Ticks the block if it's been scheduled
+     */
+    public void updateTick(World par1World, int par2, int par3, int par4, Random par5Random)
+    {
         // CraftBukkit start
-        org.bukkit.World bworld = world.getWorld();
-        org.bukkit.Server server = world.getServer();
-        org.bukkit.block.Block source = bworld == null ? null : bworld.getBlockAt(i, j, k);
+        org.bukkit.World bworld = par1World.getWorld();
+        org.bukkit.Server server = par1World.getServer();
+        org.bukkit.block.Block source = bworld == null ? null : bworld.getBlockAt(par2, par3, par4);
         // CraftBukkit end
+        int var6 = this.getFlowDecay(par1World, par2, par3, par4);
+        byte var7 = 1;
 
-        int l = this.f_(world, i, j, k);
-        byte b0 = 1;
-
-        if (this.material == Material.LAVA && !world.worldProvider.e) {
-            b0 = 2;
+        if (this.blockMaterial == Material.lava && !par1World.provider.isHellWorld)
+        {
+            var7 = 2;
         }
 
-        boolean flag = true;
-        int i1;
+        boolean var8 = true;
+        int var10;
 
-        if (l > 0) {
-            byte b1 = -100;
+        if (var6 > 0)
+        {
+            byte var9 = -100;
+            this.numAdjacentSources = 0;
+            int var12 = this.getSmallestFlowDecay(par1World, par2 - 1, par3, par4, var9);
+            var12 = this.getSmallestFlowDecay(par1World, par2 + 1, par3, par4, var12);
+            var12 = this.getSmallestFlowDecay(par1World, par2, par3, par4 - 1, var12);
+            var12 = this.getSmallestFlowDecay(par1World, par2, par3, par4 + 1, var12);
+            var10 = var12 + var7;
 
-            this.a = 0;
-            int j1 = this.d(world, i - 1, j, k, b1);
-
-            j1 = this.d(world, i + 1, j, k, j1);
-            j1 = this.d(world, i, j, k - 1, j1);
-            j1 = this.d(world, i, j, k + 1, j1);
-            i1 = j1 + b0;
-            if (i1 >= 8 || j1 < 0) {
-                i1 = -1;
+            if (var10 >= 8 || var12 < 0)
+            {
+                var10 = -1;
             }
 
-            if (this.f_(world, i, j + 1, k) >= 0) {
-                int k1 = this.f_(world, i, j + 1, k);
+            if (this.getFlowDecay(par1World, par2, par3 + 1, par4) >= 0)
+            {
+                int var11 = this.getFlowDecay(par1World, par2, par3 + 1, par4);
 
-                if (k1 >= 8) {
-                    i1 = k1;
-                } else {
-                    i1 = k1 + 8;
+                if (var11 >= 8)
+                {
+                    var10 = var11;
+                }
+                else
+                {
+                    var10 = var11 + 8;
                 }
             }
 
-            if (this.a >= 2 && this.material == Material.WATER) {
-                if (world.getMaterial(i, j - 1, k).isBuildable()) {
-                    i1 = 0;
-                } else if (world.getMaterial(i, j - 1, k) == this.material && world.getData(i, j, k) == 0) {
-                    i1 = 0;
+            if (this.numAdjacentSources >= 2 && this.blockMaterial == Material.water)
+            {
+                if (par1World.getBlockMaterial(par2, par3 - 1, par4).isSolid())
+                {
+                    var10 = 0;
+                }
+                else if (par1World.getBlockMaterial(par2, par3 - 1, par4) == this.blockMaterial && par1World.getBlockMetadata(par2, par3, par4) == 0)
+                {
+                    var10 = 0;
                 }
             }
 
-            if (this.material == Material.LAVA && l < 8 && i1 < 8 && i1 > l && random.nextInt(4) != 0) {
-                i1 = l;
-                flag = false;
+            if (this.blockMaterial == Material.lava && var6 < 8 && var10 < 8 && var10 > var6 && par5Random.nextInt(4) != 0)
+            {
+                var10 = var6;
+                var8 = false;
             }
 
-            if (i1 == l) {
-                if (flag) {
-                    this.l(world, i, j, k);
-                }
-            } else {
-                l = i1;
-                if (i1 < 0) {
-                    world.setTypeId(i, j, k, 0);
-                } else {
-                    world.setData(i, j, k, i1);
-                    world.a(i, j, k, this.id, this.r_());
-                    world.applyPhysics(i, j, k, this.id);
+            if (var10 == var6)
+            {
+                if (var8)
+                {
+                    this.updateFlow(par1World, par2, par3, par4);
                 }
             }
-        } else {
-            this.l(world, i, j, k);
+            else
+            {
+                var6 = var10;
+
+                if (var10 < 0)
+                {
+                    par1World.setBlockWithNotify(par2, par3, par4, 0);
+                }
+                else
+                {
+                    par1World.setBlockMetadataWithNotify(par2, par3, par4, var10);
+                    par1World.scheduleBlockUpdate(par2, par3, par4, this.blockID, this.tickRate());
+                    par1World.notifyBlocksOfNeighborChange(par2, par3, par4, this.blockID);
+                }
+            }
+        }
+        else
+        {
+            this.updateFlow(par1World, par2, par3, par4);
         }
 
-        if (this.p(world, i, j - 1, k)) {
+        if (this.liquidCanDisplaceBlock(par1World, par2, par3 - 1, par4))
+        {
             // CraftBukkit start - send "down" to the server
             BlockFromToEvent event = new BlockFromToEvent(source, BlockFace.DOWN);
-            if (server != null) {
+
+            if (server != null)
+            {
                 server.getPluginManager().callEvent(event);
             }
 
-            if (!event.isCancelled()) {
-                if (this.material == Material.LAVA && world.getMaterial(i, j - 1, k) == Material.WATER) {
-                    world.setTypeId(i, j - 1, k, Block.STONE.id);
-                    this.fizz(world, i, j - 1, k);
+            if (!event.isCancelled())
+            {
+                if (this.blockMaterial == Material.lava && par1World.getBlockMaterial(par2, par3 - 1, par4) == Material.water)
+                {
+                    par1World.setBlockWithNotify(par2, par3 - 1, par4, Block.stone.blockID);
+                    this.triggerLavaMixEffects(par1World, par2, par3 - 1, par4);
                     return;
                 }
 
-                if (l >= 8) {
-                    this.flow(world, i, j - 1, k, l);
-                } else {
-                    this.flow(world, i, j - 1, k, l + 8);
+                if (var6 >= 8)
+                {
+                    this.flowIntoBlock(par1World, par2, par3 - 1, par4, var6);
+                }
+                else
+                {
+                    this.flowIntoBlock(par1World, par2, par3 - 1, par4, var6 + 8);
                 }
             }
-            // CraftBukkit end
-        } else if (l >= 0 && (l == 0 || this.o(world, i, j - 1, k))) {
-            boolean[] aboolean = this.n(world, i, j, k);
 
-            i1 = l + b0;
-            if (l >= 8) {
-                i1 = 1;
+            // CraftBukkit end
+        }
+        else if (var6 >= 0 && (var6 == 0 || this.blockBlocksFlow(par1World, par2, par3 - 1, par4)))
+        {
+            boolean[] var13 = this.getOptimalFlowDirections(par1World, par2, par3, par4);
+            var10 = var6 + var7;
+
+            if (var6 >= 8)
+            {
+                var10 = 1;
             }
 
-            if (i1 >= 8) {
+            if (var10 >= 8)
+            {
                 return;
             }
 
@@ -137,180 +196,261 @@ public class BlockFlowing extends BlockFluids {
             BlockFace[] faces = new BlockFace[] { BlockFace.WEST, BlockFace.EAST, BlockFace.NORTH, BlockFace.SOUTH };
             int index = 0;
 
-            for (BlockFace currentFace : faces) {
-                if (aboolean[index]) {
+            for (BlockFace currentFace : faces)
+            {
+                if (var13[index])
+                {
                     BlockFromToEvent event = new BlockFromToEvent(source, currentFace);
 
-                    if (server != null) {
+                    if (server != null)
+                    {
                         server.getPluginManager().callEvent(event);
                     }
 
-                    if (!event.isCancelled()) {
-                        this.flow(world, i + currentFace.getModX(), j, k + currentFace.getModZ(), i1);
+                    if (!event.isCancelled())
+                    {
+                        this.flowIntoBlock(par1World, par2 + currentFace.getModX(), par3, par4 + currentFace.getModZ(), var10);
                     }
                 }
+
                 index++;
             }
+
             // CraftBukkit end
         }
     }
 
-    private void flow(World world, int i, int j, int k, int l) {
-        if (this.p(world, i, j, k)) {
-            int i1 = world.getTypeId(i, j, k);
+    /**
+     * flowIntoBlock(World world, int x, int y, int z, int newFlowDecay) - Flows into the block at the coordinates and
+     * changes the block type to the liquid.
+     */
+    private void flowIntoBlock(World par1World, int par2, int par3, int par4, int par5)
+    {
+        if (this.liquidCanDisplaceBlock(par1World, par2, par3, par4))
+        {
+            int var6 = par1World.getBlockId(par2, par3, par4);
 
-            if (i1 > 0) {
-                if (this.material == Material.LAVA) {
-                    this.fizz(world, i, j, k);
-                } else {
-                    Block.byId[i1].c(world, i, j, k, world.getData(i, j, k), 0);
+            if (var6 > 0)
+            {
+                if (this.blockMaterial == Material.lava)
+                {
+                    this.triggerLavaMixEffects(par1World, par2, par3, par4);
+                }
+                else
+                {
+                    Block.blocksList[var6].dropBlockAsItem(par1World, par2, par3, par4, par1World.getBlockMetadata(par2, par3, par4), 0);
                 }
             }
 
-            world.setTypeIdAndData(i, j, k, this.id, l);
+            par1World.setBlockAndMetadataWithNotify(par2, par3, par4, this.blockID, par5);
         }
     }
 
-    private int d(World world, int i, int j, int k, int l, int i1) {
-        int j1 = 1000;
+    /**
+     * calculateFlowCost(World world, int x, int y, int z, int accumulatedCost, int previousDirectionOfFlow) - Used to
+     * determine the path of least resistance, this method returns the lowest possible flow cost for the direction of
+     * flow indicated. Each necessary horizontal flow adds to the flow cost.
+     */
+    private int calculateFlowCost(World par1World, int par2, int par3, int par4, int par5, int par6)
+    {
+        int var7 = 1000;
 
-        for (int k1 = 0; k1 < 4; ++k1) {
-            if ((k1 != 0 || i1 != 1) && (k1 != 1 || i1 != 0) && (k1 != 2 || i1 != 3) && (k1 != 3 || i1 != 2)) {
-                int l1 = i;
-                int i2 = k;
+        for (int var8 = 0; var8 < 4; ++var8)
+        {
+            if ((var8 != 0 || par6 != 1) && (var8 != 1 || par6 != 0) && (var8 != 2 || par6 != 3) && (var8 != 3 || par6 != 2))
+            {
+                int var9 = par2;
+                int var11 = par4;
 
-                if (k1 == 0) {
-                    l1 = i - 1;
+                if (var8 == 0)
+                {
+                    var9 = par2 - 1;
                 }
 
-                if (k1 == 1) {
-                    ++l1;
+                if (var8 == 1)
+                {
+                    ++var9;
                 }
 
-                if (k1 == 2) {
-                    i2 = k - 1;
+                if (var8 == 2)
+                {
+                    var11 = par4 - 1;
                 }
 
-                if (k1 == 3) {
-                    ++i2;
+                if (var8 == 3)
+                {
+                    ++var11;
                 }
 
-                if (!this.o(world, l1, j, i2) && (world.getMaterial(l1, j, i2) != this.material || world.getData(l1, j, i2) != 0)) {
-                    if (!this.o(world, l1, j - 1, i2)) {
-                        return l;
+                if (!this.blockBlocksFlow(par1World, var9, par3, var11) && (par1World.getBlockMaterial(var9, par3, var11) != this.blockMaterial || par1World.getBlockMetadata(var9, par3, var11) != 0))
+                {
+                    if (!this.blockBlocksFlow(par1World, var9, par3 - 1, var11))
+                    {
+                        return par5;
                     }
 
-                    if (l < 4) {
-                        int j2 = this.d(world, l1, j, i2, l + 1, k1);
+                    if (par5 < 4)
+                    {
+                        int var12 = this.calculateFlowCost(par1World, var9, par3, var11, par5 + 1, var8);
 
-                        if (j2 < j1) {
-                            j1 = j2;
+                        if (var12 < var7)
+                        {
+                            var7 = var12;
                         }
                     }
                 }
             }
         }
 
-        return j1;
+        return var7;
     }
 
-    private boolean[] n(World world, int i, int j, int k) {
-        int l;
-        int i1;
+    /**
+     * Returns a boolean array indicating which flow directions are optimal based on each direction's calculated flow
+     * cost. Each array index corresponds to one of the four cardinal directions. A value of true indicates the
+     * direction is optimal.
+     */
+    private boolean[] getOptimalFlowDirections(World par1World, int par2, int par3, int par4)
+    {
+        int var5;
+        int var6;
 
-        for (l = 0; l < 4; ++l) {
-            this.c[l] = 1000;
-            i1 = i;
-            int j1 = k;
+        for (var5 = 0; var5 < 4; ++var5)
+        {
+            this.flowCost[var5] = 1000;
+            var6 = par2;
+            int var8 = par4;
 
-            if (l == 0) {
-                i1 = i - 1;
+            if (var5 == 0)
+            {
+                var6 = par2 - 1;
             }
 
-            if (l == 1) {
-                ++i1;
+            if (var5 == 1)
+            {
+                ++var6;
             }
 
-            if (l == 2) {
-                j1 = k - 1;
+            if (var5 == 2)
+            {
+                var8 = par4 - 1;
             }
 
-            if (l == 3) {
-                ++j1;
+            if (var5 == 3)
+            {
+                ++var8;
             }
 
-            if (!this.o(world, i1, j, j1) && (world.getMaterial(i1, j, j1) != this.material || world.getData(i1, j, j1) != 0)) {
-                if (this.o(world, i1, j - 1, j1)) {
-                    this.c[l] = this.d(world, i1, j, j1, 1, l);
-                } else {
-                    this.c[l] = 0;
+            if (!this.blockBlocksFlow(par1World, var6, par3, var8) && (par1World.getBlockMaterial(var6, par3, var8) != this.blockMaterial || par1World.getBlockMetadata(var6, par3, var8) != 0))
+            {
+                if (this.blockBlocksFlow(par1World, var6, par3 - 1, var8))
+                {
+                    this.flowCost[var5] = this.calculateFlowCost(par1World, var6, par3, var8, 1, var5);
+                }
+                else
+                {
+                    this.flowCost[var5] = 0;
                 }
             }
         }
 
-        l = this.c[0];
+        var5 = this.flowCost[0];
 
-        for (i1 = 1; i1 < 4; ++i1) {
-            if (this.c[i1] < l) {
-                l = this.c[i1];
+        for (var6 = 1; var6 < 4; ++var6)
+        {
+            if (this.flowCost[var6] < var5)
+            {
+                var5 = this.flowCost[var6];
             }
         }
 
-        for (i1 = 0; i1 < 4; ++i1) {
-            this.b[i1] = this.c[i1] == l;
+        for (var6 = 0; var6 < 4; ++var6)
+        {
+            this.isOptimalFlowDirection[var6] = this.flowCost[var6] == var5;
         }
 
-        return this.b;
+        return this.isOptimalFlowDirection;
     }
 
-    private boolean o(World world, int i, int j, int k) {
-        int l = world.getTypeId(i, j, k);
+    /**
+     * Returns true if block at coords blocks fluids
+     */
+    private boolean blockBlocksFlow(World par1World, int par2, int par3, int par4)
+    {
+        int var5 = par1World.getBlockId(par2, par3, par4);
 
-        if (l != Block.WOODEN_DOOR.id && l != Block.IRON_DOOR_BLOCK.id && l != Block.SIGN_POST.id && l != Block.LADDER.id && l != Block.SUGAR_CANE_BLOCK.id) {
-            if (l == 0) {
+        if (var5 != Block.doorWood.blockID && var5 != Block.doorSteel.blockID && var5 != Block.signPost.blockID && var5 != Block.ladder.blockID && var5 != Block.reed.blockID)
+        {
+            if (var5 == 0)
+            {
                 return false;
-            } else {
-                Material material = Block.byId[l].material;
-
-                return material == Material.PORTAL ? true : material.isSolid();
             }
-        } else {
+            else
+            {
+                Material var6 = Block.blocksList[var5].blockMaterial;
+                return var6 == Material.portal ? true : var6.blocksMovement();
+            }
+        }
+        else
+        {
             return true;
         }
     }
 
-    protected int d(World world, int i, int j, int k, int l) {
-        int i1 = this.f_(world, i, j, k);
+    /**
+     * getSmallestFlowDecay(World world, intx, int y, int z, int currentSmallestFlowDecay) - Looks up the flow decay at
+     * the coordinates given and returns the smaller of this value or the provided currentSmallestFlowDecay. If one
+     * value is valid and the other isn't, the valid value will be returned. Valid values are >= 0. Flow decay is the
+     * amount that a liquid has dissipated. 0 indicates a source block.
+     */
+    protected int getSmallestFlowDecay(World par1World, int par2, int par3, int par4, int par5)
+    {
+        int var6 = this.getFlowDecay(par1World, par2, par3, par4);
 
-        if (i1 < 0) {
-            return l;
-        } else {
-            if (i1 == 0) {
-                ++this.a;
+        if (var6 < 0)
+        {
+            return par5;
+        }
+        else
+        {
+            if (var6 == 0)
+            {
+                ++this.numAdjacentSources;
             }
 
-            if (i1 >= 8) {
-                i1 = 0;
+            if (var6 >= 8)
+            {
+                var6 = 0;
             }
 
-            return l >= 0 && i1 >= l ? l : i1;
+            return par5 >= 0 && var6 >= par5 ? par5 : var6;
         }
     }
 
-    private boolean p(World world, int i, int j, int k) {
-        Material material = world.getMaterial(i, j, k);
-
-        return material == this.material ? false : (material == Material.LAVA ? false : !this.o(world, i, j, k));
+    /**
+     * Returns true if the block at the coordinates can be displaced by the liquid.
+     */
+    private boolean liquidCanDisplaceBlock(World par1World, int par2, int par3, int par4)
+    {
+        Material var5 = par1World.getBlockMaterial(par2, par3, par4);
+        return var5 == this.blockMaterial ? false : (var5 == Material.lava ? false : !this.blockBlocksFlow(par1World, par2, par3, par4));
     }
 
-    public void onPlace(World world, int i, int j, int k) {
-        super.onPlace(world, i, j, k);
-        if (world.getTypeId(i, j, k) == this.id) {
-            world.a(i, j, k, this.id, this.r_());
+    /**
+     * Called whenever the block is added into the world. Args: world, x, y, z
+     */
+    public void onBlockAdded(World par1World, int par2, int par3, int par4)
+    {
+        super.onBlockAdded(par1World, par2, par3, par4);
+
+        if (par1World.getBlockId(par2, par3, par4) == this.blockID)
+        {
+            par1World.scheduleBlockUpdate(par2, par3, par4, this.blockID, this.tickRate());
         }
     }
 
-    public boolean l() {
+    public boolean func_82506_l()
+    {
         return false;
     }
 }

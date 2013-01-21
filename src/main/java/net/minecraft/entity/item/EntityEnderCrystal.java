@@ -1,66 +1,108 @@
-package net.minecraft.server;
+package net.minecraft.entity.item;
 
-public class EntityEnderCrystal extends Entity {
+import net.minecraft.block.Block;
+import net.minecraft.entity.Entity;
+import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.util.DamageSource;
+import net.minecraft.util.MathHelper;
+import net.minecraft.world.World;
+public class EntityEnderCrystal extends Entity
+{
+    /** Used to create the rotation animation when rendering the crystal. */
+    public int innerRotation = 0;
+    public int health;
 
-    public int a = 0;
-    public int b;
-
-    public EntityEnderCrystal(World world) {
-        super(world);
-        this.m = true;
-        this.a(2.0F, 2.0F);
-        this.height = this.length / 2.0F;
-        this.b = 5;
-        this.a = this.random.nextInt(100000);
+    public EntityEnderCrystal(World par1World)
+    {
+        super(par1World);
+        this.preventEntitySpawning = true;
+        this.setSize(2.0F, 2.0F);
+        this.yOffset = this.height / 2.0F;
+        this.health = 5;
+        this.innerRotation = this.rand.nextInt(100000);
     }
 
-    protected boolean f_() {
+    /**
+     * returns if this entity triggers Block.onEntityWalking on the blocks they walk on. used for spiders and wolves to
+     * prevent them from trampling crops
+     */
+    protected boolean canTriggerWalking()
+    {
         return false;
     }
 
-    protected void a() {
-        this.datawatcher.a(8, Integer.valueOf(this.b));
+    protected void entityInit()
+    {
+        this.dataWatcher.addObject(8, Integer.valueOf(this.health));
     }
 
-    public void j_() {
-        this.lastX = this.locX;
-        this.lastY = this.locY;
-        this.lastZ = this.locZ;
-        ++this.a;
-        this.datawatcher.watch(8, Integer.valueOf(this.b));
-        int i = MathHelper.floor(this.locX);
-        int j = MathHelper.floor(this.locY);
-        int k = MathHelper.floor(this.locZ);
+    /**
+     * Called to update the entity's position/logic.
+     */
+    public void onUpdate()
+    {
+        this.prevPosX = this.posX;
+        this.prevPosY = this.posY;
+        this.prevPosZ = this.posZ;
+        ++this.innerRotation;
+        this.dataWatcher.updateObject(8, Integer.valueOf(this.health));
+        int var1 = MathHelper.floor_double(this.posX);
+        int var2 = MathHelper.floor_double(this.posY);
+        int var3 = MathHelper.floor_double(this.posZ);
 
-        if (this.world.getTypeId(i, j, k) != Block.FIRE.id) {
-            this.world.setTypeId(i, j, k, Block.FIRE.id);
+        if (this.worldObj.getBlockId(var1, var2, var3) != Block.fire.blockID)
+        {
+            this.worldObj.setBlockWithNotify(var1, var2, var3, Block.fire.blockID);
         }
     }
 
-    protected void b(NBTTagCompound nbttagcompound) {}
+    /**
+     * (abstract) Protected helper method to write subclass entity data to NBT.
+     */
+    protected void writeEntityToNBT(NBTTagCompound par1NBTTagCompound) {}
 
-    protected void a(NBTTagCompound nbttagcompound) {}
+    /**
+     * (abstract) Protected helper method to read subclass entity data from NBT.
+     */
+    protected void readEntityFromNBT(NBTTagCompound par1NBTTagCompound) {}
 
-    public boolean L() {
+    /**
+     * Returns true if other Entities should be prevented from moving through this Entity.
+     */
+    public boolean canBeCollidedWith()
+    {
         return true;
     }
 
-    public boolean damageEntity(DamageSource damagesource, int i) {
-        if (this.isInvulnerable()) {
+    /**
+     * Called when the entity is attacked.
+     */
+    public boolean attackEntityFrom(DamageSource par1DamageSource, int par2)
+    {
+        if (this.isEntityInvulnerable())
+        {
             return false;
-        } else {
-            if (!this.dead && !this.world.isStatic) {
+        }
+        else
+        {
+            if (!this.isDead && !this.worldObj.isRemote)
+            {
                 // CraftBukkit start - All non-living entities need this
-                if (org.bukkit.craftbukkit.event.CraftEventFactory.handleNonLivingEntityDamageEvent(this, damagesource, i)) {
+                if (org.bukkit.craftbukkit.event.CraftEventFactory.handleNonLivingEntityDamageEvent(this, par1DamageSource, par2))
+                {
                     return false;
                 }
-                // CraftBukkit end
 
-                this.b = 0;
-                if (this.b <= 0) {
-                    this.die();
-                    if (!this.world.isStatic) {
-                        this.world.explode(this, this.locX, this.locY, this.locZ, 6.0F, true); // CraftBukkit - (Entity) null -> this
+                // CraftBukkit end
+                this.health = 0;
+
+                if (this.health <= 0)
+                {
+                    this.setDead();
+
+                    if (!this.worldObj.isRemote)
+                    {
+                        this.worldObj.createExplosion(this, this.posX, this.posY, this.posZ, 6.0F, true); // CraftBukkit - (Entity) null -> this
                     }
                 }
             }

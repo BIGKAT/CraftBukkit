@@ -1,90 +1,135 @@
-package net.minecraft.server;
+package net.minecraft.block;
 
 import java.util.List;
 import java.util.Random;
+import net.minecraft.entity.Entity;
+import net.minecraft.entity.item.EntityMinecart;
+import net.minecraft.util.AxisAlignedBB;
+import net.minecraft.world.IBlockAccess;
+import net.minecraft.world.World;
 
 import org.bukkit.event.block.BlockRedstoneEvent; // CraftBukkit
 
-public class BlockMinecartDetector extends BlockMinecartTrack {
-
-    public BlockMinecartDetector(int i, int j) {
-        super(i, j, true);
-        this.b(true);
+public class BlockDetectorRail extends BlockRail
+{
+    public BlockDetectorRail(int par1, int par2)
+    {
+        super(par1, par2, true);
+        this.setTickRandomly(true);
     }
 
-    public int r_() {
+    /**
+     * How many world ticks before ticking
+     */
+    public int tickRate()
+    {
         return 20;
     }
 
-    public boolean isPowerSource() {
+    /**
+     * Can this block provide power. Only wire currently seems to have this change based on its state.
+     */
+    public boolean canProvidePower()
+    {
         return true;
     }
 
-    public void a(World world, int i, int j, int k, Entity entity) {
-        if (!world.isStatic) {
-            int l = world.getData(i, j, k);
+    /**
+     * Triggered whenever an entity collides with this block (enters into the block). Args: world, x, y, z, entity
+     */
+    public void onEntityCollidedWithBlock(World par1World, int par2, int par3, int par4, Entity par5Entity)
+    {
+        if (!par1World.isRemote)
+        {
+            int var6 = par1World.getBlockMetadata(par2, par3, par4);
 
-            if ((l & 8) == 0) {
-                this.d(world, i, j, k, l);
+            if ((var6 & 8) == 0)
+            {
+                this.setStateIfMinecartInteractsWithRail(par1World, par2, par3, par4, var6);
             }
         }
     }
 
-    public void b(World world, int i, int j, int k, Random random) {
-        if (!world.isStatic) {
-            int l = world.getData(i, j, k);
+    /**
+     * Ticks the block if it's been scheduled
+     */
+    public void updateTick(World par1World, int par2, int par3, int par4, Random par5Random)
+    {
+        if (!par1World.isRemote)
+        {
+            int var6 = par1World.getBlockMetadata(par2, par3, par4);
 
-            if ((l & 8) != 0) {
-                this.d(world, i, j, k, l);
+            if ((var6 & 8) != 0)
+            {
+                this.setStateIfMinecartInteractsWithRail(par1World, par2, par3, par4, var6);
             }
         }
     }
 
-    public boolean b(IBlockAccess iblockaccess, int i, int j, int k, int l) {
-        return (iblockaccess.getData(i, j, k) & 8) != 0;
+    /**
+     * Returns true if the block is emitting indirect/weak redstone power on the specified side. If isBlockNormalCube
+     * returns true, standard redstone propagation rules will apply instead and this will not be called. Args: World, X,
+     * Y, Z, side. Note that the side is reversed - eg it is 1 (up) when checking the bottom of the block.
+     */
+    public boolean isProvidingWeakPower(IBlockAccess par1IBlockAccess, int par2, int par3, int par4, int par5)
+    {
+        return (par1IBlockAccess.getBlockMetadata(par2, par3, par4) & 8) != 0;
     }
 
-    public boolean c(IBlockAccess iblockaccess, int i, int j, int k, int l) {
-        return (iblockaccess.getData(i, j, k) & 8) == 0 ? false : l == 1;
+    /**
+     * Returns true if the block is emitting direct/strong redstone power on the specified side. Args: World, X, Y, Z,
+     * side. Note that the side is reversed - eg it is 1 (up) when checking the bottom of the block.
+     */
+    public boolean isProvidingStrongPower(IBlockAccess par1IBlockAccess, int par2, int par3, int par4, int par5)
+    {
+        return (par1IBlockAccess.getBlockMetadata(par2, par3, par4) & 8) == 0 ? false : par5 == 1;
     }
 
-    private void d(World world, int i, int j, int k, int l) {
-        boolean flag = (l & 8) != 0;
-        boolean flag1 = false;
-        float f = 0.125F;
-        List list = world.a(EntityMinecart.class, AxisAlignedBB.a().a((double) ((float) i + f), (double) j, (double) ((float) k + f), (double) ((float) (i + 1) - f), (double) ((float) (j + 1) - f), (double) ((float) (k + 1) - f)));
+    /**
+     * Update the detector rail power state if a minecart enter, stays or leave the block.
+     */
+    private void setStateIfMinecartInteractsWithRail(World par1World, int par2, int par3, int par4, int par5)
+    {
+        boolean var6 = (par5 & 8) != 0;
+        boolean var7 = false;
+        float var8 = 0.125F;
+        List var9 = par1World.getEntitiesWithinAABB(EntityMinecart.class, AxisAlignedBB.getAABBPool().addOrModifyAABBInPool((double)((float)par2 + var8), (double)par3, (double)((float)par4 + var8), (double)((float)(par2 + 1) - var8), (double)((float)(par3 + 1) - var8), (double)((float)(par4 + 1) - var8)));
 
-        if (!list.isEmpty()) {
-            flag1 = true;
+        if (!var9.isEmpty())
+        {
+            var7 = true;
         }
 
         // CraftBukkit start
-        if (flag != flag1) {
-            org.bukkit.block.Block block = world.getWorld().getBlockAt(i, j, k);
-
-            BlockRedstoneEvent eventRedstone = new BlockRedstoneEvent(block, flag ? 1 : 0, flag1 ? 1 : 0);
-            world.getServer().getPluginManager().callEvent(eventRedstone);
-
-            flag1 = eventRedstone.getNewCurrent() > 0;
+        if (var6 != var7)
+        {
+            org.bukkit.block.Block block = par1World.getWorld().getBlockAt(par2, par3, par4);
+            BlockRedstoneEvent eventRedstone = new BlockRedstoneEvent(block, var6 ? 1 : 0, var7 ? 1 : 0);
+            par1World.getServer().getPluginManager().callEvent(eventRedstone);
+            var7 = eventRedstone.getNewCurrent() > 0;
         }
+
         // CraftBukkit end
 
-        if (flag1 && !flag) {
-            world.setData(i, j, k, l | 8);
-            world.applyPhysics(i, j, k, this.id);
-            world.applyPhysics(i, j - 1, k, this.id);
-            world.e(i, j, k, i, j, k);
+        if (var7 && !var6)
+        {
+            par1World.setBlockMetadataWithNotify(par2, par3, par4, par5 | 8);
+            par1World.notifyBlocksOfNeighborChange(par2, par3, par4, this.blockID);
+            par1World.notifyBlocksOfNeighborChange(par2, par3 - 1, par4, this.blockID);
+            par1World.markBlockRangeForRenderUpdate(par2, par3, par4, par2, par3, par4);
         }
 
-        if (!flag1 && flag) {
-            world.setData(i, j, k, l & 7);
-            world.applyPhysics(i, j, k, this.id);
-            world.applyPhysics(i, j - 1, k, this.id);
-            world.e(i, j, k, i, j, k);
+        if (!var7 && var6)
+        {
+            par1World.setBlockMetadataWithNotify(par2, par3, par4, par5 & 7);
+            par1World.notifyBlocksOfNeighborChange(par2, par3, par4, this.blockID);
+            par1World.notifyBlocksOfNeighborChange(par2, par3 - 1, par4, this.blockID);
+            par1World.markBlockRangeForRenderUpdate(par2, par3, par4, par2, par3, par4);
         }
 
-        if (flag1) {
-            world.a(i, j, k, this.id, this.r_());
+        if (var7)
+        {
+            par1World.scheduleBlockUpdate(par2, par3, par4, this.blockID, this.tickRate());
         }
     }
 }

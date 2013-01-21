@@ -1,61 +1,90 @@
-package net.minecraft.server;
+package net.minecraft.item;
 
-public class ItemBlock extends Item {
+import net.minecraft.block.Block;
+import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.world.World;
+public class ItemBlock extends Item
+{
+    /** The block ID of the Block associated with this ItemBlock */
+    private int blockID;
 
-    private int id;
-
-    public ItemBlock(int i) {
-        super(i);
-        this.id = i + 256;
-        this.c(Block.byId[i + 256].a(2));
+    public ItemBlock(int par1)
+    {
+        super(par1);
+        this.blockID = par1 + 256;
+        this.setIconIndex(Block.blocksList[par1 + 256].getBlockTextureFromSide(2));
     }
 
-    public int g() {
-        return this.id;
+    /**
+     * Returns the blockID for this Item
+     */
+    public int getBlockID()
+    {
+        return this.blockID;
     }
 
-    public boolean interactWith(ItemStack itemstack, EntityHuman entityhuman, World world, int i, int j, int k, int l, float f, float f1, float f2) {
-        int i1 = world.getTypeId(i, j, k);
+    /**
+     * Callback for item usage. If the item does something special on right clicking, he will have one of those. Return
+     * True if something happen and false if it don't. This is for ITEMS, not BLOCKS
+     */
+    public boolean onItemUse(ItemStack par1ItemStack, EntityPlayer par2EntityPlayer, World par3World, int par4, int par5, int par6, int par7, float par8, float par9, float par10)
+    {
+        int var11 = par3World.getBlockId(par4, par5, par6);
 
-        if (i1 == Block.SNOW.id) {
-            l = 1;
-        } else if (i1 != Block.VINE.id && i1 != Block.LONG_GRASS.id && i1 != Block.DEAD_BUSH.id) {
-            if (l == 0) {
-                --j;
+        if (var11 == Block.snow.blockID)
+        {
+            par7 = 1;
+        }
+        else if (var11 != Block.vine.blockID && var11 != Block.tallGrass.blockID && var11 != Block.deadBush.blockID)
+        {
+            if (par7 == 0)
+            {
+                --par5;
             }
 
-            if (l == 1) {
-                ++j;
+            if (par7 == 1)
+            {
+                ++par5;
             }
 
-            if (l == 2) {
-                --k;
+            if (par7 == 2)
+            {
+                --par6;
             }
 
-            if (l == 3) {
-                ++k;
+            if (par7 == 3)
+            {
+                ++par6;
             }
 
-            if (l == 4) {
-                --i;
+            if (par7 == 4)
+            {
+                --par4;
             }
 
-            if (l == 5) {
-                ++i;
+            if (par7 == 5)
+            {
+                ++par4;
             }
         }
 
-        if (itemstack.count == 0) {
+        if (par1ItemStack.stackSize == 0)
+        {
             return false;
-        } else if (!entityhuman.a(i, j, k, l, itemstack)) {
+        }
+        else if (!par2EntityPlayer.canPlayerEdit(par4, par5, par6, par7, par1ItemStack))
+        {
             return false;
-        } else if (j == 255 && Block.byId[this.id].material.isBuildable()) {
+        }
+        else if (par5 == 255 && Block.blocksList[this.blockID].blockMaterial.isSolid())
+        {
             return false;
-        } else if (world.mayPlace(this.id, i, j, k, false, l, entityhuman)) {
-            Block block = Block.byId[this.id];
-            int j1 = this.filterData(itemstack.getData());
-            int k1 = Block.byId[this.id].getPlacedData(world, i, j, k, l, f, f1, f2, j1);
-
+        }
+        else if (par3World.canPlaceEntityOnSide(this.blockID, par4, par5, par6, false, par7, par2EntityPlayer))
+        {
+            Block var12 = Block.blocksList[this.blockID];
+            int var13 = this.getMetadata(par1ItemStack.getItemDamage());
+            int var14 = Block.blocksList[this.blockID].onBlockPlaced(par3World, par4, par5, par6, par7, par8, par9, par10, var13);
             // CraftBukkit start - redirect to common function handler
             /*
             if (world.setTypeIdAndData(i, j, k, this.id, k1)) {
@@ -68,51 +97,57 @@ public class ItemBlock extends Item {
                 --itemstack.count;
             }
             */
-            return processBlockPlace(world, entityhuman, itemstack, i, j, k, this.id, k1);
+            return processBlockPlace(par3World, par2EntityPlayer, par1ItemStack, par4, par5, par6, this.blockID, var14);
             // CraftBukkit end
-        } else {
+        }
+        else
+        {
             return false;
         }
     }
 
     // CraftBukkit start - add method to process block placement
-    static boolean processBlockPlace(final World world, final EntityHuman entityhuman, final ItemStack itemstack, final int x, final int y, final int z, final int id, final int data) {
+    static boolean processBlockPlace(final World world, final EntityPlayer entityhuman, final ItemStack itemstack, final int x, final int y, final int z, final int id, final int data)
+    {
         org.bukkit.block.BlockState blockstate = org.bukkit.craftbukkit.block.CraftBlockState.getBlockState(world, x, y, z);
-
-        world.suppressPhysics = true;
-        world.setTypeIdAndData(x, y, z, id, data);
-
+        world.editingBlocks = true;
+        world.setBlockAndMetadataWithNotify(x, y, z, id, data);
         org.bukkit.event.block.BlockPlaceEvent event = org.bukkit.craftbukkit.event.CraftEventFactory.callBlockPlaceEvent(world, entityhuman, blockstate, x, y, z);
-        if (event.isCancelled() || !event.canBuild()) {
+
+        if (event.isCancelled() || !event.canBuild())
+        {
             blockstate.update(true);
-            world.suppressPhysics = false;
+            world.editingBlocks = false;
             return false;
         }
 
-        world.suppressPhysics = false;
-        world.applyPhysics(x, y, z, world.getTypeId(x, y, z));
+        world.editingBlocks = false;
+        world.notifyBlocksOfNeighborChange(x, y, z, world.getBlockId(x, y, z));
+        Block block = Block.blocksList[world.getBlockId(x, y, z)];
 
-        Block block = Block.byId[world.getTypeId(x, y, z)];
-        if (block != null) {
-            block.postPlace(world, x, y, z, entityhuman);
-            block.postPlace(world, x, y, z, world.getData(x, y, z));
-
-            world.makeSound((double) ((float) x + 0.5F), (double) ((float) y + 0.5F), (double) ((float) z + 0.5F), block.stepSound.getPlaceSound(), (block.stepSound.getVolume1() + 1.0F) / 2.0F, block.stepSound.getVolume2() * 0.8F);
+        if (block != null)
+        {
+            block.onBlockPlacedBy(world, x, y, z, entityhuman);
+            block.onPostBlockPlaced(world, x, y, z, world.getBlockMetadata(x, y, z));
+            world.playSoundEffect((double)((float) x + 0.5F), (double)((float) y + 0.5F), (double)((float) z + 0.5F), block.stepSound.getPlaceSound(), (block.stepSound.getVolume() + 1.0F) / 2.0F, block.stepSound.getPitch() * 0.8F);
         }
 
-        if (itemstack != null) {
-            --itemstack.count;
+        if (itemstack != null)
+        {
+            --itemstack.stackSize;
         }
 
         return true;
     }
     // CraftBukkit end
 
-    public String d(ItemStack itemstack) {
-        return Block.byId[this.id].a();
+    public String getItemNameIS(ItemStack par1ItemStack)
+    {
+        return Block.blocksList[this.blockID].getBlockName();
     }
 
-    public String getName() {
-        return Block.byId[this.id].a();
+    public String getItemName()
+    {
+        return Block.blocksList[this.blockID].getBlockName();
     }
 }

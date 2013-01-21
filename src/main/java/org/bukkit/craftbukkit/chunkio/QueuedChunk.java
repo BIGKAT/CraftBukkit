@@ -1,18 +1,14 @@
 package org.bukkit.craftbukkit.chunkio;
 
-import net.minecraft.server.ChunkProviderServer;
-import net.minecraft.server.ChunkRegionLoader;
-import net.minecraft.server.NBTTagCompound;
-import net.minecraft.server.World;
 
 class QueuedChunk {
     long coords;
-    ChunkRegionLoader loader;
-    World world;
-    ChunkProviderServer provider;
-    NBTTagCompound compound;
+    net.minecraft.world.chunk.storage.AnvilChunkLoader/*was:ChunkRegionLoader*/ loader;
+    net.minecraft.world.World/*was:World*/ world;
+    net.minecraft.world.gen.ChunkProviderServer/*was:ChunkProviderServer*/ provider;
+    net.minecraft.nbt.NBTTagCompound/*was:NBTTagCompound*/ compound;
 
-    public QueuedChunk(long coords, ChunkRegionLoader loader, World world, ChunkProviderServer provider) {
+    public QueuedChunk(long coords, net.minecraft.world.chunk.storage.AnvilChunkLoader/*was:ChunkRegionLoader*/ loader, net.minecraft.world.World/*was:World*/ world, net.minecraft.world.gen.ChunkProviderServer/*was:ChunkProviderServer*/ provider) {
         this.coords = coords;
         this.loader = loader;
         this.world = world;

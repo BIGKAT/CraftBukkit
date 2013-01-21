@@ -1,186 +1,298 @@
-package net.minecraft.server;
+package net.minecraft.potion;
 
 // CraftBukkit start
 import org.bukkit.craftbukkit.event.CraftEventFactory;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.EntityRegainHealthEvent.RegainReason;
+import net.minecraft.entity.EntityLiving;
+import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.entity.projectile.EntityPotion;
+import net.minecraft.util.DamageSource;
 // CraftBukkit end
 
-public class MobEffectList {
+public class Potion
+{
+    /** The array of potion types. */
+    public static final Potion[] potionTypes = new Potion[32];
+    public static final Potion field_76423_b = null;
+    public static final Potion moveSpeed = (new Potion(1, false, 8171462)).setPotionName("potion.moveSpeed").setIconIndex(0, 0);
+    public static final Potion moveSlowdown = (new Potion(2, true, 5926017)).setPotionName("potion.moveSlowdown").setIconIndex(1, 0);
+    public static final Potion digSpeed = (new Potion(3, false, 14270531)).setPotionName("potion.digSpeed").setIconIndex(2, 0).setEffectiveness(1.5D);
+    public static final Potion digSlowdown = (new Potion(4, true, 4866583)).setPotionName("potion.digSlowDown").setIconIndex(3, 0);
+    public static final Potion damageBoost = (new Potion(5, false, 9643043)).setPotionName("potion.damageBoost").setIconIndex(4, 0);
+    public static final Potion heal = (new PotionHealth(6, false, 16262179)).setPotionName("potion.heal");
+    public static final Potion harm = (new PotionHealth(7, true, 4393481)).setPotionName("potion.harm");
+    public static final Potion jump = (new Potion(8, false, 7889559)).setPotionName("potion.jump").setIconIndex(2, 1);
+    public static final Potion confusion = (new Potion(9, true, 5578058)).setPotionName("potion.confusion").setIconIndex(3, 1).setEffectiveness(0.25D);
 
-    public static final MobEffectList[] byId = new MobEffectList[32];
-    public static final MobEffectList b = null;
-    public static final MobEffectList FASTER_MOVEMENT = (new MobEffectList(1, false, 8171462)).b("potion.moveSpeed").b(0, 0);
-    public static final MobEffectList SLOWER_MOVEMENT = (new MobEffectList(2, true, 5926017)).b("potion.moveSlowdown").b(1, 0);
-    public static final MobEffectList FASTER_DIG = (new MobEffectList(3, false, 14270531)).b("potion.digSpeed").b(2, 0).a(1.5D);
-    public static final MobEffectList SLOWER_DIG = (new MobEffectList(4, true, 4866583)).b("potion.digSlowDown").b(3, 0);
-    public static final MobEffectList INCREASE_DAMAGE = (new MobEffectList(5, false, 9643043)).b("potion.damageBoost").b(4, 0);
-    public static final MobEffectList HEAL = (new InstantMobEffect(6, false, 16262179)).b("potion.heal");
-    public static final MobEffectList HARM = (new InstantMobEffect(7, true, 4393481)).b("potion.harm");
-    public static final MobEffectList JUMP = (new MobEffectList(8, false, 7889559)).b("potion.jump").b(2, 1);
-    public static final MobEffectList CONFUSION = (new MobEffectList(9, true, 5578058)).b("potion.confusion").b(3, 1).a(0.25D);
-    public static final MobEffectList REGENERATION = (new MobEffectList(10, false, 13458603)).b("potion.regeneration").b(7, 0).a(0.25D);
-    public static final MobEffectList RESISTANCE = (new MobEffectList(11, false, 10044730)).b("potion.resistance").b(6, 1);
-    public static final MobEffectList FIRE_RESISTANCE = (new MobEffectList(12, false, 14981690)).b("potion.fireResistance").b(7, 1);
-    public static final MobEffectList WATER_BREATHING = (new MobEffectList(13, false, 3035801)).b("potion.waterBreathing").b(0, 2);
-    public static final MobEffectList INVISIBILITY = (new MobEffectList(14, false, 8356754)).b("potion.invisibility").b(0, 1);
-    public static final MobEffectList BLINDNESS = (new MobEffectList(15, true, 2039587)).b("potion.blindness").b(5, 1).a(0.25D);
-    public static final MobEffectList NIGHT_VISION = (new MobEffectList(16, false, 2039713)).b("potion.nightVision").b(4, 1);
-    public static final MobEffectList HUNGER = (new MobEffectList(17, true, 5797459)).b("potion.hunger").b(1, 1);
-    public static final MobEffectList WEAKNESS = (new MobEffectList(18, true, 4738376)).b("potion.weakness").b(5, 0);
-    public static final MobEffectList POISON = (new MobEffectList(19, true, 5149489)).b("potion.poison").b(6, 0).a(0.25D);
-    public static final MobEffectList WITHER = (new MobEffectList(20, true, 3484199)).b("potion.wither").b(1, 2).a(0.25D);
-    public static final MobEffectList w = null;
-    public static final MobEffectList x = null;
-    public static final MobEffectList y = null;
-    public static final MobEffectList z = null;
-    public static final MobEffectList A = null;
-    public static final MobEffectList B = null;
-    public static final MobEffectList C = null;
-    public static final MobEffectList D = null;
-    public static final MobEffectList E = null;
-    public static final MobEffectList F = null;
-    public static final MobEffectList G = null;
+    /** The regeneration Potion object. */
+    public static final Potion regeneration = (new Potion(10, false, 13458603)).setPotionName("potion.regeneration").setIconIndex(7, 0).setEffectiveness(0.25D);
+    public static final Potion resistance = (new Potion(11, false, 10044730)).setPotionName("potion.resistance").setIconIndex(6, 1);
+
+    /** The fire resistance Potion object. */
+    public static final Potion fireResistance = (new Potion(12, false, 14981690)).setPotionName("potion.fireResistance").setIconIndex(7, 1);
+
+    /** The water breathing Potion object. */
+    public static final Potion waterBreathing = (new Potion(13, false, 3035801)).setPotionName("potion.waterBreathing").setIconIndex(0, 2);
+
+    /** The invisibility Potion object. */
+    public static final Potion invisibility = (new Potion(14, false, 8356754)).setPotionName("potion.invisibility").setIconIndex(0, 1);
+
+    /** The blindness Potion object. */
+    public static final Potion blindness = (new Potion(15, true, 2039587)).setPotionName("potion.blindness").setIconIndex(5, 1).setEffectiveness(0.25D);
+
+    /** The night vision Potion object. */
+    public static final Potion nightVision = (new Potion(16, false, 2039713)).setPotionName("potion.nightVision").setIconIndex(4, 1);
+
+    /** The hunger Potion object. */
+    public static final Potion hunger = (new Potion(17, true, 5797459)).setPotionName("potion.hunger").setIconIndex(1, 1);
+
+    /** The weakness Potion object. */
+    public static final Potion weakness = (new Potion(18, true, 4738376)).setPotionName("potion.weakness").setIconIndex(5, 0);
+
+    /** The poison Potion object. */
+    public static final Potion poison = (new Potion(19, true, 5149489)).setPotionName("potion.poison").setIconIndex(6, 0).setEffectiveness(0.25D);
+
+    /** The wither Potion object. */
+    public static final Potion wither = (new Potion(20, true, 3484199)).setPotionName("potion.wither").setIconIndex(1, 2).setEffectiveness(0.25D);
+    public static final Potion field_76434_w = null;
+    public static final Potion field_76444_x = null;
+    public static final Potion field_76443_y = null;
+    public static final Potion field_76442_z = null;
+    public static final Potion field_76409_A = null;
+    public static final Potion field_76410_B = null;
+    public static final Potion field_76411_C = null;
+    public static final Potion field_76405_D = null;
+    public static final Potion field_76406_E = null;
+    public static final Potion field_76407_F = null;
+    public static final Potion field_76408_G = null;
+
+    /** The Id of a Potion object. */
     public final int id;
-    private String I = "";
-    private int J = -1;
-    private final boolean K;
-    private double L;
-    private boolean M;
-    private final int N;
 
-    protected MobEffectList(int i, boolean flag, int j) {
-        this.id = i;
-        byId[i] = this;
-        this.K = flag;
-        if (flag) {
-            this.L = 0.5D;
-        } else {
-            this.L = 1.0D;
+    /** The name of the Potion. */
+    private String name = "";
+
+    /** The index for the icon displayed when the potion effect is active. */
+    private int statusIconIndex = -1;
+
+    /**
+     * This field indicated if the effect is 'bad' - negative - for the entity.
+     */
+    private final boolean isBadEffect;
+    private double effectiveness;
+    private boolean usable;
+
+    /** Is the color of the liquid for this potion. */
+    private final int liquidColor;
+
+    protected Potion(int par1, boolean par2, int par3)
+    {
+        this.id = par1;
+        potionTypes[par1] = this;
+        this.isBadEffect = par2;
+
+        if (par2)
+        {
+            this.effectiveness = 0.5D;
+        }
+        else
+        {
+            this.effectiveness = 1.0D;
         }
 
-        this.N = j;
-
+        this.liquidColor = par3;
         org.bukkit.potion.PotionEffectType.registerPotionEffectType(new org.bukkit.craftbukkit.potion.CraftPotionEffectType(this)); // CraftBukkit
     }
 
-    protected MobEffectList b(int i, int j) {
-        this.J = i + j * 8;
+    /**
+     * Sets the index for the icon displayed in the player's inventory when the status is active.
+     */
+    protected Potion setIconIndex(int par1, int par2)
+    {
+        this.statusIconIndex = par1 + par2 * 8;
         return this;
     }
 
-    public int getId() {
+    /**
+     * returns the ID of the potion
+     */
+    public int getId()
+    {
         return this.id;
     }
 
-    public void tick(EntityLiving entityliving, int i) {
-        if (this.id == REGENERATION.id) {
-            if (entityliving.getHealth() < entityliving.maxHealth) { // CraftBukkit - .getMaxHealth() -> .maxHealth
-                entityliving.heal(1, RegainReason.MAGIC_REGEN); // CraftBukkit
+    public void performEffect(EntityLiving par1EntityLiving, int par2)
+    {
+        if (this.id == regeneration.id)
+        {
+            if (par1EntityLiving.getHealth() < par1EntityLiving.maxHealth)   // CraftBukkit - .getMaxHealth() -> .maxHealth
+            {
+                par1EntityLiving.heal(1, RegainReason.MAGIC_REGEN); // CraftBukkit
             }
-        } else if (this.id == POISON.id) {
-            if (entityliving.getHealth() > 1) {
+        }
+        else if (this.id == poison.id)
+        {
+            if (par1EntityLiving.getHealth() > 1)
+            {
                 // CraftBukkit start
-                EntityDamageEvent event = CraftEventFactory.callEntityDamageEvent(null, entityliving, EntityDamageEvent.DamageCause.POISON, 1);
+                EntityDamageEvent event = CraftEventFactory.callEntityDamageEvent(null, par1EntityLiving, EntityDamageEvent.DamageCause.POISON, 1);
 
-                if (!event.isCancelled() && event.getDamage() > 0) {
-                    entityliving.damageEntity(DamageSource.MAGIC, event.getDamage());
+                if (!event.isCancelled() && event.getDamage() > 0)
+                {
+                    par1EntityLiving.attackEntityFrom(DamageSource.magic, event.getDamage());
                 }
+
                 // CraftBukkit end
             }
-        } else if (this.id == WITHER.id) {
+        }
+        else if (this.id == wither.id)
+        {
             // CraftBukkit start
-            EntityDamageEvent event = CraftEventFactory.callEntityDamageEvent(null, entityliving, EntityDamageEvent.DamageCause.WITHER, 1);
+            EntityDamageEvent event = CraftEventFactory.callEntityDamageEvent(null, par1EntityLiving, EntityDamageEvent.DamageCause.WITHER, 1);
 
-            if (!event.isCancelled() && event.getDamage() > 0) {
-                entityliving.damageEntity(DamageSource.WITHER, event.getDamage());
+            if (!event.isCancelled() && event.getDamage() > 0)
+            {
+                par1EntityLiving.attackEntityFrom(DamageSource.wither, event.getDamage());
             }
-            // CraftBukkit end
-        } else if (this.id == HUNGER.id && entityliving instanceof EntityHuman) {
-            ((EntityHuman) entityliving).j(0.025F * (float) (i + 1));
-        } else if ((this.id != HEAL.id || entityliving.bA()) && (this.id != HARM.id || !entityliving.bA())) {
-            if (this.id == HARM.id && !entityliving.bA() || this.id == HEAL.id && entityliving.bA()) {
-                // CraftBukkit start
-                EntityDamageEvent event = CraftEventFactory.callEntityDamageEvent(null, entityliving, EntityDamageEvent.DamageCause.MAGIC, 6 << i);
 
-                if (!event.isCancelled() && event.getDamage() > 0) {
-                    entityliving.damageEntity(DamageSource.MAGIC, event.getDamage());
+            // CraftBukkit end
+        }
+        else if (this.id == hunger.id && par1EntityLiving instanceof EntityPlayer)
+        {
+            ((EntityPlayer)par1EntityLiving).addExhaustion(0.025F * (float)(par2 + 1));
+        }
+        else if ((this.id != heal.id || par1EntityLiving.isEntityUndead()) && (this.id != harm.id || !par1EntityLiving.isEntityUndead()))
+        {
+            if (this.id == harm.id && !par1EntityLiving.isEntityUndead() || this.id == heal.id && par1EntityLiving.isEntityUndead())
+            {
+                // CraftBukkit start
+                EntityDamageEvent event = CraftEventFactory.callEntityDamageEvent(null, par1EntityLiving, EntityDamageEvent.DamageCause.MAGIC, 6 << par2);
+
+                if (!event.isCancelled() && event.getDamage() > 0)
+                {
+                    par1EntityLiving.attackEntityFrom(DamageSource.magic, event.getDamage());
                 }
+
                 // CraftBukkit end
             }
-        } else {
-            entityliving.heal(6 << i, RegainReason.MAGIC); // CraftBukkit
+        }
+        else
+        {
+            par1EntityLiving.heal(6 << par2, RegainReason.MAGIC); // CraftBukkit
         }
     }
 
-    public void applyInstantEffect(EntityLiving entityliving, EntityLiving entityliving1, int i, double d0) {
+    /**
+     * Hits the provided entity with this potion's instant effect.
+     */
+    public void affectEntity(EntityLiving par1EntityLiving, EntityLiving par2EntityLiving, int par3, double par4)
+    {
         // CraftBukkit start - delegate; we need EntityPotion
-        applyInstantEffect(entityliving, entityliving1, i, d0, null);
+        applyInstantEffect(par1EntityLiving, par2EntityLiving, par3, par4, null);
     }
 
-    public void applyInstantEffect(EntityLiving entityliving, EntityLiving entityliving1, int i, double d0, EntityPotion potion) {
+    public void applyInstantEffect(EntityLiving entityliving, EntityLiving entityliving1, int i, double d0, EntityPotion potion)
+    {
         // CraftBukkit end
         int j;
 
-        if ((this.id != HEAL.id || entityliving1.bA()) && (this.id != HARM.id || !entityliving1.bA())) {
-            if (this.id == HARM.id && !entityliving1.bA() || this.id == HEAL.id && entityliving1.bA()) {
-                j = (int) (d0 * (double) (6 << i) + 0.5D);
-                if (entityliving == null) {
-                    entityliving1.damageEntity(DamageSource.MAGIC, j);
-                } else {
+        if ((this.id != heal.id || entityliving1.isEntityUndead()) && (this.id != harm.id || !entityliving1.isEntityUndead()))
+        {
+            if (this.id == harm.id && !entityliving1.isEntityUndead() || this.id == heal.id && entityliving1.isEntityUndead())
+            {
+                j = (int)(d0 * (double)(6 << i) + 0.5D);
+
+                if (entityliving == null)
+                {
+                    entityliving1.attackEntityFrom(DamageSource.magic, j);
+                }
+                else
+                {
                     // CraftBukkit - The "damager" needs to be the potion
-                    entityliving1.damageEntity(DamageSource.b(potion != null ? potion : entityliving1, entityliving), j);
+                    entityliving1.attackEntityFrom(DamageSource.causeIndirectMagicDamage(potion != null ? potion : entityliving1, entityliving), j);
                 }
             }
-        } else {
-            j = (int) (d0 * (double) (6 << i) + 0.5D);
+        }
+        else
+        {
+            j = (int)(d0 * (double)(6 << i) + 0.5D);
             entityliving1.heal(j, RegainReason.MAGIC); // CraftBukkit
         }
     }
 
-    public boolean isInstant() {
+    /**
+     * Returns true if the potion has an instant effect instead of a continuous one (eg Harming)
+     */
+    public boolean isInstant()
+    {
         return false;
     }
 
-    public boolean a(int i, int j) {
-        int k;
+    /**
+     * checks if Potion effect is ready to be applied this tick.
+     */
+    public boolean isReady(int par1, int par2)
+    {
+        int var3;
 
-        if (this.id != REGENERATION.id && this.id != POISON.id) {
-            if (this.id == WITHER.id) {
-                k = 40 >> j;
-                return k > 0 ? i % k == 0 : true;
-            } else {
-                return this.id == HUNGER.id;
+        if (this.id != regeneration.id && this.id != poison.id)
+        {
+            if (this.id == wither.id)
+            {
+                var3 = 40 >> par2;
+                return var3 > 0 ? par1 % var3 == 0 : true;
             }
-        } else {
-            k = 25 >> j;
-            return k > 0 ? i % k == 0 : true;
+            else
+            {
+                return this.id == hunger.id;
+            }
+        }
+        else
+        {
+            var3 = 25 >> par2;
+            return var3 > 0 ? par1 % var3 == 0 : true;
         }
     }
 
-    public MobEffectList b(String s) {
-        this.I = s;
+    /**
+     * Set the potion name.
+     */
+    public Potion setPotionName(String par1Str)
+    {
+        this.name = par1Str;
         return this;
     }
 
-    public String a() {
-        return this.I;
+    /**
+     * returns the name of the potion
+     */
+    public String getName()
+    {
+        return this.name;
     }
 
-    protected MobEffectList a(double d0) {
-        this.L = d0;
+    protected Potion setEffectiveness(double par1)
+    {
+        this.effectiveness = par1;
         return this;
     }
 
-    public double getDurationModifier() {
-        return this.L;
+    public double getEffectiveness()
+    {
+        return this.effectiveness;
     }
 
-    public boolean i() {
-        return this.M;
+    public boolean isUsable()
+    {
+        return this.usable;
     }
 
-    public int j() {
-        return this.N;
+    /**
+     * Returns the color of the potion liquid.
+     */
+    public int getLiquidColor()
+    {
+        return this.liquidColor;
     }
 }
